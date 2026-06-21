@@ -2,6 +2,7 @@ const asyncHandler = require('express-async-handler');
 const axios = require('axios');
 const gutenbergService = require('../services/gutenbergService');
 const EResource = require('../models/EResource');
+const { recordQualifyingAction } = require('../services/streakService');
 
 // @desc    Browse / Search external Gutenberg books
 // @route   GET /api/eresources/external
@@ -106,9 +107,28 @@ const proxyContent = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Record reading progress
+// @route   POST /api/eresources/:id/progress
+// @access  Private
+const updateReadingProgress = asyncHandler(async (req, res) => {
+  const { readingTimeMinutes } = req.body;
+  
+  // In a real implementation we'd save this to a ReadingProgress model,
+  // but for the streak requirement, we just verify it's >= 3 minutes.
+  if (readingTimeMinutes >= 3) {
+    const streakData = await recordQualifyingAction(req.user._id, 'eresource_read');
+    if (streakData && req.app.get('io')) {
+      req.app.get('io').to(`user:${req.user._id}`).emit('streak:updated', streakData);
+    }
+  }
+
+  res.json({ success: true });
+});
+
 module.exports = {
   listExternal,
   getExternalDetail,
   openExternal,
-  proxyContent
+  proxyContent,
+  updateReadingProgress
 };

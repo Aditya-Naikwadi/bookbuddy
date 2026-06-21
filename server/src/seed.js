@@ -18,6 +18,10 @@ const Feedback = require('./models/Feedback');
 const Complaint = require('./models/Complaint');
 const Notification = require('./models/Notification');
 const NotificationPreference = require('./models/NotificationPreference');
+const Sticker = require('./models/Sticker');
+const StreakReward = require('./models/StreakReward');
+const Streak = require('./models/Streak');
+const UserSticker = require('./models/UserSticker');
 
 const connectDB = require('./config/db');
 
@@ -42,6 +46,10 @@ const importData = async () => {
     await Complaint.deleteMany();
     await Notification.deleteMany();
     await NotificationPreference.deleteMany();
+    await Sticker.deleteMany();
+    await StreakReward.deleteMany();
+    await Streak.deleteMany();
+    await UserSticker.deleteMany();
 
     console.log('Seeding demo users...');
     const salt = await bcrypt.genSalt(10);
@@ -211,15 +219,35 @@ const importData = async () => {
         type: 'PDF',
         url: 'https://example.com/ml-basics.pdf',
         category: 'Open Access',
-        status: 'approved'
+        status: 'approved',
+        externalId: -1
       },
       {
         title: 'Journal of Computer Science Vol 45',
         type: 'EPUB',
         url: 'https://example.com/jcs-v45.epub',
         category: 'Research Journals',
-        status: 'approved'
+        status: 'approved',
+        externalId: -2
       }
+    ]);
+
+    console.log('Seeding Stickers & Streak Rewards...');
+    await Sticker.create([
+      { code: 'STRK_3', name: '3-Day Reader', description: 'Read for 3 consecutive days.', icon: '🔥', category: 'streak_milestone', criteriaType: 'streak_days', criteriaValue: 3, rarity: 'common' },
+      { code: 'STRK_7', name: 'Week Warrior', description: 'Read for 7 consecutive days.', icon: '📅', category: 'streak_milestone', criteriaType: 'streak_days', criteriaValue: 7, rarity: 'common' },
+      { code: 'STRK_14', name: 'Fortnight Finisher', description: 'Read for 14 consecutive days.', icon: '⏳', category: 'streak_milestone', criteriaType: 'streak_days', criteriaValue: 14, rarity: 'rare' },
+      { code: 'STRK_30', name: 'Month Master', description: 'Read for 30 consecutive days.', icon: '🏆', category: 'streak_milestone', criteriaType: 'streak_days', criteriaValue: 30, rarity: 'epic' },
+      { code: 'EXPL_GENRE_5', name: 'Genre Explorer', description: 'Borrow books from 5 different genres.', icon: '🗺️', category: 'exploration', criteriaType: 'genre_count', criteriaValue: 5, rarity: 'rare' },
+      { code: 'EXPL_LAB_5', name: 'Lab Regular', description: 'Complete 5 lab bookings.', icon: '💻', category: 'exploration', criteriaType: 'lab_count', criteriaValue: 5, rarity: 'common' }
+    ]);
+
+    await StreakReward.create([
+      { streakDays: 3, rewardType: 'visual_upgrade', rewardPayload: { theme: 'silver_flame' } },
+      { streakDays: 7, rewardType: 'freeze', rewardPayload: {} },
+      { streakDays: 14, rewardType: 'patron_theme', rewardPayload: { theme: 'gold_card' } },
+      { streakDays: 30, rewardType: 'certificate', rewardPayload: { fileUrl: '/certificates/30-day.pdf' } },
+      { streakDays: 60, rewardType: 'early_access', rewardPayload: {} }
     ]);
 
     console.log('Database successfully seeded! 🌱');

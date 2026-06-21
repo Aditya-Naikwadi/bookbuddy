@@ -11,13 +11,13 @@ const {
   getMyQueue,
   getMyFines
 } = require('../../controllers/dashboards/studentDashboardController');
-const { protect, authorize } = require('../../middlewares/authMiddleware');
+const { protect, restrictTo } = require('../../middlewares/auth');
 
 // Base route: /api/dashboards/student
 
 // Apply middleware to all routes in this file
 router.use(protect);
-router.use(authorize('student'));
+router.use(restrictTo('student'));
 
 // Summary Route
 router.get('/', getStudentDashboardSummary);

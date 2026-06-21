@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { submitComplaint, getMyComplaints } = require('../controllers/complaintController');
-const { protect } = require('../middlewares/authMiddleware');
+const { protect } = require('../middlewares/auth');
 
 router.use(protect);
 

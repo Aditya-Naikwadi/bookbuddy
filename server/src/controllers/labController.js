@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const LabSeat = require('../models/LabSeat');
 const LabBooking = require('../models/LabBooking');
+const { recordQualifyingAction } = require('../services/streakService');
 
 // @desc    Get all lab seats
 // @route   GET /api/lab/seats
@@ -43,6 +44,11 @@ const createBooking = asyncHandler(async (req, res) => {
     startTime,
     endTime
   });
+
+  const streakData = await recordQualifyingAction(req.user._id, 'lab_booking');
+  if (streakData && req.app.get('io')) {
+    req.app.get('io').to(`user:${req.user._id}`).emit('streak:updated', streakData);
+  }
 
   res.status(201).json({ success: true, data: booking });
 });

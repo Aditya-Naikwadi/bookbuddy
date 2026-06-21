@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getSeats, createBooking, getMyBookings, cancelBooking } = require('../controllers/labController');
-const { protect } = require('../middlewares/authMiddleware');
+const { protect } = require('../middlewares/auth');
 
 router.use(protect);
 

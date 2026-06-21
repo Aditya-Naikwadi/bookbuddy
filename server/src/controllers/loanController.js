@@ -1,14 +1,14 @@
+const asyncHandler = require('../utils/asyncHandler');
 const Loan = require('../models/Loan');
-const Book = require('../models/Book');
-const asyncHandler = require('express-async-handler');
+const { borrowBook, renewLoan: renewLoanService, returnLoan: returnLoanService } = require('../services/loanService');
 
 // @desc    Get user's loans
 // @route   GET /api/loans/me
 // @access  Private
 const getMyLoans = asyncHandler(async (req, res) => {
-  const { status, page, limit } = req.query;
-  const pageSize = Number(limit) || 10;
-  const pageNumber = Number(page) || 1;
+  const { status, page = 1, limit = 10 } = req.query;
+  const pageSize = Number(limit);
+  const pageNumber = Number(page);
 
   let query = { userId: req.user._id };
   
@@ -16,7 +16,7 @@ const getMyLoans = asyncHandler(async (req, res) => {
     query.status = status;
   }
 
-  const count = await Loan.countDocuments(query);
+  const total = await Loan.countDocuments(query);
   const loans = await Loan.find(query)
     .populate('bookId', 'title author coverImage format')
     .sort({ issueDate: -1 })
@@ -25,60 +25,43 @@ const getMyLoans = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    loans,
-    page: pageNumber,
-    pages: Math.ceil(count / pageSize),
-    total: count
+    data: loans,
+    pagination: {
+      page: pageNumber,
+      limit: pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize)
+    }
   });
+});
+
+// @desc    Borrow a book
+// @route   POST /api/loans/:bookId/borrow
+// @access  Private
+const borrowBookHandler = asyncHandler(async (req, res) => {
+  const loan = await borrowBook(req.user._id, req.params.bookId);
+  res.json({ success: true, data: loan });
 });
 
 // @desc    Renew a loan
 // @route   POST /api/loans/:id/renew
 // @access  Private
 const renewLoan = asyncHandler(async (req, res) => {
-  const loan = await Loan.findById(req.params.id).populate('bookId');
+  const loan = await renewLoanService(req.params.id, req.user._id);
+  res.json({ success: true, data: loan });
+});
 
-  if (!loan) {
-    res.status(404);
-    throw new Error('Loan not found');
-  }
-
-  if (loan.userId.toString() !== req.user._id.toString()) {
-    res.status(401);
-    throw new Error('Not authorized for this loan');
-  }
-
-  if (loan.status !== 'active') {
-    res.status(400);
-    throw new Error('Can only renew active loans');
-  }
-
-  if (loan.renewCount >= loan.maxRenewals) {
-    res.status(400);
-    throw new Error('Maximum renewal limit reached');
-  }
-
-  // Simulate queue check (we don't have reservations model in Phase 1 MVP, but leaving placeholder)
-  const hasQueue = false; // in real impl, check if Reservation exists for bookId
-  
-  if (hasQueue) {
-    res.status(400);
-    throw new Error('Someone is waiting for this book');
-  }
-
-  // Extend due date by 14 days from current due date
-  const newDueDate = new Date(loan.dueDate);
-  newDueDate.setDate(newDueDate.getDate() + 14);
-
-  loan.dueDate = newDueDate;
-  loan.renewCount += 1;
-
-  await loan.save();
-
-  res.json({ success: true, loan });
+// @desc    Return a loan
+// @route   POST /api/loans/:id/return
+// @access  Private
+const returnLoanHandler = asyncHandler(async (req, res) => {
+  const loan = await returnLoanService(req.params.id, req.user._id);
+  res.json({ success: true, data: loan });
 });
 
 module.exports = {
   getMyLoans,
+  borrowBookHandler,
   renewLoan,
+  returnLoanHandler
 };

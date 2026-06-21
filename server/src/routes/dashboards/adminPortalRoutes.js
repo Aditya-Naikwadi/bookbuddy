@@ -1,9 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const { getAdminDashboardSummary } = require('../../controllers/dashboards/adminPortalController');
-const { protect } = require('../../middlewares/auth');
+const {
+  getSystemOverview,
+  createCollegeAdmin,
+  getCollegeAdmins,
+  getSystemAuditLogs
+} = require('../../controllers/dashboards/adminPortalController');
+const { protect, restrictTo } = require('../../middlewares/auth');
 
-// Note: In a real app, you would add an admin-only middleware here
-router.get('/', protect, getAdminDashboardSummary);
+// Note: For a real Super Admin, you might want a distinct role 'super_admin'. 
+// For now, we reuse the `admin` middleware.
+router.use(protect, restrictTo('admin'));
+
+router.route('/overview').get(getSystemOverview);
+router.route('/admins')
+  .get(getCollegeAdmins)
+  .post(createCollegeAdmin);
+router.route('/audit-logs').get(getSystemAuditLogs);
 
 module.exports = router;

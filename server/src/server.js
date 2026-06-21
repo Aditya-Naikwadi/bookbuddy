@@ -1,5 +1,4 @@
 const http = require('http');
-const { Server } = require('socket.io');
 const dotenv = require('dotenv');
 const app = require('./app');
 const connectDB = require('./config/db');
@@ -10,33 +9,12 @@ dotenv.config({ path: '../.env' }); // adjusted for server/.env if needed, bette
 // Connect to database
 connectDB();
 
+const { initSockets } = require('./sockets');
+
 const server = http.createServer(app);
 
 // Setup Socket.io
-const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST'],
-  },
-});
-
-io.on('connection', (socket) => {
-  console.log(`Socket connected: ${socket.id}`);
-
-  socket.on('join_user', (userId) => {
-    socket.join(`user:${userId}`);
-    console.log(`User ${userId} joined room user:${userId}`);
-  });
-
-  socket.on('join_book', (bookId) => {
-    socket.join(`book:${bookId}`);
-    console.log(`Joined book room book:${bookId}`);
-  });
-
-  socket.on('disconnect', () => {
-    console.log(`Socket disconnected: ${socket.id}`);
-  });
-});
+const io = initSockets(server);
 
 // Attach socket io to app so routes can access it if needed
 app.set('io', io);
