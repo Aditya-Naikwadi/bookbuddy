@@ -1,52 +1,60 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import DashboardLayout from './layouts/DashboardLayout'
-import AuthLayout from './layouts/AuthLayout'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Landing from './pages/public/Landing'
-import ProtectedRoute from './components/ProtectedRoute'
-import useAuthStore from './store/authStore'
+import { Suspense, lazy } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import useAuthStore from './store/authStore';
 
-import AdminDashboardHome from './pages/dashboards/admin-portal/AdminDashboardHome'
-import CollegeAdminDashboardHome from './pages/dashboards/college-admin/CollegeAdminDashboardHome'
-import StudentDashboardHome from './pages/dashboards/student/StudentDashboardHome'
-import GeneralDashboardHome from './pages/dashboards/general/GeneralDashboardHome'
+// Eagerly loaded components (Critical for initial render)
+import Landing from './pages/public/Landing';
+import ProtectedRoute from './components/ProtectedRoute';
 
-// Student Dashboard Features
-import Catalog from './pages/dashboards/student/Catalog'
-import MyLoans from './pages/dashboards/student/MyLoans'
-import Fines from './pages/dashboards/student/Fines'
-import PatronCard from './pages/dashboards/student/PatronCard'
-import EResources from './pages/dashboards/student/EResources'
-import ReadingLists from './pages/dashboards/student/ReadingLists'
-import Recommendations from './pages/dashboards/student/Recommendations'
-import SavedBookmarks from './pages/dashboards/student/SavedBookmarks'
-import LabBooking from './pages/dashboards/student/LabBooking'
-import Support from './pages/dashboards/student/Support'
-import EbookReader from './pages/dashboards/student/EbookReader'
-// College Admin Dashboard Features
-import PatronManagement from './pages/dashboards/college-admin/PatronManagement'
-import Circulation from './pages/dashboards/college-admin/Circulation'
-import Cataloging from './pages/dashboards/college-admin/Cataloging'
-import DigitalAssets from './pages/dashboards/college-admin/DigitalAssets'
-import Inventory from './pages/dashboards/college-admin/Inventory'
-import Finances from './pages/dashboards/college-admin/Finances'
-import SystemConfig from './pages/dashboards/college-admin/SystemConfig'
-import Facilities from './pages/dashboards/college-admin/Facilities'
-import Helpdesk from './pages/dashboards/college-admin/Helpdesk'
-import Analytics from './pages/dashboards/college-admin/Analytics'
+// Lazy loaded layout components
+const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
+const AuthLayout = lazy(() => import('./layouts/AuthLayout'));
 
-// General Dashboard Features
-import GeneralSearch from './pages/dashboards/general/GeneralSearch'
-import GeneralEResources from './pages/dashboards/general/GeneralEResources'
-import GeneralSaved from './pages/dashboards/general/GeneralSaved'
+// Lazy loaded Auth pages
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
 
-// Admin Portal (Super Admin) Features
-import SystemOverview from './pages/dashboards/admin-portal/SystemOverview'
-import CollegeAdminManager from './pages/dashboards/admin-portal/CollegeAdminManager'
-import GlobalContentModeration from './pages/dashboards/admin-portal/GlobalContentModeration'
-import AuditLogs from './pages/dashboards/admin-portal/AuditLogs'
-import SystemSettings from './pages/dashboards/admin-portal/SystemSettings'
+// Lazy loaded Admin Portal (Super Admin) Features
+const AdminDashboardHome = lazy(() => import('./pages/dashboards/admin-portal/AdminDashboardHome'));
+const SystemOverview = lazy(() => import('./pages/dashboards/admin-portal/SystemOverview'));
+const CollegeAdminManager = lazy(() => import('./pages/dashboards/admin-portal/CollegeAdminManager'));
+const GlobalContentModeration = lazy(() => import('./pages/dashboards/admin-portal/GlobalContentModeration'));
+const AuditLogs = lazy(() => import('./pages/dashboards/admin-portal/AuditLogs'));
+const SystemSettings = lazy(() => import('./pages/dashboards/admin-portal/SystemSettings'));
+
+// Lazy loaded College Admin Dashboard Features
+const CollegeAdminDashboardHome = lazy(() => import('./pages/dashboards/college-admin/CollegeAdminDashboardHome'));
+const PatronManagement = lazy(() => import('./pages/dashboards/college-admin/PatronManagement'));
+const Circulation = lazy(() => import('./pages/dashboards/college-admin/Circulation'));
+const Cataloging = lazy(() => import('./pages/dashboards/college-admin/Cataloging'));
+const DigitalAssets = lazy(() => import('./pages/dashboards/college-admin/DigitalAssets'));
+const Inventory = lazy(() => import('./pages/dashboards/college-admin/Inventory'));
+const Finances = lazy(() => import('./pages/dashboards/college-admin/Finances'));
+const SystemConfig = lazy(() => import('./pages/dashboards/college-admin/SystemConfig'));
+const Facilities = lazy(() => import('./pages/dashboards/college-admin/Facilities'));
+const Helpdesk = lazy(() => import('./pages/dashboards/college-admin/Helpdesk'));
+const Analytics = lazy(() => import('./pages/dashboards/college-admin/Analytics'));
+
+// Lazy loaded General Dashboard Features
+const GeneralDashboardHome = lazy(() => import('./pages/dashboards/general/GeneralDashboardHome'));
+const GeneralSearch = lazy(() => import('./pages/dashboards/general/GeneralSearch'));
+const GeneralEResources = lazy(() => import('./pages/dashboards/general/GeneralEResources'));
+const GeneralSaved = lazy(() => import('./pages/dashboards/general/GeneralSaved'));
+
+// Lazy loaded Student Dashboard Features
+const StudentDashboardHome = lazy(() => import('./pages/dashboards/student/StudentDashboardHome'));
+const Catalog = lazy(() => import('./pages/dashboards/student/Catalog'));
+const MyLoans = lazy(() => import('./pages/dashboards/student/MyLoans'));
+const Fines = lazy(() => import('./pages/dashboards/student/Fines'));
+const PatronCard = lazy(() => import('./pages/dashboards/student/PatronCard'));
+const EResources = lazy(() => import('./pages/dashboards/student/EResources'));
+const ReadingLists = lazy(() => import('./pages/dashboards/student/ReadingLists'));
+const Recommendations = lazy(() => import('./pages/dashboards/student/Recommendations'));
+const SavedBookmarks = lazy(() => import('./pages/dashboards/student/SavedBookmarks'));
+const LabBooking = lazy(() => import('./pages/dashboards/student/LabBooking'));
+const Support = lazy(() => import('./pages/dashboards/student/Support'));
+const EbookReader = lazy(() => import('./pages/dashboards/student/EbookReader'));
 
 // Component to redirect authenticated users away from Auth routes
 const AuthRedirect = ({ children }) => {
@@ -60,79 +68,96 @@ const AuthRedirect = ({ children }) => {
   return children;
 };
 
+// Simple fallback loader for suspense
+const PageLoader = () => (
+  <div className="min-h-screen w-full flex items-center justify-center bg-void">
+    <div className="w-12 h-12 border-4 border-ember border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
+
+import { QueryProvider } from './providers/QueryProvider';
+import { ThemeProvider } from './context/ThemeContext';
+
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Public Landing Page */}
-        <Route path="/" element={<Landing />} />
+    <ThemeProvider>
+      <QueryProvider>
+      <Router>
+        <ErrorBoundary>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              {/* Public Landing Page */}
+              <Route path="/" element={<Landing />} />
 
-        {/* Auth Routes */}
-        <Route path="/auth" element={<AuthRedirect><AuthLayout /></AuthRedirect>}>
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
-        </Route>
+              {/* Auth Routes */}
+              <Route path="/auth" element={<AuthRedirect><AuthLayout /></AuthRedirect>}>
+                <Route path="login" element={<Login />} />
+                <Route path="register" element={<Register />} />
+              </Route>
 
-        {/* Protected Dashboard Routes */}
-        {/* Protected Dashboard Routes */}
-        <Route element={<DashboardLayout />}>
-          
-          {/* Admin Portal (Super Admin) Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['super-admin']} />}>
-            <Route path="admin-portal" element={<AdminDashboardHome />} />
-            <Route path="admin-portal/overview" element={<SystemOverview />} />
-            <Route path="admin-portal/college-admins" element={<CollegeAdminManager />} />
-            <Route path="admin-portal/moderation" element={<GlobalContentModeration />} />
-            <Route path="admin-portal/audit-logs" element={<AuditLogs />} />
-            <Route path="admin-portal/settings" element={<SystemSettings />} />
-          </Route>
+              {/* Protected Dashboard Routes */}
+              <Route element={<DashboardLayout />}>
+                
+                {/* Admin Portal (Super Admin) Routes */}
+                <Route element={<ProtectedRoute allowedRoles={['super-admin']} />}>
+                  <Route path="admin-portal" element={<AdminDashboardHome />} />
+                  <Route path="admin-portal/overview" element={<SystemOverview />} />
+                  <Route path="admin-portal/college-admins" element={<CollegeAdminManager />} />
+                  <Route path="admin-portal/moderation" element={<GlobalContentModeration />} />
+                  <Route path="admin-portal/audit-logs" element={<AuditLogs />} />
+                  <Route path="admin-portal/settings" element={<SystemSettings />} />
+                </Route>
 
-          {/* College Admin Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['college-admin']} />}>
-            <Route path="college-admin" element={<CollegeAdminDashboardHome />} />
-            <Route path="college-admin/patrons" element={<PatronManagement />} />
-            <Route path="college-admin/circulation" element={<Circulation />} />
-            <Route path="college-admin/cataloging" element={<Cataloging />} />
-            <Route path="college-admin/digital-assets" element={<DigitalAssets />} />
-            <Route path="college-admin/inventory" element={<Inventory />} />
-            <Route path="college-admin/finances" element={<Finances />} />
-            <Route path="college-admin/system-config" element={<SystemConfig />} />
-            <Route path="college-admin/facilities" element={<Facilities />} />
-            <Route path="college-admin/helpdesk" element={<Helpdesk />} />
-            <Route path="college-admin/analytics" element={<Analytics />} />
-          </Route>
+                {/* College Admin Routes */}
+                <Route element={<ProtectedRoute allowedRoles={['college-admin']} />}>
+                  <Route path="college-admin" element={<CollegeAdminDashboardHome />} />
+                  <Route path="college-admin/patrons" element={<PatronManagement />} />
+                  <Route path="college-admin/circulation" element={<Circulation />} />
+                  <Route path="college-admin/cataloging" element={<Cataloging />} />
+                  <Route path="college-admin/digital-assets" element={<DigitalAssets />} />
+                  <Route path="college-admin/inventory" element={<Inventory />} />
+                  <Route path="college-admin/finances" element={<Finances />} />
+                  <Route path="college-admin/system-config" element={<SystemConfig />} />
+                  <Route path="college-admin/facilities" element={<Facilities />} />
+                  <Route path="college-admin/helpdesk" element={<Helpdesk />} />
+                  <Route path="college-admin/analytics" element={<Analytics />} />
+                </Route>
 
-          {/* General Dashboard Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['general']} />}>
-            <Route path="general-dashboard" element={<GeneralDashboardHome />} />
-            <Route path="general-dashboard/search" element={<GeneralSearch />} />
-            <Route path="general-dashboard/e-resources" element={<GeneralEResources />} />
-            <Route path="general-dashboard/saved" element={<GeneralSaved />} />
-          </Route>
+                {/* General Dashboard Routes */}
+                <Route element={<ProtectedRoute allowedRoles={['general']} />}>
+                  <Route path="general-dashboard" element={<GeneralDashboardHome />} />
+                  <Route path="general-dashboard/search" element={<GeneralSearch />} />
+                  <Route path="general-dashboard/e-resources" element={<GeneralEResources />} />
+                  <Route path="general-dashboard/saved" element={<GeneralSaved />} />
+                </Route>
 
-          {/* Student Specific Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['student']} />}>
-            <Route path="student-dashboard" element={<StudentDashboardHome />} />
-            <Route path="catalog" element={<Catalog />} />
-            <Route path="loans" element={<MyLoans />} />
-            <Route path="fines" element={<Fines />} />
-            <Route path="patron-card" element={<PatronCard />} />
-            <Route path="e-resources" element={<EResources />} />
-            <Route path="reading-lists" element={<ReadingLists />} />
-            <Route path="recommendations" element={<Recommendations />} />
-            <Route path="saved" element={<SavedBookmarks />} />
-            <Route path="lab-booking" element={<LabBooking />} />
-            <Route path="support" element={<Support />} />
-          </Route>
-        </Route>
+                {/* Student Specific Routes */}
+                <Route element={<ProtectedRoute allowedRoles={['student']} />}>
+                  <Route path="student-dashboard" element={<StudentDashboardHome />} />
+                  <Route path="catalog" element={<Catalog />} />
+                  <Route path="loans" element={<MyLoans />} />
+                  <Route path="fines" element={<Fines />} />
+                  <Route path="patron-card" element={<PatronCard />} />
+                  <Route path="e-resources" element={<EResources />} />
+                  <Route path="reading-lists" element={<ReadingLists />} />
+                  <Route path="recommendations" element={<Recommendations />} />
+                  <Route path="saved" element={<SavedBookmarks />} />
+                  <Route path="lab-booking" element={<LabBooking />} />
+                  <Route path="support" element={<Support />} />
+                </Route>
+              </Route>
 
-        {/* Fullscreen Reader Route (Protected but outside dashboard layout) */}
-        <Route element={<ProtectedRoute allowedRoles={['student', 'general']} />}>
-          <Route path="/eresources/read/:resourceId" element={<EbookReader />} />
-        </Route>
-      </Routes>
-    </Router>
-  )
+              {/* Fullscreen Reader Route (Protected but outside dashboard layout) */}
+              <Route element={<ProtectedRoute allowedRoles={['student', 'general']} />}>
+                <Route path="/eresources/read/:resourceId" element={<EbookReader />} />
+              </Route>
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
+      </Router>
+    </QueryProvider>
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;

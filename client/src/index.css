@@ -1,6 +1,95 @@
 @import "tailwindcss";
+
+@theme {
+  --color-void: var(--bg-void);
+  --color-deep: var(--bg-deep);
+  --color-surface: var(--bg-surface);
+  --color-edge: var(--bg-edge);
+  --color-parchment: #F5EDD8;
+  --color-ink: var(--text-ink);
+  --color-muted: var(--text-muted);
+  
+  --color-ember: #E66525;
+  --color-ember-glow: #F59E0B;
+  --color-ember-100: #fef3c7;
+  
+  --color-indigo: #6366F1;
+  --color-fuchsia: #D946EF;
+  --color-cyan: #06B6D4;
+  
+  --color-success: #10B981;
+  --color-danger: #EF4444;
+
+  --font-sans: "Outfit", sans-serif;
+  --font-serif: "Playfair Display", serif;
+}
+
 @layer base {
-  body {
-    @apply bg-slate-50 text-slate-900;
+  :root, .dark {
+    --bg-void: #06080D;
+    --bg-deep: #0D111A;
+    --bg-surface: #151A26;
+    --bg-edge: #222B40;
+    --text-ink: #F8F9FA;
+    --text-muted: #9BA3B5;
+  }
+
+  .light {
+    --bg-void: #F8F9FA;
+    --bg-deep: #F1F3F5;
+    --bg-surface: #FFFFFF;
+    --bg-edge: #E5E7EB;
+    --text-ink: #06080D;
+    --text-muted: #64748B;
+  }
+
+  html, body {
+    @apply text-ink antialiased selection:bg-ember/30 selection:text-ember-100;
+    background-color: var(--bg-void);
+    background-image: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 40%),
+                      radial-gradient(circle at bottom left, rgba(217, 70, 239, 0.05), transparent 40%);
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  #root {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  *, *::before, *::after {
+    box-sizing: inherit;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-surface/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)];
+  }
+  
+  .glass-panel-hover {
+    @apply transition-all duration-500 hover:bg-surface/60 hover:border-white/20 hover:shadow-[0_12px_48px_rgba(0,0,0,0.5)] hover:-translate-y-1 relative overflow-hidden;
+  }
+
+  /* Shimmer effect for glass panels */
+  .glass-panel-hover::after {
+    content: "";
+    @apply absolute inset-0 opacity-0 transition-opacity duration-500 pointer-events-none;
+    background: radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.06), transparent 40%);
+  }
+  
+  .glass-panel-hover:hover::after {
+    @apply opacity-100;
+  }
+
+  .text-gradient-primary {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-white via-ink to-muted;
+  }
+  
+  .text-gradient-accent {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-ember to-ember-glow;
   }
 }

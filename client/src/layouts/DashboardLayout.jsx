@@ -122,7 +122,11 @@ const DashboardLayout = () => {
 
       {/* Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around p-2 z-50">
-        <MobileNavItem to="/dashboard" icon={<LayoutDashboard size={20} />} label="Home" />
+        <MobileNavItem 
+          to={isAdminPortal ? "/admin-portal" : isCollegeAdmin ? "/college-admin" : isGeneralDashboard ? "/general-dashboard" : "/student-dashboard"} 
+          icon={<LayoutDashboard size={20} />} 
+          label="Home" 
+        />
         <MobileNavItem to="/catalog" icon={<Search size={20} />} label="Catalog" />
         <MobileNavItem to="/loans" icon={<Library size={20} />} label="Loans" />
         <MobileNavItem to="/patron-card" icon={<CreditCard size={20} />} label="Card" />

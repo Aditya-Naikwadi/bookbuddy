@@ -7,16 +7,28 @@ export default {
   theme: {
     extend: {
       colors: {
+        void: 'var(--color-void)',
+        deep: 'var(--color-deep)',
+        surface: 'var(--color-surface)',
+        edge: 'var(--color-edge)',
+        parchment: 'var(--color-parchment)',
+        ink: 'var(--color-ink)',
+        muted: 'var(--color-muted)',
+        ember: {
+          DEFAULT: 'var(--color-ember)',
+          glow: 'var(--color-ember-glow)',
+          100: '#fef3c7',
+        },
         indigo: {
-          500: '#4F46E5', // Primary
+          DEFAULT: 'var(--color-indigo)',
+          500: '#4F46E5', // Keep for backward compat
         },
-        amber: {
-          500: '#D97706', // Secondary/Accent
-        },
-        success: '#16A34A',
-        warning: '#F59E0B',
-        danger: '#DC2626',
-        info: '#0EA5E9',
+        success: 'var(--color-success)',
+        danger: 'var(--color-danger)',
+      },
+      fontFamily: {
+        sans: ['Plus Jakarta Sans', 'sans-serif'],
+        serif: ['DM Serif Display', 'serif'],
       },
     },
   },
