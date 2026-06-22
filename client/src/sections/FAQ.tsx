@@ -56,11 +56,10 @@ export const FAQ = () => {
                   isOpen ? "bg-void/50" : "bg-transparent hover:bg-void/30"
                 )}
               >
-                {/* eslint-disable-next-line jsx-a11y/aria-proptypes */}
                 <button
                   onClick={() => toggleAccordion(index)}
                   className="w-full text-left px-6 py-5 flex items-center justify-between focus:outline-none"
-                  aria-expanded={isOpen ? "true" : "false"}
+                  aria-expanded={isOpen}
                 >
                   <span className="font-semibold text-lg text-ink pr-8">{faq.question}</span>
                   <motion.div

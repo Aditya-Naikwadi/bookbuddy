@@ -86,7 +86,7 @@
   }
 
   .text-gradient-primary {
-    @apply bg-clip-text text-transparent bg-gradient-to-br from-white via-ink to-muted;
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-ink via-ink/80 to-muted;
   }
   
   .text-gradient-accent {
