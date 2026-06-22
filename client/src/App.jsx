@@ -1,7 +1,9 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import useAuthStore from './store/authStore';
+import { AnimatePresence } from 'framer-motion';
+import { SplashScreen } from './components/ui/SplashScreen';
 
 // Eagerly loaded components (Critical for initial render)
 import Landing from './pages/public/Landing';
@@ -79,11 +81,18 @@ import { QueryProvider } from './providers/QueryProvider';
 import { ThemeProvider } from './context/ThemeContext';
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
   return (
     <ThemeProvider>
       <QueryProvider>
-      <Router>
-        <ErrorBoundary>
+        <AnimatePresence>
+          {showSplash && (
+            <SplashScreen onComplete={() => setShowSplash(false)} />
+          )}
+        </AnimatePresence>
+        <Router>
+          <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Public Landing Page */}

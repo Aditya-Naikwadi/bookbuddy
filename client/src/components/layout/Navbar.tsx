@@ -41,7 +41,13 @@ export const Navbar = () => {
     >
       <div className="max-w-7xl mx-auto px-6 md:px-12 xl:px-24 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BookOpen className="w-6 h-6 text-ember" />
+          <div className="w-8 h-8 rounded-full overflow-hidden bg-[#FAF6EC] border border-ember/20 flex items-center justify-center relative shadow-sm">
+            <img 
+              src="/logo.png" 
+              alt="BookBuddy Mascot" 
+              className="w-[185%] h-[185%] max-w-none object-cover object-top translate-y-[10%]" 
+            />
+          </div>
           <span className="font-serif text-2xl text-ink">Book<span className="text-ember">Buddy</span></span>
         </div>
         
