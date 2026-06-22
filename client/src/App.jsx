@@ -3,6 +3,10 @@ import DashboardLayout from './layouts/DashboardLayout'
 import AuthLayout from './layouts/AuthLayout'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Landing from './pages/public/Landing'
+import ProtectedRoute from './components/ProtectedRoute'
+import useAuthStore from './store/authStore'
+
 import AdminDashboardHome from './pages/dashboards/admin-portal/AdminDashboardHome'
 import CollegeAdminDashboardHome from './pages/dashboards/college-admin/CollegeAdminDashboardHome'
 import StudentDashboardHome from './pages/dashboards/student/StudentDashboardHome'
@@ -44,61 +48,88 @@ import GlobalContentModeration from './pages/dashboards/admin-portal/GlobalConte
 import AuditLogs from './pages/dashboards/admin-portal/AuditLogs'
 import SystemSettings from './pages/dashboards/admin-portal/SystemSettings'
 
+// Component to redirect authenticated users away from Auth routes
+const AuthRedirect = ({ children }) => {
+  const { isAuthenticated, user } = useAuthStore();
+  if (isAuthenticated && user) {
+    if (user.role === 'college-admin') return <Navigate to="/college-admin" replace />;
+    if (user.role === 'general') return <Navigate to="/general-dashboard" replace />;
+    if (user.role === 'super-admin') return <Navigate to="/admin-portal" replace />;
+    return <Navigate to="/student-dashboard" replace />;
+  }
+  return children;
+};
+
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/auth" element={<AuthLayout />}>
+        {/* Public Landing Page */}
+        <Route path="/" element={<Landing />} />
+
+        {/* Auth Routes */}
+        <Route path="/auth" element={<AuthRedirect><AuthLayout /></AuthRedirect>}>
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
         </Route>
 
-        <Route path="/" element={<DashboardLayout />}>
-          <Route index element={<Navigate to="/student-dashboard" replace />} />
+        {/* Protected Dashboard Routes */}
+        {/* Protected Dashboard Routes */}
+        <Route element={<DashboardLayout />}>
           
-          {/* Dashboard Homes */}
-          <Route path="admin-portal" element={<AdminDashboardHome />} />
-          <Route path="college-admin" element={<CollegeAdminDashboardHome />} />
-          <Route path="student-dashboard" element={<StudentDashboardHome />} />
-          <Route path="general-dashboard" element={<GeneralDashboardHome />} />
-          <Route path="general-dashboard/search" element={<GeneralSearch />} />
-          <Route path="general-dashboard/e-resources" element={<GeneralEResources />} />
-          <Route path="general-dashboard/saved" element={<GeneralSaved />} />
-          
-          {/* Admin Portal (Super Admin) Specific Routes */}
-          <Route path="admin-portal/overview" element={<SystemOverview />} />
-          <Route path="admin-portal/college-admins" element={<CollegeAdminManager />} />
-          <Route path="admin-portal/moderation" element={<GlobalContentModeration />} />
-          <Route path="admin-portal/audit-logs" element={<AuditLogs />} />
-          <Route path="admin-portal/settings" element={<SystemSettings />} />
+          {/* Admin Portal (Super Admin) Routes */}
+          <Route element={<ProtectedRoute allowedRoles={['super-admin']} />}>
+            <Route path="admin-portal" element={<AdminDashboardHome />} />
+            <Route path="admin-portal/overview" element={<SystemOverview />} />
+            <Route path="admin-portal/college-admins" element={<CollegeAdminManager />} />
+            <Route path="admin-portal/moderation" element={<GlobalContentModeration />} />
+            <Route path="admin-portal/audit-logs" element={<AuditLogs />} />
+            <Route path="admin-portal/settings" element={<SystemSettings />} />
+          </Route>
 
-          {/* College Admin Specific Routes */}
-          <Route path="college-admin/patrons" element={<PatronManagement />} />
-          <Route path="college-admin/circulation" element={<Circulation />} />
-          <Route path="college-admin/cataloging" element={<Cataloging />} />
-          <Route path="college-admin/digital-assets" element={<DigitalAssets />} />
-          <Route path="college-admin/inventory" element={<Inventory />} />
-          <Route path="college-admin/finances" element={<Finances />} />
-          <Route path="college-admin/system-config" element={<SystemConfig />} />
-          <Route path="college-admin/facilities" element={<Facilities />} />
-          <Route path="college-admin/helpdesk" element={<Helpdesk />} />
-          <Route path="college-admin/analytics" element={<Analytics />} />
+          {/* College Admin Routes */}
+          <Route element={<ProtectedRoute allowedRoles={['college-admin']} />}>
+            <Route path="college-admin" element={<CollegeAdminDashboardHome />} />
+            <Route path="college-admin/patrons" element={<PatronManagement />} />
+            <Route path="college-admin/circulation" element={<Circulation />} />
+            <Route path="college-admin/cataloging" element={<Cataloging />} />
+            <Route path="college-admin/digital-assets" element={<DigitalAssets />} />
+            <Route path="college-admin/inventory" element={<Inventory />} />
+            <Route path="college-admin/finances" element={<Finances />} />
+            <Route path="college-admin/system-config" element={<SystemConfig />} />
+            <Route path="college-admin/facilities" element={<Facilities />} />
+            <Route path="college-admin/helpdesk" element={<Helpdesk />} />
+            <Route path="college-admin/analytics" element={<Analytics />} />
+          </Route>
+
+          {/* General Dashboard Routes */}
+          <Route element={<ProtectedRoute allowedRoles={['general']} />}>
+            <Route path="general-dashboard" element={<GeneralDashboardHome />} />
+            <Route path="general-dashboard/search" element={<GeneralSearch />} />
+            <Route path="general-dashboard/e-resources" element={<GeneralEResources />} />
+            <Route path="general-dashboard/saved" element={<GeneralSaved />} />
+          </Route>
 
           {/* Student Specific Routes */}
-          <Route path="catalog" element={<Catalog />} />
-          <Route path="loans" element={<MyLoans />} />
-          <Route path="fines" element={<Fines />} />
-          <Route path="patron-card" element={<PatronCard />} />
-          <Route path="e-resources" element={<EResources />} />
-          <Route path="reading-lists" element={<ReadingLists />} />
-          <Route path="recommendations" element={<Recommendations />} />
-          <Route path="saved" element={<SavedBookmarks />} />
-          <Route path="lab-booking" element={<LabBooking />} />
-          <Route path="support" element={<Support />} />
+          <Route element={<ProtectedRoute allowedRoles={['student']} />}>
+            <Route path="student-dashboard" element={<StudentDashboardHome />} />
+            <Route path="catalog" element={<Catalog />} />
+            <Route path="loans" element={<MyLoans />} />
+            <Route path="fines" element={<Fines />} />
+            <Route path="patron-card" element={<PatronCard />} />
+            <Route path="e-resources" element={<EResources />} />
+            <Route path="reading-lists" element={<ReadingLists />} />
+            <Route path="recommendations" element={<Recommendations />} />
+            <Route path="saved" element={<SavedBookmarks />} />
+            <Route path="lab-booking" element={<LabBooking />} />
+            <Route path="support" element={<Support />} />
+          </Route>
         </Route>
 
-        {/* Fullscreen Reader Route */}
-        <Route path="/eresources/read/:resourceId" element={<EbookReader />} />
+        {/* Fullscreen Reader Route (Protected but outside dashboard layout) */}
+        <Route element={<ProtectedRoute allowedRoles={['student', 'general']} />}>
+          <Route path="/eresources/read/:resourceId" element={<EbookReader />} />
+        </Route>
       </Routes>
     </Router>
   )

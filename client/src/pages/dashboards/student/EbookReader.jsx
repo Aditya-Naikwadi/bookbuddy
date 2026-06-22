@@ -47,7 +47,8 @@ const EbookReader = () => {
         book.destroy();
       };
     } else if (format === 'html') {
-      setIsLoading(false); // HTML iframe handles its own loading state basically
+      // HTML iframe handles its own loading state basically
+      setTimeout(() => setIsLoading(false), 0);
     }
   }, [resourceId, format]);
 

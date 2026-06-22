@@ -1,4 +1,4 @@
-import { Server, Mail as MailIcon, HardDrive, RefreshCw } from 'lucide-react';
+import { Mail as MailIcon, HardDrive, RefreshCw } from 'lucide-react';
 
 const SystemSettings = () => {
   return (

@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { useQuery } from '@tanstack/react-query';
 import { streakApi } from './api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';

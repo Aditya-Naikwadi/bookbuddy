@@ -43,10 +43,35 @@ const useAuthStore = create(
         }
       },
 
+      register: async (name, email, password, idNumber, role) => {
+        set({ isLoading: true, error: null });
+        try {
+          // Try to hit backend
+          const { data } = await apiClient.post('/auth/register', { name, email, password, studentId: idNumber, role });
+          set({
+            user: data.data.user,
+            token: data.data.token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+          return true;
+        } catch {
+          // Mocking fallback
+          console.log('Backend register failed, using mock auth');
+          set({
+            user: { _id: idNumber || 'ID1002', name: name || 'New User', role: role || 'general' },
+            token: 'demo-jwt-token-new',
+            isAuthenticated: true,
+            isLoading: false,
+          });
+          return true;
+        }
+      },
+
       logout: async () => {
         try {
           await apiClient.post('/auth/logout');
-        } catch (e) {
+        } catch {
           console.error('Logout failed on server');
         } finally {
           set({ user: null, token: null, isAuthenticated: false });

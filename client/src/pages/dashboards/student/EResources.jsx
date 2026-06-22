@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Download, ExternalLink, Loader2, BookOpen, Search } from 'lucide-react';
+import { FileText, ExternalLink, Loader2, BookOpen, Search } from 'lucide-react';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../../api/client';

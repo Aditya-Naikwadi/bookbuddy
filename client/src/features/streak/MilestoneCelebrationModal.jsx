@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,21 +14,7 @@ export const MilestoneCelebrationModal = () => {
   const [open, setOpen] = useState(false);
   const [payload, setPayload] = useState(null);
 
-  useEffect(() => {
-    const handleStreakUpdate = (e) => {
-      const data = e.detail || e; // Support custom events or direct calls
-      if (data && (data.newStickers?.length > 0 || data.newRewards?.length > 0)) {
-        setPayload(data);
-        setOpen(true);
-        triggerConfetti();
-      }
-    };
-
-    window.addEventListener('streak:updated', handleStreakUpdate);
-    return () => window.removeEventListener('streak:updated', handleStreakUpdate);
-  }, []);
-
-  const triggerConfetti = () => {
+  function triggerConfetti() {
     const duration = 3 * 1000;
     const end = Date.now() + duration;
 
@@ -53,7 +39,21 @@ export const MilestoneCelebrationModal = () => {
       }
     };
     frame();
-  };
+  }
+
+  useEffect(() => {
+    const handleStreakUpdate = (e) => {
+      const data = e.detail || e; // Support custom events or direct calls
+      if (data && (data.newStickers?.length > 0 || data.newRewards?.length > 0)) {
+        setPayload(data);
+        setOpen(true);
+        triggerConfetti();
+      }
+    };
+
+    window.addEventListener('streak:updated', handleStreakUpdate);
+    return () => window.removeEventListener('streak:updated', handleStreakUpdate);
+  }, []);
 
   if (!payload) return null;
 

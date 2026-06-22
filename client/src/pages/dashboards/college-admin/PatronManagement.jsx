@@ -1,4 +1,4 @@
-import { Users, UserPlus, ShieldAlert, KeyRound } from 'lucide-react';
+import { Users, UserPlus, KeyRound } from 'lucide-react';
 
 const PatronManagement = () => {
   return (

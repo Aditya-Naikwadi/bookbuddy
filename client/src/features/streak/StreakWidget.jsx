@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { streakApi } from './api';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';

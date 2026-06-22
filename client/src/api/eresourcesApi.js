@@ -27,5 +27,6 @@ export const getContentUrl = (resourceId, format) => {
 
 export const saveProgress = async (resourceId, { lastPosition, percentComplete }) => {
   // Not fully implemented on backend yet, but here for the API contract
+  console.log('saveProgress called for', resourceId, lastPosition, percentComplete);
   return { success: true };
 };

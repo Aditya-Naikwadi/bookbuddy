@@ -1,4 +1,4 @@
-import { Bookmark, Search } from 'lucide-react';
+import { Bookmark } from 'lucide-react';
 
 const SavedBookmarks = () => {
   return (

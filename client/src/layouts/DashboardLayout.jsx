@@ -1,12 +1,15 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Book, LayoutDashboard, Library, UserCircle, Search, CreditCard, Receipt, FileText, ListPlus, Sparkles, Bookmark, Monitor, MessageSquare, Users, ArrowRightLeft, BookPlus, UploadCloud, PackageSearch, Settings2, DoorOpen, Ticket, LineChart, Shield, Globe, FileCheck, FileSearch, HardDrive } from 'lucide-react';
+import { Outlet, Link } from 'react-router-dom';
+import { Book, LayoutDashboard, Library, Search, CreditCard, Receipt, FileText, ListPlus, Sparkles, Bookmark, Monitor, MessageSquare, Users, ArrowRightLeft, BookPlus, UploadCloud, PackageSearch, Settings2, DoorOpen, Ticket, LineChart, Shield, Globe, FileCheck, FileSearch, HardDrive, LogOut } from 'lucide-react';
 import NotificationCenter from '../components/student/NotificationCenter';
+import useAuthStore from '../store/authStore';
 
 const DashboardLayout = () => {
-  const location = useLocation();
-  const isAdminPortal = location.pathname.includes('/admin-portal');
-  const isCollegeAdmin = location.pathname.includes('/college-admin');
-  const isGeneralDashboard = location.pathname.includes('/general-dashboard');
+  const { user, logout } = useAuthStore();
+  
+  const isAdminPortal = user?.role === 'super-admin';
+  const isCollegeAdmin = user?.role === 'college-admin';
+  const isGeneralDashboard = user?.role === 'general';
+  const isStudent = user?.role === 'student';
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
@@ -16,15 +19,15 @@ const DashboardLayout = () => {
           <Book className="text-indigo-600 w-8 h-8" />
           <span className="text-2xl font-serif font-bold text-slate-900">BookBuddy</span>
         </div>
-        <nav className="p-4 space-y-1 flex-1">
-          <NavItem to="/admin-portal" icon={<LayoutDashboard size={20} />} label="Admin Portal" />
-          <NavItem to="/college-admin" icon={<LayoutDashboard size={20} />} label="College Admin" />
-          <NavItem to="/student-dashboard" icon={<LayoutDashboard size={20} />} label="Student Dashboard" />
-          <NavItem to="/general-dashboard" icon={<LayoutDashboard size={20} />} label="General Dashboard" />
+        <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
+          {isAdminPortal && <NavItem to="/admin-portal" icon={<LayoutDashboard size={20} />} label="Admin Portal" />}
+          {isCollegeAdmin && <NavItem to="/college-admin" icon={<LayoutDashboard size={20} />} label="College Admin" />}
+          {isStudent && <NavItem to="/student-dashboard" icon={<LayoutDashboard size={20} />} label="Student Dashboard" />}
+          {isGeneralDashboard && <NavItem to="/general-dashboard" icon={<LayoutDashboard size={20} />} label="General Dashboard" />}
           
           <div className="my-4 border-t border-slate-100"></div>
 
-          {isAdminPortal ? (
+          {isAdminPortal && (
             <>
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Super Admin</p>
               <NavItem to="/admin-portal/overview" icon={<Globe size={20} />} label="System Overview" />
@@ -33,7 +36,9 @@ const DashboardLayout = () => {
               <NavItem to="/admin-portal/audit-logs" icon={<FileSearch size={20} />} label="Audit Logs" />
               <NavItem to="/admin-portal/settings" icon={<HardDrive size={20} />} label="System Settings" />
             </>
-          ) : isCollegeAdmin ? (
+          )}
+          
+          {isCollegeAdmin && (
             <>
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">College Admin</p>
               <NavItem to="/college-admin/patrons" icon={<Users size={20} />} label="Patrons & Roles" />
@@ -47,14 +52,18 @@ const DashboardLayout = () => {
               <NavItem to="/college-admin/helpdesk" icon={<Ticket size={20} />} label="Helpdesk" />
               <NavItem to="/college-admin/analytics" icon={<LineChart size={20} />} label="Analytics" />
             </>
-          ) : isGeneralDashboard ? (
+          )}
+          
+          {isGeneralDashboard && (
             <>
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">General Public</p>
               <NavItem to="/general-dashboard/search" icon={<Search size={20} />} label="Advanced Search" />
               <NavItem to="/general-dashboard/e-resources" icon={<FileText size={20} />} label="Public E-Resources" />
               <NavItem to="/general-dashboard/saved" icon={<Bookmark size={20} />} label="Saved Bookmarks" />
             </>
-          ) : (
+          )}
+          
+          {isStudent && (
             <>
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Student Features</p>
               <NavItem to="/catalog" icon={<Search size={20} />} label="Catalog & Alerts" />
@@ -71,8 +80,11 @@ const DashboardLayout = () => {
           )}
         </nav>
         <div className="p-4 border-t border-slate-200">
-          <button className="flex items-center gap-3 w-full p-2 text-slate-600 hover:text-indigo-600 transition-colors">
-            <UserCircle size={20} />
+          <button 
+            onClick={() => logout()}
+            className="flex items-center gap-3 w-full p-2 text-slate-600 hover:text-indigo-600 transition-colors"
+          >
+            <LogOut size={20} />
             <span className="font-medium">Logout</span>
           </button>
         </div>
@@ -95,8 +107,8 @@ const DashboardLayout = () => {
           <div className="flex items-center gap-4 ml-auto">
             <NotificationCenter />
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold">
-                JD
+              <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold uppercase">
+                {user?.name?.substring(0, 2) || 'U'}
               </div>
             </div>
           </div>
