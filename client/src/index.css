@@ -20,8 +20,8 @@
   --color-success: #10B981;
   --color-danger: #EF4444;
 
-  --font-sans: "Outfit", sans-serif;
-  --font-serif: "Playfair Display", serif;
+  --font-sans: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", sans-serif;
+  --font-serif: "DM Serif Display", serif;
 }
 
 @layer base {
