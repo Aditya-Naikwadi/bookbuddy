@@ -81,14 +81,22 @@ import { QueryProvider } from './providers/QueryProvider';
 import { ThemeProvider } from './context/ThemeContext';
 
 function App() {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    // Prevent splash screen from reloading during the same session
+    return !sessionStorage.getItem('bookbuddy_splash_shown');
+  });
+
+  const handleSplashComplete = () => {
+    sessionStorage.setItem('bookbuddy_splash_shown', 'true');
+    setShowSplash(false);
+  };
 
   return (
     <ThemeProvider>
       <QueryProvider>
         <AnimatePresence>
           {showSplash && (
-            <SplashScreen onComplete={() => setShowSplash(false)} />
+            <SplashScreen onComplete={handleSplashComplete} />
           )}
         </AnimatePresence>
         <Router>
