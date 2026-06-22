@@ -31,6 +31,32 @@ BookBuddy is a comprehensive, multi-tenant library management and student engage
 * **System Settings:** Global configurations for the BookBuddy platform.
 
 ## 🛠️ Technology Stack
-* **Frontend:** React, Vite, Tailwind CSS
-* **Backend:** Node.js, Express.js
-* **Routing & API:** React Router, RESTful APIs
+
+BookBuddy is built using a modern, scalable, and high-performance stack:
+
+### 💻 Frontend
+* **Core Framework:** React 19
+* **Build Tooling:** Vite
+* **Styling & Design:** Tailwind CSS v4
+* **State Management:** Zustand (lightweight global client state)
+* **Data Fetching & Caching:** TanStack React Query v5
+* **Routing:** React Router v7
+* **Form Validation:** React Hook Form & Zod
+* **Animations & UX:** Framer Motion (for smooth micro-interactions) & Lenis (for smooth scrolling)
+* **Real-time WebSockets:** Socket.io Client (chat and notifications)
+* **Ebook Engine:** Epub.js (digital ebook reader integration)
+
+### ⚙️ Backend & Database
+* **Runtime & Web Framework:** Node.js & Express.js (RESTful APIs)
+* **Real-time Engine:** Socket.io (bi-directional client-server connection)
+* **Database & ODM:** MongoDB & Mongoose
+* **Security & Auth:** JSON Web Tokens (JWT) & Bcrypt
+* **Request Validation:** Zod schema validation
+* **Caching:** Node-Cache (in-memory caching)
+* **Background Tasks:** Node-Cron (scheduling for fine calculations and reminders)
+
+### ☁️ Hosting & Infrastructure
+* **Frontend Hosting:** Vercel
+* **API Server Hosting:** Render / custom Node hosting
+* **Database Hosting:** MongoDB Atlas
+
