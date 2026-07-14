@@ -1,6 +1,10 @@
 const asyncHandler = require('../utils/asyncHandler');
 const Loan = require('../models/Loan');
-const { borrowBook, renewLoan: renewLoanService, returnLoan: returnLoanService } = require('../services/loanService');
+const {
+  borrowBook,
+  renewLoan: renewLoanService,
+  returnLoan: returnLoanService,
+} = require('../services/loanService');
 
 // @desc    Get user's loans
 // @route   GET /api/loans/me
@@ -11,7 +15,7 @@ const getMyLoans = asyncHandler(async (req, res) => {
   const pageNumber = Number(page);
 
   let query = { userId: req.user._id };
-  
+
   if (status && status !== 'all') {
     query.status = status;
   }
@@ -30,8 +34,8 @@ const getMyLoans = asyncHandler(async (req, res) => {
       page: pageNumber,
       limit: pageSize,
       total,
-      totalPages: Math.ceil(total / pageSize)
-    }
+      totalPages: Math.ceil(total / pageSize),
+    },
   });
 });
 
@@ -63,5 +67,5 @@ module.exports = {
   getMyLoans,
   borrowBookHandler,
   renewLoan,
-  returnLoanHandler
+  returnLoanHandler,
 };

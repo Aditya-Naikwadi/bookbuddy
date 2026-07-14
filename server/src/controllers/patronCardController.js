@@ -29,10 +29,10 @@ const getMyPatronCard = asyncHandler(async (req, res) => {
       membershipStatus: user.membershipStatus,
       validTill: user.validTill,
       qrCodeData: qrPayload,
-    }
+    },
   });
 });
 
 module.exports = {
-  getMyPatronCard
+  getMyPatronCard,
 };

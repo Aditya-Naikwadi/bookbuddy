@@ -62,29 +62,33 @@ const importData = async () => {
         email: 'student@bookbuddy.com',
         password: hashedPassword, // 'Demo@123'
         role: 'student',
-        major: 'Computer Science'
+        collegeId: 'COLLEGE_A',
+        major: 'Computer Science',
       },
       {
         studentId: 'LIB2001',
         name: 'Super Admin',
         email: 'admin@bookbuddy.com',
         password: hashedPassword,
-        role: 'super-admin'
+        collegeId: 'GLOBAL',
+        role: 'super-admin',
       },
       {
         studentId: 'COL3001',
         name: 'College Admin',
         email: 'collegeadmin@bookbuddy.com',
         password: hashedPassword,
-        role: 'college-admin'
+        collegeId: 'COLLEGE_A',
+        role: 'college-admin',
       },
       {
         studentId: 'GEN4001',
         name: 'General User',
         email: 'general@bookbuddy.com',
         password: hashedPassword,
-        role: 'general'
-      }
+        collegeId: 'COLLEGE_A',
+        role: 'general',
+      },
     ]);
 
     const studentId = users[0]._id;
@@ -92,6 +96,7 @@ const importData = async () => {
     console.log('Seeding demo books...');
     const books = await Book.create([
       {
+        collegeId: 'COLLEGE_A',
         title: 'The Pragmatic Programmer',
         author: 'Andrew Hunt, David Thomas',
         isbn: '978-0201616224',
@@ -104,9 +109,11 @@ const importData = async () => {
         availabilityStatus: 'available',
         location: 'Rack A1, Shelf 2',
         description: 'A book about software engineering.',
-        coverImage: 'https://images-na.ssl-images-amazon.com/images/I/41as+WafrFL._SX396_BO1,204,203,200_.jpg'
+        coverImage:
+          'https://images-na.ssl-images-amazon.com/images/I/41as+WafrFL._SX396_BO1,204,203,200_.jpg',
       },
       {
+        collegeId: 'COLLEGE_A',
         title: 'Clean Code',
         author: 'Robert C. Martin',
         isbn: '978-0132350884',
@@ -119,9 +126,11 @@ const importData = async () => {
         availabilityStatus: 'checked_out',
         location: 'Rack A1, Shelf 3',
         description: 'A Handbook of Agile Software Craftsmanship.',
-        coverImage: 'https://images-na.ssl-images-amazon.com/images/I/41jEbK-jG+L._SX373_BO1,204,203,200_.jpg'
+        coverImage:
+          'https://images-na.ssl-images-amazon.com/images/I/41jEbK-jG+L._SX373_BO1,204,203,200_.jpg',
       },
       {
+        collegeId: 'COLLEGE_A',
         title: 'Design Patterns',
         author: 'Erich Gamma',
         isbn: '978-0201633610',
@@ -134,9 +143,11 @@ const importData = async () => {
         availabilityStatus: 'available',
         location: 'Rack A2, Shelf 1',
         description: 'Elements of Reusable Object-Oriented Software.',
-        coverImage: 'https://images-na.ssl-images-amazon.com/images/I/51szD9HC9pL._SX395_BO1,204,203,200_.jpg'
+        coverImage:
+          'https://images-na.ssl-images-amazon.com/images/I/51szD9HC9pL._SX395_BO1,204,203,200_.jpg',
       },
       {
+        collegeId: 'COLLEGE_A',
         title: 'Introduction to Algorithms',
         author: 'Thomas H. Cormen',
         isbn: '978-0262033848',
@@ -151,6 +162,7 @@ const importData = async () => {
         description: 'Comprehensive guide to algorithms.',
       },
       {
+        collegeId: 'COLLEGE_A',
         title: 'Refactoring',
         author: 'Martin Fowler',
         isbn: '978-0134757599',
@@ -163,11 +175,11 @@ const importData = async () => {
         availabilityStatus: 'available',
         location: 'Rack A1, Shelf 4',
         description: 'Improving the Design of Existing Code.',
-      }
+      },
     ]);
 
     console.log('Seeding active loans, fines, and queue...');
-    
+
     // Active Loan
     const activeLoanDate = new Date();
     activeLoanDate.setDate(activeLoanDate.getDate() - 5);
@@ -175,11 +187,12 @@ const importData = async () => {
     activeDueDate.setDate(activeDueDate.getDate() + 9); // Due in 9 days
 
     await Loan.create({
+      collegeId: 'COLLEGE_A',
       userId: studentId,
       bookId: books[0]._id, // Pragmatic Programmer
       issueDate: activeLoanDate,
       dueDate: activeDueDate,
-      status: 'active'
+      status: 'active',
     });
 
     // History Loan
@@ -189,39 +202,43 @@ const importData = async () => {
     pastReturnDate.setDate(pastReturnDate.getDate() - 15);
 
     const returnedLoan = await Loan.create({
+      collegeId: 'COLLEGE_A',
       userId: studentId,
       bookId: books[4]._id, // Refactoring
       issueDate: pastLoanDate,
       dueDate: pastReturnDate,
       returnDate: pastReturnDate,
-      status: 'returned'
+      status: 'returned',
     });
 
     // Hold Queue
     await Reservation.create({
+      collegeId: 'COLLEGE_A',
       userId: studentId,
       bookId: books[1]._id, // Clean Code (checked out)
       queuePosition: 2,
-      status: 'pending'
+      status: 'pending',
     });
 
     // Fine
     await Fine.create({
+      collegeId: 'COLLEGE_A',
       userId: studentId,
       loanId: returnedLoan._id,
       daysOverdue: 9,
       amount: 45,
       reason: 'Overdue: Cracking the Coding Interview',
-      status: 'unpaid'
+      status: 'unpaid',
     });
 
     console.log('Seeding Lab Seats...');
     const seats = [];
-    for(let i=1; i<=10; i++) {
+    for (let i = 1; i <= 10; i++) {
       seats.push({
+        collegeId: 'COLLEGE_A',
         seatNumber: `PC-${i.toString().padStart(2, '0')}`,
         status: i % 5 === 0 ? 'maintenance' : 'available',
-        computerSpecs: 'i7 12700K, 32GB RAM, RTX 3060'
+        computerSpecs: 'i7 12700K, 32GB RAM, RTX 3060',
       });
     }
     await LabSeat.create(seats);
@@ -234,7 +251,7 @@ const importData = async () => {
         url: 'https://example.com/ml-basics.pdf',
         category: 'Open Access',
         status: 'approved',
-        externalId: -1
+        externalId: -1,
       },
       {
         title: 'Journal of Computer Science Vol 45',
@@ -242,26 +259,84 @@ const importData = async () => {
         url: 'https://example.com/jcs-v45.epub',
         category: 'Research Journals',
         status: 'approved',
-        externalId: -2
-      }
+        externalId: -2,
+      },
     ]);
 
     console.log('Seeding Stickers & Streak Rewards...');
     await Sticker.create([
-      { code: 'STRK_3', name: '3-Day Reader', description: 'Read for 3 consecutive days.', icon: '🔥', category: 'streak_milestone', criteriaType: 'streak_days', criteriaValue: 3, rarity: 'common' },
-      { code: 'STRK_7', name: 'Week Warrior', description: 'Read for 7 consecutive days.', icon: '📅', category: 'streak_milestone', criteriaType: 'streak_days', criteriaValue: 7, rarity: 'common' },
-      { code: 'STRK_14', name: 'Fortnight Finisher', description: 'Read for 14 consecutive days.', icon: '⏳', category: 'streak_milestone', criteriaType: 'streak_days', criteriaValue: 14, rarity: 'rare' },
-      { code: 'STRK_30', name: 'Month Master', description: 'Read for 30 consecutive days.', icon: '🏆', category: 'streak_milestone', criteriaType: 'streak_days', criteriaValue: 30, rarity: 'epic' },
-      { code: 'EXPL_GENRE_5', name: 'Genre Explorer', description: 'Borrow books from 5 different genres.', icon: '🗺️', category: 'exploration', criteriaType: 'genre_count', criteriaValue: 5, rarity: 'rare' },
-      { code: 'EXPL_LAB_5', name: 'Lab Regular', description: 'Complete 5 lab bookings.', icon: '💻', category: 'exploration', criteriaType: 'lab_count', criteriaValue: 5, rarity: 'common' }
+      {
+        code: 'STRK_3',
+        name: '3-Day Reader',
+        description: 'Read for 3 consecutive days.',
+        icon: '🔥',
+        category: 'streak_milestone',
+        criteriaType: 'streak_days',
+        criteriaValue: 3,
+        rarity: 'common',
+      },
+      {
+        code: 'STRK_7',
+        name: 'Week Warrior',
+        description: 'Read for 7 consecutive days.',
+        icon: '📅',
+        category: 'streak_milestone',
+        criteriaType: 'streak_days',
+        criteriaValue: 7,
+        rarity: 'common',
+      },
+      {
+        code: 'STRK_14',
+        name: 'Fortnight Finisher',
+        description: 'Read for 14 consecutive days.',
+        icon: '⏳',
+        category: 'streak_milestone',
+        criteriaType: 'streak_days',
+        criteriaValue: 14,
+        rarity: 'rare',
+      },
+      {
+        code: 'STRK_30',
+        name: 'Month Master',
+        description: 'Read for 30 consecutive days.',
+        icon: '🏆',
+        category: 'streak_milestone',
+        criteriaType: 'streak_days',
+        criteriaValue: 30,
+        rarity: 'epic',
+      },
+      {
+        code: 'EXPL_GENRE_5',
+        name: 'Genre Explorer',
+        description: 'Borrow books from 5 different genres.',
+        icon: '🗺️',
+        category: 'exploration',
+        criteriaType: 'genre_count',
+        criteriaValue: 5,
+        rarity: 'rare',
+      },
+      {
+        code: 'EXPL_LAB_5',
+        name: 'Lab Regular',
+        description: 'Complete 5 lab bookings.',
+        icon: '💻',
+        category: 'exploration',
+        criteriaType: 'lab_count',
+        criteriaValue: 5,
+        rarity: 'common',
+      },
     ]);
 
     await StreakReward.create([
       { streakDays: 3, rewardType: 'visual_upgrade', rewardPayload: { theme: 'silver_flame' } },
       { streakDays: 7, rewardType: 'freeze', rewardPayload: {} },
       { streakDays: 14, rewardType: 'patron_theme', rewardPayload: { theme: 'gold_card' } },
-      { streakDays: 30, rewardType: 'certificate', rewardPayload: { fileUrl: '/certificates/30-day.pdf' } },
-      { streakDays: 60, rewardType: 'early_access', rewardPayload: {} }
+      {
+        streakDays: 30,
+        rewardType: 'certificate',
+        rewardPayload: { fileUrl: '/certificates/30-day.pdf' },
+      },
+      { streakDays: 60, rewardType: 'early_access', rewardPayload: {} },
     ]);
 
     console.log('Database successfully seeded! 🌱');

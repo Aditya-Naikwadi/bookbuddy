@@ -6,14 +6,14 @@ const BookSuggestion = require('../models/BookSuggestion');
 // @access  Private
 const suggestBook = asyncHandler(async (req, res) => {
   const { title, author, isbn, reason } = req.body;
-  
+
   const suggestion = await BookSuggestion.create({
     userId: req.user._id,
     title,
     author,
     isbn,
     reason,
-    upvotedBy: [req.user._id]
+    upvotedBy: [req.user._id],
   });
 
   res.status(201).json({ success: true, data: suggestion });
@@ -23,7 +23,9 @@ const suggestBook = asyncHandler(async (req, res) => {
 // @route   GET /api/book-suggestions
 // @access  Private
 const getSuggestions = asyncHandler(async (req, res) => {
-  const suggestions = await BookSuggestion.find({}).sort({ upvotes: -1 }).populate('userId', 'name');
+  const suggestions = await BookSuggestion.find({})
+    .sort({ upvotes: -1 })
+    .populate('userId', 'name');
   res.json({ success: true, data: suggestions });
 });
 
@@ -32,7 +34,7 @@ const getSuggestions = asyncHandler(async (req, res) => {
 // @access  Private
 const upvoteSuggestion = asyncHandler(async (req, res) => {
   const suggestion = await BookSuggestion.findById(req.params.id);
-  
+
   if (!suggestion) {
     res.status(404);
     throw new Error('Suggestion not found');

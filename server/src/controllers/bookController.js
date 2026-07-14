@@ -15,7 +15,7 @@ const getBooks = asyncHandler(async (req, res) => {
   if (search) {
     query.$text = { $search: search };
   }
-  
+
   if (category) {
     // allow comma separated categories
     query.category = { $in: category.split(',') };
@@ -40,7 +40,7 @@ const getBooks = asyncHandler(async (req, res) => {
   }
 
   const count = await Book.countDocuments(query);
-  
+
   const books = await Book.find(query)
     .limit(pageSize)
     .skip(pageSize * (page - 1))
@@ -51,7 +51,7 @@ const getBooks = asyncHandler(async (req, res) => {
     books,
     page,
     pages: Math.ceil(count / pageSize),
-    total: count
+    total: count,
   });
 });
 

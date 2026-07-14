@@ -16,7 +16,7 @@ const getSeats = asyncHandler(async (req, res) => {
 // @access  Private
 const createBooking = asyncHandler(async (req, res) => {
   const { seatId, startTime, endTime } = req.body;
-  
+
   // Check seat exists
   const seat = await LabSeat.findById(seatId);
   if (!seat) {
@@ -28,9 +28,7 @@ const createBooking = asyncHandler(async (req, res) => {
   const overlapping = await LabBooking.findOne({
     seatId,
     status: 'active',
-    $or: [
-      { startTime: { $lt: endTime }, endTime: { $gt: startTime } }
-    ]
+    $or: [{ startTime: { $lt: endTime }, endTime: { $gt: startTime } }],
   });
 
   if (overlapping) {
@@ -42,7 +40,7 @@ const createBooking = asyncHandler(async (req, res) => {
     userId: req.user._id,
     seatId,
     startTime,
-    endTime
+    endTime,
   });
 
   const streakData = await recordQualifyingAction(req.user._id, 'lab_booking');
@@ -70,7 +68,7 @@ const cancelBooking = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Booking not found');
   }
-  
+
   booking.status = 'cancelled';
   await booking.save();
   res.json({ success: true, message: 'Booking cancelled' });

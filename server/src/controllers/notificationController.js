@@ -1,5 +1,5 @@
 const asyncHandler = require('../utils/asyncHandler');
-const Notification = require('../models/Notification');
+const notificationService = require('../services/notificationService');
 const AppError = require('../utils/AppError');
 
 // @desc    Get my notifications
@@ -8,18 +8,21 @@ const AppError = require('../utils/AppError');
 const getMyNotifications = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 10;
-  const skip = (page - 1) * limit;
+  
+  const result = await notificationService.getMyNotifications(req.user._id, {
+    page,
+    limit,
+  });
 
-  const total = await Notification.countDocuments({ userId: req.user._id });
-  const notifications = await Notification.find({ userId: req.user._id })
-    .skip(skip)
-    .limit(limit)
-    .sort('-createdAt');
-
-  res.json({ 
-    success: true, 
-    data: notifications,
-    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+  res.json({
+    success: true,
+    data: result.notifications,
+    pagination: {
+      page,
+      limit,
+      total: result.pagination.total,
+      totalPages: result.pagination.pages,
+    },
   });
 });
 
@@ -27,19 +30,11 @@ const getMyNotifications = asyncHandler(async (req, res) => {
 // @route   PATCH /api/notifications/:id/read
 // @access  Private
 const markAsRead = asyncHandler(async (req, res) => {
-  const notification = await Notification.findOne({ _id: req.params.id, userId: req.user._id });
-
-  if (!notification) {
-    throw new AppError('Notification not found', 404);
-  }
-
-  notification.isRead = true;
-  await notification.save();
-
+  const notification = await notificationService.markRead(req.params.id, req.user._id);
   res.json({ success: true, data: notification });
 });
 
 module.exports = {
   getMyNotifications,
-  markAsRead
+  markAsRead,
 };

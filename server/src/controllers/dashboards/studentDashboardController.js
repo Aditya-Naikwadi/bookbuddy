@@ -1,233 +1,1015 @@
-const asyncHandler = require('express-async-handler');
+// Controller managing student-specific dashboard catalog actions, loans, holds, fines, and digital/personalization services.
 const Book = require('../../models/Book');
 const Loan = require('../../models/Loan');
-const User = require('../../models/User');
 const Fine = require('../../models/Fine');
-const Reservation = require('../../models/Reservation');
 const EResource = require('../../models/EResource');
+const ReadingList = require('../../models/ReadingList');
+const ReadingProgress = require('../../models/ReadingProgress');
+const Bookmark = require('../../models/Bookmark');
+const SavedSearch = require('../../models/SavedSearch');
+const LabSeat = require('../../models/LabSeat');
+const LabBooking = require('../../models/LabBooking');
+const BookSuggestion = require('../../models/BookSuggestion');
+const Feedback = require('../../models/Feedback');
+const Complaint = require('../../models/Complaint');
+const Streak = require('../../models/Streak');
+const UserSticker = require('../../models/UserSticker');
+const NotificationPreference = require('../../models/NotificationPreference');
+const loanService = require('../../services/loanService');
+const reservationService = require('../../services/reservationService');
+const labBookingService = require('../../services/labBookingService');
+const notificationService = require('../../services/notificationService');
+const streakService = require('../../services/streakService');
+const { getApprovedResourcesFilter } = require('../../services/eresourceService');
+const { assertOwner } = require('../../services/ownershipService');
+const AppError = require('../../utils/AppError');
 
-// @desc    Get Student Dashboard summary data
-// @route   GET /api/dashboards/student
-// @access  Private/Student
-const getStudentDashboardSummary = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
+// ==========================================
+// Catalog & OPAC Controllers
+// ==========================================
 
-  const activeLoans = await Loan.countDocuments({ userId, status: 'active' });
-  const pendingFines = await Fine.aggregate([
-    { $match: { userId, status: 'unpaid' } },
-    { $group: { _id: null, total: { $sum: '$amount' } } }
-  ]);
-  const reservedBooks = await Reservation.countDocuments({ userId, status: { $in: ['pending', 'ready_for_pickup'] } });
-
-  res.json({
-    success: true,
-    data: {
-      activeLoans,
-      pendingFines: pendingFines[0]?.total || 0,
-      reservedBooks,
-      notifications: 0
-    }
-  });
-});
-
-// @desc    Search OPAC Catalog
+// @desc    Get college catalog books
 // @route   GET /api/dashboards/student/catalog
 // @access  Private/Student
-const searchCatalog = asyncHandler(async (req, res) => {
-  const { query, category, format, page = 1, limit = 10 } = req.query;
-  const skip = (page - 1) * limit;
+const getStudentCatalog = async (req, res, next) => {
+  try {
+    const { query, category, page = 1, limit = 10 } = req.query;
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
-  let filter = {};
-  
-  if (query) {
-    filter.$text = { $search: query };
-  }
-  if (category) {
-    filter.category = category;
-  }
-  if (format) {
-    filter.format = format;
-  }
+    const filter = { ...req.tenantFilter };
 
-  const books = await Book.find(filter)
-    .skip(skip)
-    .limit(Number(limit))
-    .select('-__v');
-
-  const total = await Book.countDocuments(filter);
-
-  res.json({
-    success: true,
-    data: books,
-    pagination: {
-      total,
-      page: Number(page),
-      pages: Math.ceil(total / limit)
+    if (query) {
+      filter.$text = { $search: query };
     }
-  });
-});
+    if (category) {
+      filter.category = category;
+    }
 
-// @desc    Get Smart Recommendations
+    const books = await Book.find(filter).skip(skip).limit(parseInt(limit, 10)).select('-__v');
+
+    const total = await Book.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: books,
+      pagination: {
+        total,
+        page: parseInt(page, 10),
+        pages: Math.ceil(total / parseInt(limit, 10)),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get placeholder catalog recommendations
 // @route   GET /api/dashboards/student/catalog/recommendations
 // @access  Private/Student
-const getRecommendations = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
-  
-  // Recommend based on major or fallback to generally popular
-  let filter = {};
-  if (user.major) {
-    filter = { category: new RegExp(user.major, 'i') };
+const getStudentRecommendations = async (req, res, next) => {
+  try {
+    const recentLoan = await Loan.findOne({ userId: req.user.id })
+      .sort('-createdAt')
+      .populate('bookId');
+
+    const filter = { ...req.tenantFilter };
+    if (recentLoan && recentLoan.bookId) {
+      filter.category = recentLoan.bookId.category;
+    }
+
+    const recommendations = await Book.find(filter).limit(5);
+
+    res.json({
+      success: true,
+      data: recommendations,
+    });
+  } catch (error) {
+    next(error);
   }
+};
 
-  const recommendations = await Book.find(filter).limit(5);
+// ==========================================
+// Circulation & Holds Controllers
+// ==========================================
 
-  res.json({
-    success: true,
-    data: recommendations
-  });
-});
-
-// @desc    Get E-Resources
-// @route   GET /api/dashboards/student/eresources
-// @access  Private/Student
-const getEResources = asyncHandler(async (req, res) => {
-  const resources = await EResource.find({ status: 'approved' });
-  res.json({
-    success: true,
-    data: resources
-  });
-});
-
-// @desc    Get Current Borrowing & History
+// @desc    Get student loans (active + returned)
 // @route   GET /api/dashboards/student/loans
 // @access  Private/Student
-const getMyLoans = asyncHandler(async (req, res) => {
-  const loans = await Loan.find({ userId: req.user._id })
-    .populate('bookId', 'title author coverImage')
-    .sort({ issueDate: -1 });
+const getStudentLoans = async (req, res, next) => {
+  try {
+    const loans = await Loan.find({ userId: req.user.id })
+      .populate('bookId', 'title author isbn coverImage')
+      .sort('-createdAt');
 
-  const active = loans.filter(l => l.status === 'active' || l.status === 'overdue');
-  const history = loans.filter(l => l.status === 'returned');
+    res.json({
+      success: true,
+      data: loans,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
-  res.json({
-    success: true,
-    data: { active, history }
-  });
-});
-
-// @desc    Renew a Book
+// @desc    Renew student loan
 // @route   POST /api/dashboards/student/loans/:id/renew
 // @access  Private/Student
-const renewLoan = asyncHandler(async (req, res) => {
-  const loan = await Loan.findOne({ _id: req.params.id, userId: req.user._id });
-  
-  if (!loan) {
-    res.status(404);
-    throw new Error('Loan not found');
+const renewStudentLoan = async (req, res, next) => {
+  try {
+    const loan = await loanService.renewLoan(req.params.id, req.user.id);
+    res.json({
+      success: true,
+      data: loan,
+      message: 'Loan successfully renewed.',
+    });
+  } catch (error) {
+    next(error);
   }
+};
 
-  if (loan.renewCount >= loan.maxRenewals) {
-    res.status(400);
-    throw new Error('Maximum renewal limit reached');
-  }
-
-  // Check if anyone has reserved this book
-  const reservations = await Reservation.countDocuments({ bookId: loan.bookId, status: 'pending' });
-  if (reservations > 0) {
-    res.status(400);
-    throw new Error('Cannot renew: This book has been requested by another patron');
-  }
-
-  loan.renewCount += 1;
-  const newDueDate = new Date(loan.dueDate);
-  newDueDate.setDate(newDueDate.getDate() + 14); // Extend by 14 days
-  loan.dueDate = newDueDate;
-
-  await loan.save();
-
-  res.json({
-    success: true,
-    data: loan,
-    message: 'Book renewed successfully'
-  });
-});
-
-// @desc    Place a Hold / Reservation
+// @desc    Place reservation hold
 // @route   POST /api/dashboards/student/reservations
 // @access  Private/Student
-const placeHold = asyncHandler(async (req, res) => {
-  const { bookId } = req.body;
-
-  const book = await Book.findById(bookId);
-  if (!book) {
-    res.status(404);
-    throw new Error('Book not found');
+const placeStudentHold = async (req, res, next) => {
+  try {
+    const { bookId } = req.body;
+    const reservation = await reservationService.placeHold(req.user.id, bookId, req.user.collegeId);
+    res.status(201).json({
+      success: true,
+      data: reservation,
+      message: `Hold placed successfully. Queue position: ${reservation.queuePosition}`,
+    });
+  } catch (error) {
+    next(error);
   }
+};
 
-  if (book.availableCopies > 0) {
-    res.status(400);
-    throw new Error('Book is currently available. You can check it out directly.');
-  }
-
-  const existingHold = await Reservation.findOne({ userId: req.user._id, bookId, status: 'pending' });
-  if (existingHold) {
-    res.status(400);
-    throw new Error('You already have a hold placed on this book.');
-  }
-
-  // Find current queue length
-  const queueLength = await Reservation.countDocuments({ bookId, status: 'pending' });
-
-  const reservation = await Reservation.create({
-    userId: req.user._id,
-    bookId,
-    queuePosition: queueLength + 1,
-    status: 'pending'
-  });
-
-  res.status(201).json({
-    success: true,
-    data: reservation,
-    message: `Hold placed successfully. You are number ${reservation.queuePosition} in the queue.`
-  });
-});
-
-// @desc    Get My Hold Queue
+// @desc    Get student queue position
 // @route   GET /api/dashboards/student/reservations/queue
 // @access  Private/Student
-const getMyQueue = asyncHandler(async (req, res) => {
-  const queue = await Reservation.find({ userId: req.user._id })
-    .populate('bookId', 'title author coverImage')
-    .sort({ createdAt: -1 });
+const getStudentQueuePosition = async (req, res, next) => {
+  try {
+    const { bookId } = req.query;
+    const position = await reservationService.getQueuePosition(req.user.id, bookId);
 
-  res.json({
-    success: true,
-    data: queue
-  });
-});
+    if (position === null) {
+      return next(new AppError('No active hold found for this book.', 404));
+    }
 
-// @desc    Get Itemized Fines
+    res.json({
+      success: true,
+      data: { queuePosition: position },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get student fines (unpaid + paid)
 // @route   GET /api/dashboards/student/fines
 // @access  Private/Student
-const getMyFines = asyncHandler(async (req, res) => {
-  const fines = await Fine.find({ userId: req.user._id })
-    .populate('loanId')
-    .sort({ createdAt: -1 });
+const getStudentFines = async (req, res, next) => {
+  try {
+    const fines = await Fine.find({ userId: req.user.id }).populate('loanId').sort('-createdAt');
 
-  res.json({
-    success: true,
-    data: fines
-  });
-});
+    res.json({
+      success: true,
+      data: fines,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ==========================================
+// Digital Assets (EResource) Controllers
+// ==========================================
+
+// @desc    Get approved e-resources
+// @route   GET /api/dashboards/student/eresources
+// @access  Private/Student
+const getStudentEResources = async (req, res, next) => {
+  try {
+    const { type, category, page = 1, limit = 10 } = req.query;
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+
+    // Filter strictly using the approved resources filter (moderationStatus: approved + tenant)
+    const filter = getApprovedResourcesFilter(req.tenantFilter);
+
+    if (type) {
+      filter.type = type;
+    }
+    if (category) {
+      filter.category = category;
+    }
+
+    const resources = await EResource.find(filter)
+      .skip(skip)
+      .limit(parseInt(limit, 10))
+      .sort('-createdAt');
+
+    const total = await EResource.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: resources,
+      pagination: {
+        total,
+        page: parseInt(page, 10),
+        pages: Math.ceil(total / parseInt(limit, 10)),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get single e-resource details
+// @route   GET /api/dashboards/student/eresources/:id
+// @access  Private/Student
+const getStudentEResourceDetails = async (req, res, next) => {
+  try {
+    const resource = await EResource.findOne({ _id: req.params.id, ...req.tenantFilter });
+
+    if (!resource) {
+      return next(new AppError('Resource not found.', 404));
+    }
+
+    // Hide pending/rejected resources from other students (uploader can view pending status)
+    if (
+      resource.moderationStatus !== 'approved' &&
+      resource.uploadedBy.toString() !== req.user.id.toString()
+    ) {
+      return next(new AppError('Resource not found.', 404));
+    }
+
+    res.json({
+      success: true,
+      data: resource,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Upload/propose new e-resource
+// @route   POST /api/dashboards/student/eresources
+// @access  Private/Student
+const uploadStudentEResource = async (req, res, next) => {
+  try {
+    const { title, author, type, fileUrl, category } = req.body;
+
+    const resource = await EResource.create({
+      collegeId: req.user.collegeId,
+      title,
+      author,
+      type,
+      fileUrl,
+      uploadedBy: req.user.id,
+      moderationStatus: 'pending',
+      category,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: resource,
+      message: 'Resource successfully submitted and is pending moderation.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ==========================================
+// Reading List Controllers
+// ==========================================
+
+// @desc    Get my reading lists, plus public lists in same college
+// @route   GET /api/dashboards/student/reading-lists
+// @access  Private/Student
+const getStudentReadingLists = async (req, res, next) => {
+  try {
+    const lists = await ReadingList.find({
+      $or: [{ ownerId: req.user.id }, { collegeId: req.user.collegeId, visibility: 'public' }],
+    }).sort('-createdAt');
+
+    res.json({
+      success: true,
+      data: lists,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get single reading list details
+// @route   GET /api/dashboards/student/reading-lists/:id
+// @access  Private/Student
+const getStudentReadingListDetails = async (req, res, next) => {
+  try {
+    const list = await ReadingList.findOne({ _id: req.params.id, ...req.tenantFilter });
+
+    if (!list) {
+      return next(new AppError('Reading list not found.', 404));
+    }
+
+    // Access control: if private, only the owner can read
+    if (list.visibility === 'private' && list.ownerId.toString() !== req.user.id.toString()) {
+      return next(new AppError('Reading list not found.', 404));
+    }
+
+    res.json({
+      success: true,
+      data: list,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Create new reading list
+// @route   POST /api/dashboards/student/reading-lists
+// @access  Private/Student
+const createStudentReadingList = async (req, res, next) => {
+  try {
+    const { title, description, visibility } = req.body;
+
+    const list = await ReadingList.create({
+      collegeId: req.user.collegeId,
+      ownerId: req.user.id,
+      title,
+      description,
+      visibility,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: list,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update reading list
+// @route   PUT /api/dashboards/student/reading-lists/:id
+// @access  Private/Student
+const updateStudentReadingList = async (req, res, next) => {
+  try {
+    const list = await ReadingList.findOne({ _id: req.params.id, ...req.tenantFilter });
+
+    if (!list) {
+      return next(new AppError('Reading list not found.', 404));
+    }
+
+    assertOwner(list, req.user.id);
+
+    const { title, description, visibility } = req.body;
+    if (title !== undefined) list.title = title;
+    if (description !== undefined) list.description = description;
+    if (visibility !== undefined) list.visibility = visibility;
+
+    await list.save();
+
+    res.json({
+      success: true,
+      data: list,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete reading list
+// @route   DELETE /api/dashboards/student/reading-lists/:id
+// @access  Private/Student
+const deleteStudentReadingList = async (req, res, next) => {
+  try {
+    const list = await ReadingList.findOne({ _id: req.params.id, ...req.tenantFilter });
+
+    if (!list) {
+      return next(new AppError('Reading list not found.', 404));
+    }
+
+    assertOwner(list, req.user.id);
+
+    await list.deleteOne();
+
+    res.json({
+      success: true,
+      message: 'Reading list deleted successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Add item to reading list
+// @route   POST /api/dashboards/student/reading-lists/:id/items
+// @access  Private/Student
+const addReadingListItem = async (req, res, next) => {
+  try {
+    const list = await ReadingList.findOne({ _id: req.params.id, ...req.tenantFilter });
+
+    if (!list) {
+      return next(new AppError('Reading list not found.', 404));
+    }
+
+    assertOwner(list, req.user.id);
+
+    const { resourceType, resourceId } = req.body;
+
+    // Check duplicate
+    const exists = list.items.some(
+      (item) =>
+        item.resourceId.toString() === resourceId.toString() && item.resourceType === resourceType
+    );
+    if (exists) {
+      return next(new AppError('Resource already exists in this reading list.', 400));
+    }
+
+    list.items.push({
+      resourceType,
+      resourceId,
+      addedAt: new Date(),
+    });
+
+    await list.save();
+
+    res.json({
+      success: true,
+      data: list,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete item from reading list
+// @route   DELETE /api/dashboards/student/reading-lists/:id/items/:itemId
+// @access  Private/Student
+const deleteReadingListItem = async (req, res, next) => {
+  try {
+    const list = await ReadingList.findOne({ _id: req.params.id, ...req.tenantFilter });
+
+    if (!list) {
+      return next(new AppError('Reading list not found.', 404));
+    }
+
+    assertOwner(list, req.user.id);
+
+    const originalLength = list.items.length;
+    list.items = list.items.filter((item) => item._id.toString() !== req.params.itemId.toString());
+
+    if (list.items.length === originalLength) {
+      return next(new AppError('Item not found in reading list.', 404));
+    }
+
+    await list.save();
+
+    res.json({
+      success: true,
+      data: list,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ==========================================
+// Reading Progress Controllers
+// ==========================================
+
+// @desc    Get reading progress for e-resource
+// @route   GET /api/dashboards/student/reading-progress/:eresourceId
+// @access  Private/Student
+const getReadingProgress = async (req, res, next) => {
+  try {
+    const progress = await ReadingProgress.findOne({
+      userId: req.user.id,
+      eresourceId: req.params.eresourceId,
+    });
+
+    if (!progress) {
+      return next(new AppError('No reading progress record found.', 404));
+    }
+
+    res.json({
+      success: true,
+      data: progress,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Upsert reading progress
+// @route   PUT /api/dashboards/student/reading-progress/:eresourceId
+// @access  Private/Student
+const upsertReadingProgress = async (req, res, next) => {
+  try {
+    const { eresourceId } = req.params;
+    const { currentPage, epubProgress } = req.body;
+
+    const progress = await ReadingProgress.findOneAndUpdate(
+      { userId: req.user.id, eresourceId },
+      {
+        $set: {
+          currentPage,
+          epubProgress,
+          lastReadAt: new Date(),
+        },
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    res.json({
+      success: true,
+      data: progress,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ==========================================
+// Bookmarks Controllers
+// ==========================================
+
+// @desc    Get user bookmarks
+// @route   GET /api/dashboards/student/bookmarks
+// @access  Private/Student
+const getStudentBookmarks = async (req, res, next) => {
+  try {
+    const { eresourceId } = req.query;
+
+    const filter = { userId: req.user.id };
+    if (eresourceId) {
+      filter.eresourceId = eresourceId;
+    }
+
+    const bookmarks = await Bookmark.find(filter).sort('-createdAt');
+
+    res.json({
+      success: true,
+      data: bookmarks,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Create bookmark
+// @route   POST /api/dashboards/student/bookmarks
+// @access  Private/Student
+const createStudentBookmark = async (req, res, next) => {
+  try {
+    const { eresourceId, locationRef, note } = req.body;
+
+    const bookmark = await Bookmark.create({
+      userId: req.user.id,
+      eresourceId,
+      locationRef,
+      note,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: bookmark,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete bookmark
+// @route   DELETE /api/dashboards/student/bookmarks/:id
+// @access  Private/Student
+const deleteStudentBookmark = async (req, res, next) => {
+  try {
+    const bookmark = await Bookmark.findById(req.params.id);
+
+    if (!bookmark) {
+      return next(new AppError('Bookmark not found.', 404));
+    }
+
+    assertOwner(bookmark, req.user.id);
+
+    await bookmark.deleteOne();
+
+    res.json({
+      success: true,
+      message: 'Bookmark successfully deleted.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ==========================================
+// Saved Searches Controllers
+// ==========================================
+
+// @desc    Get saved searches
+// @route   GET /api/dashboards/student/saved-searches
+// @access  Private/Student
+const getStudentSavedSearches = async (req, res, next) => {
+  try {
+    const searches = await SavedSearch.find({ userId: req.user.id }).sort('-createdAt');
+
+    res.json({
+      success: true,
+      data: searches,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Save search parameters
+// @route   POST /api/dashboards/student/saved-searches
+// @access  Private/Student
+const saveStudentSearch = async (req, res, next) => {
+  try {
+    const { queryParams, alertsEnabled } = req.body;
+
+    const search = await SavedSearch.create({
+      userId: req.user.id,
+      collegeId: req.user.collegeId,
+      queryParams,
+      alertsEnabled,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: search,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete saved search
+// @route   DELETE /api/dashboards/student/saved-searches/:id
+// @access  Private/Student
+const deleteStudentSearch = async (req, res, next) => {
+  try {
+    const search = await SavedSearch.findById(req.params.id);
+
+    if (!search) {
+      return next(new AppError('Saved search not found.', 404));
+    }
+
+    assertOwner(search, req.user.id);
+
+    await search.deleteOne();
+
+    res.json({
+      success: true,
+      message: 'Saved search successfully deleted.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Toggle alert status on saved search
+// @route   PATCH /api/dashboards/student/saved-searches/:id/alerts
+// @access  Private/Student
+const toggleSavedSearchAlerts = async (req, res, next) => {
+  try {
+    const search = await SavedSearch.findById(req.params.id);
+
+    if (!search) {
+      return next(new AppError('Saved search not found.', 404));
+    }
+
+    assertOwner(search, req.user.id);
+
+    search.alertsEnabled = req.body.alertsEnabled;
+    await search.save();
+
+    res.json({
+      success: true,
+      data: search,
+      message: 'Saved search alert preference updated.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get lab seats availability
+// @route   GET /api/dashboards/student/labs/availability
+// @access  Private/Student
+const getLabsAvailability = async (req, res, next) => {
+  try {
+    const { labName, date } = req.query;
+    const availability = await labBookingService.getAvailability(
+      req.user.collegeId,
+      labName,
+      date
+    );
+    res.json({ success: true, data: availability });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Book a lab timeslot
+// @route   POST /api/dashboards/student/lab-bookings
+// @access  Private/Student
+const createLabBooking = async (req, res, next) => {
+  try {
+    const { seatId, startTime, endTime } = req.body;
+    const result = await labBookingService.createBooking(
+      req.user.id,
+      seatId,
+      req.user.collegeId,
+      startTime,
+      endTime
+    );
+    res.status(201).json({ success: true, data: result.booking, streak: result.streakData });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Cancel lab timeslot booking
+// @route   DELETE /api/dashboards/student/lab-bookings/:id
+// @access  Private/Student
+const cancelLabBooking = async (req, res, next) => {
+  try {
+    const booking = await labBookingService.cancelBooking(
+      req.params.id,
+      req.user.id,
+      req.user.role
+    );
+    res.json({ success: true, data: booking, message: 'Booking cancelled successfully.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get student's own lab bookings
+// @route   GET /api/dashboards/student/lab-bookings
+// @access  Private/Student
+const getStudentLabBookings = async (req, res, next) => {
+  try {
+    const bookings = await LabBooking.find({
+      userId: req.user.id,
+      ...req.tenantFilter,
+    })
+      .populate('seatId')
+      .sort({ startTime: -1 });
+
+    res.json({ success: true, data: bookings });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Submit book suggestion
+// @route   POST /api/dashboards/student/book-suggestions
+// @access  Private/Student
+const createBookSuggestion = async (req, res, next) => {
+  try {
+    const { title, author, reason } = req.body;
+    const suggestion = await BookSuggestion.create({
+      collegeId: req.user.collegeId,
+      suggestedBy: req.user.id,
+      title,
+      author,
+      reason,
+      status: 'pending',
+    });
+    res.status(201).json({ success: true, data: suggestion });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get student's own book suggestions
+// @route   GET /api/dashboards/student/book-suggestions
+// @access  Private/Student
+const getStudentBookSuggestions = async (req, res, next) => {
+  try {
+    const suggestions = await BookSuggestion.find({
+      suggestedBy: req.user.id,
+      ...req.tenantFilter,
+    }).sort({ createdAt: -1 });
+
+    res.json({ success: true, data: suggestions });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Submit general feedback
+// @route   POST /api/dashboards/student/feedback
+// @access  Private/Student
+const createFeedback = async (req, res, next) => {
+  try {
+    const { category, message, rating } = req.body;
+    const feedback = await Feedback.create({
+      collegeId: req.user.collegeId,
+      submittedBy: req.user.id,
+      category,
+      message,
+      rating,
+    });
+    res.status(201).json({ success: true, data: feedback });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Submit helpdesk complaint
+// @route   POST /api/dashboards/student/complaints
+// @access  Private/Student
+const createComplaint = async (req, res, next) => {
+  try {
+    const { subject, description } = req.body;
+    const complaint = await Complaint.create({
+      collegeId: req.user.collegeId,
+      submittedBy: req.user.id,
+      subject,
+      description,
+      status: 'open',
+    });
+    res.status(201).json({ success: true, data: complaint });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get student's own complaints
+// @route   GET /api/dashboards/student/complaints
+// @access  Private/Student
+const getStudentComplaints = async (req, res, next) => {
+  try {
+    const complaints = await Complaint.find({
+      submittedBy: req.user.id,
+      ...req.tenantFilter,
+    }).sort({ createdAt: -1 });
+
+    res.json({ success: true, data: complaints });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get current student streak status
+// @route   GET /api/dashboards/student/streak
+// @access  Private/Student
+const getStudentStreak = async (req, res, next) => {
+  try {
+    const streak = await streakService.getOrCreateStreak(req.user.id, req.user.collegeId);
+    res.json({
+      success: true,
+      data: {
+        currentStreak: streak.currentStreak,
+        maxStreak: streak.maxStreak,
+        freezesAvailable: streak.freezesAvailable,
+        lastQualifyingActionAt: streak.lastQualifyingActionAt,
+        timezone: streak.timezone,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get student's earned stickers
+// @route   GET /api/dashboards/student/stickers
+// @access  Private/Student
+const getStudentStickers = async (req, res, next) => {
+  try {
+    const stickers = await UserSticker.find({ userId: req.user.id })
+      .populate('stickerId')
+      .sort({ earnedAt: -1 });
+    res.json({ success: true, data: stickers });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get student's own notifications
+// @route   GET /api/dashboards/student/notifications
+// @access  Private/Student
+const getStudentNotifications = async (req, res, next) => {
+  try {
+    const result = await notificationService.getMyNotifications(req.user.id, {
+      read: req.query.read,
+      page: req.query.page,
+      limit: req.query.limit,
+    });
+    res.json({ success: true, ...result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Mark a notification as read
+// @route   PATCH /api/dashboards/student/notifications/:id/read
+// @access  Private/Student
+const readStudentNotification = async (req, res, next) => {
+  try {
+    const notification = await notificationService.markRead(req.params.id, req.user.id);
+    res.json({ success: true, data: notification, message: 'Notification marked as read.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get student's notification preferences
+// @route   GET /api/dashboards/student/notification-preferences
+// @access  Private/Student
+const getNotificationPreferences = async (req, res, next) => {
+  try {
+    let pref = await NotificationPreference.findOne({ userId: req.user.id });
+    if (!pref) {
+      pref = await NotificationPreference.create({
+        userId: req.user.id,
+        emailEnabled: true,
+        pushEnabled: true,
+        inAppEnabled: true,
+        typePreferences: {},
+      });
+    }
+    res.json({ success: true, data: pref });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update student's notification preferences
+// @route   PUT /api/dashboards/student/notification-preferences
+// @access  Private/Student
+const updateNotificationPreferences = async (req, res, next) => {
+  try {
+    const { emailEnabled, pushEnabled, inAppEnabled, typePreferences } = req.body;
+    let pref = await NotificationPreference.findOne({ userId: req.user.id });
+    if (!pref) {
+      pref = new NotificationPreference({ userId: req.user.id });
+    }
+
+    if (emailEnabled !== undefined) pref.emailEnabled = emailEnabled;
+    if (pushEnabled !== undefined) pref.pushEnabled = pushEnabled;
+    if (inAppEnabled !== undefined) pref.inAppEnabled = inAppEnabled;
+
+    if (typePreferences !== undefined) {
+      for (const [key, value] of Object.entries(typePreferences)) {
+        pref.typePreferences.set(key, value);
+      }
+    }
+
+    await pref.save();
+    res.json({ success: true, data: pref, message: 'Notification preferences updated.' });
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
-  getStudentDashboardSummary,
-  searchCatalog,
-  getRecommendations,
-  getEResources,
-  getMyLoans,
-  renewLoan,
-  placeHold,
-  getMyQueue,
-  getMyFines
+  getStudentCatalog,
+  getStudentRecommendations,
+  getStudentLoans,
+  renewStudentLoan,
+  placeStudentHold,
+  getStudentQueuePosition,
+  getStudentFines,
+  getStudentEResources,
+  getStudentEResourceDetails,
+  uploadStudentEResource,
+  getStudentReadingLists,
+  getStudentReadingListDetails,
+  createStudentReadingList,
+  updateStudentReadingList,
+  deleteStudentReadingList,
+  addReadingListItem,
+  deleteReadingListItem,
+  getReadingProgress,
+  upsertReadingProgress,
+  getStudentBookmarks,
+  createStudentBookmark,
+  deleteStudentBookmark,
+  getStudentSavedSearches,
+  saveStudentSearch,
+  deleteStudentSearch,
+  toggleSavedSearchAlerts,
+  getLabsAvailability,
+  createLabBooking,
+  cancelLabBooking,
+  getStudentLabBookings,
+  createBookSuggestion,
+  getStudentBookSuggestions,
+  createFeedback,
+  createComplaint,
+  getStudentComplaints,
+  getStudentStreak,
+  getStudentStickers,
+  getStudentNotifications,
+  readStudentNotification,
+  getNotificationPreferences,
+  updateNotificationPreferences,
 };

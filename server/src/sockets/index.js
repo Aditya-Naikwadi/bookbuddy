@@ -1,30 +1,31 @@
 const { Server } = require('socket.io');
+const socketAuth = require('./socketAuth');
+const events = require('./events');
 
 let io;
 
 const initSockets = (server) => {
   io = new Server(server, {
     cors: {
-      origin: process.env.CLIENT_URL || 'http://localhost:5173',
+      origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
       methods: ['GET', 'POST'],
+      credentials: true,
     },
   });
 
+  // Attach authentication middleware
+  io.use(socketAuth);
+
   io.on('connection', (socket) => {
-    console.log(`Socket connected: ${socket.id}`);
+    const userId = socket.data.user.id;
+    console.log(`Socket connected: ${socket.id} for user: ${userId}`);
 
-    socket.on('join_user', (userId) => {
-      socket.join(`user:${userId}`);
-      console.log(`User ${userId} joined room user:${userId}`);
-    });
-
-    socket.on('join_book', (bookId) => {
-      socket.join(`book:${bookId}`);
-      console.log(`Joined book room book:${bookId}`);
-    });
+    // Automatically join the user-specific room
+    socket.join(`user:${userId}`);
+    console.log(`User ${userId} joined room user:${userId}`);
 
     socket.on('disconnect', () => {
-      console.log(`Socket disconnected: ${socket.id}`);
+      console.log(`Socket disconnected: ${socket.id} for user: ${userId}`);
     });
   });
 
@@ -38,21 +39,31 @@ const getIo = () => {
   return io;
 };
 
-const emitAvailabilityUpdate = (bookId, payload) => {
+const emitNotification = (userId, notification) => {
   if (io) {
-    io.to(`book:${bookId}`).emit('availability:update', payload);
+    io.to(`user:${userId}`).emit(events.NOTIFICATION_NEW, {
+      _id: notification._id,
+      type: notification.type,
+      message: notification.message,
+      read: notification.read,
+      createdAt: notification.createdAt,
+    });
   }
 };
 
-const emitNotification = (userId, payload) => {
+const emitStreakUpdate = (userId, streak) => {
   if (io) {
-    io.to(`user:${userId}`).emit('notification:new', payload);
+    io.to(`user:${userId}`).emit(events.STREAK_UPDATED, {
+      currentStreak: streak.currentStreak,
+      maxStreak: streak.maxStreak,
+      freezesAvailable: streak.freezesAvailable,
+    });
   }
 };
 
 module.exports = {
   initSockets,
   getIo,
-  emitAvailabilityUpdate,
-  emitNotification
+  emitNotification,
+  emitStreakUpdate,
 };

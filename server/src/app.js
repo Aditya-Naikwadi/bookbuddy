@@ -1,18 +1,107 @@
+// Express application configuration and middleware wiring.
 const express = require('express');
 const cors = require('cors');
-const { errorHandler, notFound } = require('./middlewares/errorHandler');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
+const mongoSanitize = require('express-mongo-sanitize');
+
+const config = require('./config');
+const logger = require('./utils/logger');
+const notFound = require('./middlewares/notFound');
+const errorHandler = require('./middlewares/errorHandler');
+const mongoose = require('mongoose');
 
 const app = express();
+const crypto = require('crypto');
 
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Simple healthcheck
-app.get('/api/health', (req, res) => {
-  res.json({ success: true, message: 'Server is running' });
+// Assign Request ID
+app.use((req, res, next) => {
+  req.id = req.headers['x-request-id'] || crypto.randomUUID();
+  res.setHeader('x-request-id', req.id);
+  next();
 });
 
+// Security Headers
+app.use(helmet());
+
+// CORS Configuration
+app.use(
+  cors({
+    origin: config.clientOrigin,
+    credentials: true,
+  })
+);
+
+// Body Parser
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// NoSQL Injection Defense
+app.use(mongoSanitize());
+
+// Request Logger
+app.use(
+  morgan(config.nodeEnv === 'production' ? 'combined' : 'dev', {
+    stream: { write: (message) => logger.info(message.trim()) },
+  })
+);
+
+// Global Rate Limiter
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many requests from this IP, please try again after 15 minutes',
+    code: 429,
+  },
+});
+app.use(limiter);
+
+// Health Check Route
+app.get('/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  const isHealthy = dbStatus === 'connected';
+
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'ok' : 'error',
+    dbConnection: dbStatus,
+    uptime: `${process.uptime().toFixed(2)}s`,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Backward compatible health check
+app.get('/api/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  const isHealthy = dbStatus === 'connected';
+  res.status(isHealthy ? 200 : 503).json({
+    success: isHealthy,
+    message: isHealthy ? 'Server is running' : 'Database connection error',
+  });
+});
+
+// Debug tenant check route for validation
+const { protect, requireRole } = require('./middlewares/auth');
+const scopeToTenant = require('./middlewares/scopeToTenant');
+app.get(
+  '/api/_debug/tenant-check',
+  protect,
+  requireRole('college-admin', 'college_admin', 'student'),
+  scopeToTenant,
+  (req, res) => {
+    res.json({
+      success: true,
+      user: req.user,
+      tenantFilter: req.tenantFilter,
+    });
+  }
+);
+
+// Domain Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/books', require('./routes/bookRoutes'));
 app.use('/api/loans', require('./routes/loanRoutes'));

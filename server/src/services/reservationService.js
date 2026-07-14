@@ -1,97 +1,90 @@
+// Business logic service managing book reservations and queues.
 const Reservation = require('../models/Reservation');
 const Book = require('../models/Book');
 const AppError = require('../utils/AppError');
-const { createNotification } = require('./notificationService');
 
-const joinQueue = async (userId, bookId) => {
-  const book = await Book.findById(bookId);
+const placeHold = async (userId, bookId, collegeId) => {
+  const book = await Book.findOne({ _id: bookId, collegeId });
   if (!book) {
-    throw new AppError('Book not found', 404);
+    throw new AppError('Book not found.', 404);
   }
 
-  // Only allowed when availableCopies === 0
-  if (book.availableCopies > 0) {
-    throw new AppError('Book is currently available. You can borrow it directly.', 400);
+  // Only allow reservations/holds if the book is fully checked out
+  if (book.copiesAvailable > 0) {
+    throw new AppError('Book is currently available. Please borrow it directly.', 400);
   }
 
-  // Check if user is already in queue
-  const existingRes = await Reservation.findOne({ userId, bookId, status: { $in: ['waiting', 'ready'] } });
-  if (existingRes) {
-    throw new AppError('You are already in the queue for this book', 400);
-  }
-
-  const currentCount = await Reservation.countDocuments({ bookId, status: 'waiting' });
-
-  const reservation = await Reservation.create({
+  // Reject duplicate active holds
+  const existingHold = await Reservation.findOne({
     userId,
     bookId,
-    queuePosition: currentCount + 1,
-    status: 'waiting'
+    status: { $in: ['queued', 'ready_for_pickup'] },
+    collegeId,
+  });
+
+  if (existingHold) {
+    throw new AppError('You already have an active hold on this book.', 400);
+  }
+
+  // Compute new queue position (count active holds + 1)
+  const currentQueuedCount = await Reservation.countDocuments({
+    bookId,
+    status: { $in: ['queued', 'ready_for_pickup'] },
+    collegeId,
+  });
+
+  const reservation = await Reservation.create({
+    collegeId,
+    userId,
+    bookId,
+    queuePosition: currentQueuedCount + 1,
+    status: 'queued',
   });
 
   return reservation;
 };
 
-const leaveQueue = async (reservationId, userId) => {
-  const reservation = await Reservation.findOne({ _id: reservationId, userId });
-  if (!reservation) {
-    throw new AppError('Reservation not found', 404);
+const getQueuePosition = async (userId, bookId) => {
+  const hold = await Reservation.findOne({
+    userId,
+    bookId,
+    status: { $in: ['queued', 'ready_for_pickup'] },
+  });
+
+  if (!hold) {
+    return null;
   }
 
-  if (reservation.status !== 'waiting' && reservation.status !== 'ready') {
-    throw new AppError('Cannot leave a queue that is already cancelled or expired', 400);
-  }
-
-  const { bookId, queuePosition } = reservation;
-
-  reservation.status = 'cancelled';
-  reservation.queuePosition = null;
-  await reservation.save();
-
-  // Decrement everyone behind
-  if (queuePosition !== null) {
-    await Reservation.updateMany(
-      { bookId, status: 'waiting', queuePosition: { $gt: queuePosition } },
-      { $inc: { queuePosition: -1 } }
-    );
-  }
-
-  return reservation;
+  return hold.queuePosition;
 };
 
-const promoteNext = async (bookId) => {
-  // Move the lowest queuePosition waiting reservation to ready
-  const nextRes = await Reservation.findOne({ bookId, status: 'waiting' }).sort({ queuePosition: 1 });
-  
-  if (nextRes) {
-    const { queuePosition } = nextRes;
+const promoteNextHold = async (bookId, collegeId) => {
+  const nextHold = await Reservation.findOne({
+    bookId,
+    status: 'queued',
+    collegeId,
+  }).sort('queuePosition');
 
-    nextRes.status = 'ready';
-    nextRes.notifiedAt = new Date();
-    nextRes.queuePosition = null;
-    await nextRes.save();
+  if (nextHold) {
+    nextHold.status = 'ready_for_pickup';
+    nextHold.readyAt = new Date();
+    await nextHold.save();
 
-    // Decrement everyone behind by 1
-    await Reservation.updateMany(
-      { bookId, status: 'waiting', queuePosition: { $gt: queuePosition } },
-      { $inc: { queuePosition: -1 } }
+    const notificationService = require('./notificationService');
+    await notificationService.notify(
+      nextHold.userId,
+      'hold_ready',
+      'Your held book is ready for pickup.',
+      nextHold.bookId,
+      'Book'
     );
-
-    // Notify the user
-    await createNotification({
-      userId: nextRes.userId,
-      type: 'reservation_ready',
-      message: `A book you reserved is now ready to be picked up!`,
-      relatedBookId: bookId
-    });
-
-    return nextRes;
+    return nextHold;
   }
   return null;
 };
 
 module.exports = {
-  joinQueue,
-  leaveQueue,
-  promoteNext
+  placeHold,
+  getQueuePosition,
+  promoteNextHold,
 };

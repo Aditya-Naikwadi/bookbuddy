@@ -5,7 +5,7 @@ const {
   repairStreak,
   getStickerCatalog,
   getMyStickers,
-  getRewardsLadder
+  getRewardsLadder,
 } = require('../controllers/streakController');
 const { protect } = require('../middlewares/auth');
 

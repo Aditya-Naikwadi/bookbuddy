@@ -1,42 +1,54 @@
+// Schema representing overdue loan fines.
 const mongoose = require('mongoose');
 
-const fineSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
+const fineSchema = new mongoose.Schema(
+  {
+    collegeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'College',
+      required: true,
+      index: true,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+    loanId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Loan',
+      required: true,
+      index: true,
+    },
+    overdueDays: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    amount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    status: {
+      type: String,
+      enum: ['unpaid', 'paid', 'waived'],
+      default: 'unpaid',
+      index: true,
+    },
+    paidAt: {
+      type: Date,
+      default: null,
+    },
   },
-  loanId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Loan',
-    required: true,
-  },
-  amount: {
-    type: Number,
-    required: true,
-  },
-  ratePerDay: {
-    type: Number,
-    required: true,
-    default: 5, // e.g., ₹5/day
-  },
-  daysOverdue: {
-    type: Number,
-    required: true,
-  },
-  status: {
-    type: String,
-    enum: ['unpaid', 'paid', 'waived'],
-    default: 'unpaid',
-  },
-  paidAt: {
-    type: Date,
-  },
-  paymentRef: {
-    type: String,
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true,
-});
+);
+
+// Compound indexes
+fineSchema.index({ userId: 1, status: 1 });
+fineSchema.index({ collegeId: 1, status: 1 });
 
 module.exports = mongoose.model('Fine', fineSchema);

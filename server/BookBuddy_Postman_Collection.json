@@ -1,0 +1,325 @@
+{
+  "info": {
+    "_postman_id": "8b3f8f11-7443-4bbf-bb87-6e6912384a86",
+    "name": "BookBuddy API - Production & Dev Portal",
+    "description": "Comprehensive Postman collection containing all route groupings for students, college admins, and super admins across all phases of development.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register Student/Admin",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"STU_007\",\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane.smith@college.edu\",\n  \"password\": \"securepassword123\",\n  \"collegeId\": \"60d21b4667d0d8992e610d85\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane.smith@college.edu\",\n  \"password\": \"securepassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Access Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "refresh"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Student Dashboard",
+      "item": [
+        {
+          "name": "Get Book Catalog",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboards/student/catalog",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboards", "student", "catalog"]
+            }
+          }
+        },
+        {
+          "name": "Place Book Reservation (Hold)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": \"60d21b4667d0d8992e610d86\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/dashboards/student/reservations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboards", "student", "reservations"]
+            }
+          }
+        },
+        {
+          "name": "Book Lab Seat Timeslot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"seatId\": \"60d21b4667d0d8992e610d88\",\n  \"startTime\": \"2026-07-15T09:00:00.000Z\",\n  \"endTime\": \"2026-07-15T11:00:00.000Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/dashboards/student/lab-bookings",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboards", "student", "lab-bookings"]
+            }
+          }
+        },
+        {
+          "name": "Get Streak Progress",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboards/student/streak",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboards", "student", "streak"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "College Admin Dashboard",
+      "item": [
+        {
+          "name": "Checkout Book (Staff Override)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"60d21b4667d0d8992e610d87\",\n  \"bookId\": \"60d21b4667d0d8992e610d86\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/dashboards/college-admin/circulation/checkout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboards", "college-admin", "circulation", "checkout"]
+            }
+          }
+        },
+        {
+          "name": "Return Book (Staff Override)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loanId\": \"60d21b4667d0d8992e610d8b\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/dashboards/college-admin/circulation/return",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboards", "college-admin", "circulation", "return"]
+            }
+          }
+        },
+        {
+          "name": "Get College Analytics Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboards/college-admin/analytics/summary",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboards", "college-admin", "analytics", "summary"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Super Admin Portal",
+      "item": [
+        {
+          "name": "Onboard College Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{super_admin_access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"ADMIN_NEW_01\",\n  \"name\": \"Dean Watson\",\n  \"email\": \"dean.watson@inst.edu\",\n  \"password\": \"secureadminpass123\",\n  \"collegeId\": \"60d21b4667d0d8992e610d85\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/dashboards/admin-portal/admins",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboards", "admin-portal", "admins"]
+            }
+          }
+        },
+        {
+          "name": "Get Global System Audit Trail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{super_admin_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboards/admin-portal/audit-trail?limit=25",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboards", "admin-portal", "audit-trail"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "25"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "super_admin_access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

@@ -21,13 +21,13 @@ const normalizeBook = (book) => {
     source: 'gutenberg',
     externalId: book.id,
     title: book.title,
-    author: book.authors?.map(a => a.name).join(', ') || 'Unknown Author',
+    author: book.authors?.map((a) => a.name).join(', ') || 'Unknown Author',
     category: book.subjects?.[0] || 'Public Domain',
     language: book.languages?.[0] || 'en',
     coverImage: book.formats?.['image/jpeg'] || null,
     readUrl: book.formats?.['text/html'] || null,
     epubUrl: book.formats?.['application/epub+zip'] || null,
-    downloadCount: book.download_count || 0
+    downloadCount: book.download_count || 0,
   };
 };
 
@@ -49,16 +49,16 @@ const searchBooks = async ({ search, language, topic, page }) => {
 
   try {
     const response = await axios.get(`${BASE_URL}/books?${queryStr}`, { timeout: TIMEOUT_MS });
-    
+
     const normalizedData = {
       totalCount: response.data.count,
       nextPage: response.data.next ? new URL(response.data.next).searchParams.get('page') : null,
-      items: response.data.results.map(normalizeBook)
+      items: response.data.results.map(normalizeBook),
     };
 
     // Store in cache
     cache.set(cacheKey, normalizedData);
-    
+
     return normalizedData;
   } catch (error) {
     console.error(`[Gutendex Service] Error searching books: ${error.message}`);
@@ -77,9 +77,9 @@ const getBookById = async (gutenbergId) => {
   try {
     const response = await axios.get(`${BASE_URL}/books/${gutenbergId}`, { timeout: TIMEOUT_MS });
     const normalizedBook = normalizeBook(response.data);
-    
+
     cache.set(cacheKey, normalizedBook);
-    
+
     return normalizedBook;
   } catch (error) {
     console.error(`[Gutendex Service] Error fetching book ${gutenbergId}: ${error.message}`);
@@ -90,5 +90,5 @@ const getBookById = async (gutenbergId) => {
 module.exports = {
   searchBooks,
   getBookById,
-  UpstreamUnavailableError
+  UpstreamUnavailableError,
 };

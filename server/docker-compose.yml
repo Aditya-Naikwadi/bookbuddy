@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - '5000:5000'
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - MONGO_URI=mongodb://db:27017/bookbuddy
+      - JWT_SECRET=supersecret123
+      - JWT_REFRESH_SECRET=supersecretrefresh123
+      - CLIENT_URL=http://localhost:5173
+      - CLIENT_ORIGIN=http://localhost:5173
+      - JWT_ACCESS_EXPIRY=15m
+      - JWT_REFRESH_EXPIRY=7d
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: mongo:6.0
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    restart: always
+
+volumes:
+  mongo_data:

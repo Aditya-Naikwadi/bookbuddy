@@ -1,62 +1,66 @@
+// Schema representing digital library documents, textbooks, and resources.
 const mongoose = require('mongoose');
 
-const eResourceSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
+const eResourceSchema = new mongoose.Schema(
+  {
+    collegeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'College',
+      required: true,
+      index: true,
+    },
+    title: {
+      type: String,
+      required: true,
+    },
+    author: {
+      type: String,
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: ['pdf', 'epub', 'journal'],
+      required: true,
+    },
+    fileUrl: {
+      type: String,
+      required: true,
+    },
+    uploadedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    moderationStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+      index: true,
+    },
+    moderationNote: {
+      type: String,
+    },
+    moderatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    moderatedAt: {
+      type: Date,
+      default: null,
+    },
+    category: {
+      type: String,
+      required: true,
+      index: true,
+    },
   },
-  category: {
-    type: String,
-    enum: ['Past Exam Papers', 'Research Journals', 'Faculty Publications', 'Open Access', 'Public Domain', 'Textbook'],
-    required: true,
-  },
-  type: {
-    type: String, // PDF, EPUB, HTML etc.
-    default: 'PDF'
-  },
-  sizeMB: {
-    type: Number,
-  },
-  url: {
-    type: String, // Kept for backward compatibility with internal resources
-  },
-  source: { 
-    type: String, 
-    enum: ['internal', 'gutenberg'], 
-    default: 'internal' 
-  },
-  externalId: { 
-    type: Number, 
-    default: null 
-  }, // Gutendex book id when source = 'gutenberg'
-  readUrl: {
-    type: String
-  },
-  epubUrl: {
-    type: String
-  },
-  downloadCount: {
-    type: Number
-  },
-  uploadedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
-  accessLevel: {
-    type: String,
-    enum: ['public', 'student', 'faculty'],
-    default: 'student',
-  },
-  status: {
-    type: String,
-    enum: ['pending_review', 'approved', 'rejected'],
-    default: 'pending_review',
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true,
-});
+);
 
-// Sparse unique index to prevent duplicate Gutendex imports
-eResourceSchema.index({ source: 1, externalId: 1 }, { unique: true, sparse: true });
+// Compound index for listing approved resources by category
+eResourceSchema.index({ collegeId: 1, moderationStatus: 1, category: 1 });
 
 module.exports = mongoose.model('EResource', eResourceSchema);

@@ -9,7 +9,7 @@ const { recordQualifyingAction } = require('../services/streakService');
 // @access  Private
 const listExternal = asyncHandler(async (req, res) => {
   const { search, language, topic, page } = req.query;
-  
+
   try {
     const data = await gutenbergService.searchBooks({ search, language, topic, page });
     res.json({ success: true, data });
@@ -37,7 +37,7 @@ const getExternalDetail = asyncHandler(async (req, res) => {
 // @access  Private
 const openExternal = asyncHandler(async (req, res) => {
   const { gutenbergId } = req.params;
-  
+
   // 1. Check if it already exists in our DB
   let resource = await EResource.findOne({ source: 'gutenberg', externalId: gutenbergId });
 
@@ -45,7 +45,7 @@ const openExternal = asyncHandler(async (req, res) => {
   if (!resource) {
     try {
       const bookData = await gutenbergService.getBookById(gutenbergId);
-      
+
       resource = await EResource.create({
         title: bookData.title,
         category: 'Open Access', // Default mapped category
@@ -57,7 +57,7 @@ const openExternal = asyncHandler(async (req, res) => {
         epubUrl: bookData.epubUrl,
         downloadCount: bookData.downloadCount,
         accessLevel: 'public',
-        status: 'approved'
+        status: 'approved',
       });
     } catch (error) {
       res.status(error.statusCode || 500);
@@ -73,7 +73,7 @@ const openExternal = asyncHandler(async (req, res) => {
 // @access  Private
 const proxyContent = asyncHandler(async (req, res) => {
   const resource = await EResource.findById(req.params.id);
-  
+
   if (!resource || resource.source !== 'gutenberg') {
     res.status(404);
     throw new Error('Resource not found or is not an external resource');
@@ -92,13 +92,13 @@ const proxyContent = asyncHandler(async (req, res) => {
     const response = await axios({
       method: 'GET',
       url: targetUrl,
-      responseType: 'stream'
+      responseType: 'stream',
     });
 
     // Pass along headers
     res.setHeader('Content-Type', response.headers['content-type']);
     res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache proxied content for 1 hour
-    
+
     response.data.pipe(res);
   } catch (error) {
     console.error(`[Proxy Content] Failed to fetch ${targetUrl}`);
@@ -112,7 +112,7 @@ const proxyContent = asyncHandler(async (req, res) => {
 // @access  Private
 const updateReadingProgress = asyncHandler(async (req, res) => {
   const { readingTimeMinutes } = req.body;
-  
+
   // In a real implementation we'd save this to a ReadingProgress model,
   // but for the streak requirement, we just verify it's >= 3 minutes.
   if (readingTimeMinutes >= 3) {
@@ -130,5 +130,5 @@ module.exports = {
   getExternalDetail,
   openExternal,
   proxyContent,
-  updateReadingProgress
+  updateReadingProgress,
 };

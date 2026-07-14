@@ -14,7 +14,9 @@ const validate = (schema) => (req, res, next) => {
     next();
   } catch (err) {
     // Collect all Zod error messages
-    const errorMessages = err.errors ? err.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') : err.message;
+    const errorMessages = err.errors
+      ? err.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')
+      : err.message;
     next(new AppError(`Validation Error: ${errorMessages}`, 400));
   }
 };

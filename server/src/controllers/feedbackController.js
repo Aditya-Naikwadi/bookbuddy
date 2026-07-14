@@ -6,13 +6,13 @@ const Feedback = require('../models/Feedback');
 // @access  Private
 const submitFeedback = asyncHandler(async (req, res) => {
   const { rating, category, comment, isAnonymous } = req.body;
-  
+
   const feedback = await Feedback.create({
     userId: isAnonymous ? null : req.user._id,
     rating,
     category,
     comment,
-    isAnonymous
+    isAnonymous,
   });
 
   res.status(201).json({ success: true, data: feedback });

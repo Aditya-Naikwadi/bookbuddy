@@ -18,15 +18,12 @@ const listInternalResources = asyncHandler(async (req, res) => {
   }
 
   const total = await EResource.countDocuments(query);
-  const resources = await EResource.find(query)
-    .skip(skip)
-    .limit(limit)
-    .sort('-createdAt');
+  const resources = await EResource.find(query).skip(skip).limit(limit).sort('-createdAt');
 
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     data: resources,
-    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
 });
 
@@ -35,8 +32,9 @@ const listInternalResources = asyncHandler(async (req, res) => {
 // @access  Private
 const updateProgress = asyncHandler(async (req, res) => {
   const { dailySecondsToday } = req.body;
-  
-  if (dailySecondsToday >= 180) { // 3 minutes = 180 seconds
+
+  if (dailySecondsToday >= 180) {
+    // 3 minutes = 180 seconds
     await recordQualifyingAction(req.user._id, 'eresource');
   }
 
@@ -45,5 +43,5 @@ const updateProgress = asyncHandler(async (req, res) => {
 
 module.exports = {
   listInternalResources,
-  updateProgress
+  updateProgress,
 };

@@ -16,10 +16,10 @@ const getMySavedSearches = asyncHandler(async (req, res) => {
     .limit(limit)
     .sort('-createdAt');
 
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     data: searches,
-    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
 });
 
@@ -32,7 +32,7 @@ const createSavedSearch = asyncHandler(async (req, res) => {
   const search = await SavedSearch.create({
     userId: req.user._id,
     label,
-    filters
+    filters,
   });
 
   res.json({ success: true, data: search });
@@ -40,5 +40,5 @@ const createSavedSearch = asyncHandler(async (req, res) => {
 
 module.exports = {
   getMySavedSearches,
-  createSavedSearch
+  createSavedSearch,
 };

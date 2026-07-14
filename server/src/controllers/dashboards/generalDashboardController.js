@@ -9,11 +9,11 @@ const searchPublicCatalog = asyncHandler(async (req, res) => {
   const { keyword, category, author } = req.query;
 
   const query = {};
-  
+
   if (keyword) {
     query.$or = [
       { title: { $regex: keyword, $options: 'i' } },
-      { description: { $regex: keyword, $options: 'i' } }
+      { description: { $regex: keyword, $options: 'i' } },
     ];
   }
 
@@ -30,7 +30,7 @@ const searchPublicCatalog = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: books,
-    count: books.length
+    count: books.length,
   });
 });
 
@@ -40,11 +40,11 @@ const searchPublicCatalog = asyncHandler(async (req, res) => {
 const getPublicEResources = asyncHandler(async (req, res) => {
   // Only return resources meant for public viewing
   const resources = await EResource.find({ accessLevel: 'public', status: 'approved' }).limit(50);
-  
+
   res.json({
     success: true,
     data: resources,
-    count: resources.length
+    count: resources.length,
   });
 });
 
@@ -53,7 +53,10 @@ const getPublicEResources = asyncHandler(async (req, res) => {
 // @access  Public
 const getGeneralDashboardSummary = asyncHandler(async (req, res) => {
   const totalCatalogBooks = await Book.countDocuments();
-  const publicResources = await EResource.countDocuments({ accessLevel: 'public', status: 'approved' });
+  const publicResources = await EResource.countDocuments({
+    accessLevel: 'public',
+    status: 'approved',
+  });
 
   res.json({
     success: true,
@@ -61,13 +64,13 @@ const getGeneralDashboardSummary = asyncHandler(async (req, res) => {
       totalCatalogBooks,
       publicResources,
       libraryHours: '8:00 AM - 10:00 PM',
-      announcements: 'Welcome to BookBuddy Open Catalog.'
-    }
+      announcements: 'Welcome to BookBuddy Open Catalog.',
+    },
   });
 });
 
 module.exports = {
   searchPublicCatalog,
   getPublicEResources,
-  getGeneralDashboardSummary
+  getGeneralDashboardSummary,
 };

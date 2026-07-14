@@ -16,17 +16,17 @@ const getMyFines = asyncHandler(async (req, res) => {
       path: 'loanId',
       populate: {
         path: 'bookId',
-        select: 'title'
-      }
+        select: 'title',
+      },
     })
     .skip(skip)
     .limit(limit)
     .sort({ createdAt: -1 });
 
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     data: fines,
-    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
 });
 
@@ -35,7 +35,7 @@ const getMyFines = asyncHandler(async (req, res) => {
 // @access  Private
 const getMyFinesSummary = asyncHandler(async (req, res) => {
   const fines = await Fine.find({ userId: req.user._id, status: 'unpaid' });
-  
+
   const totalUnpaid = fines.reduce((acc, fine) => acc + fine.amount, 0);
 
   res.json({ success: true, data: { totalUnpaid, unpaidCount: fines.length } });

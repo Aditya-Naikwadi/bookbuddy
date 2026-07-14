@@ -1,6 +1,7 @@
 const Fine = require('../models/Fine');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
+const notificationService = require('./notificationService');
 
 const calculateFine = async (loan) => {
   // If not overdue, no fine
@@ -18,13 +19,23 @@ const calculateFine = async (loan) => {
   const amount = diffDays * ratePerDay;
 
   const fine = await Fine.create({
+    collegeId: loan.collegeId,
     userId: loan.userId,
     loanId: loan._id,
     amount,
     ratePerDay,
     daysOverdue: diffDays,
-    status: 'unpaid'
+    overdueDays: diffDays,
+    status: 'unpaid',
   });
+
+  await notificationService.notify(
+    loan.userId,
+    'fine_issued',
+    `You have been issued a fine of ${amount} for an overdue book.`,
+    fine._id,
+    'Fine'
+  );
 
   return fine;
 };
@@ -63,5 +74,5 @@ const payFine = async (fineId, userId, useWaiver = false) => {
 
 module.exports = {
   calculateFine,
-  payFine
+  payFine,
 };

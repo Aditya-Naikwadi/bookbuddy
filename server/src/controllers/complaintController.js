@@ -7,12 +7,12 @@ const Complaint = require('../models/Complaint');
 const submitComplaint = asyncHandler(async (req, res) => {
   const { subject, description } = req.body;
   const ticketId = 'TKT-' + Math.floor(100000 + Math.random() * 900000);
-  
+
   const complaint = await Complaint.create({
     userId: req.user._id,
     ticketId,
     subject,
-    description
+    description,
   });
 
   res.status(201).json({ success: true, data: complaint });

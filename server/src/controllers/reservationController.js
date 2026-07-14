@@ -26,12 +26,15 @@ const getMyReservations = asyncHandler(async (req, res) => {
     .limit(limit)
     .sort('-createdAt');
 
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     data: reservations,
     pagination: {
-      page, limit, total, totalPages: Math.ceil(total / limit)
-    }
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
   });
 });
 
@@ -46,5 +49,5 @@ const leaveQueueHandler = asyncHandler(async (req, res) => {
 module.exports = {
   joinQueueHandler,
   getMyReservations,
-  leaveQueueHandler
+  leaveQueueHandler,
 };

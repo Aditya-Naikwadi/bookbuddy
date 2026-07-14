@@ -1,182 +1,164 @@
+const mongoose = require('mongoose');
 const Streak = require('../models/Streak');
-const User = require('../models/User');
+const StreakReward = require('../models/StreakReward');
 const Sticker = require('../models/Sticker');
 const UserSticker = require('../models/UserSticker');
-const StreakReward = require('../models/StreakReward');
-const Loan = require('../models/Loan');
+const notificationService = require('./notificationService');
+const { emitStreakUpdate } = require('../sockets');
+const AppError = require('../utils/AppError');
+
+// Config-driven list of qualifying action types
+const QUALIFYING_ACTIONS = ['checkout', 'return', 'on_time_renewal', 'lab_booking'];
 
 /**
  * Helper to get the local YYYY-MM-DD string for a user's timezone.
  */
 const getLocalDateString = (dateObj, timezone) => {
   try {
-    return dateObj.toLocaleDateString('en-CA', { timeZone: timezone });
+    return new Date(dateObj).toLocaleDateString('en-CA', { timeZone: timezone });
   } catch (err) {
     // Fallback if timezone is invalid
-    return dateObj.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    return new Date(dateObj).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
   }
 };
 
 /**
- * Returns a new Date object shifted by N days.
+ * Records a qualifying user action and updates their daily streak.
+ * 
+ * CRITICAL: This is the ONLY function permitted to write to the Streak collection.
  */
-const addDays = (dateObj, days) => {
-  const newDate = new Date(dateObj.valueOf());
-  newDate.setDate(newDate.getDate() + days);
-  return newDate;
-};
-
-const checkAndAwardStickers = async (userId) => {
-  const newStickers = [];
-  const streak = await Streak.findOne({ userId });
-  if (!streak) return newStickers;
-
-  const allStickers = await Sticker.find();
-  const earnedStickers = await UserSticker.find({ userId });
-  const earnedCodes = new Set(earnedStickers.map(s => s.stickerCode));
-
-  // Determine current stats
-  const currentDays = streak.currentStreak;
-  
-  // Example: genres, lab counts, etc. In a real system, you'd aggregate these.
-  // For demo purposes, we will mostly evaluate 'streak_days' criteria here.
-  for (const sticker of allStickers) {
-    if (earnedCodes.has(sticker.code)) continue;
-
-    let qualified = false;
-    if (sticker.criteriaType === 'streak_days') {
-      if (currentDays >= sticker.criteriaValue) qualified = true;
-    }
-    // Implement other criteria aggregations as needed (e.g. genre_count)...
-
-    if (qualified) {
-      await UserSticker.create({ userId, stickerCode: sticker.code });
-      newStickers.push(sticker);
-    }
+const recordQualifyingAction = async (userId, collegeId, actionType) => {
+  // 1. Verify if the action type is qualifying
+  if (!QUALIFYING_ACTIONS.includes(actionType)) {
+    // If not qualifying, do nothing
+    return null;
   }
 
-  return newStickers;
-};
-
-const recordQualifyingAction = async (userId, actionType) => {
-  const user = await User.findById(userId);
-  if (!user) return;
-
-  const timezone = user.timezone || 'Asia/Kolkata';
   const now = new Date();
-  const todayStr = getLocalDateString(now, timezone);
-  const yesterdayStr = getLocalDateString(addDays(now, -1), timezone);
-
   let streak = await Streak.findOne({ userId });
 
   if (!streak) {
-    // First time ever
+    // First time ever creating a streak for this user
     streak = await Streak.create({
       userId,
+      collegeId,
       currentStreak: 1,
-      longestStreak: 1,
-      lastQualifyingDate: todayStr
+      maxStreak: 1,
+      freezesAvailable: 2,
+      lastQualifyingActionAt: now,
+      timezone: 'Asia/Kolkata', // default
     });
   } else {
-    // If already qualified today, do nothing
-    if (streak.lastQualifyingDate === todayStr) {
-      return; // No-op
+    const timezone = streak.timezone || 'Asia/Kolkata';
+    const todayStr = getLocalDateString(now, timezone);
+
+    // Compute dates for yesterday and two days ago in local user timezone
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const yesterdayStr = getLocalDateString(yesterday, timezone);
+
+    const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    const twoDaysAgoStr = getLocalDateString(twoDaysAgo, timezone);
+
+    const lastActionDateStr = getLocalDateString(streak.lastQualifyingActionAt, timezone);
+
+    if (lastActionDateStr === todayStr) {
+      // Already performed a qualifying action today: no-op for streak count
+      streak.lastQualifyingActionAt = now;
+      await streak.save();
+      emitStreakUpdate(userId, streak);
+      return streak;
     }
 
-    if (streak.lastQualifyingDate === yesterdayStr) {
-      // Continuous streak!
+    if (lastActionDateStr === yesterdayStr) {
+      // Continuous streak increment
+      streak.currentStreak += 1;
+    } else if (lastActionDateStr === twoDaysAgoStr && streak.freezesAvailable > 0) {
+      // Missed yesterday but has a freeze: consume freeze and treat as continuous
+      streak.freezesAvailable -= 1;
       streak.currentStreak += 1;
     } else {
-      // Gap in streak
-      const gapDateStr = getLocalDateString(addDays(now, -2), timezone);
-      
-      // If the last qualifying date was exactly 2 days ago and they have a freeze
-      if (streak.lastQualifyingDate === gapDateStr && streak.freezesAvailable > 0) {
-        streak.freezesAvailable -= 1;
-        streak.freezesUsedTotal += 1;
-        streak.currentStreak += 1; // Treat as continuous
-      } else {
-        // Streak broken
-        streak.currentStreak = 1;
-      }
+      // Gap is wider: reset streak to 1
+      streak.currentStreak = 1;
     }
 
-    if (streak.currentStreak > streak.longestStreak) {
-      streak.longestStreak = streak.currentStreak;
+    if (streak.currentStreak > streak.maxStreak) {
+      streak.maxStreak = streak.currentStreak;
     }
 
-    streak.lastQualifyingDate = todayStr;
-
-    // Award freeze if they hit a multiple of 7
-    if (streak.currentStreak % 7 === 0 && streak.freezesAvailable < 2) {
-      streak.freezesAvailable += 1;
-    }
-
+    streak.lastQualifyingActionAt = now;
     await streak.save();
   }
 
-  // Check milestone rewards
-  const newRewards = [];
-  const rewardDef = await StreakReward.findOne({ streakDays: streak.currentStreak });
-  if (rewardDef) {
-    // Apply reward
-    if (rewardDef.rewardType === 'freeze' && streak.freezesAvailable < 2) {
-      streak.freezesAvailable += 1;
+  // 2. Check and process StreakReward milestones crossed by the new currentStreak
+  const rewards = await StreakReward.find({ milestoneThreshold: streak.currentStreak });
+  for (const reward of rewards) {
+    if (reward.rewardType === 'freeze') {
+      const addedFreezes = parseInt(reward.rewardValue, 10) || 0;
+      streak.freezesAvailable += addedFreezes;
       await streak.save();
-    } else if (rewardDef.rewardType === 'bonus_renewal') {
-      user.bonusRenewalsAvailable = (user.bonusRenewalsAvailable || 0) + 1;
-      await user.save();
-    } else if (rewardDef.rewardType === 'fine_waiver') {
-      user.fineWaiverCoupons = (user.fineWaiverCoupons || 0) + 1;
-      await user.save();
+
+      await notificationService.notify(
+        userId,
+        'streak_milestone',
+        `Milestone reached! You earned ${addedFreezes} extra streak freezes.`,
+        reward._id,
+        'StreakReward'
+      );
+    } else if (reward.rewardType === 'badge') {
+      // Try to find a sticker with name or ID matching the badge value
+      let sticker = await Sticker.findOne({ name: reward.rewardValue });
+      if (!sticker && mongoose.isValidObjectId(reward.rewardValue)) {
+        sticker = await Sticker.findById(reward.rewardValue);
+      }
+
+      if (sticker) {
+        // Unlock UserSticker if not already earned
+        const userStickerExists = await UserSticker.findOne({ userId, stickerId: sticker._id });
+        if (!userStickerExists) {
+          await UserSticker.create({ userId, stickerId: sticker._id });
+          await notificationService.notify(
+            userId,
+            'streak_milestone',
+            `Congratulations! You unlocked the "${sticker.name}" sticker for reaching your ${streak.currentStreak}-day streak milestone!`,
+            sticker._id,
+            'Sticker'
+          );
+        }
+      }
+    } else if (reward.rewardType === 'theme') {
+      await notificationService.notify(
+        userId,
+        'streak_milestone',
+        `Milestone reached! You unlocked the visual theme: ${reward.rewardValue}.`,
+        reward._id,
+        'StreakReward'
+      );
     }
-    newRewards.push(rewardDef);
   }
 
-  // Check stickers
-  const newStickers = await checkAndAwardStickers(userId);
+  // 3. Emit updated streak live via socket
+  emitStreakUpdate(userId, streak);
 
-  // Emit event via Socket.io (Requires app.get('io'))
-  // This will be called globally wherever we pass `req.app` or if we have a global io instance
-  // Since we don't have req here, we'll return the payload so the controller can emit it.
-  
-  return {
-    streak,
-    newStickers,
-    newRewards
-  };
+  return streak;
 };
 
-const useStreakRepair = async (userId) => {
-  const user = await User.findById(userId);
-  if (!user) throw new Error('User not found');
-  
-  const streak = await Streak.findOne({ userId });
-  if (!streak) throw new Error('No streak found');
-  if (streak.repairUsedThisMonth) throw new Error('Repair already used this month');
-
-  const timezone = user.timezone || 'Asia/Kolkata';
-  const now = new Date();
-  const yesterdayStr = getLocalDateString(addDays(now, -1), timezone);
-  const twoDaysAgoStr = getLocalDateString(addDays(now, -2), timezone);
-
-  // The repair is meant to be used when `lastQualifyingDate` was exactly 2 days ago (missed yesterday)
-  if (streak.lastQualifyingDate !== twoDaysAgoStr) {
-    throw new Error('Streak repair can only restore a break that happened yesterday');
+const getOrCreateStreak = async (userId, collegeId) => {
+  let streak = await Streak.findOne({ userId });
+  if (!streak) {
+    streak = await Streak.create({
+      userId,
+      collegeId,
+      currentStreak: 0,
+      maxStreak: 0,
+      freezesAvailable: 2,
+      timezone: 'Asia/Kolkata',
+    });
   }
-
-  // Restore the streak
-  streak.repairUsedThisMonth = true;
-  streak.lastQualifyingDate = yesterdayStr; // Artificially plug the gap
-  // The user will still need to do an action TODAY to increment it, 
-  // but at least it won't reset to 1 when they do.
-  
-  await streak.save();
   return streak;
 };
 
 module.exports = {
   recordQualifyingAction,
-  checkAndAwardStickers,
-  useStreakRepair
+  getLocalDateString,
+  getOrCreateStreak,
 };

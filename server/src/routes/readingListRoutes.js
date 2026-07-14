@@ -5,19 +5,20 @@ const {
   getListById,
   createList,
   updateList,
-  deleteList
+  deleteList,
 } = require('../controllers/readingListController');
 const { protect } = require('../middlewares/auth');
+const validate = require('../middlewares/validate');
+const { paramIdSchema } = require('../validations/common.validation');
+const { createReadingListSchema, updateReadingListSchema } = require('../validations/personalization.validation');
 
 router.use(protect);
 
-router.route('/')
-  .get(getLists)
-  .post(createList);
+router.route('/').get(getLists).post(validate(createReadingListSchema), createList);
 
 router.route('/:id')
-  .get(getListById)
-  .patch(updateList)
-  .delete(deleteList);
+  .get(validate(paramIdSchema), getListById)
+  .patch(validate(paramIdSchema), validate(updateReadingListSchema), updateList)
+  .delete(validate(paramIdSchema), deleteList);
 
 module.exports = router;

@@ -3,7 +3,7 @@ const router = express.Router();
 const {
   searchPublicCatalog,
   getPublicEResources,
-  getGeneralDashboardSummary
+  getGeneralDashboardSummary,
 } = require('../../controllers/dashboards/generalDashboardController');
 
 // All General Dashboard routes are PUBLIC (no auth middleware)

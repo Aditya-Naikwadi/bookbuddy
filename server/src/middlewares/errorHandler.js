@@ -1,26 +1,31 @@
-const AppError = require('../utils/AppError');
+const config = require('../config');
+const logger = require('../utils/logger');
+const { sendAlert } = require('../utils/alerting');
 
-const notFound = (req, res, next) => {
-  const error = new AppError(`Not Found - ${req.originalUrl}`, 404);
-  next(error);
-};
+// eslint-disable-next-line no-unused-vars
+const errorHandler = (err, req, res, _next) => {
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'Internal Server Error';
+  const requestId = req.id || 'N/A';
 
-const errorHandler = (err, req, res, next) => {
-  let statusCode = err.statusCode || (res.statusCode === 200 ? 500 : res.statusCode);
-  let message = err.message;
-
-  // If Mongoose not found error
-  if (err.name === 'CastError' && err.kind === 'ObjectId') {
-    statusCode = 404;
-    message = 'Resource not found';
+  // Log error based on operational vs non-operational status
+  if (err.isOperational) {
+    logger.warn(`Operational Error [${statusCode}]: ${message}`, { requestId });
+  } else {
+    logger.error(`Unexpected Error [${statusCode}]: ${message}`, { stack: err.stack, requestId });
+    // Dispatch alert for non-operational errors
+    sendAlert(err, req);
   }
 
-  res.status(statusCode).json({
+  const response = {
     success: false,
     message,
-    errors: err.errors || undefined,
-    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
-  });
+    code: statusCode,
+    requestId,
+    ...(config.nodeEnv === 'development' && { stack: err.stack }),
+  };
+
+  res.status(statusCode).json(response);
 };
 
-module.exports = { notFound, errorHandler };
+module.exports = errorHandler;

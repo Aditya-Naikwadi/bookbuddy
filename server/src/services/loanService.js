@@ -1,131 +1,144 @@
+// Business logic service managing book checkout, return, and renewals.
 const Loan = require('../models/Loan');
 const Book = require('../models/Book');
-const User = require('../models/User');
 const Reservation = require('../models/Reservation');
+const Fine = require('../models/Fine');
 const AppError = require('../utils/AppError');
-const { emitAvailabilityUpdate } = require('../sockets');
-const { recordQualifyingAction } = require('./streakService');
-const { calculateFine } = require('./fineService');
-const { promoteNext } = require('./reservationService');
+const config = require('../config');
+const streakService = require('./streakService');
+const notificationService = require('./notificationService');
+const reservationService = require('./reservationService');
 
-const borrowBook = async (userId, bookId) => {
-  const book = await Book.findById(bookId);
-  if (!book) {
-    throw new AppError('Book not found', 404);
+const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
+  // 1. Check unpaid fines limit
+  const unpaidFines = await Fine.find({ userId, status: 'unpaid' });
+  const totalUnpaidFine = unpaidFines.reduce((sum, f) => sum + f.amount, 0);
+  if (totalUnpaidFine > config.unpaidFineLimit) {
+    throw new AppError(
+      `User has unpaid fines of ${totalUnpaidFine}, exceeding the limit of ${config.unpaidFineLimit}.`,
+      400
+    );
   }
 
-  if (book.availableCopies <= 0) {
-    throw new AppError('No copies available. Please join the queue.', 400);
-  }
-
-  // Check if user already has this book active
+  // 2. Check if user already has this book checked out active
   const existingLoan = await Loan.findOne({ userId, bookId, status: 'active' });
   if (existingLoan) {
-    throw new AppError('You have already borrowed this book', 400);
+    throw new AppError('User already has an active loan for this book.', 400);
   }
 
-  // Create Loan
-  const dueDate = new Date();
-  dueDate.setDate(dueDate.getDate() + 14); // 14 days default
-
-  const loan = await Loan.create({
-    userId,
+  // 3. Check queue priority: if someone else is waiting at the front of the queue, reject
+  const frontReservation = await Reservation.findOne({
     bookId,
-    dueDate,
-    status: 'active'
-  });
+    status: { $in: ['queued', 'ready_for_pickup'] },
+  }).sort('queuePosition');
 
-  // Decrement copies
-  book.availableCopies -= 1;
-  if (book.availableCopies === 0) {
-    book.availabilityStatus = 'checked_out';
+  if (frontReservation && frontReservation.userId.toString() !== userId.toString()) {
+    throw new AppError('This book is reserved for another user next in the queue.', 400);
   }
-  await book.save();
 
-  // Side effects
-  emitAvailabilityUpdate(bookId, { availableCopies: book.availableCopies, status: book.availabilityStatus });
-  await recordQualifyingAction(userId, 'borrow');
+  // 4. Atomic copiesAvailable decrement
+  const book = await Book.findOneAndUpdate(
+    { _id: bookId, collegeId, copiesAvailable: { $gt: 0 } },
+    { $inc: { copiesAvailable: -1 } },
+    { new: true }
+  );
+  if (!book) {
+    throw new AppError('No copies available for this book.', 400);
+  }
+
+  try {
+    // Fulfill reservation if this user was at the front
+    if (frontReservation && frontReservation.userId.toString() === userId.toString()) {
+      frontReservation.status = 'fulfilled';
+      await frontReservation.save();
+    }
+
+    // 5. Create active Loan record
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + config.loanPeriodDays);
+
+    const loan = await Loan.create({
+      collegeId,
+      userId,
+      bookId,
+      issueDate: new Date(),
+      dueDate,
+      maxRenewals: config.maxRenewals,
+      status: 'active',
+      issuedBy,
+    });
+
+    await streakService.recordQualifyingAction(userId, collegeId, 'checkout');
+
+    return loan;
+  } catch (err) {
+    // Rollback the atomic decrement if loan creation failed
+    await Book.updateOne({ _id: bookId }, { $inc: { copiesAvailable: 1 } });
+    throw err;
+  }
+};
+
+const returnBook = async (loanId, collegeId) => {
+  // 1. Find active loan
+  const loan = await Loan.findOne({ _id: loanId, collegeId, status: { $in: ['active', 'overdue'] } });
+  if (!loan) {
+    throw new AppError('Active loan not found.', 404);
+  }
+
+  // 2. Update loan status
+  loan.status = 'returned';
+  loan.returnDate = new Date();
+  await loan.save();
+
+  // 3. Increment copies atomically
+  await Book.findOneAndUpdate({ _id: loan.bookId, collegeId }, { $inc: { copiesAvailable: 1 } });
+
+  // 4. Promote next hold reservation in queue (reusable service call)
+  await reservationService.promoteNextHold(loan.bookId, collegeId);
+
+  await streakService.recordQualifyingAction(loan.userId, collegeId, 'return');
 
   return loan;
 };
 
 const renewLoan = async (loanId, userId) => {
-  const loan = await Loan.findOne({ _id: loanId, userId });
+  // 1. Find active loan
+  const loan = await Loan.findOne({ _id: loanId, userId, status: 'active' });
   if (!loan) {
-    throw new AppError('Loan not found', 404);
+    throw new AppError('Active loan not found.', 404);
   }
 
-  if (loan.status !== 'active') {
-    throw new AppError('Can only renew active loans', 400);
+  // 2. Check if max renewals reached
+  if (loan.renewalCount >= loan.maxRenewals) {
+    throw new AppError('Maximum renewals reached.', 400);
   }
 
-  const user = await User.findById(userId);
-
-  // Check queue
-  const queueCount = await Reservation.countDocuments({ bookId: loan.bookId, status: 'waiting' });
-  if (queueCount > 0) {
-    throw new AppError('Cannot renew this book because other users are waiting in the queue.', 400);
+  // 3. Check if others are waiting in queue
+  const hasQueue = await Reservation.exists({
+    bookId: loan.bookId,
+    status: { $in: ['queued', 'ready_for_pickup'] },
+  });
+  if (hasQueue) {
+    throw new AppError('Cannot renew. Other users are waiting in the queue.', 400);
   }
 
-  // Check renewals available
-  const totalAllowed = loan.maxRenewals + (user.bonusRenewalsAvailable || 0);
-  if (loan.renewCount >= totalAllowed) {
-    throw new AppError('Maximum renewals reached', 400);
-  }
-
-  // Check if a bonus renewal is being consumed
-  if (loan.renewCount >= loan.maxRenewals) {
-    user.bonusRenewalsAvailable -= 1;
-    await user.save();
-  }
-
-  // Renew
+  // 4. Renew the loan
+  const isOnTime = new Date() <= new Date(loan.dueDate);
   const newDueDate = new Date(loan.dueDate);
-  newDueDate.setDate(newDueDate.getDate() + 14); // add 14 days
+  newDueDate.setDate(newDueDate.getDate() + config.loanPeriodDays);
   loan.dueDate = newDueDate;
-  loan.renewCount += 1;
+  loan.renewalCount += 1;
   await loan.save();
 
-  // Side effects
-  await recordQualifyingAction(userId, 'renew');
-
-  return loan;
-};
-
-const returnLoan = async (loanId, userId) => {
-  const loan = await Loan.findOne({ _id: loanId, userId });
-  if (!loan) {
-    throw new AppError('Loan not found', 404);
+  if (isOnTime) {
+    await streakService.recordQualifyingAction(userId, loan.collegeId, 'on_time_renewal');
   }
-
-  if (loan.status !== 'active') {
-    throw new AppError('Loan is already returned', 400);
-  }
-
-  // Mark returned
-  loan.status = 'returned';
-  loan.returnDate = new Date();
-  await loan.save();
-
-  // Increment copies
-  const book = await Book.findById(loan.bookId);
-  if (book) {
-    book.availableCopies += 1;
-    book.availabilityStatus = 'available';
-    await book.save();
-    emitAvailabilityUpdate(book._id, { availableCopies: book.availableCopies, status: book.availabilityStatus });
-  }
-
-  // Side effects
-  await calculateFine(loan);
-  await promoteNext(loan.bookId);
-  await recordQualifyingAction(userId, 'return');
 
   return loan;
 };
 
 module.exports = {
-  borrowBook,
+  checkoutBook,
+  returnBook,
   renewLoan,
-  returnLoan
 };

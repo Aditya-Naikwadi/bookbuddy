@@ -1,9 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const {
-  getStickerCatalog,
-  getMyStickers
-} = require('../controllers/streakController');
+const { getStickerCatalog, getMyStickers } = require('../controllers/streakController');
 const { protect } = require('../middlewares/auth');
 
 router.use(protect);

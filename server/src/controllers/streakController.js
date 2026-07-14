@@ -10,7 +10,7 @@ const { useStreakRepair } = require('../services/streakService');
 // @access  Private
 const getMyStreak = asyncHandler(async (req, res) => {
   let streak = await Streak.findOne({ userId: req.user._id });
-  
+
   if (!streak) {
     // If they have no streak doc yet, return a clean state
     return res.json({
@@ -20,14 +20,14 @@ const getMyStreak = asyncHandler(async (req, res) => {
         longestStreak: 0,
         lastQualifyingDate: null,
         freezesAvailable: 0,
-        todayComplete: false
-      }
+        todayComplete: false,
+      },
     });
   }
 
   const timezone = req.user.timezone || 'Asia/Kolkata';
   const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: timezone });
-  
+
   res.json({
     success: true,
     data: {
@@ -35,8 +35,8 @@ const getMyStreak = asyncHandler(async (req, res) => {
       longestStreak: streak.longestStreak,
       lastQualifyingDate: streak.lastQualifyingDate,
       freezesAvailable: streak.freezesAvailable,
-      todayComplete: streak.lastQualifyingDate === todayStr
-    }
+      todayComplete: streak.lastQualifyingDate === todayStr,
+    },
   });
 });
 
@@ -82,5 +82,5 @@ module.exports = {
   repairStreak,
   getStickerCatalog,
   getMyStickers,
-  getRewardsLadder
+  getRewardsLadder,
 };

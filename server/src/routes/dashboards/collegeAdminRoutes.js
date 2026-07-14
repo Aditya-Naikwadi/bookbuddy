@@ -1,3 +1,4 @@
+// College Admin Dashboard Route mounts.
 const express = require('express');
 const router = express.Router();
 const {
@@ -6,45 +7,82 @@ const {
   getPatronDetails,
   checkoutBook,
   returnBook,
-  getHoldQueue,
+  getCirculationQueue,
   addBook,
   updateBook,
   uploadCollegeResource,
-  getPendingFines,
-  processPayment,
+  getCollegeFines,
+  payCollegeFine,
+  getPendingEResources,
+  moderateEResource,
   getHelpdeskTickets,
   resolveTicket,
-  getAnalyticsSummary
+  getAnalyticsSummary,
+  getLabSeats,
+  createLabSeat,
+  updateLabSeat,
+  getLabBookings,
+  getBookSuggestions,
+  updateBookSuggestion,
+  getFeedback,
 } = require('../../controllers/dashboards/collegeAdminController');
-const { protect, restrictTo } = require('../../middlewares/auth');
+const { protect, requireRole } = require('../../middlewares/auth');
+const scopeToTenant = require('../../middlewares/scopeToTenant');
+const validate = require('../../middlewares/validate');
+const auditLog = require('../../middlewares/auditLog');
+const { paramIdSchema } = require('../../validations/common.validation');
+const {
+  checkoutSchema,
+  returnSchema,
+  payFineSchema,
+} = require('../../validations/library.validation');
+const { moderateSchema } = require('../../validations/personalization.validation');
+const {
+  createSeatSchema,
+  updateSeatSchema,
+  updateSuggestionSchema,
+  resolveComplaintSchema,
+} = require('../../validations/facilities.validation');
 
 // Note: `college-admin` acts as the College Admin verifier. We also support 'admin' and 'librarian' as fallbacks.
-router.use(protect, restrictTo('college-admin', 'admin', 'librarian'));
+router.use(protect, requireRole('college-admin', 'admin', 'librarian'));
+router.use(scopeToTenant);
 
 // Patron Management
-router.route('/patrons')
-  .get(getAllPatrons)
-  .post(createStudent);
-router.route('/patrons/:id').get(getPatronDetails);
+router.route('/patrons').get(getAllPatrons).post(createStudent);
+router.route('/patrons/:id').get(validate(paramIdSchema), getPatronDetails);
 
 // Circulation & Queue
-router.route('/circulation/checkout').post(checkoutBook);
-router.route('/circulation/return').post(returnBook);
-router.route('/circulation/queue').get(getHoldQueue);
+router.route('/circulation/checkout').post(validate(checkoutSchema), auditLog('circulation.checkout'), checkoutBook);
+router.route('/circulation/return').post(validate(returnSchema), auditLog('circulation.return'), returnBook);
+router.route('/circulation/queue').get(getCirculationQueue);
 
 // Cataloging & DAM
-router.route('/catalog')
-  .post(addBook);
-router.route('/catalog/:id')
-  .put(updateBook);
-router.route('/resources')
-  .post(uploadCollegeResource);
+router.route('/catalog').post(addBook);
+router.route('/catalog/:id').put(validate(paramIdSchema), updateBook);
+router.route('/resources').post(uploadCollegeResource);
+
+// Moderation
+router.route('/eresources/pending').get(getPendingEResources);
+router.route('/eresources/:id/moderate').put(validate(paramIdSchema), validate(moderateSchema), moderateEResource);
 
 // Fines & Ticketing
-router.route('/fines').get(getPendingFines);
-router.route('/fines/:id/pay').post(processPayment);
+router.route('/fines').get(getCollegeFines);
+router.route('/fines/:id/pay').post(validate(paramIdSchema), validate(payFineSchema), auditLog('fine.pay'), payCollegeFine);
 router.route('/helpdesk').get(getHelpdeskTickets);
-router.route('/helpdesk/:id/resolve').put(resolveTicket);
+router.route('/helpdesk/:id/resolve').put(validate(paramIdSchema), validate(resolveComplaintSchema), auditLog('complaint.resolve'), resolveTicket);
+
+// Lab Inventory & Booking Management
+router.route('/lab-seats').get(getLabSeats).post(validate(createSeatSchema), auditLog('lab_seat.create'), createLabSeat);
+router.route('/lab-seats/:id').put(validate(paramIdSchema), validate(updateSeatSchema), auditLog('lab_seat.update'), updateLabSeat);
+router.route('/lab-bookings').get(getLabBookings);
+
+// Book Suggestions Moderation
+router.route('/book-suggestions').get(getBookSuggestions);
+router.route('/book-suggestions/:id').put(validate(paramIdSchema), validate(updateSuggestionSchema), auditLog('suggestion.moderate'), updateBookSuggestion);
+
+// Feedback Logs
+router.route('/feedback').get(getFeedback);
 
 // Analytics
 router.route('/analytics/summary').get(getAnalyticsSummary);

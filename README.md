@@ -60,3 +60,57 @@ BookBuddy is built using a modern, scalable, and high-performance stack:
 * **API Server Hosting:** Render / custom Node hosting
 * **Database Hosting:** MongoDB Atlas
 
+---
+
+## 🚀 Backend Architecture Summary
+The backend follows a tenant-scoped multi-layered architectural pattern:
+* **Routes & Controller Layer**: Receives HTTP requests, executes strict Input Validation (via Zod), verifies credentials and authorization roles (via Auth middleware), scopes queries based on `collegeId` (via ScopeToTenant middleware), and logs successful admin mutations (via AuditLog middleware).
+* **Service Layer**: Implements core business rules (e.g. Loan calculations, Hold Queue promotions, Streak checks, and Notifications) in isolation from transport mechanisms.
+* **Database Model Layer**: Manages data mapping (Mongoose) with optimal compound and text indices to ensure performance.
+* **Background Tasks**: Periodic cron jobs (CronService) execute fine accruals, queue sweeps, and user streak resets at local midnights.
+
+---
+
+## 🛠️ Local Setup & Running
+1. **Clone and navigate to the project directory**:
+   ```bash
+   cd BookBuddy
+   ```
+2. **Setup environment variables**:
+   Create a `.env` file inside the `server/` directory. (Refer to the `server/PRODUCTION_ENV_CHECKLIST.md` for description of each parameter).
+   ```bash
+   cp server/.env.example server/.env
+   ```
+3. **Install Dependencies**:
+   ```bash
+   cd server && npm install
+   ```
+4. **Run the Development Server**:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## 🐳 Docker Compose (Single Command Launch)
+To spin up both the MongoDB database and the backend server in isolated containers:
+```bash
+cd server
+docker-compose up --build
+```
+This runs MongoDB at `localhost:27017` and the Express Server at `localhost:5000`.
+
+---
+
+## 🧪 Running Integration & E2E Tests
+To run all 8 Jest integration test suites covering auth, library, personalization, engagement, real-time sockets, cron schedules, super admin portal, and the E2E user journey:
+```bash
+cd server
+npm test
+```
+To generate coverage reports:
+```bash
+npm test -- --coverage
+```
+
+

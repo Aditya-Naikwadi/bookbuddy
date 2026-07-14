@@ -20,10 +20,10 @@ const getLists = asyncHandler(async (req, res) => {
     .limit(limit)
     .sort('-createdAt');
 
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     data: lists,
-    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
 });
 
@@ -39,7 +39,11 @@ const getListById = asyncHandler(async (req, res) => {
     throw new AppError('Reading list not found', 404);
   }
 
-  if (!list.isPublic && list.createdBy._id.toString() !== req.user._id.toString() && req.user.role === 'student') {
+  if (
+    !list.isPublic &&
+    list.createdBy._id.toString() !== req.user._id.toString() &&
+    req.user.role === 'student'
+  ) {
     throw new AppError('Not authorized to view this list', 403);
   }
 
@@ -59,7 +63,7 @@ const createList = asyncHandler(async (req, res) => {
     bookIds: bookIds || [],
     createdBy: req.user._id,
     type: type || 'personal',
-    isPublic: isPublic || false
+    isPublic: isPublic || false,
   });
 
   res.json({ success: true, data: list });
@@ -75,13 +79,16 @@ const updateList = asyncHandler(async (req, res) => {
     throw new AppError('Reading list not found', 404);
   }
 
-  if (list.createdBy.toString() !== req.user._id.toString() && !['college-admin', 'super-admin', 'admin'].includes(req.user.role)) {
+  if (
+    list.createdBy.toString() !== req.user._id.toString() &&
+    !['college-admin', 'super-admin', 'admin'].includes(req.user.role)
+  ) {
     throw new AppError('Not authorized to update this list', 403);
   }
 
   list = await ReadingList.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
-    runValidators: true
+    runValidators: true,
   });
 
   res.json({ success: true, data: list });
@@ -97,7 +104,10 @@ const deleteList = asyncHandler(async (req, res) => {
     throw new AppError('Reading list not found', 404);
   }
 
-  if (list.createdBy.toString() !== req.user._id.toString() && !['college-admin', 'super-admin', 'admin'].includes(req.user.role)) {
+  if (
+    list.createdBy.toString() !== req.user._id.toString() &&
+    !['college-admin', 'super-admin', 'admin'].includes(req.user.role)
+  ) {
     throw new AppError('Not authorized to delete this list', 403);
   }
 
@@ -111,5 +121,5 @@ module.exports = {
   getListById,
   createList,
   updateList,
-  deleteList
+  deleteList,
 };

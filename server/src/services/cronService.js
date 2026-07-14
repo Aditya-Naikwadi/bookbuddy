@@ -1,148 +1,295 @@
 const cron = require('node-cron');
+const CronRunLog = require('../models/CronRunLog');
 const Loan = require('../models/Loan');
 const Fine = require('../models/Fine');
 const Reservation = require('../models/Reservation');
 const Streak = require('../models/Streak');
-const User = require('../models/User');
+const notificationService = require('./notificationService');
+const reservationService = require('./reservationService');
+const streakService = require('./streakService');
+const timezoneHelper = require('../utils/timezoneHelper');
+const config = require('../config');
+const logger = require('../utils/logger');
+const { emitStreakUpdate } = require('../sockets');
 
-const initCronJobs = () => {
-  // 1. Overdue fine accrual job - Runs daily at midnight
-  cron.schedule('0 0 * * *', async () => {
-    try {
-      console.log('[Cron] Running overdue fine accrual job...');
-      const now = new Date();
-      
-      // Find all active loans that are past due
-      const overdueLoans = await Loan.find({
-        status: 'active',
-        dueDate: { $lt: now }
-      });
-
-      for (let loan of overdueLoans) {
-        // Add Rs. 5 per day fine (mocked for demo)
-        console.log(`[Cron] Accruing fine for loan ${loan._id}`);
-        // In a real app, calculate exact days and update Fine model
-      }
-    } catch (error) {
-      console.error('[Cron Error] Error in overdue fine accrual job:', error);
-    }
-  });
-
-  // 2. Queue expiry sweep - Runs hourly
-  cron.schedule('0 * * * *', async () => {
-    try {
-      console.log('[Cron] Running queue expiry sweep...');
-      const now = new Date();
-      const expiryThreshold = new Date(now.getTime() - 48 * 60 * 60 * 1000); // 48 hours ago
-      
-      const expiredReservations = await Reservation.find({
-        status: 'ready_for_pickup',
-        updatedAt: { $lt: expiryThreshold }
-      });
-
-      for (let res of expiredReservations) {
-        res.status = 'cancelled';
-        await res.save();
-        console.log(`[Cron] Expired reservation ${res._id} marked as cancelled.`);
-      }
-    } catch (error) {
-      console.error('[Cron Error] Error in queue expiry sweep:', error);
-    }
-  });
-
-  // 3. Dues reminder job - Runs daily at 9am
-  cron.schedule('0 9 * * *', async () => {
-    try {
-      console.log('[Cron] Running dues reminder job...');
-      const inTwoDays = new Date();
-      inTwoDays.setDate(inTwoDays.getDate() + 2);
-
-      const upcomingLoans = await Loan.find({
-        status: 'active',
-        dueDate: { 
-          $gte: new Date().setHours(0,0,0,0), 
-          $lte: inTwoDays 
-        }
-      });
-
-      console.log(`[Cron] Found ${upcomingLoans.length} loans due soon.`);
-    } catch (error) {
-      console.error('[Cron Error] Error in dues reminder job:', error);
-    }
-  });
-
-  // 4. Hourly streak expiry sweep
-  cron.schedule('0 * * * *', async () => {
-    try {
-      console.log('[Cron] Running hourly streak expiry sweep...');
-      const users = await User.find({}).select('_id timezone');
-      for (let user of users) {
-        const tz = user.timezone || 'Asia/Kolkata';
-        // In JS, we can get current hour in local TZ
-        const now = new Date();
-        const localHourStr = now.toLocaleTimeString('en-US', { timeZone: tz, hour12: false, hour: 'numeric' });
-        const localHour = parseInt(localHourStr, 10);
-        
-        // If it's just past midnight (hour 0) in the user's timezone
-        if (localHour === 0) {
-          // Evaluate if they missed yesterday
-          const yesterdayStr = new Date(now.getTime() - 86400000).toLocaleDateString('en-CA', { timeZone: tz });
-          const streak = await Streak.findOne({ userId: user._id });
-          if (streak && streak.currentStreak > 0 && streak.lastQualifyingDate !== yesterdayStr) {
-            // If they didn't qualify yesterday
-            if (streak.freezesAvailable > 0) {
-              streak.freezesAvailable -= 1;
-              streak.freezesUsedTotal += 1;
-              console.log(`[Cron] Applied freeze for user ${user._id}`);
-            } else {
-              streak.currentStreak = 0; // completely lost streak
-              console.log(`[Cron] Streak lost for user ${user._id}`);
-            }
-            await streak.save();
-          }
-        }
-      }
-    } catch (error) {
-      console.error('[Cron Error] Error in hourly streak expiry sweep:', error);
-    }
-  });
-
-  // 5. Daily Streak Reminder Job (runs hourly, checks if ~3 hours to midnight in user's timezone)
-  cron.schedule('0 * * * *', async () => {
-    try {
-      console.log('[Cron] Running daily streak reminder job...');
-      const users = await User.find({}).select('_id timezone email');
-      for (let user of users) {
-        const tz = user.timezone || 'Asia/Kolkata';
-        const now = new Date();
-        const localHourStr = now.toLocaleTimeString('en-US', { timeZone: tz, hour12: false, hour: 'numeric' });
-        const localHour = parseInt(localHourStr, 10);
-
-        // ~3 hours before midnight is hour 21
-        if (localHour === 21) {
-          const todayStr = now.toLocaleDateString('en-CA', { timeZone: tz });
-          const streak = await Streak.findOne({ userId: user._id });
-          
-          if (streak && streak.currentStreak > 0 && streak.lastQualifyingDate !== todayStr) {
-            console.log(`[Cron] REMINDER: User ${user._id} has 3 hours left to keep their ${streak.currentStreak}-day streak alive!`);
-            // Note: In real app, dispatch email or push notification here
-          }
-        }
-      }
-    } catch (error) {
-      console.error('[Cron Error] Error in daily streak reminder job:', error);
-    }
-  });
-
-  // 6. Monthly Repair Flag Reset
-  cron.schedule('0 0 1 * *', async () => {
-    try {
-      console.log('[Cron] Resetting streak repair flags for the month...');
-      await Streak.updateMany({}, { repairUsedThisMonth: false });
-    } catch (error) {
-      console.error('[Cron Error] Error in monthly repair reset job:', error);
-    }
-  });
+/**
+ * Single job runner wrapper for observability and failure isolation.
+ */
+const runJob = async (jobName, jobFn) => {
+  const startedAt = new Date();
+  let affectedCount = 0;
+  try {
+    affectedCount = await jobFn();
+    await CronRunLog.create({
+      jobName,
+      startedAt,
+      finishedAt: new Date(),
+      status: 'success',
+      affectedCount,
+    });
+  } catch (err) {
+    logger.error(`Cron job ${jobName} failed: ${err.message}`, err);
+    await CronRunLog.create({
+      jobName,
+      startedAt,
+      finishedAt: new Date(),
+      status: 'failed',
+      errorMessage: err.message,
+    });
+  }
 };
 
-module.exports = initCronJobs;
+/**
+ * JOB 1: Overdue Fine Accrual
+ * Runs daily at midnight to assess active overdue loans and apply/accumulate fines.
+ */
+const runOverdueFineAccrual = async () => {
+  const now = new Date();
+  // Find all active or already overdue loans past their due date
+  const loans = await Loan.find({
+    status: { $in: ['active', 'overdue'] },
+    dueDate: { $lt: now },
+  });
+
+  let affected = 0;
+  for (const loan of loans) {
+    // Transition status to overdue if still marked active
+    if (loan.status === 'active') {
+      loan.status = 'overdue';
+      await loan.save();
+    }
+
+    // Calculate overdue metrics
+    const overdueDays = Math.max(1, Math.floor((now - loan.dueDate) / (1000 * 60 * 60 * 24)));
+    const amount = Math.min(overdueDays * config.fineRatePerDay, config.fineMaxAmount);
+
+    // Idempotency: find or update existing unpaid fine
+    let fine = await Fine.findOne({ loanId: loan._id, status: 'unpaid' });
+    if (fine) {
+      fine.overdueDays = overdueDays;
+      fine.amount = amount;
+      await fine.save();
+    } else {
+      fine = await Fine.create({
+        collegeId: loan.collegeId,
+        userId: loan.userId,
+        loanId: loan._id,
+        amount,
+        overdueDays,
+        status: 'unpaid',
+      });
+    }
+
+    await notificationService.notify(
+      loan.userId,
+      'fine_issued',
+      `You have an accumulated fine of ${amount} for an overdue book.`,
+      fine._id,
+      'Fine'
+    );
+    affected++;
+  }
+  return affected;
+};
+
+/**
+ * JOB 2: Queue Expiry Sweep
+ * Runs hourly to clear expired pickup holds (pickup window expired).
+ */
+const runQueueExpirySweep = async () => {
+  const cutoff = new Date(Date.now() - config.holdPickupWindowHours * 60 * 60 * 1000);
+  const reservations = await Reservation.find({
+    status: 'ready_for_pickup',
+    readyAt: { $lt: cutoff },
+  });
+
+  let affected = 0;
+  for (const res of reservations) {
+    res.status = 'expired';
+    await res.save();
+
+    await notificationService.notify(
+      res.userId,
+      'general',
+      'Your book reservation has expired.',
+      res.bookId,
+      'Book'
+    );
+
+    // Atomically promote next hold from queue using Phase 2 service function
+    await reservationService.promoteNextHold(res.bookId, res.collegeId);
+    affected++;
+  }
+  return affected;
+};
+
+/**
+ * JOB 3: Due Reminders
+ * Runs daily at 9am to alert users of upcoming return deadlines.
+ */
+const runDueReminders = async () => {
+  const now = new Date();
+  const daysOut = config.dueReminderDaysBefore;
+
+  // Compute exact day range N days out to send exactly one reminder
+  const targetDateStart = new Date();
+  targetDateStart.setDate(now.getDate() + daysOut);
+  targetDateStart.setHours(0, 0, 0, 0);
+
+  const targetDateEnd = new Date();
+  targetDateEnd.setDate(now.getDate() + daysOut);
+  targetDateEnd.setHours(23, 59, 59, 999);
+
+  const loans = await Loan.find({
+    status: 'active',
+    dueDate: { $gte: targetDateStart, $lte: targetDateEnd },
+  });
+
+  let affected = 0;
+  for (const loan of loans) {
+    await notificationService.notify(
+      loan.userId,
+      'general',
+      `Your loan is due in ${daysOut} days on ${loan.dueDate.toLocaleDateString()}.`,
+      loan.bookId,
+      'Book'
+    );
+    affected++;
+  }
+  return affected;
+};
+
+/**
+ * JOB 4: Streak Expiry Sweep
+ * Runs hourly. Reset user streaks at their respective local midnights.
+ */
+const runStreakExpirySweep = async (mockNow = null) => {
+  const referenceTime = mockNow || new Date();
+  const streaks = await Streak.find({});
+
+  let affected = 0;
+  for (const streak of streaks) {
+    const timezone = streak.timezone || 'Asia/Kolkata';
+
+    // Verify if it is currently midnight for this user
+    if (!timezoneHelper.isMidnight(referenceTime, timezone)) {
+      continue;
+    }
+
+    const todayStr = streakService.getLocalDateString(referenceTime, timezone);
+
+    const yesterday = new Date(referenceTime.getTime() - 24 * 60 * 60 * 1000);
+    const yesterdayStr = streakService.getLocalDateString(yesterday, timezone);
+
+    const lastActionStr = streak.lastQualifyingActionAt
+      ? streakService.getLocalDateString(streak.lastQualifyingActionAt, timezone)
+      : null;
+
+    // Check if they did NOT perform any qualifying actions yesterday or today
+    if (lastActionStr !== todayStr && lastActionStr !== yesterdayStr) {
+      if (streak.freezesAvailable > 0) {
+        // Consume freeze coupon to preserve streak
+        streak.freezesAvailable -= 1;
+      } else {
+        // Reset streak to 0
+        streak.currentStreak = 0;
+      }
+      await streak.save();
+      emitStreakUpdate(streak.userId, streak);
+      affected++;
+    }
+  }
+  return affected;
+};
+
+/**
+ * JOB 5: Streak Reminders
+ * Runs hourly. Notifies users with active streaks 3 hours before their local midnight.
+ */
+const runStreakReminders = async (mockNow = null) => {
+  const referenceTime = mockNow || new Date();
+  const streaks = await Streak.find({ currentStreak: { $gt: 0 } });
+
+  let affected = 0;
+  for (const streak of streaks) {
+    const timezone = streak.timezone || 'Asia/Kolkata';
+
+    // Check if the user is 3 hours from local midnight
+    if (!timezoneHelper.isHoursBeforeMidnight(referenceTime, timezone, config.streakReminderHoursBefore)) {
+      continue;
+    }
+
+    const todayStr = streakService.getLocalDateString(referenceTime, timezone);
+
+    const lastActionStr = streak.lastQualifyingActionAt
+      ? streakService.getLocalDateString(streak.lastQualifyingActionAt, timezone)
+      : null;
+
+    // Skip if they already checked in today
+    if (lastActionStr === todayStr) {
+      continue;
+    }
+
+    // Idempotency: skip if they were already reminded today
+    const lastReminderStr = streak.lastStreakReminderSentAt
+      ? streakService.getLocalDateString(streak.lastStreakReminderSentAt, timezone)
+      : null;
+    if (lastReminderStr === todayStr) {
+      continue;
+    }
+
+    // Send warning notification
+    await notificationService.notify(
+      streak.userId,
+      'streak_at_risk',
+      `Your ${streak.currentStreak}-day streak is at risk! Perform a qualifying action in the next 3 hours to protect it.`
+    );
+
+    streak.lastStreakReminderSentAt = referenceTime;
+    await streak.save();
+    affected++;
+  }
+  return affected;
+};
+
+/**
+ * Schedules all background cron jobs with node-cron.
+ */
+const initCronJobs = () => {
+  // Overdue Fine Accrual: Daily at midnight
+  cron.schedule('0 0 * * *', () => {
+    runJob('Overdue Fine Accrual', runOverdueFineAccrual);
+  });
+
+  // Queue Expiry Sweep: Hourly
+  cron.schedule('0 * * * *', () => {
+    runJob('Queue Expiry Sweep', runQueueExpirySweep);
+  });
+
+  // Due Reminders: Daily at 9 AM
+  cron.schedule('0 9 * * *', () => {
+    runJob('Due Reminders', runDueReminders);
+  });
+
+  // Streak Expiry Sweep: Hourly
+  cron.schedule('0 * * * *', () => {
+    runJob('Streak Expiry Sweep', () => runStreakExpirySweep());
+  });
+
+  // Streak Reminders: Hourly
+  cron.schedule('0 * * * *', () => {
+    runJob('Streak Reminders', () => runStreakReminders());
+  });
+
+  logger.info('Cron jobs initialized successfully.');
+};
+
+module.exports = {
+  initCronJobs,
+  runJob,
+  runOverdueFineAccrual,
+  runQueueExpirySweep,
+  runDueReminders,
+  runStreakExpirySweep,
+  runStreakReminders,
+};

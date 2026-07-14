@@ -1,33 +1,52 @@
+// CRITICAL: ONLY services/notificationService.js is permitted to write to this collection.
 const mongoose = require('mongoose');
 
-const notificationSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
+const notificationSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+    collegeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'College',
+      required: true,
+      index: true,
+    },
+    type: {
+      type: String,
+      enum: [
+        'hold_ready',
+        'fine_issued',
+        'complaint_resolved',
+        'streak_milestone',
+        'streak_at_risk',
+        'general',
+      ],
+      required: true,
+      index: true,
+    },
+    message: {
+      type: String,
+      required: true,
+    },
+    read: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    relatedId: {
+      type: mongoose.Schema.Types.ObjectId,
+    },
+    relatedType: {
+      type: String,
+    },
   },
-  title: {
-    type: String,
-    required: true,
-  },
-  message: {
-    type: String,
-    required: true,
-  },
-  type: {
-    type: String,
-    enum: ['due_reminder', 'overdue_fine', 'hold_ready', 'general_alert', 'complaint_update'],
-    default: 'general_alert',
-  },
-  isRead: {
-    type: Boolean,
-    default: false,
-  },
-  actionUrl: {
-    type: String,
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true,
-});
+);
 
 module.exports = mongoose.model('Notification', notificationSchema);

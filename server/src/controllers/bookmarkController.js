@@ -17,10 +17,10 @@ const getMyBookmarks = asyncHandler(async (req, res) => {
     .limit(limit)
     .sort('-createdAt');
 
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     data: bookmarks,
-    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
 });
 
@@ -37,7 +37,7 @@ const createBookmark = asyncHandler(async (req, res) => {
 
   const bookmark = await Bookmark.create({
     userId: req.user._id,
-    bookId
+    bookId,
   });
 
   res.json({ success: true, data: bookmark });
@@ -61,5 +61,5 @@ const deleteBookmark = asyncHandler(async (req, res) => {
 module.exports = {
   getMyBookmarks,
   createBookmark,
-  deleteBookmark
+  deleteBookmark,
 };

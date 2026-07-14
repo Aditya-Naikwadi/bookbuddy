@@ -1,39 +1,48 @@
+// CRITICAL: ONLY services/streakService.js is permitted to write to this collection.
+// EXCEPTION: services/cronService.js is permitted to perform passive resets and freeze deductions.
 const mongoose = require('mongoose');
 
-const streakSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    unique: true
+const streakSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      unique: true,
+    },
+    lastStreakReminderSentAt: {
+      type: Date,
+    },
+    collegeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'College',
+      required: true,
+      index: true,
+    },
+    currentStreak: {
+      type: Number,
+      default: 0,
+    },
+    maxStreak: {
+      type: Number,
+      default: 0,
+    },
+    freezesAvailable: {
+      type: Number,
+      default: 2,
+    },
+    lastQualifyingActionAt: {
+      type: Date,
+    },
+    timezone: {
+      type: String,
+      required: true,
+      default: 'Asia/Kolkata',
+    },
   },
-  currentStreak: {
-    type: Number,
-    default: 0
-  },
-  longestStreak: {
-    type: Number,
-    default: 0
-  },
-  lastQualifyingDate: {
-    type: String, // Stored as 'YYYY-MM-DD' in user's local timezone
-    default: null
-  },
-  freezesAvailable: {
-    type: Number,
-    default: 0,
-    max: 2
-  },
-  freezesUsedTotal: {
-    type: Number,
-    default: 0
-  },
-  repairUsedThisMonth: {
-    type: Boolean,
-    default: false
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true
-});
+);
 
 module.exports = mongoose.model('Streak', streakSchema);
