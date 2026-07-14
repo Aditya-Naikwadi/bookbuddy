@@ -5,7 +5,9 @@ const { sendAlert } = require('../utils/alerting');
 // eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, _next) => {
   const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
+  const message = (err.isOperational || config.nodeEnv !== 'production')
+    ? (err.message || 'Internal Server Error')
+    : 'An unexpected error occurred. Please contact support.';
   const requestId = req.id || 'N/A';
 
   // Log error based on operational vs non-operational status

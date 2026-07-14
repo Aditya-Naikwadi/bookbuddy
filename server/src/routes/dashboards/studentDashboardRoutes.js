@@ -75,22 +75,24 @@ const {
   createComplaintSchema,
   updateNotificationPreferencesSchema,
 } = require('../../validations/facilities.validation');
+const { userLimiter, expensiveRouteLimiter } = require('../../middlewares/rateLimiters');
 
 // Apply middleware gates to all routes
 router.use(protect);
 router.use(requireRole('student'));
 router.use(scopeToTenant);
+router.use(userLimiter);
 
 // Catalog & OPAC
-router.get('/catalog', getStudentCatalog);
-router.get('/catalog/recommendations', getStudentRecommendations);
+router.get('/catalog', expensiveRouteLimiter, getStudentCatalog);
+router.get('/catalog/recommendations', expensiveRouteLimiter, getStudentRecommendations);
 
 // Circulation & Loans
 router.get('/loans', getStudentLoans);
 router.post('/loans/:id/renew', validate(renewLoanSchema), renewStudentLoan);
 
 // Reservations & Holds
-router.post('/reservations', validate(placeHoldSchema), placeStudentHold);
+router.post('/reservations', expensiveRouteLimiter, validate(placeHoldSchema), placeStudentHold);
 router.get('/reservations/queue', validate(getQueueSchema), getStudentQueuePosition);
 
 // Fines
@@ -118,7 +120,7 @@ router.delete('/reading-lists/:id/items/:itemId', validate(paramIdAndItemIdSchem
 router
   .route('/reading-progress/:eresourceId')
   .get(validate(paramEResourceIdSchema), getReadingProgress)
-  .put(validate(paramEResourceIdSchema), validate(updateProgressSchema), upsertReadingProgress);
+  .put(expensiveRouteLimiter, validate(paramEResourceIdSchema), validate(updateProgressSchema), upsertReadingProgress);
 
 // Bookmarks
 router

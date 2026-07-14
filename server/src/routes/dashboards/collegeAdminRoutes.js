@@ -35,6 +35,10 @@ const {
   checkoutSchema,
   returnSchema,
   payFineSchema,
+  createBookSchema,
+  updateBookSchema,
+  uploadResourceSchema,
+  createStudentSchema,
 } = require('../../validations/library.validation');
 const { moderateSchema } = require('../../validations/personalization.validation');
 const {
@@ -44,12 +48,15 @@ const {
   resolveComplaintSchema,
 } = require('../../validations/facilities.validation');
 
+const { userLimiter, expensiveRouteLimiter } = require('../../middlewares/rateLimiters');
+
 // Note: `college-admin` acts as the College Admin verifier. We also support 'admin' and 'librarian' as fallbacks.
 router.use(protect, requireRole('college-admin', 'admin', 'librarian'));
 router.use(scopeToTenant);
+router.use(userLimiter);
 
 // Patron Management
-router.route('/patrons').get(getAllPatrons).post(createStudent);
+router.route('/patrons').get(getAllPatrons).post(validate(createStudentSchema), createStudent);
 router.route('/patrons/:id').get(validate(paramIdSchema), getPatronDetails);
 
 // Circulation & Queue
@@ -58,9 +65,9 @@ router.route('/circulation/return').post(validate(returnSchema), auditLog('circu
 router.route('/circulation/queue').get(getCirculationQueue);
 
 // Cataloging & DAM
-router.route('/catalog').post(addBook);
-router.route('/catalog/:id').put(validate(paramIdSchema), updateBook);
-router.route('/resources').post(uploadCollegeResource);
+router.route('/catalog').post(validate(createBookSchema), addBook);
+router.route('/catalog/:id').put(validate(paramIdSchema), validate(updateBookSchema), updateBook);
+router.route('/resources').post(validate(uploadResourceSchema), uploadCollegeResource);
 
 // Moderation
 router.route('/eresources/pending').get(getPendingEResources);
@@ -85,6 +92,6 @@ router.route('/book-suggestions/:id').put(validate(paramIdSchema), validate(upda
 router.route('/feedback').get(getFeedback);
 
 // Analytics
-router.route('/analytics/summary').get(getAnalyticsSummary);
+router.route('/analytics/summary').get(expensiveRouteLimiter, getAnalyticsSummary);
 
 module.exports = router;

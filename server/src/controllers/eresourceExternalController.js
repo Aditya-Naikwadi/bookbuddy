@@ -3,6 +3,7 @@ const axios = require('axios');
 const gutenbergService = require('../services/gutenbergService');
 const EResource = require('../models/EResource');
 const { recordQualifyingAction } = require('../services/streakService');
+const events = require('../sockets/events');
 
 // @desc    Browse / Search external Gutenberg books
 // @route   GET /api/eresources/external
@@ -118,7 +119,7 @@ const updateReadingProgress = asyncHandler(async (req, res) => {
   if (readingTimeMinutes >= 3) {
     const streakData = await recordQualifyingAction(req.user._id, 'eresource_read');
     if (streakData && req.app.get('io')) {
-      req.app.get('io').to(`user:${req.user._id}`).emit('streak:updated', streakData);
+      req.app.get('io').to(`user:${req.user._id}`).emit(events.STREAK_UPDATED, streakData);
     }
   }
 

@@ -59,6 +59,17 @@ const config = {
     startHour: parseInt(process.env.LAB_START_HOUR, 10) || 8, // 8 AM UTC/Local
     endHour: parseInt(process.env.LAB_END_HOUR, 10) || 20,   // 8 PM UTC/Local
   },
+  redisUrl: process.env.REDIS_URL || null,
+  rateLimits: {
+    globalMax: parseInt(process.env.RATE_LIMIT_GLOBAL_MAX, 10) || 100,
+    globalWindowMs: parseInt(process.env.RATE_LIMIT_GLOBAL_WINDOW_MS, 10) || 60000,
+    authMax: parseInt(process.env.RATE_LIMIT_AUTH_MAX, 10) || 5,
+    authWindowMs: parseInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS, 10) || 15 * 60 * 1000,
+    userMax: parseInt(process.env.RATE_LIMIT_USER_MAX, 10) || 100,
+    userWindowMs: parseInt(process.env.RATE_LIMIT_USER_WINDOW_MS, 10) || 60000,
+    expensiveMax: parseInt(process.env.RATE_LIMIT_EXPENSIVE_MAX, 10) || 10,
+    expensiveWindowMs: parseInt(process.env.RATE_LIMIT_EXPENSIVE_WINDOW_MS, 10) || 60000,
+  },
 };
 
 module.exports = config;

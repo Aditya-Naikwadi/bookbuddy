@@ -6,11 +6,10 @@ const Complaint = require('../models/Complaint');
 // @access  Private
 const submitComplaint = asyncHandler(async (req, res) => {
   const { subject, description } = req.body;
-  const ticketId = 'TKT-' + Math.floor(100000 + Math.random() * 900000);
 
   const complaint = await Complaint.create({
-    userId: req.user._id,
-    ticketId,
+    collegeId: req.user.collegeId,
+    submittedBy: req.user._id,
     subject,
     description,
   });
@@ -22,7 +21,7 @@ const submitComplaint = asyncHandler(async (req, res) => {
 // @route   GET /api/complaints
 // @access  Private
 const getMyComplaints = asyncHandler(async (req, res) => {
-  const complaints = await Complaint.find({ userId: req.user._id }).sort({ createdAt: -1 });
+  const complaints = await Complaint.find({ submittedBy: req.user._id, ...req.tenantFilter }).sort({ createdAt: -1 });
   res.json({ success: true, data: complaints });
 });
 

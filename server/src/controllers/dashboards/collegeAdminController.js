@@ -45,7 +45,16 @@ const createStudent = async (req, res, next) => {
 // @access  Private/CollegeAdmin
 const getAllPatrons = async (req, res, next) => {
   try {
-    const patrons = await User.find({ role: 'student', ...req.tenantFilter }).select('-password');
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 100;
+    const skip = (page - 1) * limit;
+
+    const patrons = await User.find({ role: 'student', ...req.tenantFilter })
+      .select('-password')
+      .sort('-createdAt')
+      .skip(skip)
+      .limit(limit);
+
     res.json({ success: true, data: patrons });
   } catch (error) {
     next(error);
@@ -128,9 +137,16 @@ const uploadCollegeResource = async (req, res, next) => {
 // @access  Private/CollegeAdmin
 const getHelpdeskTickets = async (req, res, next) => {
   try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 100;
+    const skip = (page - 1) * limit;
+
     const tickets = await Complaint.find({ ...req.tenantFilter })
       .populate('submittedBy', 'name studentId email')
-      .sort('-createdAt');
+      .sort('-createdAt')
+      .skip(skip)
+      .limit(limit);
+
     res.json({ success: true, data: tickets });
   } catch (error) {
     next(error);
@@ -344,13 +360,19 @@ const returnBook = async (req, res, next) => {
 // @access  Private/CollegeAdmin
 const getCirculationQueue = async (req, res, next) => {
   try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 100;
+    const skip = (page - 1) * limit;
+
     const queue = await Reservation.find({
       ...req.tenantFilter,
       status: { $in: ['queued', 'ready_for_pickup'] },
     })
       .populate('bookId', 'title author isbn')
       .populate('userId', 'name email studentId')
-      .sort('queuePosition');
+      .sort('queuePosition')
+      .skip(skip)
+      .limit(limit);
 
     res.json({
       success: true,
@@ -367,6 +389,9 @@ const getCirculationQueue = async (req, res, next) => {
 const getCollegeFines = async (req, res, next) => {
   try {
     const { status } = req.query;
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 100;
+    const skip = (page - 1) * limit;
 
     const filter = { ...req.tenantFilter };
     if (status) {
@@ -379,7 +404,9 @@ const getCollegeFines = async (req, res, next) => {
         path: 'loanId',
         populate: { path: 'bookId', select: 'title author' },
       })
-      .sort('-createdAt');
+      .sort('-createdAt')
+      .skip(skip)
+      .limit(limit);
 
     res.json({
       success: true,
@@ -430,12 +457,18 @@ const payCollegeFine = async (req, res, next) => {
 // @access  Private/CollegeAdmin
 const getPendingEResources = async (req, res, next) => {
   try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 100;
+    const skip = (page - 1) * limit;
+
     const resources = await EResource.find({
       ...req.tenantFilter,
       moderationStatus: 'pending',
     })
       .populate('uploadedBy', 'name email studentId')
-      .sort('-createdAt');
+      .sort('-createdAt')
+      .skip(skip)
+      .limit(limit);
 
     res.json({
       success: true,

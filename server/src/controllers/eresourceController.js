@@ -11,7 +11,7 @@ const listInternalResources = asyncHandler(async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 10;
   const skip = (page - 1) * limit;
 
-  const query = { source: 'internal', status: 'approved' };
+  const query = { source: 'internal', moderationStatus: 'approved', ...req.tenantFilter };
 
   if (req.query.search) {
     query.title = { $regex: req.query.search, $options: 'i' };

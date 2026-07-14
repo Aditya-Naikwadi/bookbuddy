@@ -3,6 +3,7 @@ const NotificationPreference = require('../models/NotificationPreference');
 const User = require('../models/User');
 const { emitNotification } = require('../sockets');
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
 /**
  * Creates and pushes a notification if not muted by the user's preferences.
@@ -54,11 +55,11 @@ const notify = async (userId, type, message, relatedId = null, relatedType = nul
   // 5. Stubs for Email/Push alerts
   if (pref.emailEnabled) {
     // TODO: Integrate actual email service provider (e.g. Nodemailer/SendGrid)
-    console.log(`[TODO: Email Notification] Send to User: ${userId}, Message: "${message}"`);
+    logger.info(`[TODO: Email Notification] Send to User: ${userId}, Message: "${message}"`);
   }
   if (pref.pushEnabled) {
     // TODO: Integrate push notification service provider (e.g. Firebase Cloud Messaging)
-    console.log(`[TODO: Push Notification] Send to User: ${userId}, Message: "${message}"`);
+    logger.info(`[TODO: Push Notification] Send to User: ${userId}, Message: "${message}"`);
   }
 
   return notification;

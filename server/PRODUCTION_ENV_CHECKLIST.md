@@ -23,3 +23,6 @@ This document details all environment variables required to run the BookBuddy ba
 | `STREAK_REMINDER_HOURS_BEFORE` | No | `3` | Hours before local midnight to warn a student of an expiring daily streak. Defaults to `3`. |
 | `LAB_START_HOUR` | No | `8` | Lab operating start hour (local 24h format). Defaults to `8` (8 AM). |
 | `LAB_END_HOUR` | No | `20` | Lab operating end hour (local 24h format). Defaults to `20` (8 PM). |
+| `REDIS_URL` | No | `redis://localhost:6379` | Shared Redis cache URL for multi-instance distributed rate limiting. Defaults to none (uses in-memory store if missing). |
+| `RATE_LIMIT_GLOBAL_MAX` | No | `100` | Max requests allowed per global window per IP. Defaults to `100`. |
+| `RATE_LIMIT_GLOBAL_WINDOW_MS` | No | `60000` | Time duration for global rate limiting window (in milliseconds). Defaults to `60000` (1 minute). |

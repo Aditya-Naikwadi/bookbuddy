@@ -188,7 +188,12 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
       .send({ name: 'Gamma Institute', code: 'GAM' });
     expect(resSuccess.status).toBe(201);
 
-    const logsSuccess = await AuditLog.find({ action: 'college.create' });
+    let logsSuccess = [];
+    for (let i = 0; i < 10; i++) {
+      logsSuccess = await AuditLog.find({ action: 'college.create' });
+      if (logsSuccess.length === 1) break;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
     expect(logsSuccess.length).toBe(1);
     expect(logsSuccess[0].actorId.toString()).toBe(superAdmin._id.toString());
     expect(logsSuccess[0].metadata.code).toBe('GAM');
@@ -220,9 +225,14 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
       .send(newAdminData);
     expect(res.status).toBe(201);
 
-    // Direct database query on AuditLog
-    const auditRecord = await AuditLog.findOne({ action: 'college_admin.create' });
-    expect(auditRecord).toBeDefined();
+    // Direct database query on AuditLog (with retry to wait for async write)
+    let auditRecord = null;
+    for (let i = 0; i < 10; i++) {
+      auditRecord = await AuditLog.findOne({ action: 'college_admin.create' });
+      if (auditRecord) break;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    expect(auditRecord).not.toBeNull();
 
     // Verify metadata does not contain sensitive properties
     const metaStr = JSON.stringify(auditRecord.metadata);

@@ -7,10 +7,10 @@ const validate = (schema) => (req, res, next) => {
       query: req.query,
       params: req.params,
     });
-    // Optional: Overwrite with parsed/sanitized data
-    // req.body = validData.body;
-    // req.query = validData.query;
-    // req.params = validData.params;
+    // Overwrite request objects with parsed/sanitized/coerced data
+    if (validData.body) req.body = validData.body;
+    if (validData.query) req.query = validData.query;
+    if (validData.params) req.params = validData.params;
     next();
   } catch (err) {
     // Collect all Zod error messages

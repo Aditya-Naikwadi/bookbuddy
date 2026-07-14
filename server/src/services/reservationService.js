@@ -26,20 +26,38 @@ const placeHold = async (userId, bookId, collegeId) => {
     throw new AppError('You already have an active hold on this book.', 400);
   }
 
-  // Compute new queue position (count active holds + 1)
-  const currentQueuedCount = await Reservation.countDocuments({
-    bookId,
-    status: { $in: ['queued', 'ready_for_pickup'] },
-    collegeId,
-  });
+  // Compute new queue position and save with collision safety
+  let reservation;
+  let retries = 5;
+  while (retries > 0) {
+    try {
+      const currentQueuedCount = await Reservation.countDocuments({
+        bookId,
+        status: { $in: ['queued', 'ready_for_pickup'] },
+        collegeId,
+      });
 
-  const reservation = await Reservation.create({
-    collegeId,
-    userId,
-    bookId,
-    queuePosition: currentQueuedCount + 1,
-    status: 'queued',
-  });
+      reservation = await Reservation.create({
+        collegeId,
+        userId,
+        bookId,
+        queuePosition: currentQueuedCount + 1,
+        status: 'queued',
+      });
+      break;
+    } catch (err) {
+      if (err.code === 11000) {
+        retries--;
+        if (retries === 0) {
+          throw new AppError('Server is busy placing reservations, please try again.', 409);
+        }
+        // Brief exponential backoff/jitter before retrying
+        await new Promise((resolve) => setTimeout(resolve, Math.random() * 50 + 10));
+      } else {
+        throw err;
+      }
+    }
+  }
 
   return reservation;
 };

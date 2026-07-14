@@ -1,4 +1,5 @@
 const { DateTime } = require('luxon');
+const logger = require('./logger');
 
 /**
  * Checks if a given time is in the midnight hour (00:00 - 00:59) in a specific timezone.
@@ -12,7 +13,7 @@ const isMidnight = (time, timezone) => {
     const dt = DateTime.fromJSDate(time).setZone(timezone);
     return dt.hour === 0;
   } catch (err) {
-    console.error('timezoneHelper.isMidnight error:', err);
+    logger.error('timezoneHelper.isMidnight error:', err);
     // Fallback to UTC if timezone is invalid
     return time.getUTCHours() === 0;
   }

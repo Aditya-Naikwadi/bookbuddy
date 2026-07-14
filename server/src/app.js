@@ -2,9 +2,8 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
-const mongoSanitize = require('express-mongo-sanitize');
+const mongoSanitize = require('./middlewares/mongoSanitize');
 
 const config = require('./config');
 const logger = require('./utils/logger');
@@ -38,7 +37,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // NoSQL Injection Defense
-app.use(mongoSanitize());
+app.use(mongoSanitize);
 
 // Request Logger
 app.use(
@@ -46,20 +45,6 @@ app.use(
     stream: { write: (message) => logger.info(message.trim()) },
   })
 );
-
-// Global Rate Limiter
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per window
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    message: 'Too many requests from this IP, please try again after 15 minutes',
-    code: 429,
-  },
-});
-app.use(limiter);
 
 // Health Check Route
 app.get('/health', (req, res) => {
@@ -84,6 +69,10 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Apply custom global rate limiter to all routes except health checks
+const { globalLimiter } = require('./middlewares/rateLimiters');
+app.use(globalLimiter);
+
 // Debug tenant check route for validation
 const { protect, requireRole } = require('./middlewares/auth');
 const scopeToTenant = require('./middlewares/scopeToTenant');
@@ -101,7 +90,22 @@ app.get(
   }
 );
 
-// Domain Routes
+// Debug test route for rate limiter verification
+app.all(
+  '/api/_debug/test-limiter',
+  (req, res, next) => {
+    // Dynamically apply limiter to avoid side effects during normal app use
+    const { authLimiter } = require('./middlewares/rateLimiters');
+    authLimiter(req, res, next);
+  },
+  (req, res) => {
+    res.json({
+      success: true,
+      body: req.body,
+      query: req.query,
+    });
+  }
+);
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/books', require('./routes/bookRoutes'));
 app.use('/api/loans', require('./routes/loanRoutes'));

@@ -5,14 +5,14 @@ const Feedback = require('../models/Feedback');
 // @route   POST /api/feedback
 // @access  Private
 const submitFeedback = asyncHandler(async (req, res) => {
-  const { rating, category, comment, isAnonymous } = req.body;
+  const { rating, category, comment, message } = req.body;
 
   const feedback = await Feedback.create({
-    userId: isAnonymous ? null : req.user._id,
+    collegeId: req.user.collegeId,
+    submittedBy: req.user._id,
     rating,
     category,
-    comment,
-    isAnonymous,
+    message: message || comment,
   });
 
   res.status(201).json({ success: true, data: feedback });
@@ -22,7 +22,9 @@ const submitFeedback = asyncHandler(async (req, res) => {
 // @route   GET /api/feedback
 // @access  Private/Admin
 const getFeedback = asyncHandler(async (req, res) => {
-  const feedback = await Feedback.find({}).sort({ createdAt: -1 }).populate('userId', 'name email');
+  const feedback = await Feedback.find(req.tenantFilter)
+    .sort({ createdAt: -1 })
+    .populate('submittedBy', 'name email');
   res.json({ success: true, data: feedback });
 });
 

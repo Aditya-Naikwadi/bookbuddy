@@ -10,7 +10,7 @@ const getBooks = asyncHandler(async (req, res) => {
 
   const { search, category, format, available, yearFrom, yearTo, lang } = req.query;
 
-  let query = {};
+  let query = { ...req.tenantFilter };
 
   if (search) {
     query.$text = { $search: search };
@@ -59,7 +59,7 @@ const getBooks = asyncHandler(async (req, res) => {
 // @route   GET /api/books/:id
 // @access  Public
 const getBookById = asyncHandler(async (req, res) => {
-  const book = await Book.findById(req.params.id);
+  const book = await Book.findOne({ _id: req.params.id, ...req.tenantFilter });
 
   if (book) {
     res.json({ success: true, book });
@@ -73,7 +73,7 @@ const getBookById = asyncHandler(async (req, res) => {
 // @route   GET /api/books/:id/availability
 // @access  Public
 const getBookAvailability = asyncHandler(async (req, res) => {
-  const book = await Book.findById(req.params.id).select('totalCopies availableCopies');
+  const book = await Book.findOne({ _id: req.params.id, ...req.tenantFilter }).select('totalCopies availableCopies');
 
   if (book) {
     res.json({ success: true, availability: book });

@@ -1,6 +1,7 @@
 const { Server } = require('socket.io');
 const socketAuth = require('./socketAuth');
 const events = require('./events');
+const logger = require('../utils/logger');
 
 let io;
 
@@ -18,14 +19,14 @@ const initSockets = (server) => {
 
   io.on('connection', (socket) => {
     const userId = socket.data.user.id;
-    console.log(`Socket connected: ${socket.id} for user: ${userId}`);
+    logger.info(`Socket connected: ${socket.id} for user: ${userId}`);
 
     // Automatically join the user-specific room
     socket.join(`user:${userId}`);
-    console.log(`User ${userId} joined room user:${userId}`);
+    logger.info(`User ${userId} joined room user:${userId}`);
 
     socket.on('disconnect', () => {
-      console.log(`Socket disconnected: ${socket.id} for user: ${userId}`);
+      logger.info(`Socket disconnected: ${socket.id} for user: ${userId}`);
     });
   });
 
