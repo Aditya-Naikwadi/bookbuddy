@@ -25,7 +25,7 @@ const UserSticker = require('./models/UserSticker');
 
 const connectDB = require('./config/db');
 
-dotenv.config({ path: '../.env' }); // Adjust if needed depending on execution context
+dotenv.config({ path: require('path').join(__dirname, '../.env') });
 
 const importData = async () => {
   try {
@@ -66,10 +66,24 @@ const importData = async () => {
       },
       {
         studentId: 'LIB2001',
-        name: 'Library Admin',
+        name: 'Super Admin',
         email: 'admin@bookbuddy.com',
         password: hashedPassword,
-        role: 'admin'
+        role: 'super-admin'
+      },
+      {
+        studentId: 'COL3001',
+        name: 'College Admin',
+        email: 'collegeadmin@bookbuddy.com',
+        password: hashedPassword,
+        role: 'college-admin'
+      },
+      {
+        studentId: 'GEN4001',
+        name: 'General User',
+        email: 'general@bookbuddy.com',
+        password: hashedPassword,
+        role: 'general'
       }
     ]);
 

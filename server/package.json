@@ -2,10 +2,12 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "dev:start": "nodemon src/server.js",
+    "build": "echo 'Building backend... No compilation needed for Node.js CommonJS'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

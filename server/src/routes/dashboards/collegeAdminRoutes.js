@@ -18,8 +18,8 @@ const {
 } = require('../../controllers/dashboards/collegeAdminController');
 const { protect, restrictTo } = require('../../middlewares/auth');
 
-// Note: `admin` middleware in this project's context acts as the College Admin verifier.
-router.use(protect, restrictTo('admin', 'librarian'));
+// Note: `college-admin` acts as the College Admin verifier. We also support 'admin' and 'librarian' as fallbacks.
+router.use(protect, restrictTo('college-admin', 'admin', 'librarian'));
 
 // Patron Management
 router.route('/patrons')

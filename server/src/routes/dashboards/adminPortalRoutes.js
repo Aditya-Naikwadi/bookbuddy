@@ -8,9 +8,8 @@ const {
 } = require('../../controllers/dashboards/adminPortalController');
 const { protect, restrictTo } = require('../../middlewares/auth');
 
-// Note: For a real Super Admin, you might want a distinct role 'super_admin'. 
-// For now, we reuse the `admin` middleware.
-router.use(protect, restrictTo('admin'));
+// Note: 'super-admin' acts as the Super Admin verifier. We also support 'admin' as a fallback.
+router.use(protect, restrictTo('super-admin', 'admin'));
 
 router.route('/overview').get(getSystemOverview);
 router.route('/admins')

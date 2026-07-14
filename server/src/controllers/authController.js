@@ -6,7 +6,7 @@ const asyncHandler = require('express-async-handler');
 // @route   POST /api/auth/register
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
-  const { studentId, name, email, password } = req.body;
+  const { studentId, name, email, password, role } = req.body;
 
   const userExists = await User.findOne({ $or: [{ email }, { studentId }] });
 
@@ -20,6 +20,7 @@ const registerUser = asyncHandler(async (req, res) => {
     name,
     email,
     password,
+    role: role || 'student'
   });
 
   if (user) {
@@ -47,9 +48,15 @@ const registerUser = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 const loginUser = asyncHandler(async (req, res) => {
-  const { studentId, password } = req.body;
+  const { studentId, email, password } = req.body;
+  const credential = studentId || email;
 
-  const user = await User.findOne({ studentId });
+  const user = await User.findOne({
+    $or: [
+      { studentId: credential },
+      { email: credential }
+    ]
+  });
 
   if (user && (await user.comparePassword(password))) {
     const token = generateToken(res, user._id);

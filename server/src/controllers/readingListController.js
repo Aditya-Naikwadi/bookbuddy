@@ -75,7 +75,7 @@ const updateList = asyncHandler(async (req, res) => {
     throw new AppError('Reading list not found', 404);
   }
 
-  if (list.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+  if (list.createdBy.toString() !== req.user._id.toString() && !['college-admin', 'super-admin', 'admin'].includes(req.user.role)) {
     throw new AppError('Not authorized to update this list', 403);
   }
 
@@ -97,7 +97,7 @@ const deleteList = asyncHandler(async (req, res) => {
     throw new AppError('Reading list not found', 404);
   }
 
-  if (list.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+  if (list.createdBy.toString() !== req.user._id.toString() && !['college-admin', 'super-admin', 'admin'].includes(req.user.role)) {
     throw new AppError('Not authorized to delete this list', 403);
   }
 
