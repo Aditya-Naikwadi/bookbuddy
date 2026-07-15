@@ -77,39 +77,96 @@ const getLimiter = (keyPrefix, points, durationSeconds) => {
 const limiters = {
   global: getLimiter('global', config.rateLimits.globalMax, Math.ceil(config.rateLimits.globalWindowMs / 1000)),
   auth: getLimiter('auth', config.rateLimits.authMax, Math.ceil(config.rateLimits.authWindowMs / 1000)),
+  authIp: getLimiter('authIp', config.rateLimits.authIpMax, Math.ceil(config.rateLimits.authWindowMs / 1000)),
+  authEmail: getLimiter('authEmail', config.rateLimits.authEmailMax, Math.ceil(config.rateLimits.authWindowMs / 1000)),
   user: getLimiter('user', config.rateLimits.userMax, Math.ceil(config.rateLimits.userWindowMs / 1000)),
   expensive: getLimiter('expensive', config.rateLimits.expensiveMax, Math.ceil(config.rateLimits.expensiveWindowMs / 1000)),
 };
 
 // Helper to extract clean client IP
 const getClientIp = (req) => {
-  return req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown-ip';
+  const forwardedFor = req.headers['x-forwarded-for'];
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
+  return req.socket.remoteAddress || 'unknown-ip';
 };
 
 // Middlewares
 const globalLimiter = async (req, res, next) => {
-  const ip = getClientIp(req);
+  if (req.path === '/health' || req.path === '/api/health') {
+    return next();
+  }
+
+  let key = getClientIp(req);
+  let userId = null;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    try {
+      const { verifyAccessToken } = require('../utils/token');
+      const token = req.headers.authorization.split(' ')[1];
+      const decoded = verifyAccessToken(token);
+      if (decoded && decoded.sub) {
+        userId = decoded.sub;
+        key = `user:${userId}`;
+      }
+    } catch (err) {
+      // Fallback to IP if token is invalid or expired
+    }
+  }
+
   try {
-    await limiters.global(ip);
+    await limiters.global(key);
     next();
   } catch (rej) {
-    handleRejection(ip, 'global', req, res, next, rej);
+    handleRejection(key, 'global', req, res, next, rej, userId);
   }
 };
 
 const authLimiter = async (req, res, next) => {
+  if (req.path === '/health' || req.path === '/api/health') {
+    return next();
+  }
+
   const ip = getClientIp(req);
   const identifier = (req.body.email || req.body.studentId || '').trim().toLowerCase();
-  const key = `${ip}:${identifier}`;
+
   try {
-    await limiters.auth(key);
+    // 1. IP-only check for authentication routes
+    try {
+      await limiters.authIp(ip);
+    } catch (rej) {
+      return handleRejection(ip, 'authIp', req, res, next, rej);
+    }
+
+    // 2. Identifier checks (if identifier is provided)
+    if (identifier) {
+      // IP + email combination
+      try {
+        await limiters.auth(`${ip}:${identifier}`);
+      } catch (rej) {
+        return handleRejection(`${ip}:${identifier}`, 'authCombined', req, res, next, rej);
+      }
+
+      // Email-only brute force prevention
+      try {
+        await limiters.authEmail(identifier);
+      } catch (rej) {
+        return handleRejection(identifier, 'authEmail', req, res, next, rej);
+      }
+    }
+
     next();
-  } catch (rej) {
-    handleRejection(key, 'auth', req, res, next, rej);
+  } catch (err) {
+    next(err);
   }
 };
 
 const userLimiter = async (req, res, next) => {
+  if (req.path === '/health' || req.path === '/api/health') {
+    return next();
+  }
+
   const key = req.user && req.user.id ? req.user.id : getClientIp(req);
   try {
     await limiters.user(key);
@@ -120,6 +177,10 @@ const userLimiter = async (req, res, next) => {
 };
 
 const expensiveRouteLimiter = async (req, res, next) => {
+  if (req.path === '/health' || req.path === '/api/health') {
+    return next();
+  }
+
   const key = req.user && req.user.id ? req.user.id : getClientIp(req);
   try {
     await limiters.expensive(key);
@@ -129,11 +190,17 @@ const expensiveRouteLimiter = async (req, res, next) => {
   }
 };
 
-const handleRejection = (key, tierName, req, res, next, rej) => {
+const handleRejection = (key, tierName, req, res, next, rej, userId = null) => {
   const retryAfterSeconds = rej.msBeforeNext ? Math.ceil(rej.msBeforeNext / 1000) : 60;
   res.setHeader('Retry-After', String(retryAfterSeconds));
 
-  logger.warn(`Rate limit exceeded on ${tierName} tier. Key: ${key}, Path: ${req.originalUrl || req.url}`);
+  const clientIp = getClientIp(req);
+  const activeUserId = userId || (req.user && req.user.id) || null;
+  const path = req.originalUrl || req.url;
+
+  logger.warn(
+    `Rate limit exceeded. Tier: ${tierName}, Key: ${key}, IP: ${clientIp}, UserID: ${activeUserId || 'unauthenticated'}, Path: ${path}, Retry-After: ${retryAfterSeconds}s`
+  );
 
   res.status(429).json({
     success: false,
@@ -147,7 +214,6 @@ module.exports = {
   authLimiter,
   userLimiter,
   expensiveRouteLimiter,
-  // Export internal helper for testing multi-instance sync
   getLimiter,
   redisClient,
 };

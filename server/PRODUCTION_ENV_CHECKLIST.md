@@ -24,5 +24,14 @@ This document details all environment variables required to run the BookBuddy ba
 | `LAB_START_HOUR` | No | `8` | Lab operating start hour (local 24h format). Defaults to `8` (8 AM). |
 | `LAB_END_HOUR` | No | `20` | Lab operating end hour (local 24h format). Defaults to `20` (8 PM). |
 | `REDIS_URL` | No | `redis://localhost:6379` | Shared Redis cache URL for multi-instance distributed rate limiting. Defaults to none (uses in-memory store if missing). |
-| `RATE_LIMIT_GLOBAL_MAX` | No | `100` | Max requests allowed per global window per IP. Defaults to `100`. |
+| `RATE_LIMIT_GLOBAL_MAX` | No | `100` | Max requests allowed per global window per IP (or per-user if authenticated). Defaults to `100`. |
 | `RATE_LIMIT_GLOBAL_WINDOW_MS` | No | `60000` | Time duration for global rate limiting window (in milliseconds). Defaults to `60000` (1 minute). |
+| `RATE_LIMIT_AUTH_MAX` | No | `5` | Max auth attempts per IP + Email/ID combination. Defaults to `5`. |
+| `RATE_LIMIT_AUTH_IP_MAX` | No | `20` | Max auth attempts per IP address. Defaults to `20`. |
+| `RATE_LIMIT_AUTH_EMAIL_MAX` | No | `5` | Max auth attempts per Email/ID across all IPs. Defaults to `5`. |
+| `RATE_LIMIT_AUTH_WINDOW_MS` | No | `900000` | Time duration for auth rate limiting window (in milliseconds). Defaults to `900000` (15 minutes). |
+| `RATE_LIMIT_USER_MAX` | No | `100` | Max requests allowed per user per window. Defaults to `100`. |
+| `RATE_LIMIT_USER_WINDOW_MS` | No | `60000` | Time duration for per-user rate limiting window (in milliseconds). Defaults to `60000` (1 minute). |
+| `RATE_LIMIT_EXPENSIVE_MAX` | No | `10` | Max requests allowed per window for expensive routes. Defaults to `10`. |
+| `RATE_LIMIT_EXPENSIVE_WINDOW_MS` | No | `60000` | Time duration for expensive rate limiting window (in milliseconds). Defaults to `60000` (1 minute). |
+

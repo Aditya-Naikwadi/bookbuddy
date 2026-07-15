@@ -64,6 +64,8 @@ const config = {
     globalMax: parseInt(process.env.RATE_LIMIT_GLOBAL_MAX, 10) || 100,
     globalWindowMs: parseInt(process.env.RATE_LIMIT_GLOBAL_WINDOW_MS, 10) || 60000,
     authMax: parseInt(process.env.RATE_LIMIT_AUTH_MAX, 10) || 5,
+    authIpMax: parseInt(process.env.RATE_LIMIT_AUTH_IP_MAX, 10) || 20,
+    authEmailMax: parseInt(process.env.RATE_LIMIT_AUTH_EMAIL_MAX, 10) || 5,
     authWindowMs: parseInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS, 10) || 15 * 60 * 1000,
     userMax: parseInt(process.env.RATE_LIMIT_USER_MAX, 10) || 100,
     userWindowMs: parseInt(process.env.RATE_LIMIT_USER_WINDOW_MS, 10) || 60000,

@@ -54,7 +54,10 @@ process.env.JWT_REFRESH_EXPIRY = '7d';
 process.env.RATE_LIMIT_GLOBAL_MAX = '50';
 process.env.RATE_LIMIT_GLOBAL_WINDOW_MS = '60000';
 process.env.RATE_LIMIT_AUTH_MAX = '2'; // Trigger auth block at 3rd request
+process.env.RATE_LIMIT_AUTH_IP_MAX = '2';
+process.env.RATE_LIMIT_AUTH_EMAIL_MAX = '2';
 process.env.RATE_LIMIT_AUTH_WINDOW_MS = '5000';
+
 
 const app = require('../app');
 const { getLimiter } = require('../middlewares/rateLimiters');
@@ -102,7 +105,7 @@ describe('API Rate Limiting & Input Validation Hardening Tests', () => {
         expect.objectContaining({
           success: false,
           code: 429,
-          message: expect.stringContaining('Too many requests on auth limiter'),
+          message: expect.stringContaining('Too many requests on authIp limiter'),
         })
       );
     });
@@ -157,6 +160,74 @@ describe('API Rate Limiting & Input Validation Hardening Tests', () => {
         const resApi = await request(app).get('/api/health');
         expect(resApi.status).toBe(200);
       }
+    });
+
+    it('5. should block by IP-only auth limiter when email addresses vary', async () => {
+      // Send 1st login request with student1@test.com
+      const res1 = await request(app)
+        .post('/api/_debug/test-limiter')
+        .send({ email: 'student1@test.com' });
+      expect(res1.status).toBe(200);
+
+      // Send 2nd login request with student2@test.com from the same IP
+      const res2 = await request(app)
+        .post('/api/_debug/test-limiter')
+        .send({ email: 'student2@test.com' });
+      expect(res2.status).toBe(200);
+
+      // Send 3rd login request with student3@test.com from the same IP
+      // This should trip the IP-only auth limiter (RATE_LIMIT_AUTH_IP_MAX = 2)
+      const res3 = await request(app)
+        .post('/api/_debug/test-limiter')
+        .send({ email: 'student3@test.com' });
+      
+      expect(res3.status).toBe(429);
+      expect(res3.body.message).toContain('Too many requests on authIp limiter');
+    });
+
+    it('6. should block by email-only auth limiter when IP addresses vary', async () => {
+      // Send 1st request for 'target@test.com' from IP '1.1.1.1'
+      const res1 = await request(app)
+        .post('/api/_debug/test-limiter')
+        .set('X-Forwarded-For', '1.1.1.1')
+        .send({ email: 'target@test.com' });
+      expect(res1.status).toBe(200);
+
+      // Send 2nd request for 'target@test.com' from IP '2.2.2.2'
+      const res2 = await request(app)
+        .post('/api/_debug/test-limiter')
+        .set('X-Forwarded-For', '2.2.2.2')
+        .send({ email: 'target@test.com' });
+      expect(res2.status).toBe(200);
+
+      // Send 3rd request for 'target@test.com' from IP '3.3.3.3'
+      // This should trip the email-only limiter (RATE_LIMIT_AUTH_EMAIL_MAX = 2)
+      const res3 = await request(app)
+        .post('/api/_debug/test-limiter')
+        .set('X-Forwarded-For', '3.3.3.3')
+        .send({ email: 'target@test.com' });
+
+      expect(res3.status).toBe(429);
+      expect(res3.body.message).toContain('Too many requests on authEmail limiter');
+    });
+
+    it('7. should key the global limiter by user ID when a JWT is present', async () => {
+      const jwt = require('jsonwebtoken');
+      const tokenUser = jwt.sign(
+        { sub: 'user_12345', role: 'student', collegeId: '6a579dbe4c4d0dc04452df15' },
+        'testjwtsecretkey999',
+        { expiresIn: '15m' }
+      );
+
+      // Call profile route passing the Bearer token (which requires authentication)
+      // Since it has the globalLimiter and protect applied
+      await request(app)
+        .get('/api/auth/profile')
+        .set('Authorization', `Bearer ${tokenUser}`);
+
+      // Inspect mock store to verify the global limiter used the user sub ID
+      const keys = Array.from(mockSharedRedisStore.keys());
+      expect(keys).toContain('global:user:user_12345');
     });
   });
 
