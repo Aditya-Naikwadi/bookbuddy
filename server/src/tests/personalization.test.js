@@ -18,6 +18,9 @@ const ReadingList = require('../models/ReadingList');
 const ReadingProgress = require('../models/ReadingProgress');
 const SavedSearch = require('../models/SavedSearch');
 const { generateTokenPair } = require('../utils/token');
+const axios = require('axios');
+
+jest.mock('axios');
 
 describe('Digital Assets & Personalization API Integration Tests', () => {
   let collegeA;
@@ -334,5 +337,69 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
       });
 
     expect(res.status).toBe(400);
+  });
+
+  // Assertion 10: Proxy content allowed for Gutenberg domains
+  it('10. should allow proxying external resource content for whitelisted domains', async () => {
+    const resource = await EResource.create({
+      collegeId: collegeA._id,
+      title: 'Gutenberg Ebook',
+      author: 'Author',
+      type: 'epub',
+      url: 'https://gutenberg.org/ebook.epub',
+      source: 'gutenberg',
+      externalId: 12345,
+      readUrl: 'https://gutenberg.org/ebook.html',
+      epubUrl: 'https://gutenberg.org/ebook.epub',
+      fileUrl: 'https://gutenberg.org/ebook.epub',
+      uploadedBy: studentA._id,
+      category: 'Open Access',
+      moderationStatus: 'approved',
+    });
+
+    const { Readable } = require('stream');
+    const mockStream = new Readable();
+    mockStream.push('mocked epub data');
+    mockStream.push(null);
+
+    axios.mockImplementationOnce(() => Promise.resolve({
+      status: 200,
+      headers: { 'content-type': 'application/epub+zip' },
+      data: mockStream,
+    }));
+
+    const res = await request(app)
+      .get(`/api/eresources/external/${resource._id}/content?format=epub`)
+      .set('Authorization', `Bearer ${tokenStudentA}`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/epub+zip');
+    expect(res.headers['content-security-policy']).toContain('sandbox');
+  });
+
+  // Assertion 11: Proxy content rejected for non-whitelisted domains
+  it('11. should block proxying external resource content for non-whitelisted domains', async () => {
+    const resource = await EResource.create({
+      collegeId: collegeA._id,
+      title: 'Malicious Ebook',
+      author: 'Attacker',
+      type: 'epub',
+      url: 'https://malicious-site.com/attack.epub',
+      source: 'gutenberg',
+      externalId: 67890,
+      readUrl: 'https://malicious-site.com/attack.html',
+      epubUrl: 'https://malicious-site.com/attack.epub',
+      fileUrl: 'https://malicious-site.com/attack.epub',
+      uploadedBy: studentA._id,
+      category: 'Open Access',
+      moderationStatus: 'approved',
+    });
+
+    const res = await request(app)
+      .get(`/api/eresources/external/${resource._id}/content?format=epub`)
+      .set('Authorization', `Bearer ${tokenStudentA}`);
+
+    expect(res.status).toBe(403);
+    expect(res.body.message).toContain('untrusted domain');
   });
 });

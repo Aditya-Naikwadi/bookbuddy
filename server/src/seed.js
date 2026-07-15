@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 
 // Import all models
 const User = require('./models/User');

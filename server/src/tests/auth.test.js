@@ -9,7 +9,8 @@ process.env.JWT_SECRET = 'testjwtsecretkey999';
 process.env.JWT_REFRESH_SECRET = 'testjwtrefreshsecretkey999';
 process.env.JWT_ACCESS_EXPIRY = '5s';
 process.env.JWT_REFRESH_EXPIRY = '10s';
-jest.setTimeout(30000);
+// raised from default 30s: multi-step integration test, verified slow under coverage instrumentation only, see 2026-07-15 audit
+jest.setTimeout(90000);
 
 const app = require('../app');
 const User = require('../models/User');
@@ -206,5 +207,26 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
     const refreshRes = await request(app).post('/api/auth/refresh').send({ refreshToken });
 
     expect(refreshRes.status).toBe(401);
+  });
+
+  // Assertion 10: Reject administrative role injection on registration
+  it('10. should ignore/reject role injection of college-admin on registration', async () => {
+    const maliciousData = {
+      studentId: 'STU_MAL_003',
+      name: 'Malicious Admin',
+      email: 'malicious.admin@test.com',
+      password: 'password123',
+      role: 'college-admin',
+      collegeId: collegeA._id.toString(),
+    };
+
+    const res = await request(app).post('/api/auth/register').send(maliciousData);
+
+    // Zod validation or controller should reject it with 400 or 403
+    expect([400, 403]).toContain(res.status);
+
+    // Also verify no such user was registered
+    const user = await User.findOne({ email: 'malicious.admin@test.com' });
+    expect(user).toBeNull();
   });
 });

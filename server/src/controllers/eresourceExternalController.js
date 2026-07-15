@@ -4,6 +4,7 @@ const gutenbergService = require('../services/gutenbergService');
 const EResource = require('../models/EResource');
 const { recordQualifyingAction } = require('../services/streakService');
 const events = require('../sockets/events');
+const AppError = require('../utils/AppError');
 
 // @desc    Browse / Search external Gutenberg books
 // @route   GET /api/eresources/external
@@ -48,21 +49,23 @@ const openExternal = asyncHandler(async (req, res) => {
       const bookData = await gutenbergService.getBookById(gutenbergId);
 
       resource = await EResource.create({
+        collegeId: req.user.collegeId,
         title: bookData.title,
+        author: bookData.author || 'Unknown Author',
         category: 'Open Access', // Default mapped category
-        type: bookData.epubUrl ? 'EPUB' : 'HTML',
+        type: bookData.epubUrl ? 'epub' : 'pdf',
+        fileUrl: bookData.epubUrl || bookData.readUrl || 'https://gutenberg.org',
+        uploadedBy: req.user.id,
+        moderationStatus: 'approved',
         url: bookData.readUrl || bookData.epubUrl || '',
         source: 'gutenberg',
         externalId: bookData.externalId,
         readUrl: bookData.readUrl,
         epubUrl: bookData.epubUrl,
         downloadCount: bookData.downloadCount,
-        accessLevel: 'public',
-        status: 'approved',
       });
     } catch (error) {
-      res.status(error.statusCode || 500);
-      throw new Error(error.message);
+      throw new AppError(error.message, error.statusCode || 500);
     }
   }
 
@@ -76,35 +79,50 @@ const proxyContent = asyncHandler(async (req, res) => {
   const resource = await EResource.findById(req.params.id);
 
   if (!resource || resource.source !== 'gutenberg') {
-    res.status(404);
-    throw new Error('Resource not found or is not an external resource');
+    throw new AppError('Resource not found or is not an external resource', 404);
   }
 
   const { format } = req.query;
   const targetUrl = format === 'epub' ? resource.epubUrl : resource.readUrl;
 
   if (!targetUrl) {
-    res.status(400);
-    throw new Error(`Format ${format} is not available for this resource`);
+    throw new AppError(`Format ${format} is not available for this resource`, 400);
+  }
+
+  // Validate that targetUrl matches approved Gutenberg domains to prevent arbitrary SSRF/XSS
+  try {
+    const { hostname, protocol } = new URL(targetUrl);
+    const allowedHosts = ['www.gutenberg.org', 'gutenberg.org', 'gutendex.com'];
+    if (protocol !== 'https:' || !allowedHosts.includes(hostname.toLowerCase())) {
+      throw new AppError('Requested resource content URL points to an untrusted domain.', 403);
+    }
+  } catch (err) {
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError(err.message || 'Invalid or untrusted resource content URL', 403);
   }
 
   try {
-    // We proxy it as a stream so we don't load huge EPUBs into memory fully
+    // We proxy it as a stream so we don't load huge EPUBs into memory fully.
+    // maxRedirects is restricted to 0 to prevent redirect-based SSRF.
     const response = await axios({
       method: 'GET',
       url: targetUrl,
       responseType: 'stream',
+      maxRedirects: 0,
     });
 
-    // Pass along headers
-    res.setHeader('Content-Type', response.headers['content-type']);
+    // Pass along headers and apply browser sandboxing to prevent script execution on our origin
+    res.setHeader('Content-Type', response.headers['content-type'] || 'text/html');
     res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache proxied content for 1 hour
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
 
     response.data.pipe(res);
   } catch (error) {
     console.error(`[Proxy Content] Failed to fetch ${targetUrl}`);
-    res.status(502);
-    throw new Error('Failed to proxy content from upstream server');
+    throw new AppError('Failed to proxy content from upstream server', 502);
   }
 });
 

@@ -434,7 +434,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
       issuedBy: adminA._id,
       maxRenewals: 2,
     });
-    await Loan.create({
+    const loan2 = await Loan.create({
       collegeId: collegeA._id,
       userId: studentA._id,
       bookId: book1._id,
@@ -467,7 +467,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
     await Fine.create({
       collegeId: collegeA._id,
       userId: studentA._id,
-      loanId: loan1._id,
+      loanId: loan2._id,
       amount: 70,
       status: 'unpaid',
       overdueDays: 5,

@@ -1,9 +1,11 @@
 const asyncHandler = require('../utils/asyncHandler');
 const Loan = require('../models/Loan');
+const Book = require('../models/Book');
+const AppError = require('../utils/AppError');
 const {
-  borrowBook,
+  checkoutBook,
   renewLoan: renewLoanService,
-  returnLoan: returnLoanService,
+  returnBook,
 } = require('../services/loanService');
 
 // @desc    Get user's loans
@@ -14,7 +16,7 @@ const getMyLoans = asyncHandler(async (req, res) => {
   const pageSize = Number(limit);
   const pageNumber = Number(page);
 
-  let query = { userId: req.user._id };
+  let query = { userId: req.user.id, collegeId: req.user.collegeId };
 
   if (status && status !== 'all') {
     query.status = status;
@@ -43,7 +45,15 @@ const getMyLoans = asyncHandler(async (req, res) => {
 // @route   POST /api/loans/:bookId/borrow
 // @access  Private
 const borrowBookHandler = asyncHandler(async (req, res) => {
-  const loan = await borrowBook(req.user._id, req.params.bookId);
+  const { bookId } = req.params;
+
+  // Tenant-scope the book lookup
+  const book = await Book.findOne({ _id: bookId, collegeId: req.user.collegeId });
+  if (!book) {
+    throw new AppError('Book not found or unauthorized access.', 404);
+  }
+
+  const loan = await checkoutBook(req.user.id, bookId, req.user.collegeId, req.user.id);
   res.json({ success: true, data: loan });
 });
 
@@ -51,7 +61,12 @@ const borrowBookHandler = asyncHandler(async (req, res) => {
 // @route   POST /api/loans/:id/renew
 // @access  Private
 const renewLoan = asyncHandler(async (req, res) => {
-  const loan = await renewLoanService(req.params.id, req.user._id);
+  const loanRecord = await Loan.findOne({ _id: req.params.id, userId: req.user.id, collegeId: req.user.collegeId });
+  if (!loanRecord) {
+    throw new AppError('Active loan not found or unauthorized access.', 404);
+  }
+
+  const loan = await renewLoanService(req.params.id, req.user.id);
   res.json({ success: true, data: loan });
 });
 
@@ -59,7 +74,18 @@ const renewLoan = asyncHandler(async (req, res) => {
 // @route   POST /api/loans/:id/return
 // @access  Private
 const returnLoanHandler = asyncHandler(async (req, res) => {
-  const loan = await returnLoanService(req.params.id, req.user._id);
+  // Let's verify the loan belongs to the user and their college
+  const loanRecord = await Loan.findOne({
+    _id: req.params.id,
+    userId: req.user.id,
+    collegeId: req.user.collegeId,
+    status: { $in: ['active', 'overdue'] },
+  });
+  if (!loanRecord) {
+    throw new AppError('Active loan not found or unauthorized access.', 404);
+  }
+
+  const loan = await returnBook(req.params.id, req.user.collegeId);
   res.json({ success: true, data: loan });
 });
 

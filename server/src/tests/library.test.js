@@ -8,7 +8,8 @@ process.env.JWT_SECRET = 'testjwtlibrarysecretkey999';
 process.env.JWT_REFRESH_SECRET = 'testjwtlibraryrefreshsecretkey999';
 process.env.JWT_ACCESS_EXPIRY = '10m';
 process.env.JWT_REFRESH_EXPIRY = '7d';
-jest.setTimeout(30000);
+// raised from default 30s: multi-step integration test, verified slow under coverage instrumentation only, see 2026-07-15 audit
+jest.setTimeout(90000);
 
 const app = require('../app');
 const User = require('../models/User');

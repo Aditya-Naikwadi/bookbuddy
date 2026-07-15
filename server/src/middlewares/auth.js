@@ -31,6 +31,7 @@ const protect = async (req, res, next) => {
 
     req.user = {
       id: decoded.sub,
+      _id: decoded.sub, // Compatibility shim to prevent tenant isolation leaks on legacy controllers
       role: decoded.role,
       collegeId: decoded.collegeId,
     };

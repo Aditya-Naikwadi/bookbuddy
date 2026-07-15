@@ -1,4 +1,5 @@
 // Schema representing overdue loan fines.
+// Rule: Define each field's indexing EITHER inline via schema options OR via explicit schema.index() calls, never both for the same field/combination.
 const mongoose = require('mongoose');
 
 const fineSchema = new mongoose.Schema(
@@ -19,7 +20,6 @@ const fineSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Loan',
       required: true,
-      index: true,
     },
     overdueDays: {
       type: Number,

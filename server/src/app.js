@@ -22,7 +22,28 @@ app.use((req, res, next) => {
 });
 
 // Security Headers
-app.use(helmet());
+app.use(
+  helmet({
+    hsts: {
+      maxAge: 63072000, // 2 years
+      includeSubDomains: true,
+      preload: true,
+    },
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'"],
+        frameAncestors: ["'none'"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    crossOriginResourcePolicy: { policy: 'same-site' },
+  })
+);
 
 // CORS Configuration
 app.use(

@@ -4,9 +4,28 @@ const { sendAlert } = require('../utils/alerting');
 
 // eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, _next) => {
-  const statusCode = err.statusCode || 500;
-  const message = (err.isOperational || config.nodeEnv !== 'production')
-    ? (err.message || 'Internal Server Error')
+  let statusCode = err.statusCode || 500;
+  let message = err.message || 'Internal Server Error';
+
+  // Sanitize and handle database-specific errors safely
+  if (err.name === 'CastError') {
+    statusCode = 400;
+    message = `Invalid format for field: ${err.path}`;
+    err.isOperational = true;
+  } else if (err.name === 'ValidationError') {
+    statusCode = 400;
+    message = Object.values(err.errors || {}).map((el) => el.message).join('. ');
+    err.isOperational = true;
+  } else if (err.code === 11000) {
+    statusCode = 409;
+    const field = Object.keys(err.keyValue || {})[0] || 'record';
+    message = `A record with this ${field} already exists.`;
+    err.isOperational = true;
+  }
+
+  const isProd = config.nodeEnv === 'production';
+  const displayMessage = (err.isOperational || !isProd)
+    ? message
     : 'An unexpected error occurred. Please contact support.';
   const requestId = req.id || 'N/A';
 
@@ -21,7 +40,7 @@ const errorHandler = (err, req, res, _next) => {
 
   const response = {
     success: false,
-    message,
+    message: displayMessage,
     code: statusCode,
     requestId,
     ...(config.nodeEnv === 'development' && { stack: err.stack }),

@@ -54,6 +54,28 @@ const eResourceSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    source: {
+      type: String,
+      enum: ['internal', 'gutenberg'],
+      default: 'internal',
+      index: true,
+    },
+    externalId: {
+      type: Number,
+      index: true,
+    },
+    readUrl: {
+      type: String,
+    },
+    epubUrl: {
+      type: String,
+    },
+    url: {
+      type: String,
+    },
+    downloadCount: {
+      type: Number,
+    },
   },
   {
     timestamps: true,

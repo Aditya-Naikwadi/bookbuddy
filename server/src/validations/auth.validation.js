@@ -8,7 +8,7 @@ const registerSchema = z.object({
       name: z.string().min(2, 'Name must be at least 2 characters').trim(),
       email: z.string().email('Invalid email address').trim(),
       password: z.string().min(8, 'Password must be at least 8 characters long'),
-      role: z.enum(['student', 'college-admin', 'super-admin', 'general']).default('student'),
+      role: z.enum(['student', 'general']).default('student'),
       collegeId: z
         .string()
         .regex(/^[0-9a-fA-F]{24}$/, 'Invalid College ID format')

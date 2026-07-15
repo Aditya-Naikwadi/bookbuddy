@@ -1,6 +1,10 @@
 // Mock RateLimiterRedis to simulate a shared Redis storage across multiple instances
 const mockSharedRedisStore = new Map();
 
+// Clear require cache to ensure rateLimiters is re-loaded with the mocked RateLimiterRedis
+delete require.cache[require.resolve('../middlewares/rateLimiters')];
+delete require.cache[require.resolve('../app')];
+
 jest.mock('rate-limiter-flexible', () => {
   const original = jest.requireActual('rate-limiter-flexible');
   class MockRateLimiterRedis {
@@ -228,6 +232,34 @@ describe('API Rate Limiting & Input Validation Hardening Tests', () => {
       // Inspect mock store to verify the global limiter used the user sub ID
       const keys = Array.from(mockSharedRedisStore.keys());
       expect(keys).toContain('global:user:user_12345');
+    });
+
+    it('8. [Regression] should not block legitimate logins in subsequent simulated test files (proving reset functionality)', async () => {
+      // Simulate "File 1" running auth requests and exhausting the auth combined bucket (limit is 2)
+      await request(app)
+        .post('/api/_debug/test-limiter')
+        .send({ email: 'regression@test.com' });
+
+      await request(app)
+        .post('/api/_debug/test-limiter')
+        .send({ email: 'regression@test.com' });
+
+      // 3rd request - blocked in "File 1"
+      const res3 = await request(app)
+        .post('/api/_debug/test-limiter')
+        .send({ email: 'regression@test.com' });
+      expect(res3.status).toBe(429);
+
+      // Simulate "File 2" starting: Jest triggers beforeEach hook resetting limiters
+      const { resetAllLimiters } = require('../middlewares/rateLimiters');
+      resetAllLimiters();
+      mockSharedRedisStore.clear(); // Clear mocked Redis store shared in this file
+
+      // Legitimate first request in "File 2" must succeed (not blocked by File 1's exhausted bucket)
+      const res4 = await request(app)
+        .post('/api/_debug/test-limiter')
+        .send({ email: 'regression@test.com' });
+      expect(res4.status).toBe(200);
     });
   });
 

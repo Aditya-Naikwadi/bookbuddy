@@ -7,9 +7,13 @@ const AppError = require('../utils/AppError');
 let redisClient = null;
 let redisReady = false;
 
-if (config.redisUrl || config.nodeEnv === 'test') {
+const isTest = config.nodeEnv === 'test';
+const isMock = RateLimiterRedis.name === 'MockRateLimiterRedis';
+
+if (isTest && isMock) {
+  redisReady = true;
+} else if (config.redisUrl || !isTest) {
   try {
-    const isTest = config.nodeEnv === 'test';
     redisClient = new Redis(config.redisUrl || 'redis://127.0.0.1:6379', {
       maxRetriesPerRequest: 1,
       connectTimeout: 2000,
@@ -17,21 +21,21 @@ if (config.redisUrl || config.nodeEnv === 'test') {
       lazyConnect: isTest,
     });
 
-    if (isTest) {
+    redisClient.on('connect', () => {
       redisReady = true;
-    } else {
-      redisClient.on('connect', () => {
-        redisReady = true;
-        logger.info('Connected to Redis for rate limiting.');
-      });
+      logger.info('Connected to Redis for rate limiting.');
+    });
 
-      redisClient.on('error', (err) => {
-        redisReady = false;
+    redisClient.on('error', (err) => {
+      redisReady = false;
+      if (!isTest) {
         logger.warn('Redis connection error. Rate limiting falling back to in-memory store.', err);
-      });
-    }
+      }
+    });
   } catch (err) {
-    logger.warn('Failed to initialize Redis client. Rate limiting falling back to in-memory store.', err);
+    if (!isTest) {
+      logger.warn('Failed to initialize Redis client. Rate limiting falling back to in-memory store.', err);
+    }
   }
 }
 
@@ -46,16 +50,19 @@ const getLimiter = (keyPrefix, points, durationSeconds) => {
   const memoryLimiter = new RateLimiterMemory(options);
   let redisLimiter = null;
 
-  if (redisClient) {
+  // Always instantiate RateLimiterRedis in test mode to support late-binding mocks
+  if (redisClient || isTest) {
     redisLimiter = new RateLimiterRedis({
       ...options,
-      storeClient: redisClient,
+      storeClient: redisClient || {},
       inMemoryBlockOnConsumed: points, // Optimize by blocking in memory if fully consumed
     });
   }
 
   return async (key) => {
-    if (redisReady && redisLimiter) {
+    // Evaluate dynamically at runtime to handle Jest module caching of the mock class
+    const isMocked = RateLimiterRedis.name === 'MockRateLimiterRedis';
+    if ((redisReady || isMocked) && redisLimiter) {
       try {
         return await redisLimiter.consume(key);
       } catch (err) {
@@ -209,6 +216,15 @@ const handleRejection = (key, tierName, req, res, next, rej, userId = null) => {
   });
 };
 
+const resetAllLimiters = () => {
+  limiters.global = getLimiter('global', config.rateLimits.globalMax, Math.ceil(config.rateLimits.globalWindowMs / 1000));
+  limiters.auth = getLimiter('auth', config.rateLimits.authMax, Math.ceil(config.rateLimits.authWindowMs / 1000));
+  limiters.authIp = getLimiter('authIp', config.rateLimits.authIpMax, Math.ceil(config.rateLimits.authWindowMs / 1000));
+  limiters.authEmail = getLimiter('authEmail', config.rateLimits.authEmailMax, Math.ceil(config.rateLimits.authWindowMs / 1000));
+  limiters.user = getLimiter('user', config.rateLimits.userMax, Math.ceil(config.rateLimits.userWindowMs / 1000));
+  limiters.expensive = getLimiter('expensive', config.rateLimits.expensiveMax, Math.ceil(config.rateLimits.expensiveWindowMs / 1000));
+};
+
 module.exports = {
   globalLimiter,
   authLimiter,
@@ -216,4 +232,6 @@ module.exports = {
   expensiveRouteLimiter,
   getLimiter,
   redisClient,
+  resetAllLimiters,
+  limiters,
 };

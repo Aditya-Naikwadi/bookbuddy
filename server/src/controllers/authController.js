@@ -13,9 +13,9 @@ const registerUser = async (req, res, next) => {
   try {
     const { studentId, name, email, password, role, collegeId } = req.body;
 
-    // Disallow public registration of super-admin accounts
-    if (role === 'super-admin') {
-      return next(new AppError('Public registration of super-admin accounts is forbidden.', 403));
+    // Disallow public registration of administrative/privileged roles
+    if (role === 'super-admin' || role === 'college-admin') {
+      return next(new AppError('Public registration of administrative roles is forbidden.', 403));
     }
 
     // Verify College exists if collegeId is provided

@@ -1,5 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
 const Bookmark = require('../models/Bookmark');
+const EResource = require('../models/EResource');
 const AppError = require('../utils/AppError');
 
 // @desc    Get my bookmarks
@@ -10,9 +11,9 @@ const getMyBookmarks = asyncHandler(async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 10;
   const skip = (page - 1) * limit;
 
-  const total = await Bookmark.countDocuments({ userId: req.user._id });
-  const bookmarks = await Bookmark.find({ userId: req.user._id })
-    .populate('bookId', 'title author coverImage')
+  const total = await Bookmark.countDocuments({ userId: req.user.id });
+  const bookmarks = await Bookmark.find({ userId: req.user.id })
+    .populate('eresourceId', 'title author coverImage format')
     .skip(skip)
     .limit(limit)
     .sort('-createdAt');
@@ -28,16 +29,24 @@ const getMyBookmarks = asyncHandler(async (req, res) => {
 // @route   POST /api/bookmarks
 // @access  Private
 const createBookmark = asyncHandler(async (req, res) => {
-  const { bookId } = req.body;
+  const { eresourceId, locationRef, note } = req.body;
 
-  const existing = await Bookmark.findOne({ userId: req.user._id, bookId });
+  // Enforce tenant scoping: verify eresource belongs to user's college
+  const eresource = await EResource.findOne({ _id: eresourceId, collegeId: req.user.collegeId });
+  if (!eresource) {
+    throw new AppError('EResource not found or unauthorized access.', 404);
+  }
+
+  const existing = await Bookmark.findOne({ userId: req.user.id, eresourceId, locationRef });
   if (existing) {
-    throw new AppError('Bookmark already exists', 400);
+    throw new AppError('Bookmark already exists at this location', 400);
   }
 
   const bookmark = await Bookmark.create({
-    userId: req.user._id,
-    bookId,
+    userId: req.user.id,
+    eresourceId,
+    locationRef,
+    note,
   });
 
   res.json({ success: true, data: bookmark });
@@ -47,7 +56,7 @@ const createBookmark = asyncHandler(async (req, res) => {
 // @route   DELETE /api/bookmarks/:id
 // @access  Private
 const deleteBookmark = asyncHandler(async (req, res) => {
-  const bookmark = await Bookmark.findOne({ _id: req.params.id, userId: req.user._id });
+  const bookmark = await Bookmark.findOne({ _id: req.params.id, userId: req.user.id });
 
   if (!bookmark) {
     throw new AppError('Bookmark not found', 404);

@@ -1,4 +1,5 @@
 // Schema representing curated collections of catalog items.
+// Rule: Define each field's indexing EITHER inline via schema options OR via explicit schema.index() calls, never both for the same field/combination.
 const mongoose = require('mongoose');
 
 const readingListSchema = new mongoose.Schema(
@@ -13,7 +14,6 @@ const readingListSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     title: {
       type: String,

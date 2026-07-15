@@ -10,8 +10,8 @@ const getMySavedSearches = asyncHandler(async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 10;
   const skip = (page - 1) * limit;
 
-  const total = await SavedSearch.countDocuments({ userId: req.user._id });
-  const searches = await SavedSearch.find({ userId: req.user._id })
+  const total = await SavedSearch.countDocuments({ userId: req.user.id });
+  const searches = await SavedSearch.find({ userId: req.user.id })
     .skip(skip)
     .limit(limit)
     .sort('-createdAt');
@@ -30,7 +30,7 @@ const createSavedSearch = asyncHandler(async (req, res) => {
   const { label, filters } = req.body;
 
   const search = await SavedSearch.create({
-    userId: req.user._id,
+    userId: req.user.id,
     label,
     filters,
   });
