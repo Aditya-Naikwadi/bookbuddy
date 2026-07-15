@@ -12,11 +12,11 @@ const originalClose = mongoose.connection.close;
 const originalDisconnect = mongoose.disconnect;
 
 mongoose.connection.close = async function (...args) {
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise((resolve) => setTimeout(resolve, 500));
   return originalClose.apply(this, args);
 };
 
 mongoose.disconnect = async function (...args) {
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise((resolve) => setTimeout(resolve, 500));
   return originalDisconnect.apply(this, args);
 };

@@ -73,7 +73,9 @@ const getBookById = asyncHandler(async (req, res) => {
 // @route   GET /api/books/:id/availability
 // @access  Public
 const getBookAvailability = asyncHandler(async (req, res) => {
-  const book = await Book.findOne({ _id: req.params.id, ...req.tenantFilter }).select('totalCopies availableCopies');
+  const book = await Book.findOne({ _id: req.params.id, ...req.tenantFilter }).select(
+    'totalCopies availableCopies'
+  );
 
   if (book) {
     res.json({ success: true, availability: book });

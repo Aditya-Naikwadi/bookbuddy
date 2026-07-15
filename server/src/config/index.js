@@ -25,7 +25,15 @@ if (missingEnv.length > 0) {
 }
 
 if (process.env.NODE_ENV === 'production') {
-  const weakSecrets = ['supersecret123', 'supersecretrefresh123', 'placeholder', 'secret', 'default', 'testjwtsecretkey999', 'testjwtrefreshsecretkey999'];
+  const weakSecrets = [
+    'supersecret123',
+    'supersecretrefresh123',
+    'placeholder',
+    'secret',
+    'default',
+    'testjwtsecretkey999',
+    'testjwtrefreshsecretkey999',
+  ];
   if (
     weakSecrets.includes(process.env.JWT_SECRET.toLowerCase()) ||
     weakSecrets.includes(process.env.JWT_REFRESH_SECRET.toLowerCase())
@@ -57,7 +65,7 @@ const config = {
   streakReminderHoursBefore: parseInt(process.env.STREAK_REMINDER_HOURS_BEFORE, 10) || 3,
   labOperatingHours: {
     startHour: parseInt(process.env.LAB_START_HOUR, 10) || 8, // 8 AM UTC/Local
-    endHour: parseInt(process.env.LAB_END_HOUR, 10) || 20,   // 8 PM UTC/Local
+    endHour: parseInt(process.env.LAB_END_HOUR, 10) || 20, // 8 PM UTC/Local
   },
   redisUrl: process.env.REDIS_URL || null,
   rateLimits: {

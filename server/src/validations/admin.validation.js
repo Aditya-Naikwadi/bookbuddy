@@ -16,9 +16,7 @@ const createAdminSchema = z.object({
       name: z.string().min(1, 'Admin name is required'),
       email: z.string().email('Invalid email address'),
       password: z.string().min(6, 'Password must be at least 6 characters long'),
-      collegeId: z
-        .string()
-        .regex(/^[0-9a-fA-F]{24}$/, 'Invalid collegeId MongoDB ObjectId format'),
+      collegeId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid collegeId MongoDB ObjectId format'),
     })
     .strict(),
 });

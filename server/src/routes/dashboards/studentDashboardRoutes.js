@@ -113,14 +113,28 @@ router
   .get(validate(paramIdSchema), getStudentReadingListDetails)
   .put(validate(paramIdSchema), validate(updateReadingListSchema), updateStudentReadingList)
   .delete(validate(paramIdSchema), deleteStudentReadingList);
-router.post('/reading-lists/:id/items', validate(paramIdSchema), validate(addReadingListItemSchema), addReadingListItem);
-router.delete('/reading-lists/:id/items/:itemId', validate(paramIdAndItemIdSchema), deleteReadingListItem);
+router.post(
+  '/reading-lists/:id/items',
+  validate(paramIdSchema),
+  validate(addReadingListItemSchema),
+  addReadingListItem
+);
+router.delete(
+  '/reading-lists/:id/items/:itemId',
+  validate(paramIdAndItemIdSchema),
+  deleteReadingListItem
+);
 
 // Reading Progress
 router
   .route('/reading-progress/:eresourceId')
   .get(validate(paramEResourceIdSchema), getReadingProgress)
-  .put(expensiveRouteLimiter, validate(paramEResourceIdSchema), validate(updateProgressSchema), upsertReadingProgress);
+  .put(
+    expensiveRouteLimiter,
+    validate(paramEResourceIdSchema),
+    validate(updateProgressSchema),
+    upsertReadingProgress
+  );
 
 // Bookmarks
 router
@@ -135,7 +149,12 @@ router
   .get(getStudentSavedSearches)
   .post(validate(createSavedSearchSchema), saveStudentSearch);
 router.delete('/saved-searches/:id', validate(paramIdSchema), deleteStudentSearch);
-router.patch('/saved-searches/:id/alerts', validate(paramIdSchema), validate(toggleAlertsSchema), toggleSavedSearchAlerts);
+router.patch(
+  '/saved-searches/:id/alerts',
+  validate(paramIdSchema),
+  validate(toggleAlertsSchema),
+  toggleSavedSearchAlerts
+);
 
 // Labs & Bookings
 router.get('/labs/availability', validate(getAvailabilitySchema), getLabsAvailability);
@@ -162,6 +181,10 @@ router.get('/stickers', getStudentStickers);
 router.get('/notifications', getStudentNotifications);
 router.patch('/notifications/:id/read', validate(paramIdSchema), readStudentNotification);
 router.get('/notification-preferences', getNotificationPreferences);
-router.put('/notification-preferences', validate(updateNotificationPreferencesSchema), updateNotificationPreferences);
+router.put(
+  '/notification-preferences',
+  validate(updateNotificationPreferencesSchema),
+  updateNotificationPreferences
+);
 
 module.exports = router;

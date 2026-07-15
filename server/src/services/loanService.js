@@ -32,7 +32,9 @@ const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
     const frontReservation = await Reservation.findOne({
       bookId,
       status: { $in: ['queued', 'ready_for_pickup'] },
-    }).sort('queuePosition').session(session);
+    })
+      .sort('queuePosition')
+      .session(session);
 
     if (frontReservation && frontReservation.userId.toString() !== userId.toString()) {
       throw new AppError('This book is reserved for another user next in the queue.', 400);
@@ -59,16 +61,21 @@ const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + config.loanPeriodDays);
 
-      const [loan] = await Loan.create([{
-        collegeId,
-        userId,
-        bookId,
-        issueDate: new Date(),
-        dueDate,
-        maxRenewals: config.maxRenewals,
-        status: 'active',
-        issuedBy,
-      }], { session });
+      const [loan] = await Loan.create(
+        [
+          {
+            collegeId,
+            userId,
+            bookId,
+            issueDate: new Date(),
+            dueDate,
+            maxRenewals: config.maxRenewals,
+            status: 'active',
+            issuedBy,
+          },
+        ],
+        { session }
+      );
 
       await streakService.recordQualifyingAction(userId, collegeId, 'checkout');
 
@@ -83,7 +90,11 @@ const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
 
 const returnBook = async (loanId, collegeId) => {
   // 1. Find active loan
-  const loan = await Loan.findOne({ _id: loanId, collegeId, status: { $in: ['active', 'overdue'] } });
+  const loan = await Loan.findOne({
+    _id: loanId,
+    collegeId,
+    status: { $in: ['active', 'overdue'] },
+  });
   if (!loan) {
     throw new AppError('Active loan not found.', 404);
   }

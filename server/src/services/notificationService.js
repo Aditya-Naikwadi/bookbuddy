@@ -7,7 +7,7 @@ const logger = require('../utils/logger');
 
 /**
  * Creates and pushes a notification if not muted by the user's preferences.
- * 
+ *
  * CRITICAL: This is the ONLY function permitted to write to the Notification collection.
  */
 const notify = async (userId, type, message, relatedId = null, relatedType = null) => {
@@ -29,9 +29,10 @@ const notify = async (userId, type, message, relatedId = null, relatedType = nul
   }
 
   // Check if in-app notifications are muted globally, or this specific type is muted
-  const typeMuted = pref.typePreferences && pref.typePreferences.get
-    ? pref.typePreferences.get(type) === false
-    : pref.typePreferences && pref.typePreferences[type] === false;
+  const typeMuted =
+    pref.typePreferences && pref.typePreferences.get
+      ? pref.typePreferences.get(type) === false
+      : pref.typePreferences && pref.typePreferences[type] === false;
 
   if (!pref.inAppEnabled || typeMuted) {
     // Notification is muted by user preferences

@@ -215,7 +215,13 @@ const runStreakReminders = async (mockNow = null) => {
     const timezone = streak.timezone || 'Asia/Kolkata';
 
     // Check if the user is 3 hours from local midnight
-    if (!timezoneHelper.isHoursBeforeMidnight(referenceTime, timezone, config.streakReminderHoursBefore)) {
+    if (
+      !timezoneHelper.isHoursBeforeMidnight(
+        referenceTime,
+        timezone,
+        config.streakReminderHoursBefore
+      )
+    ) {
       continue;
     }
 

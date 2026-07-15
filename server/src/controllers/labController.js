@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const LabSeat = require('../models/LabSeat');
 const LabBooking = require('../models/LabBooking');
+const labBookingService = require('../services/labBookingService');
 const { recordQualifyingAction } = require('../services/streakService');
 const events = require('../sockets/events');
 
@@ -18,38 +19,19 @@ const getSeats = asyncHandler(async (req, res) => {
 const createBooking = asyncHandler(async (req, res) => {
   const { seatId, startTime, endTime } = req.body;
 
-  // Check seat exists
-  const seat = await LabSeat.findById(seatId);
-  if (!seat) {
-    res.status(404);
-    throw new Error('Seat not found');
-  }
-
-  // Check overlap (simplified for demo)
-  const overlapping = await LabBooking.findOne({
+  const result = await labBookingService.createBooking(
+    req.user.id,
     seatId,
-    status: 'active',
-    $or: [{ startTime: { $lt: endTime }, endTime: { $gt: startTime } }],
-  });
-
-  if (overlapping) {
-    res.status(400);
-    throw new Error('Seat is already booked for this time slot');
-  }
-
-  const booking = await LabBooking.create({
-    userId: req.user._id,
-    seatId,
+    req.user.collegeId,
     startTime,
-    endTime,
-  });
+    endTime
+  );
 
-  const streakData = await recordQualifyingAction(req.user._id, 'lab_booking');
-  if (streakData && req.app.get('io')) {
-    req.app.get('io').to(`user:${req.user._id}`).emit(events.STREAK_UPDATED, streakData);
+  if (result.streakData && req.app.get('io')) {
+    req.app.get('io').to(`user:${req.user.id}`).emit(events.STREAK_UPDATED, result.streakData);
   }
 
-  res.status(201).json({ success: true, data: booking });
+  res.status(201).json({ success: true, data: result.booking });
 });
 
 // @desc    Get my bookings

@@ -704,11 +704,7 @@ const toggleSavedSearchAlerts = async (req, res, next) => {
 const getLabsAvailability = async (req, res, next) => {
   try {
     const { labName, date } = req.query;
-    const availability = await labBookingService.getAvailability(
-      req.user.collegeId,
-      labName,
-      date
-    );
+    const availability = await labBookingService.getAvailability(req.user.collegeId, labName, date);
     res.json({ success: true, data: availability });
   } catch (error) {
     next(error);

@@ -125,7 +125,11 @@ const updateBook = async (req, res, next) => {
 // @access  Private/CollegeAdmin
 const uploadCollegeResource = async (req, res, next) => {
   try {
-    const resource = await EResource.create({ ...req.body, uploadedBy: req.user.id });
+    const resource = await EResource.create({
+      ...req.body,
+      uploadedBy: req.user.id,
+      collegeId: req.user.collegeId,
+    });
     res.status(201).json({ success: true, data: resource });
   } catch (error) {
     next(error);
@@ -238,7 +242,10 @@ const getAnalyticsSummary = async (req, res, next) => {
     ]);
 
     // Lab Utilization Rate
-    const totalSeats = await LabSeat.countDocuments({ maintenanceStatus: 'operational', ...tenantFilter });
+    const totalSeats = await LabSeat.countDocuments({
+      maintenanceStatus: 'operational',
+      ...tenantFilter,
+    });
     const totalBookings = await LabBooking.countDocuments({ status: 'booked', ...tenantFilter });
     const labUtilizationRate = totalSeats > 0 ? Number((totalBookings / totalSeats).toFixed(4)) : 0;
 
@@ -257,13 +264,17 @@ const getAnalyticsSummary = async (req, res, next) => {
         },
       },
     ]);
-    const avgComplaintResolutionHours = complaintsAgg.length > 0
-      ? Number((complaintsAgg[0].avgResolutionTimeMs / (1000 * 60 * 60)).toFixed(2))
-      : 0;
+    const avgComplaintResolutionHours =
+      complaintsAgg.length > 0
+        ? Number((complaintsAgg[0].avgResolutionTimeMs / (1000 * 60 * 60)).toFixed(2))
+        : 0;
 
     // Catalog Size vs Digital Resource Count
     const catalogSize = await Book.countDocuments({ ...tenantFilter });
-    const digitalResourceCount = await EResource.countDocuments({ moderationStatus: 'approved', ...tenantFilter });
+    const digitalResourceCount = await EResource.countDocuments({
+      moderationStatus: 'approved',
+      ...tenantFilter,
+    });
 
     res.json({
       success: true,
@@ -505,25 +516,6 @@ const moderateEResource = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
-
-module.exports = {
-  createStudent,
-  getAllPatrons,
-  getPatronDetails,
-  addBook,
-  updateBook,
-  uploadCollegeResource,
-  getHelpdeskTickets,
-  resolveTicket,
-  getAnalyticsSummary,
-  checkoutBook,
-  returnBook,
-  getCirculationQueue,
-  getCollegeFines,
-  payCollegeFine,
-  getPendingEResources,
-  moderateEResource,
 };
 
 // @desc    Get all lab seats for college

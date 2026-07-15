@@ -18,6 +18,6 @@ router.route('/').get(listExternal);
 router.route('/:gutenbergId').get(validate(paramGutenbergIdSchema), getExternalDetail);
 router.route('/:gutenbergId/open').post(validate(paramGutenbergIdSchema), openExternal);
 router.route('/:id/content').get(validate(paramIdSchema), proxyContent);
-router.route('/:id/progress').post(validate(paramIdSchema), validate(updateProgressSchema), updateReadingProgress);
+router.route('/:eresourceId/progress').post(validate(updateProgressSchema), updateReadingProgress);
 
 module.exports = router;

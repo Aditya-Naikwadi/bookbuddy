@@ -311,14 +311,20 @@ describe('Phase 6 — Background Cron Jobs Integration Tests', () => {
     expect(updatedStreak1.lastStreakReminderSentAt).toBeDefined();
 
     // Check notification
-    const notifications1 = await Notification.find({ userId: studentA._id, type: 'streak_at_risk' });
+    const notifications1 = await Notification.find({
+      userId: studentA._id,
+      type: 'streak_at_risk',
+    });
     expect(notifications1.length).toBe(1);
 
     // Run again at the same hour: should skip due to todayStr reminder sentinel
     const affected2 = await runStreakReminders(mockTime);
     expect(affected2).toBe(0);
 
-    const notifications2 = await Notification.find({ userId: studentA._id, type: 'streak_at_risk' });
+    const notifications2 = await Notification.find({
+      userId: studentA._id,
+      type: 'streak_at_risk',
+    });
     expect(notifications2.length).toBe(1); // Still only 1
   });
 

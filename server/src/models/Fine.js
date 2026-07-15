@@ -50,9 +50,6 @@ const fineSchema = new mongoose.Schema(
 // Compound indexes
 fineSchema.index({ userId: 1, status: 1 });
 fineSchema.index({ collegeId: 1, status: 1 });
-fineSchema.index(
-  { loanId: 1 },
-  { unique: true, partialFilterExpression: { status: 'unpaid' } }
-);
+fineSchema.index({ loanId: 1 }, { unique: true, partialFilterExpression: { status: 'unpaid' } });
 
 module.exports = mongoose.model('Fine', fineSchema);

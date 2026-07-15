@@ -14,7 +14,9 @@ const errorHandler = (err, req, res, _next) => {
     err.isOperational = true;
   } else if (err.name === 'ValidationError') {
     statusCode = 400;
-    message = Object.values(err.errors || {}).map((el) => el.message).join('. ');
+    message = Object.values(err.errors || {})
+      .map((el) => el.message)
+      .join('. ');
     err.isOperational = true;
   } else if (err.code === 11000) {
     statusCode = 409;
@@ -24,9 +26,10 @@ const errorHandler = (err, req, res, _next) => {
   }
 
   const isProd = config.nodeEnv === 'production';
-  const displayMessage = (err.isOperational || !isProd)
-    ? message
-    : 'An unexpected error occurred. Please contact support.';
+  const displayMessage =
+    err.isOperational || !isProd
+      ? message
+      : 'An unexpected error occurred. Please contact support.';
   const requestId = req.id || 'N/A';
 
   // Log error based on operational vs non-operational status

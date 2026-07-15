@@ -20,8 +20,13 @@ router.use(protect, requireRole('super-admin'));
 router.use(userLimiter);
 
 router.route('/overview').get(expensiveRouteLimiter, getOverview);
-router.route('/admins').get(getAdmins).post(validate(createAdminSchema), auditLog('college_admin.create'), createAdmin);
-router.route('/colleges').post(validate(createCollegeSchema), auditLog('college.create'), createCollege);
+router
+  .route('/admins')
+  .get(getAdmins)
+  .post(validate(createAdminSchema), auditLog('college_admin.create'), createAdmin);
+router
+  .route('/colleges')
+  .post(validate(createCollegeSchema), auditLog('college.create'), createCollege);
 router.route('/audit-logs').get(expensiveRouteLimiter, getAuditLogs);
 
 module.exports = router;

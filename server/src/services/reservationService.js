@@ -101,8 +101,27 @@ const promoteNextHold = async (bookId, collegeId) => {
   return null;
 };
 
+const joinQueue = async (userId, bookId, collegeId) => {
+  return await placeHold(userId, bookId, collegeId);
+};
+
+const leaveQueue = async (reservationId, userId) => {
+  const reservation = await Reservation.findOne({ _id: reservationId, userId });
+  if (!reservation) {
+    throw new AppError('Reservation not found.', 404);
+  }
+  if (reservation.status !== 'queued' && reservation.status !== 'ready_for_pickup') {
+    throw new AppError('Only active reservations can be cancelled.', 400);
+  }
+  reservation.status = 'cancelled';
+  await reservation.save();
+  return reservation;
+};
+
 module.exports = {
   placeHold,
   getQueuePosition,
   promoteNextHold,
+  joinQueue,
+  leaveQueue,
 };

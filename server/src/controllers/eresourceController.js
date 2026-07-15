@@ -1,6 +1,5 @@
 const asyncHandler = require('../utils/asyncHandler');
 const EResource = require('../models/EResource');
-const AppError = require('../utils/AppError');
 const { recordQualifyingAction } = require('../services/streakService');
 
 // @desc    Get internal e-resources
@@ -35,7 +34,7 @@ const updateProgress = asyncHandler(async (req, res) => {
 
   if (dailySecondsToday >= 180) {
     // 3 minutes = 180 seconds
-    await recordQualifyingAction(req.user._id, 'eresource');
+    await recordQualifyingAction(req.user.id, req.user.collegeId, 'eresource');
   }
 
   res.json({ success: true, message: 'Progress updated' });

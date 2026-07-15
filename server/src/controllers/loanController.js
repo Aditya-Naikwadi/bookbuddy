@@ -61,7 +61,11 @@ const borrowBookHandler = asyncHandler(async (req, res) => {
 // @route   POST /api/loans/:id/renew
 // @access  Private
 const renewLoan = asyncHandler(async (req, res) => {
-  const loanRecord = await Loan.findOne({ _id: req.params.id, userId: req.user.id, collegeId: req.user.collegeId });
+  const loanRecord = await Loan.findOne({
+    _id: req.params.id,
+    userId: req.user.id,
+    collegeId: req.user.collegeId,
+  });
   if (!loanRecord) {
     throw new AppError('Active loan not found or unauthorized access.', 404);
   }

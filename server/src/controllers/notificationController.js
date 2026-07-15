@@ -8,7 +8,7 @@ const AppError = require('../utils/AppError');
 const getMyNotifications = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 10;
-  
+
   const result = await notificationService.getMyNotifications(req.user._id, {
     page,
     limit,

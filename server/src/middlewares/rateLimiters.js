@@ -34,7 +34,10 @@ if (isTest && isMock) {
     });
   } catch (err) {
     if (!isTest) {
-      logger.warn('Failed to initialize Redis client. Rate limiting falling back to in-memory store.', err);
+      logger.warn(
+        'Failed to initialize Redis client. Rate limiting falling back to in-memory store.',
+        err
+      );
     }
   }
 }
@@ -82,12 +85,36 @@ const getLimiter = (keyPrefix, points, durationSeconds) => {
 
 // Initialize limiters
 const limiters = {
-  global: getLimiter('global', config.rateLimits.globalMax, Math.ceil(config.rateLimits.globalWindowMs / 1000)),
-  auth: getLimiter('auth', config.rateLimits.authMax, Math.ceil(config.rateLimits.authWindowMs / 1000)),
-  authIp: getLimiter('authIp', config.rateLimits.authIpMax, Math.ceil(config.rateLimits.authWindowMs / 1000)),
-  authEmail: getLimiter('authEmail', config.rateLimits.authEmailMax, Math.ceil(config.rateLimits.authWindowMs / 1000)),
-  user: getLimiter('user', config.rateLimits.userMax, Math.ceil(config.rateLimits.userWindowMs / 1000)),
-  expensive: getLimiter('expensive', config.rateLimits.expensiveMax, Math.ceil(config.rateLimits.expensiveWindowMs / 1000)),
+  global: getLimiter(
+    'global',
+    config.rateLimits.globalMax,
+    Math.ceil(config.rateLimits.globalWindowMs / 1000)
+  ),
+  auth: getLimiter(
+    'auth',
+    config.rateLimits.authMax,
+    Math.ceil(config.rateLimits.authWindowMs / 1000)
+  ),
+  authIp: getLimiter(
+    'authIp',
+    config.rateLimits.authIpMax,
+    Math.ceil(config.rateLimits.authWindowMs / 1000)
+  ),
+  authEmail: getLimiter(
+    'authEmail',
+    config.rateLimits.authEmailMax,
+    Math.ceil(config.rateLimits.authWindowMs / 1000)
+  ),
+  user: getLimiter(
+    'user',
+    config.rateLimits.userMax,
+    Math.ceil(config.rateLimits.userWindowMs / 1000)
+  ),
+  expensive: getLimiter(
+    'expensive',
+    config.rateLimits.expensiveMax,
+    Math.ceil(config.rateLimits.expensiveWindowMs / 1000)
+  ),
 };
 
 // Helper to extract clean client IP
@@ -217,12 +244,36 @@ const handleRejection = (key, tierName, req, res, next, rej, userId = null) => {
 };
 
 const resetAllLimiters = () => {
-  limiters.global = getLimiter('global', config.rateLimits.globalMax, Math.ceil(config.rateLimits.globalWindowMs / 1000));
-  limiters.auth = getLimiter('auth', config.rateLimits.authMax, Math.ceil(config.rateLimits.authWindowMs / 1000));
-  limiters.authIp = getLimiter('authIp', config.rateLimits.authIpMax, Math.ceil(config.rateLimits.authWindowMs / 1000));
-  limiters.authEmail = getLimiter('authEmail', config.rateLimits.authEmailMax, Math.ceil(config.rateLimits.authWindowMs / 1000));
-  limiters.user = getLimiter('user', config.rateLimits.userMax, Math.ceil(config.rateLimits.userWindowMs / 1000));
-  limiters.expensive = getLimiter('expensive', config.rateLimits.expensiveMax, Math.ceil(config.rateLimits.expensiveWindowMs / 1000));
+  limiters.global = getLimiter(
+    'global',
+    config.rateLimits.globalMax,
+    Math.ceil(config.rateLimits.globalWindowMs / 1000)
+  );
+  limiters.auth = getLimiter(
+    'auth',
+    config.rateLimits.authMax,
+    Math.ceil(config.rateLimits.authWindowMs / 1000)
+  );
+  limiters.authIp = getLimiter(
+    'authIp',
+    config.rateLimits.authIpMax,
+    Math.ceil(config.rateLimits.authWindowMs / 1000)
+  );
+  limiters.authEmail = getLimiter(
+    'authEmail',
+    config.rateLimits.authEmailMax,
+    Math.ceil(config.rateLimits.authWindowMs / 1000)
+  );
+  limiters.user = getLimiter(
+    'user',
+    config.rateLimits.userMax,
+    Math.ceil(config.rateLimits.userWindowMs / 1000)
+  );
+  limiters.expensive = getLimiter(
+    'expensive',
+    config.rateLimits.expensiveMax,
+    Math.ceil(config.rateLimits.expensiveWindowMs / 1000)
+  );
 };
 
 module.exports = {

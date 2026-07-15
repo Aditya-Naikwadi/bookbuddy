@@ -8,7 +8,14 @@ const { emitStreakUpdate } = require('../sockets');
 const AppError = require('../utils/AppError');
 
 // Config-driven list of qualifying action types
-const QUALIFYING_ACTIONS = ['checkout', 'return', 'on_time_renewal', 'lab_booking'];
+const QUALIFYING_ACTIONS = [
+  'checkout',
+  'return',
+  'on_time_renewal',
+  'lab_booking',
+  'eresource',
+  'eresource_read',
+];
 
 /**
  * Helper to get the local YYYY-MM-DD string for a user's timezone.
@@ -24,7 +31,7 @@ const getLocalDateString = (dateObj, timezone) => {
 
 /**
  * Records a qualifying user action and updates their daily streak.
- * 
+ *
  * CRITICAL: This is the ONLY function permitted to write to the Streak collection.
  */
 const recordQualifyingAction = async (userId, collegeId, actionType) => {

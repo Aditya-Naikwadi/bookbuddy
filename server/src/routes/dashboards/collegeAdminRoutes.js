@@ -60,8 +60,12 @@ router.route('/patrons').get(getAllPatrons).post(validate(createStudentSchema), 
 router.route('/patrons/:id').get(validate(paramIdSchema), getPatronDetails);
 
 // Circulation & Queue
-router.route('/circulation/checkout').post(validate(checkoutSchema), auditLog('circulation.checkout'), checkoutBook);
-router.route('/circulation/return').post(validate(returnSchema), auditLog('circulation.return'), returnBook);
+router
+  .route('/circulation/checkout')
+  .post(validate(checkoutSchema), auditLog('circulation.checkout'), checkoutBook);
+router
+  .route('/circulation/return')
+  .post(validate(returnSchema), auditLog('circulation.return'), returnBook);
 router.route('/circulation/queue').get(getCirculationQueue);
 
 // Cataloging & DAM
@@ -71,22 +75,50 @@ router.route('/resources').post(validate(uploadResourceSchema), uploadCollegeRes
 
 // Moderation
 router.route('/eresources/pending').get(getPendingEResources);
-router.route('/eresources/:id/moderate').put(validate(paramIdSchema), validate(moderateSchema), moderateEResource);
+router
+  .route('/eresources/:id/moderate')
+  .put(validate(paramIdSchema), validate(moderateSchema), moderateEResource);
 
 // Fines & Ticketing
 router.route('/fines').get(getCollegeFines);
-router.route('/fines/:id/pay').post(validate(paramIdSchema), validate(payFineSchema), auditLog('fine.pay'), payCollegeFine);
+router
+  .route('/fines/:id/pay')
+  .post(validate(paramIdSchema), validate(payFineSchema), auditLog('fine.pay'), payCollegeFine);
 router.route('/helpdesk').get(getHelpdeskTickets);
-router.route('/helpdesk/:id/resolve').put(validate(paramIdSchema), validate(resolveComplaintSchema), auditLog('complaint.resolve'), resolveTicket);
+router
+  .route('/helpdesk/:id/resolve')
+  .put(
+    validate(paramIdSchema),
+    validate(resolveComplaintSchema),
+    auditLog('complaint.resolve'),
+    resolveTicket
+  );
 
 // Lab Inventory & Booking Management
-router.route('/lab-seats').get(getLabSeats).post(validate(createSeatSchema), auditLog('lab_seat.create'), createLabSeat);
-router.route('/lab-seats/:id').put(validate(paramIdSchema), validate(updateSeatSchema), auditLog('lab_seat.update'), updateLabSeat);
+router
+  .route('/lab-seats')
+  .get(getLabSeats)
+  .post(validate(createSeatSchema), auditLog('lab_seat.create'), createLabSeat);
+router
+  .route('/lab-seats/:id')
+  .put(
+    validate(paramIdSchema),
+    validate(updateSeatSchema),
+    auditLog('lab_seat.update'),
+    updateLabSeat
+  );
 router.route('/lab-bookings').get(getLabBookings);
 
 // Book Suggestions Moderation
 router.route('/book-suggestions').get(getBookSuggestions);
-router.route('/book-suggestions/:id').put(validate(paramIdSchema), validate(updateSuggestionSchema), auditLog('suggestion.moderate'), updateBookSuggestion);
+router
+  .route('/book-suggestions/:id')
+  .put(
+    validate(paramIdSchema),
+    validate(updateSuggestionSchema),
+    auditLog('suggestion.moderate'),
+    updateBookSuggestion
+  );
 
 // Feedback Logs
 router.route('/feedback').get(getFeedback);

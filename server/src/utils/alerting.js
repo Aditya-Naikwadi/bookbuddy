@@ -22,7 +22,11 @@ const sendAlert = async (err, req) => {
             { title: 'Status Code', value: String(err.statusCode || 500), short: true },
             { title: 'Request ID', value: req.id || 'N/A', short: true },
             { title: 'Path', value: `${req.method} ${req.originalUrl || req.url}`, short: true },
-            { title: 'Stack Trace', value: err.stack ? err.stack.substring(0, 1000) : 'N/A', short: false },
+            {
+              title: 'Stack Trace',
+              value: err.stack ? err.stack.substring(0, 1000) : 'N/A',
+              short: false,
+            },
           ],
         },
       ],

@@ -137,22 +137,30 @@ describe('Phase 5 — Real-Time, Gamification & Notifications Integration Tests'
     // 1. recordQualifyingAction called twice in the same day (user timezone) is a no-op
     it('1. should not double-increment currentStreak when recorded twice in the same day (user-local time)', async () => {
       // Setup first time streak
-      const streak1 = await streakService.recordQualifyingAction(studentA._id, collegeA._id, 'checkout');
+      const streak1 = await streakService.recordQualifyingAction(
+        studentA._id,
+        collegeA._id,
+        'checkout'
+      );
       expect(streak1.currentStreak).toBe(1);
 
       // Call again on the same day: should stay 1
-      const streak2 = await streakService.recordQualifyingAction(studentA._id, collegeA._id, 'checkout');
+      const streak2 = await streakService.recordQualifyingAction(
+        studentA._id,
+        collegeA._id,
+        'checkout'
+      );
       expect(streak2.currentStreak).toBe(1);
     });
 
     // 2. recordQualifyingAction respects timezone
-    it('2. should correctly determine daily transitions using user\'s stored timezone', async () => {
+    it("2. should correctly determine daily transitions using user's stored timezone", async () => {
       // Get student's streak
       const streak = await Streak.findOne({ userId: studentA._id });
-      
+
       // Set timezone to Pacific/Honolulu (UTC-10)
       streak.timezone = 'Pacific/Honolulu';
-      
+
       // Assume a specific date/time for the test:
       // Let's say last qualifying action was at 2026-07-14T01:00:00Z (UTC).
       // In Honolulu (UTC-10), this translates to 2026-07-13T15:00:00 (July 13).
@@ -200,11 +208,18 @@ describe('Phase 5 — Real-Time, Gamification & Notifications Integration Tests'
       await Notification.deleteMany({ userId: studentA._id });
 
       // Call recordQualifyingAction (should increment to 7 and hit milestone)
-      const updatedStreak = await streakService.recordQualifyingAction(studentA._id, collegeA._id, 'checkout');
+      const updatedStreak = await streakService.recordQualifyingAction(
+        studentA._id,
+        collegeA._id,
+        'checkout'
+      );
       expect(updatedStreak.currentStreak).toBe(7);
 
       // Verify UserSticker is created
-      const earnedStickers = await UserSticker.find({ userId: studentA._id, stickerId: sticker._id });
+      const earnedStickers = await UserSticker.find({
+        userId: studentA._id,
+        stickerId: sticker._id,
+      });
       expect(earnedStickers.length).toBe(1);
 
       // Verify Notification is created
@@ -216,10 +231,17 @@ describe('Phase 5 — Real-Time, Gamification & Notifications Integration Tests'
       expect(milestoneNotification.message).toMatch(/Milestone 7 Sticker/i);
 
       // Subsequent call on same day should not duplicate
-      const repeatedCall = await streakService.recordQualifyingAction(studentA._id, collegeA._id, 'checkout');
+      const repeatedCall = await streakService.recordQualifyingAction(
+        studentA._id,
+        collegeA._id,
+        'checkout'
+      );
       expect(repeatedCall.currentStreak).toBe(7);
 
-      const earnedStickersAgain = await UserSticker.find({ userId: studentA._id, stickerId: sticker._id });
+      const earnedStickersAgain = await UserSticker.find({
+        userId: studentA._id,
+        stickerId: sticker._id,
+      });
       expect(earnedStickersAgain.length).toBe(1); // Still 1
     });
   });
@@ -343,7 +365,11 @@ describe('Phase 5 — Real-Time, Gamification & Notifications Integration Tests'
     // 8. Retrofit check: a return that promotes a reservation queue results in a 'hold_ready' Notification
     it('8. should trigger a hold_ready Notification for promoted user when book is returned', async () => {
       // 1. Student A already borrowed bookA in previous test. Let's find that loan.
-      const loan = await Loan.findOne({ userId: studentA._id, bookId: bookA._id, status: 'active' });
+      const loan = await Loan.findOne({
+        userId: studentA._id,
+        bookId: bookA._id,
+        status: 'active',
+      });
       expect(loan).toBeDefined();
 
       // 2. Student B places a hold on bookA

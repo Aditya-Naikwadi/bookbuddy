@@ -12,6 +12,6 @@ router.use(scopeToTenant);
 
 router.route('/').get(listInternalResources);
 
-router.route('/:id/progress').post(validate(paramIdSchema), validate(updateProgressSchema), updateProgress);
+router.route('/:eresourceId/progress').post(validate(updateProgressSchema), updateProgress);
 
 module.exports = router;

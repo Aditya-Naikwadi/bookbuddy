@@ -10,12 +10,15 @@ const getLists = asyncHandler(async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 10;
   const skip = (page - 1) * limit;
 
-  // show public lists + user's own lists
-  const query = { $or: [{ isPublic: true }, { createdBy: req.user._id }] };
+  // show public lists + user's own lists scoped to their college
+  const query = {
+    collegeId: req.user.collegeId,
+    $or: [{ visibility: 'public' }, { ownerId: req.user.id }],
+  };
 
   const total = await ReadingList.countDocuments(query);
   const lists = await ReadingList.find(query)
-    .populate('createdBy', 'name')
+    .populate('ownerId', 'name')
     .skip(skip)
     .limit(limit)
     .sort('-createdAt');
@@ -31,17 +34,18 @@ const getLists = asyncHandler(async (req, res) => {
 // @route   GET /api/reading-lists/:id
 // @access  Private
 const getListById = asyncHandler(async (req, res) => {
-  const list = await ReadingList.findById(req.params.id)
-    .populate('createdBy', 'name')
-    .populate('bookIds', 'title author coverImage');
+  const list = await ReadingList.findOne({
+    _id: req.params.id,
+    collegeId: req.user.collegeId,
+  }).populate('ownerId', 'name');
 
   if (!list) {
     throw new AppError('Reading list not found', 404);
   }
 
   if (
-    !list.isPublic &&
-    list.createdBy._id.toString() !== req.user._id.toString() &&
+    list.visibility === 'private' &&
+    list.ownerId._id.toString() !== req.user.id.toString() &&
     req.user.role === 'student'
   ) {
     throw new AppError('Not authorized to view this list', 403);
@@ -54,16 +58,15 @@ const getListById = asyncHandler(async (req, res) => {
 // @route   POST /api/reading-lists
 // @access  Private
 const createList = asyncHandler(async (req, res) => {
-  const { title, description, coverImage, bookIds, type, isPublic } = req.body;
+  const { title, description, visibility } = req.body;
 
   const list = await ReadingList.create({
+    collegeId: req.user.collegeId,
+    ownerId: req.user.id,
     title,
     description,
-    coverImage,
-    bookIds: bookIds || [],
-    createdBy: req.user._id,
-    type: type || 'personal',
-    isPublic: isPublic || false,
+    visibility: visibility || 'private',
+    items: [],
   });
 
   res.json({ success: true, data: list });
@@ -73,23 +76,25 @@ const createList = asyncHandler(async (req, res) => {
 // @route   PATCH /api/reading-lists/:id
 // @access  Private
 const updateList = asyncHandler(async (req, res) => {
-  let list = await ReadingList.findById(req.params.id);
+  let list = await ReadingList.findOne({ _id: req.params.id, collegeId: req.user.collegeId });
 
   if (!list) {
     throw new AppError('Reading list not found', 404);
   }
 
   if (
-    list.createdBy.toString() !== req.user._id.toString() &&
+    list.ownerId.toString() !== req.user.id.toString() &&
     !['college-admin', 'super-admin', 'admin'].includes(req.user.role)
   ) {
     throw new AppError('Not authorized to update this list', 403);
   }
 
-  list = await ReadingList.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
+  const { title, description, visibility } = req.body;
+  if (title !== undefined) list.title = title;
+  if (description !== undefined) list.description = description;
+  if (visibility !== undefined) list.visibility = visibility;
+
+  await list.save();
 
   res.json({ success: true, data: list });
 });
@@ -98,14 +103,14 @@ const updateList = asyncHandler(async (req, res) => {
 // @route   DELETE /api/reading-lists/:id
 // @access  Private
 const deleteList = asyncHandler(async (req, res) => {
-  const list = await ReadingList.findById(req.params.id);
+  const list = await ReadingList.findOne({ _id: req.params.id, collegeId: req.user.collegeId });
 
   if (!list) {
     throw new AppError('Reading list not found', 404);
   }
 
   if (
-    list.createdBy.toString() !== req.user._id.toString() &&
+    list.ownerId.toString() !== req.user.id.toString() &&
     !['college-admin', 'super-admin', 'admin'].includes(req.user.role)
   ) {
     throw new AppError('Not authorized to delete this list', 403);

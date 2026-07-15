@@ -7,7 +7,7 @@ const mongoose = require('mongoose');
  */
 const runInTransaction = async (fn) => {
   const conn = mongoose.connection;
-  
+
   // Safely check if database topology is a replica set
   const descriptionType = conn.client?.topology?.description?.type || '';
   const isReplicaSet = descriptionType.toLowerCase().includes('replicaset') || false;

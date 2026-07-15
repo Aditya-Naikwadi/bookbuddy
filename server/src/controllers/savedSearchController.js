@@ -27,12 +27,13 @@ const getMySavedSearches = asyncHandler(async (req, res) => {
 // @route   POST /api/saved-searches
 // @access  Private
 const createSavedSearch = asyncHandler(async (req, res) => {
-  const { label, filters } = req.body;
+  const { queryParams, alertsEnabled } = req.body;
 
   const search = await SavedSearch.create({
     userId: req.user.id,
-    label,
-    filters,
+    collegeId: req.user.collegeId,
+    queryParams,
+    alertsEnabled,
   });
 
   res.json({ success: true, data: search });

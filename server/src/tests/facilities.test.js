@@ -222,7 +222,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
     });
 
     // 4. Student can cancel their own booking; cannot cancel another student's booking (403)
-    it('4. should allow student to cancel own booking but reject cancelling other student\'s booking with 403', async () => {
+    it("4. should allow student to cancel own booking but reject cancelling other student's booking with 403", async () => {
       const startTime = '2026-08-01T16:00:00.000Z';
       const endTime = '2026-08-01T17:00:00.000Z';
 

@@ -62,7 +62,6 @@ process.env.RATE_LIMIT_AUTH_IP_MAX = '2';
 process.env.RATE_LIMIT_AUTH_EMAIL_MAX = '2';
 process.env.RATE_LIMIT_AUTH_WINDOW_MS = '5000';
 
-
 const app = require('../app');
 const { getLimiter } = require('../middlewares/rateLimiters');
 
@@ -184,7 +183,7 @@ describe('API Rate Limiting & Input Validation Hardening Tests', () => {
       const res3 = await request(app)
         .post('/api/_debug/test-limiter')
         .send({ email: 'student3@test.com' });
-      
+
       expect(res3.status).toBe(429);
       expect(res3.body.message).toContain('Too many requests on authIp limiter');
     });
@@ -225,9 +224,7 @@ describe('API Rate Limiting & Input Validation Hardening Tests', () => {
 
       // Call profile route passing the Bearer token (which requires authentication)
       // Since it has the globalLimiter and protect applied
-      await request(app)
-        .get('/api/auth/profile')
-        .set('Authorization', `Bearer ${tokenUser}`);
+      await request(app).get('/api/auth/profile').set('Authorization', `Bearer ${tokenUser}`);
 
       // Inspect mock store to verify the global limiter used the user sub ID
       const keys = Array.from(mockSharedRedisStore.keys());
@@ -236,13 +233,9 @@ describe('API Rate Limiting & Input Validation Hardening Tests', () => {
 
     it('8. [Regression] should not block legitimate logins in subsequent simulated test files (proving reset functionality)', async () => {
       // Simulate "File 1" running auth requests and exhausting the auth combined bucket (limit is 2)
-      await request(app)
-        .post('/api/_debug/test-limiter')
-        .send({ email: 'regression@test.com' });
+      await request(app).post('/api/_debug/test-limiter').send({ email: 'regression@test.com' });
 
-      await request(app)
-        .post('/api/_debug/test-limiter')
-        .send({ email: 'regression@test.com' });
+      await request(app).post('/api/_debug/test-limiter').send({ email: 'regression@test.com' });
 
       // 3rd request - blocked in "File 1"
       const res3 = await request(app)
@@ -269,14 +262,12 @@ describe('API Rate Limiting & Input Validation Hardening Tests', () => {
       // Since we don't have token, we can mock/stub protect in app or use a public route
       // Let's call /api/auth/login with unrecognized keys
       // Since loginSchema is not strict, it should pass validation but strip unrecognized keys
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: 'not-valid-email', // invalid email format triggers 400 validation error
-          password: 'password123',
-          maliciousKey: 'attack',
-        });
-      
+      const res = await request(app).post('/api/auth/login').send({
+        email: 'not-valid-email', // invalid email format triggers 400 validation error
+        password: 'password123',
+        maliciousKey: 'attack',
+      });
+
       expect(res.status).toBe(400);
       expect(res.body.message).toContain('Validation Error');
       // If we send valid login format but with extra keys, Zod will strip the extra key.

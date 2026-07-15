@@ -7,7 +7,7 @@ const { joinQueue, leaveQueue } = require('../services/reservationService');
 // @access  Private
 const joinQueueHandler = asyncHandler(async (req, res) => {
   const { bookId } = req.body;
-  const reservation = await joinQueue(req.user._id, bookId);
+  const reservation = await joinQueue(req.user.id, bookId, req.user.collegeId);
   res.json({ success: true, data: reservation });
 });
 
@@ -19,8 +19,8 @@ const getMyReservations = asyncHandler(async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 10;
   const skip = (page - 1) * limit;
 
-  const total = await Reservation.countDocuments({ userId: req.user._id });
-  const reservations = await Reservation.find({ userId: req.user._id })
+  const total = await Reservation.countDocuments({ userId: req.user.id });
+  const reservations = await Reservation.find({ userId: req.user.id })
     .populate('bookId', 'title author coverImage')
     .skip(skip)
     .limit(limit)
@@ -42,7 +42,7 @@ const getMyReservations = asyncHandler(async (req, res) => {
 // @route   DELETE /api/reservations/:id
 // @access  Private
 const leaveQueueHandler = asyncHandler(async (req, res) => {
-  const reservation = await leaveQueue(req.params.id, req.user._id);
+  const reservation = await leaveQueue(req.params.id, req.user.id);
   res.json({ success: true, data: reservation });
 });
 

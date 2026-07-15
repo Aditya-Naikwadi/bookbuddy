@@ -21,7 +21,9 @@ const submitComplaint = asyncHandler(async (req, res) => {
 // @route   GET /api/complaints
 // @access  Private
 const getMyComplaints = asyncHandler(async (req, res) => {
-  const complaints = await Complaint.find({ submittedBy: req.user._id, ...req.tenantFilter }).sort({ createdAt: -1 });
+  const complaints = await Complaint.find({ submittedBy: req.user._id, ...req.tenantFilter }).sort({
+    createdAt: -1,
+  });
   res.json({ success: true, data: complaints });
 });
 

@@ -41,6 +41,8 @@ const updateProgressSchema = z.object({
   body: z.object({
     currentPage: z.number().int().min(1).optional(),
     epubProgress: z.string().optional(),
+    dailySecondsToday: z.number().int().min(0).optional(),
+    readingTimeMinutes: z.number().int().min(0).optional(),
   }),
 });
 

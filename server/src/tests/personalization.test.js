@@ -362,11 +362,13 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
     mockStream.push('mocked epub data');
     mockStream.push(null);
 
-    axios.mockImplementationOnce(() => Promise.resolve({
-      status: 200,
-      headers: { 'content-type': 'application/epub+zip' },
-      data: mockStream,
-    }));
+    axios.mockImplementationOnce(() =>
+      Promise.resolve({
+        status: 200,
+        headers: { 'content-type': 'application/epub+zip' },
+        data: mockStream,
+      })
+    );
 
     const res = await request(app)
       .get(`/api/eresources/external/${resource._id}/content?format=epub`)

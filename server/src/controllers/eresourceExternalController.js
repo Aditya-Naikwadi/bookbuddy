@@ -135,9 +135,13 @@ const updateReadingProgress = asyncHandler(async (req, res) => {
   // In a real implementation we'd save this to a ReadingProgress model,
   // but for the streak requirement, we just verify it's >= 3 minutes.
   if (readingTimeMinutes >= 3) {
-    const streakData = await recordQualifyingAction(req.user._id, 'eresource_read');
+    const streakData = await recordQualifyingAction(
+      req.user.id,
+      req.user.collegeId,
+      'eresource_read'
+    );
     if (streakData && req.app.get('io')) {
-      req.app.get('io').to(`user:${req.user._id}`).emit(events.STREAK_UPDATED, streakData);
+      req.app.get('io').to(`user:${req.user.id}`).emit(events.STREAK_UPDATED, streakData);
     }
   }
 

@@ -81,21 +81,19 @@ describe('Phase 8 — End-to-End User Journeys Integration Test', () => {
     book = bookRes.body.data;
 
     // 4. Register a Student
-    const studentRegRes = await request(app)
-      .post('/api/auth/register')
-      .send({
-        studentId: 'STU_E2E_01',
-        name: 'John Doe',
-        email: 'john.doe@e2e.edu',
-        password: 'password123',
-        collegeId: college._id.toString(),
-      });
-    
+    const studentRegRes = await request(app).post('/api/auth/register').send({
+      studentId: 'STU_E2E_01',
+      name: 'John Doe',
+      email: 'john.doe@e2e.edu',
+      password: 'password123',
+      collegeId: college._id.toString(),
+    });
+
     // Login Student
     const studentLoginRes = await request(app)
       .post('/api/auth/login')
       .send({ email: 'john.doe@e2e.edu', password: 'password123' });
-    
+
     studentToken = studentLoginRes.body.accessToken;
     studentUser = await User.findOne({ email: 'john.doe@e2e.edu' });
   });
@@ -113,7 +111,7 @@ describe('Phase 8 — End-to-End User Journeys Integration Test', () => {
         userId: studentUser._id.toString(),
         bookId: book._id.toString(),
       });
-    
+
     expect(checkoutRes.status).toBe(201);
     expect(checkoutRes.body.success).toBe(true);
     const loan = checkoutRes.body.data;
@@ -143,7 +141,7 @@ describe('Phase 8 — End-to-End User Journeys Integration Test', () => {
     const notifyRes = await request(app)
       .get('/api/dashboards/student/notifications')
       .set('Authorization', `Bearer ${studentToken}`);
-    
+
     expect(notifyRes.status).toBe(200);
     expect(notifyRes.body.notifications.length).toBeGreaterThan(0);
     expect(notifyRes.body.notifications[0].message).toContain('fine');
@@ -152,7 +150,7 @@ describe('Phase 8 — End-to-End User Journeys Integration Test', () => {
     const studentFinesRes = await request(app)
       .get('/api/dashboards/student/fines')
       .set('Authorization', `Bearer ${studentToken}`);
-    
+
     expect(studentFinesRes.status).toBe(200);
     expect(studentFinesRes.body.data.length).toBe(1);
     expect(studentFinesRes.body.data[0].amount).toBe(25);
@@ -164,7 +162,7 @@ describe('Phase 8 — End-to-End User Journeys Integration Test', () => {
       .send({
         loanId: loan._id.toString(),
       });
-    
+
     expect(returnRes.status).toBe(200);
     expect(returnRes.body.data.status).toBe('returned');
 

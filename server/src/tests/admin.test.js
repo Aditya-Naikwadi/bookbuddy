@@ -26,7 +26,7 @@ const { generateTokenPair } = require('../utils/token');
 describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
   let collegeA;
   let collegeB;
-  
+
   let superAdmin;
   let adminA;
   let adminB;
@@ -139,7 +139,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
     const resTampered = await request(app)
       .get('/api/dashboards/admin-portal/overview')
       .set('Authorization', `Bearer ${tamperedToken}`);
-    
+
     // Auth middleware throws signature error and returns 401
     expect(resTampered.status).toBe(401);
   });
@@ -174,7 +174,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
 
     expect(resScope.status).toBe(200);
     // Student A is in College A, Student B is in College B. Scoped list should contain A but not B.
-    const studentIds = resScope.body.data.map(u => u._id.toString());
+    const studentIds = resScope.body.data.map((u) => u._id.toString());
     expect(studentIds).toContain(studentA._id.toString());
     expect(studentIds).not.toContain(studentB._id.toString());
   });

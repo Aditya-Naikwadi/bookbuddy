@@ -39,8 +39,12 @@ const getAvailability = async (collegeId, labName, dateStr) => {
   const results = seats.map((seat) => {
     const slots = [];
     for (let h = startHour; h < endHour; h++) {
-      const slotStart = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), h, 0, 0, 0));
-      const slotEnd = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), h + 1, 0, 0, 0));
+      const slotStart = new Date(
+        Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), h, 0, 0, 0)
+      );
+      const slotEnd = new Date(
+        Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), h + 1, 0, 0, 0)
+      );
 
       const isBooked = bookings.some(
         (b) =>
@@ -83,14 +87,21 @@ const createBooking = async (userId, seatId, collegeId, startTimeInput, endTimeI
   }
 
   // Validate starts on the hour
-  if (startTime.getUTCMinutes() !== 0 || startTime.getUTCSeconds() !== 0 || startTime.getUTCMilliseconds() !== 0) {
+  if (
+    startTime.getUTCMinutes() !== 0 ||
+    startTime.getUTCSeconds() !== 0 ||
+    startTime.getUTCMilliseconds() !== 0
+  ) {
     throw new AppError('Bookings must align with the start of the hour.', 400);
   }
 
   // Validate within operating hours
   const startHour = startTime.getUTCHours();
   const endHour = endTime.getUTCHours();
-  if (startHour < config.labOperatingHours.startHour || endHour > config.labOperatingHours.endHour) {
+  if (
+    startHour < config.labOperatingHours.startHour ||
+    endHour > config.labOperatingHours.endHour
+  ) {
     throw new AppError('Booking falls outside of lab operating hours.', 400);
   }
 
@@ -121,7 +132,7 @@ const createBooking = async (userId, seatId, collegeId, startTimeInput, endTimeI
     // Record streak action
     let streakData = null;
     try {
-      streakData = await recordQualifyingAction(userId, 'lab_booking');
+      streakData = await recordQualifyingAction(userId, collegeId, 'lab_booking');
     } catch (err) {
       // Don't fail the booking if streak service fails
     }
