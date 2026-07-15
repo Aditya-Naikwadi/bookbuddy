@@ -14,12 +14,12 @@
 
 ---
 
-## Overview
+## 📖 Overview
 Traditional library systems act as static catalogs, neglecting modern student expectations for real-time collaboration and academic engagement. BookBuddy re-imagines the college library as a connected campus hub. It bridges the gap between administrators, librarians, and students by consolidating physical inventory management, computer lab bookings, digital e-resource hosting (featuring an inline EPUB reader), and gamified learning milestones (streaks and stickers) in a single secure, multi-tenant environment.
 
 ---
 
-## High-Level System Architecture
+## 🏛️ High-Level System Architecture
 
 ```mermaid
 graph TD
@@ -32,7 +32,230 @@ graph TD
 
 ---
 
-## ✨ Features
+## 🎨 Frontend Architecture & Design
+
+### Technical Stack & Rationale
+BookBuddy's client is a modern React SPA built with the following core modules:
+- **React 19 & Vite 8**: Direct JSX rendering with extremely fast HMR dev server.
+- **Tailwind CSS v4**: Utility-first styling utilizing CSS native variables.
+- **Zustand v5 & React Query v5**: Zustand persists critical user session state locally (`auth-storage` in localStorage), while React Query maintains caching, re-fetching, and loading states for API server data.
+- **Epub.js**: Inline client-side parsing and rendering of public domain or uploaded EPUB books.
+
+### Global State Flow
+The authentication and session flows operate as follows:
+
+```mermaid
+graph TD
+    subgraph Zustand store
+        Store[authStore]
+        StorePersist[auth-storage in LocalStorage]
+        Store -->|persists to| StorePersist
+    end
+    
+    subgraph UI Layer
+        LoginBtn[Login Form Submit]
+        ProfileComponent[Dashboard/Profile View]
+    end
+
+    subgraph API Communication
+        ApiClient[apiClient /axios]
+        ServerAPI[Express Server /api/auth/login]
+    end
+
+    LoginBtn -->|calls login action| Store
+    Store -->|makes POST request| ApiClient
+    ApiClient -->|sends HTTP request| ServerAPI
+    ServerAPI -->|returns user & JWT token| ApiClient
+    ApiClient -->|resolves promise with payload| Store
+    Store -->|sets user state, token, isAuthenticated: true| Store
+    Store -->|re-renders| ProfileComponent
+    ProfileComponent -->|selects user state| Store
+```
+
+### Component Hierarchy Trees
+Routing is managed by React Router v7 with protected route gates (`ProtectedRoute`) enforcing roles:
+
+```mermaid
+graph TD
+    App[App.jsx] --> Router[BrowserRouter]
+    Router --> ErrorBoundary[ErrorBoundary]
+    ErrorBoundary --> Suspense[Suspense Wrapper]
+    Suspense --> DashboardLayout[DashboardLayout]
+    
+    subgraph Student Dashboard Home Component Tree
+        DashboardLayout --> StudentHome[StudentDashboardHome]
+        StudentHome --> Header[Header / Welcome & Points]
+        StudentHome --> Grid[Dashboard Grid]
+        Grid --> Stats[StatsWidget / Books Loaned, Fines]
+        Grid --> PatronCard[PatronCardWidget / barcode]
+        Grid --> Streak[StreakWidget / current streak, freezes]
+        Grid --> QuickActions[QuickActions / Catalog link, support]
+    end
+
+    subgraph Ebook Reader Component Tree
+        Router --> EbookReader[EbookReader]
+        EbookReader --> ReaderHeader[ReaderHeader / Progress, Back button]
+        EbookReader --> SplitContainer[Split Pane Container]
+        SplitContainer --> Sidebar[Table of Contents / Bookmark sidebar]
+        SplitContainer --> EpubViewport[Epub.js Viewport]
+        EpubViewport --> NavigationControls[Prev/Next Page overlay]
+    end
+```
+
+---
+
+## ⚙️ Backend Architecture & Design
+
+### Request Execution Pipeline
+Incoming requests go through a layered sequence of middleware gates to sanitize, rate-limit, and validate inputs before running controller logic:
+
+```mermaid
+graph TD
+    Request[HTTP Request] --> GlobalLimiter[globalLimiter /rate-limit]
+    GlobalLimiter --> Helmet[Helmet /security headers]
+    Helmet --> MongoSanitize[mongoSanitize /NoSQL Injection defense]
+    MongoSanitize --> Morgan[Morgan / morgan logger]
+    Morgan --> RouteMatch{Route Match?}
+    
+    RouteMatch -->|Public Route /health| HealthCtrl[Health Controller]
+    RouteMatch -->|Public Auth Route| AuthLimiter[authLimiter]
+    AuthLimiter --> Validate[validate Zod schema]
+    Validate --> AuthCtrl[Auth Controller]
+    
+    RouteMatch -->|Protected Route| Protect[protect JWT Verification]
+    Protect --> RequireRole[requireRole Role Verification]
+    RequireRole --> ScopeTenant[scopeToTenant Multi-Tenancy Scoping]
+    ScopeTenant --> UserLimiter[userLimiter /rate-limit]
+    UserLimiter --> RouteValidate[validate Zod schema]
+    RouteValidate --> ExpensiveLimiter[expensiveRouteLimiter /if expensive]
+    ExpensiveLimiter --> AuditLog[auditLog /if admin mutation]
+    AuditLog --> Controller[Route Controller]
+    
+    Controller --> Service[Service Layer]
+    Service --> Models[Mongoose Models]
+    Models --> MongoDB[(MongoDB)]
+    
+    Controller -->|Catch Error| ErrorHandler[errorHandler /AppError mapping]
+    ErrorHandler --> Response[JSON Error Response]
+```
+
+### Multi-Tenancy Scoping Sequence
+Multi-tenancy isolation is enforced at the middleware layer using `scopeToTenant`. For non-super-admins, the middleware logical scope inserts `req.tenantFilter = { collegeId: req.user.collegeId }` which is dynamically merged into Mongoose queries:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Admin as College Admin Client
+    participant App as Express (app.js)
+    participant Auth as protect Middleware
+    participant Scope as scopeToTenant Middleware
+    participant Audit as auditLog Middleware
+    participant Ctrl as collegeAdminController
+    participant Svc as loanService
+    participant DB as MongoDB
+    
+    Admin->>App: POST /api/dashboards/college-admin/circulation/checkout (Headers: Authorization: Bearer JWT)
+    App->>Auth: Parse & verify Access Token
+    Auth-->>App: Set req.user = { id, role: "college-admin", collegeId }
+    App->>Scope: Check role and construct filter
+    Scope-->>App: Set req.tenantFilter = { collegeId: ObjectId("...") }
+    App->>Audit: Record intent to write mutation
+    App->>Ctrl: Execute checkoutBookHandler(req)
+    Ctrl->>Svc: Call checkoutBook(patronId, bookId, req.tenantFilter)
+    
+    rect rgb(30, 41, 59)
+        Note over Svc,DB: Enforce Tenant-Scoping & Concurrency Safety
+        Svc->>DB: Book.findOne({ _id: bookId, ...tenantFilter })
+        DB-->>Svc: Book Record
+        Svc->>DB: User.findOne({ _id: patronId, ...tenantFilter })
+        DB-->>Svc: User Record
+        Svc->>DB: Atomic update: Book.findOneAndUpdate({ _id, copiesAvailable > 0 }, { $inc: { copiesAvailable: -1 } })
+        DB-->>Svc: Success (copiesAvailable decremented)
+        Svc->>DB: Loan.create({ collegeId, userId, bookId, dueDate })
+        DB-->>Svc: Loan Record
+    end
+    
+    Svc-->>Ctrl: Return checkout info
+    Ctrl->>Audit: Commit audit details
+    Ctrl-->>Admin: HTTP 201 Created (JSON Loan details)
+```
+
+### Background scheduled Jobs
+Node-Cron handles daily and hourly tasks with observability logs kept inside `CronRunLog`:
+- **Overdue Fine Accrual** (`0 0 * * *`): Evaluates late loans daily at local midnight, transitions loan statuses, and creates unpaid `Fine` records.
+- **Queue Expiry Sweep** (`0 * * * *`): Hourly sweeps ready hold reservations that exceeded the pickup window, transitioning status and promoting the next queue position.
+- **Due Reminders** (`0 9 * * *`): Daily warnings to patrons of upcoming loan return deadlines.
+- **Streak Expiry & Reminders** (`0 * * * *`): Checks user timezone midnights hourly, resetting active reading streaks if no qualifying check-ins occurred (or consumes a streak freeze buffer). Reminds users at risk of losing active streaks 3 hours before midnight.
+
+---
+
+## 🗄️ Database Design & Indexing
+
+### Complete Entity-Relationship Diagram (ERD)
+
+```mermaid
+erDiagram
+    College ||--o{ User : houses
+    College ||--o{ Book : stocks
+    College ||--o{ Loan : logs
+    College ||--o{ Reservation : manages
+    College ||--o{ Fine : fines
+    College ||--o{ EResource : hosts
+    College ||--o{ ReadingList : publishes
+    College ||--o{ LabSeat : owns
+    College ||--o{ LabBooking : books
+    College ||--o{ AuditLog : audits
+
+    User ||--o{ Loan : borrows
+    User ||--o{ Reservation : reserves
+    User ||--o{ Fine : owes
+    User ||--o{ EResource : uploads
+    User ||--o{ ReadingProgress : tracks
+    User ||--o{ Bookmark : writes
+    User ||--o{ ReadingList : curates
+    User ||--o{ LabBooking : reserves_seat
+    User ||--o{ UserSticker : earns
+    User ||--|| Streak : maintains
+    User ||--o{ AuditLog : performs
+
+    Book ||--o{ Loan : checked_out
+    Book ||--o{ Reservation : hold_queue
+
+    Loan ||--|| Fine : incurs
+    
+    EResource ||--o{ ReadingProgress : progress_for
+    EResource ||--o{ Bookmark : references
+
+    Sticker ||--o{ UserSticker : template_for
+```
+
+### Schema Collections Indexing Table
+Database indexes are configured explicitly to speed up query execution paths and prevent duplicates:
+
+| Targeted Collection | Index Structure | Type | Query Path Served |
+| :--- | :--- | :--- | :--- |
+| `users` | `{ email: 1 }` | Single-field, Unique | Login auth lookup. |
+| `users` | `{ studentId: 1 }` | Single-field, Unique | Member registration and circulation identification. |
+| `loans` | `{ collegeId: 1, status: 1 }` | Compound | College admin Active vs Overdue loans queues. |
+| `loans` | `{ userId: 1, status: 1 }` | Compound | Student loans dashboard lookup. |
+| `fines` | `{ userId: 1, status: 1 }` | Compound | Student outstanding fine check (unpaid total). |
+| `fines` | `{ loanId: 1 }` | Single-field, Unique | Fine accrual idempotency (ensuring one fine per loan). |
+| `reservations` | `{ bookId: 1, status: 1 }` | Compound | Hold queue promotion lookup. |
+| `labseats` | `{ collegeId: 1, labName: 1, seatNumber: 1 }` | Compound, Unique | Seat registry validation. |
+| `labbookings` | `{ seatId: 1, date: 1, timeslot: 1, status: 1 }` | Compound, Unique (Partial) | Concurrency lock to prevent double booking. |
+| `readingprogresses`| `{ userId: 1, eresourceId: 1 }` | Compound, Unique | Fast progress upsert / reading tracker lookup. |
+| `userstickers` | `{ userId: 1, stickerId: 1 }` | Compound, Unique | Award unlocking duplicate prevention. |
+| `streaks` | `{ userId: 1 }` | Single-field, Unique | Daily check-in updates and cron tracking. |
+
+### Concurrency Integrity Controls
+1. **Lending Decoupled Decrement**: Checkouts decrease `copiesAvailable` only if it is strictly greater than 0, preventing race condition inventory drops below zero:
+   `Book.findOneAndUpdate({ _id: bookId, copiesAvailable: { $gt: 0 } }, { $inc: { copiesAvailable: -1 } })`
+2. **Double Booking Locker**: Partial unique indexing on `labbookings` (`partialFilterExpression: { status: "booked" }`) blocks double bookings of seat/date/slot timeslots while allowing canceled slots to be reassigned.
+3. **Idempotence fine locking**: Unique index constraints on `Fine.loanId` block background workers from issuing multiple late fine records for the same loan.
+
+---
+
+## ✨ System Features
 
 ### 🎓 Student Portal
 * **Digital Catalog & Search**: Advanced text search across books and digital resources with real-time availability checking.
@@ -56,21 +279,6 @@ graph TD
 * **College Onboarding**: Manage college settings and college admin accounts.
 * **Moderation**: Verify and approve internally-uploaded e-resources before publishing.
 * **Security Auditing**: Browse centralized, read-only system action logs.
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology | Why |
-| :--- | :--- | :--- |
-| **Frontend UI** | React 19 / Vite 8 | High performance component-based rendering paired with near-instant hot module replacement (HMR). |
-| **Styling** | Tailwind CSS v4 | Rapid utility-first design with native CSS variable optimization. |
-| **Client State** | Zustand / React Query | Zustand provides clean, persistent local state, while React Query handles server-cache synchronizations. |
-| **Web Server** | Node.js / Express 5 | Lightweight, async request execution suitable for high-concurrency APIs. |
-| **Real-time** | Socket.io | Bi-directional socket communication for notifications and instant streak updates. |
-| **Database** | MongoDB / Mongoose | Flexible NoSQL document model that seamlessly handles varied library, gamification, and facility booking schemas. |
-| **Caching/Sync** | Redis | Shared, distributed cache that synchronizes rate limits globally across horizontally-scaled backend containers. |
-| **Task Runner** | Node-Cron | Lightweight in-process scheduler for overdue calculations, hold queue sweeps, and midnight streak resets. |
 
 ---
 
@@ -199,11 +407,10 @@ Below are the primary API entry gateways:
 ---
 
 ## 🏗️ Architectural Deep-Dives
-
-BookBuddy's architecture is separated into three distinct layers to ensure multi-tenant security, clean code division, and performant query routes. For a detailed breakdown, see:
-- 📖 [Frontend Architecture](file:///c:/Users/naikw/OneDrive/Desktop/project/BookBuddy/docs/architecture/frontend-design.md)
-- ⚙️ [Backend Architecture](file:///c:/Users/naikw/OneDrive/Desktop/project/BookBuddy/docs/architecture/backend-design.md)
-- 🗄️ [Database Design & Indexing](file:///c:/Users/naikw/OneDrive/Desktop/project/BookBuddy/docs/architecture/database-design.md)
+For the separate, granular design documents, please reference:
+- 📖 [Frontend Architecture Guide](file:///c:/Users/naikw/OneDrive/Desktop/project/BookBuddy/docs/architecture/frontend-design.md)
+- ⚙️ [Backend Architecture Guide](file:///c:/Users/naikw/OneDrive/Desktop/project/BookBuddy/docs/architecture/backend-design.md)
+- 🗄️ [Database Design & Indexing Guide](file:///c:/Users/naikw/OneDrive/Desktop/project/BookBuddy/docs/architecture/database-design.md)
 
 ---
 
@@ -224,7 +431,7 @@ npm test -- --coverage
 ---
 
 ## 🤝 Contributing
-Contributions are managed by the institution IT operations team. Please read through the [Frontend Architecture](file:///c:/Users/naikw/OneDrive/Desktop/project/BookBuddy/docs/architecture/frontend-design.md) and [Backend Architecture](file:///c:/Users/naikw/OneDrive/Desktop/project/BookBuddy/docs/architecture/backend-design.md) guides before submitting changes.
+Contributions are managed by the institution IT operations team. Please read through the frontend and backend guides before submitting changes.
 
 ---
 
