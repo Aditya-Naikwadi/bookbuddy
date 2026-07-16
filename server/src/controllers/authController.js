@@ -49,6 +49,13 @@ const registerUser = async (req, res, next) => {
     user.refreshTokenHash = hash;
     await user.save();
 
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: config.nodeEnv === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+
     res.status(201).json({
       success: true,
       user: {
@@ -100,6 +107,13 @@ const loginUser = async (req, res, next) => {
     user.refreshTokenHash = hash;
     await user.save();
 
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: config.nodeEnv === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+
     res.json({
       success: true,
       user: {
@@ -123,12 +137,16 @@ const loginUser = async (req, res, next) => {
 // @access  Public
 const refreshToken = async (req, res, next) => {
   try {
-    const { refreshToken: clientToken } = req.body;
+    const clientToken = req.cookies?.refreshToken || req.body?.refreshToken;
+
+    if (!clientToken) {
+      return next(new AppError('No refresh token provided.', 401));
+    }
 
     let decoded;
     try {
       decoded = jwt.verify(clientToken, config.jwt.refreshSecret);
-    } catch (_err) {
+    } catch {
       return next(new AppError('Invalid or expired refresh token.', 401));
     }
 
@@ -145,6 +163,12 @@ const refreshToken = async (req, res, next) => {
       // Security measure: invalidate token hash on mismatch to mitigate replay attacks
       user.refreshTokenHash = undefined;
       await user.save();
+
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: config.nodeEnv === 'production',
+        sameSite: 'lax',
+      });
       return next(new AppError('Refresh token mismatch. Revoking access.', 401));
     }
 
@@ -153,6 +177,13 @@ const refreshToken = async (req, res, next) => {
 
     user.refreshTokenHash = hash;
     await user.save();
+
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: config.nodeEnv === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
 
     res.json({
       success: true,
@@ -174,6 +205,12 @@ const logoutUser = async (req, res, next) => {
       user.refreshTokenHash = undefined;
       await user.save();
     }
+
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: config.nodeEnv === 'production',
+      sameSite: 'lax',
+    });
 
     res.json({
       success: true,

@@ -4,6 +4,7 @@ const Loan = require('../models/Loan');
 const Fine = require('../models/Fine');
 const Reservation = require('../models/Reservation');
 const Streak = require('../models/Streak');
+const CheckInLog = require('../models/CheckInLog');
 const notificationService = require('./notificationService');
 const reservationService = require('./reservationService');
 const streakService = require('./streakService');
@@ -11,13 +12,14 @@ const timezoneHelper = require('../utils/timezoneHelper');
 const config = require('../config');
 const logger = require('../utils/logger');
 const { emitStreakUpdate } = require('../sockets');
+const { runInTransaction } = require('../utils/transactionHelper');
 
 /**
  * Single job runner wrapper for observability and failure isolation.
  */
 const runJob = async (jobName, jobFn) => {
   const startedAt = new Date();
-  let affectedCount = 0;
+  let affectedCount;
   try {
     affectedCount = await jobFn();
     await CronRunLog.create({
@@ -37,6 +39,15 @@ const runJob = async (jobName, jobFn) => {
       errorMessage: err.message,
     });
   }
+};
+
+const { DateTime } = require('luxon');
+
+const getOverdueDays = (dueDate, now, timezone = 'UTC') => {
+  const dueDt = DateTime.fromJSDate(dueDate).setZone(timezone).startOf('day');
+  const nowDt = DateTime.fromJSDate(now).setZone(timezone).startOf('day');
+  const diff = nowDt.diff(dueDt, 'days').days;
+  return Math.max(0, Math.floor(diff));
 };
 
 /**
@@ -59,8 +70,12 @@ const runOverdueFineAccrual = async () => {
       await loan.save();
     }
 
-    // Calculate overdue metrics
-    const overdueDays = Math.max(1, Math.floor((now - loan.dueDate) / (1000 * 60 * 60 * 24)));
+    // Calculate overdue metrics timezone-correctly
+    const overdueDays = getOverdueDays(loan.dueDate, now, 'UTC');
+    if (overdueDays <= 0) {
+      continue;
+    }
+
     const amount = Math.min(overdueDays * config.fineRatePerDay, config.fineMaxAmount);
 
     // Idempotency: find or update existing unpaid fine
@@ -187,16 +202,39 @@ const runStreakExpirySweep = async (mockNow = null) => {
 
     // Check if they did NOT perform any qualifying actions yesterday or today
     if (lastActionStr !== todayStr && lastActionStr !== yesterdayStr) {
-      if (streak.freezesAvailable > 0) {
-        // Consume freeze coupon to preserve streak
-        streak.freezesAvailable -= 1;
-      } else {
-        // Reset streak to 0
-        streak.currentStreak = 0;
-      }
-      await streak.save();
-      emitStreakUpdate(streak.userId, streak);
-      affected++;
+      await runInTransaction(async (session) => {
+        const trStreak = await Streak.findById(streak._id).session(session);
+        if (!trStreak) return;
+
+        // Double check: does a log exist for yesterday already?
+        const existingYesterdayLog = await CheckInLog.findOne({
+          userId: trStreak.userId,
+          checkInDate: yesterdayStr,
+        }).session(session);
+
+        if (!existingYesterdayLog) {
+          if (trStreak.freezesAvailable > 0) {
+            trStreak.freezesAvailable -= 1;
+            await CheckInLog.create(
+              [
+                {
+                  collegeId: trStreak.collegeId,
+                  userId: trStreak.userId,
+                  checkInDate: yesterdayStr,
+                  timestamp: referenceTime,
+                  freezeConsumed: true,
+                },
+              ],
+              { session }
+            );
+          } else {
+            trStreak.currentStreak = 0;
+          }
+          await trStreak.save({ session });
+          emitStreakUpdate(trStreak.userId, trStreak);
+          affected++;
+        }
+      });
     }
   }
   return affected;

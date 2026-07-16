@@ -1,5 +1,5 @@
 import { Outlet, Link } from 'react-router-dom';
-import { Book, LayoutDashboard, Library, Search, CreditCard, Receipt, FileText, ListPlus, Sparkles, Bookmark, Monitor, MessageSquare, Users, ArrowRightLeft, BookPlus, UploadCloud, PackageSearch, Settings2, DoorOpen, Ticket, LineChart, Shield, Globe, FileCheck, FileSearch, HardDrive, LogOut } from 'lucide-react';
+import { Book, LayoutDashboard, Library, Search, CreditCard, Receipt, FileText, ListPlus, Sparkles, Bookmark, Monitor, MessageSquare, Users, ArrowRightLeft, BookPlus, UploadCloud, PackageSearch, Settings2, DoorOpen, Ticket, LineChart, Shield, Globe, FileCheck, FileSearch, HardDrive, LogOut, Award } from 'lucide-react';
 import NotificationCenter from '../components/student/NotificationCenter';
 import useAuthStore from '../store/authStore';
 
@@ -73,6 +73,7 @@ const DashboardLayout = () => {
               <NavItem to="/e-resources" icon={<FileText size={20} />} label="E-Resources" />
               <NavItem to="/reading-lists" icon={<ListPlus size={20} />} label="Reading Lists" />
               <NavItem to="/recommendations" icon={<Sparkles size={20} />} label="Recommendations" />
+              <NavItem to="/student-dashboard/achievements" icon={<Award size={20} />} label="Achievements & Streaks" />
               <NavItem to="/saved" icon={<Bookmark size={20} />} label="Saved & Bookmarks" />
               <NavItem to="/lab-booking" icon={<Monitor size={20} />} label="Lab Booking" />
               <NavItem to="/support" icon={<MessageSquare size={20} />} label="Support & Feedback" />

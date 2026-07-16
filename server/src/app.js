@@ -57,6 +57,20 @@ app.use(
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
+// Custom Cookie Parser Middleware
+app.use((req, res, next) => {
+  req.cookies = {};
+  if (req.headers.cookie) {
+    req.headers.cookie.split(';').forEach((cookie) => {
+      const parts = cookie.split('=');
+      const name = parts[0].trim();
+      const value = parts.slice(1).join('=').trim();
+      req.cookies[name] = decodeURIComponent(value);
+    });
+  }
+  next();
+});
+
 // NoSQL Injection Defense
 app.use(mongoSanitize);
 
@@ -127,6 +141,7 @@ app.all(
     });
   }
 );
+app.use('/api/v1/catalog', require('./routes/catalogRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/books', require('./routes/bookRoutes'));
 app.use('/api/loans', require('./routes/loanRoutes'));
@@ -138,7 +153,26 @@ app.use('/api/bookmarks', require('./routes/bookmarkRoutes'));
 app.use('/api/saved-searches', require('./routes/savedSearchRoutes'));
 app.use('/api/recommendations', require('./routes/recommendationRoutes'));
 app.use('/api/eresources', require('./routes/eresourceRoutes'));
+app.use('/api/reader', require('./routes/readerRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+
+// Gamification spec aliases
+app.post('/api/checkin', (req, res, next) => {
+  req.url = '/checkin';
+  require('./routes/streakRoutes')(req, res, next);
+});
+app.get('/api/streak', (req, res, next) => {
+  req.url = '/me';
+  require('./routes/streakRoutes')(req, res, next);
+});
+app.get('/api/streak/history', (req, res, next) => {
+  req.url = '/history';
+  require('./routes/streakRoutes')(req, res, next);
+});
+app.use('/api/badges', (req, res, next) => {
+  req.url = '/badges' + (req.url === '/' ? '' : req.url);
+  require('./routes/streakRoutes')(req, res, next);
+});
 
 // Dashboard Routes
 app.use('/api/dashboards/admin-portal', require('./routes/dashboards/adminPortalRoutes'));

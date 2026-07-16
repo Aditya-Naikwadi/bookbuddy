@@ -1,10 +1,14 @@
 import React, { useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import useAuthStore from '../store/authStore';
 import { SectionLabel } from '../components/ui/SectionLabel';
 import { Button } from '../components/ui/Button';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
 export const PatronCardSection = () => {
   const cardRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuthStore();
   
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -44,7 +48,17 @@ export const PatronCardSection = () => {
           <p className="text-muted text-lg leading-relaxed mb-8">
             Your digital patron card is always in your pocket. Show it at the desk, scan the QR at self-checkout, or download it for offline access.
           </p>
-          <Button variant="secondary" size="lg">Get Your Card →</Button>
+          <Button variant="secondary" size="lg" onClick={() => {
+            if (isAuthenticated && user) {
+              const role = user.role;
+              if (role === 'college-admin') navigate('/college-admin');
+              else if (role === 'general') navigate('/general-dashboard');
+              else if (role === 'super-admin') navigate('/admin-portal');
+              else navigate('/student-dashboard');
+            } else {
+              navigate('/auth/register');
+            }
+          }}>Get Your Card →</Button>
         </div>
         
         <div className="w-full md:w-1/2 flex justify-center" style={{ perspective: '1200px' }}>

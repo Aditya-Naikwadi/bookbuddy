@@ -1,53 +1,25 @@
-import { useEffect, useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import confetti from 'canvas-confetti';
-import { Flame } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Flame, Sparkles, X, CheckSquare, Gift } from 'lucide-react';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 export const MilestoneCelebrationModal = () => {
   const [open, setOpen] = useState(false);
   const [payload, setPayload] = useState(null);
+  const closeBtnRef = useRef(null);
 
-  function triggerConfetti() {
-    const duration = 3 * 1000;
-    const end = Date.now() + duration;
-
-    const frame = () => {
-      confetti({
-        particleCount: 5,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 },
-        colors: ['#f97316', '#fbbf24']
-      });
-      confetti({
-        particleCount: 5,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 },
-        colors: ['#f97316', '#fbbf24']
-      });
-
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
-      }
-    };
-    frame();
-  }
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     const handleStreakUpdate = (e) => {
-      const data = e.detail || e; // Support custom events or direct calls
+      const data = e.detail || e; // Support custom events or direct socket payloads
       if (data && (data.newStickers?.length > 0 || data.newRewards?.length > 0)) {
         setPayload(data);
         setOpen(true);
-        triggerConfetti();
+
+        // Focus the close button for accessibility
+        setTimeout(() => {
+          closeBtnRef.current?.focus();
+        }, 80);
       }
     };
 
@@ -55,57 +27,110 @@ export const MilestoneCelebrationModal = () => {
     return () => window.removeEventListener('streak:updated', handleStreakUpdate);
   }, []);
 
-  if (!payload) return null;
+  // Keyboard Escape closer
+  useEffect(() => {
+    if (!open) return;
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [open]);
+
+  if (!open || !payload) return null;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-md text-center border-orange-200">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-black text-orange-500 flex justify-center items-center gap-2">
-            <Flame className="w-8 h-8" fill="currentColor" />
-            Milestone Reached!
-          </DialogTitle>
-          <DialogDescription className="text-base mt-2">
-            You just hit a {payload.streak?.currentStreak} day reading streak!
-          </DialogDescription>
-        </DialogHeader>
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-void/80 backdrop-blur-[2px] animate-in fade-in duration-200"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="milestone-title"
+    >
+      <div className="bg-white rounded-3xl max-w-md w-full border border-slate-200 p-6 text-center shadow-2xl relative animate-in zoom-in-95 duration-300 flex flex-col items-center">
+        {/* Close Button */}
+        <button
+          ref={closeBtnRef}
+          onClick={() => setOpen(false)}
+          className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors focus:ring-2 focus:ring-orange-500 focus:outline-none"
+          aria-label="Dismiss milestone celebration"
+        >
+          <X size={18} />
+        </button>
 
-        <div className="py-6 space-y-6">
-          {payload.newStickers?.length > 0 && (
-            <div className="space-y-3">
-              <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground">New Stickers Unlocked</h4>
-              <div className="flex justify-center gap-4 flex-wrap">
-                {payload.newStickers.map(sticker => (
-                  <div key={sticker.code} className="flex flex-col items-center p-3 bg-muted rounded-xl w-24">
-                    <span className="text-4xl drop-shadow-md mb-2">{sticker.icon}</span>
-                    <span className="text-xs font-bold leading-tight">{sticker.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {payload.newRewards?.length > 0 && (
-            <div className="space-y-3 pt-4 border-t">
-              <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground">New Rewards</h4>
-              <ul className="text-left space-y-2 bg-orange-50 dark:bg-orange-950/30 p-4 rounded-lg">
-                {payload.newRewards.map(reward => (
-                  <li key={reward.streakDays} className="flex items-center gap-2 text-sm font-medium">
-                    <span className="text-orange-500">✨</span>
-                    {reward.rewardType.replace('_', ' ').toUpperCase()} Reward Unlocked!
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        {/* Header Icon */}
+        <div className="w-16 h-16 bg-orange-100 rounded-3xl flex items-center justify-center text-orange-500 mb-4 animate-bounce-slow">
+          <Flame size={36} fill="currentColor" />
         </div>
 
-        <div className="flex justify-center mt-2">
-          <Button onClick={() => setOpen(false)} className="bg-orange-500 hover:bg-orange-600 text-white w-full">
-            Keep it going 🔥
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        {/* Title */}
+        <h3 id="milestone-title" className="text-2xl font-serif font-black text-slate-900 flex items-center gap-1.5 justify-center">
+          <Sparkles className="text-yellow-500" size={20} />
+          Milestone Reached!
+          <Sparkles className="text-yellow-500" size={20} />
+        </h3>
+
+        {/* Subtitle */}
+        <p className="text-slate-600 font-medium text-sm mt-2">
+          Awesome work! You've reached a{' '}
+          <span className="text-orange-500 font-black">{payload.streak?.currentStreak || 0} Day</span> reading
+          streak!
+        </p>
+
+        {/* New Badges Section */}
+        {payload.newStickers?.length > 0 && (
+          <div className="w-full mt-6 space-y-3">
+            <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+              New Stickers Unlocked
+            </h4>
+            <div className="flex justify-center gap-3 flex-wrap">
+              {payload.newStickers.map((sticker) => (
+                <div
+                  key={sticker.code || sticker._id}
+                  className="flex flex-col items-center p-3.5 bg-slate-50 border border-slate-100 rounded-2xl w-24 shrink-0 shadow-sm"
+                >
+                  <span className="text-4xl drop-shadow-sm mb-1.5">{sticker.iconUrl || sticker.icon || '🏅'}</span>
+                  <span className="text-[10px] font-extrabold text-slate-800 leading-tight truncate w-full text-center">
+                    {sticker.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* New Rewards Section */}
+        {payload.newRewards?.length > 0 && (
+          <div className="w-full mt-6 space-y-3 pt-5 border-t border-slate-100">
+            <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+              Streak Rewards Unlocked
+            </h4>
+            <ul className="text-left space-y-2 bg-orange-50 p-4 rounded-2xl w-full">
+              {payload.newRewards.map((reward, i) => (
+                <li key={i} className="flex items-start gap-2.5 text-xs text-orange-800 font-medium">
+                  <Gift size={16} className="text-orange-500 shrink-0" />
+                  <span>
+                    Unlocked{' '}
+                    <span className="font-extrabold capitalize">
+                      {reward.rewardType.replace('_', ' ')}
+                    </span>{' '}
+                    reward: {reward.rewardValue || 'Claimed'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Keep it going Button */}
+        <button
+          onClick={() => setOpen(false)}
+          className="mt-6 w-full h-11 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-md transition-all active:scale-[0.98] text-xs focus:ring-2 focus:ring-orange-500/50"
+        >
+          Keep it going 🔥
+        </button>
+      </div>
+    </div>
   );
 };
+
+export default MilestoneCelebrationModal;

@@ -15,6 +15,7 @@ const Complaint = require('../../models/Complaint');
 const Streak = require('../../models/Streak');
 const UserSticker = require('../../models/UserSticker');
 const NotificationPreference = require('../../models/NotificationPreference');
+const Reservation = require('../../models/Reservation');
 const loanService = require('../../services/loanService');
 const reservationService = require('../../services/reservationService');
 const labBookingService = require('../../services/labBookingService');
@@ -33,7 +34,7 @@ const AppError = require('../../utils/AppError');
 // @access  Private/Student
 const getStudentCatalog = async (req, res, next) => {
   try {
-    const { query, category, page = 1, limit = 10 } = req.query;
+    const { query, category, format, availability, sortBy, page = 1, limit = 10 } = req.query;
     const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
     const filter = { ...req.tenantFilter };
@@ -41,11 +42,37 @@ const getStudentCatalog = async (req, res, next) => {
     if (query) {
       filter.$text = { $search: query };
     }
-    if (category) {
+    if (category && category !== 'all') {
       filter.category = category;
     }
+    if (format && format !== 'all') {
+      filter.format = format;
+    }
+    if (availability === 'available') {
+      filter.copiesAvailable = { $gt: 0 };
+    } else if (availability === 'checked-out') {
+      filter.copiesAvailable = 0;
+    }
 
-    const books = await Book.find(filter).skip(skip).limit(parseInt(limit, 10)).select('-__v');
+    let sortOptions = { title: 1 }; // Default alphabetical
+    if (sortBy === 'newest') {
+      sortOptions = { createdAt: -1 };
+    } else if (sortBy === 'title') {
+      sortOptions = { title: 1 };
+    } else if (sortBy === 'relevance' && query) {
+      sortOptions = { score: { $meta: 'textScore' } };
+    }
+
+    const booksQuery = Book.find(filter);
+    if (sortBy === 'relevance' && query) {
+      booksQuery.select({ score: { $meta: 'textScore' } });
+    }
+
+    const books = await booksQuery
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(parseInt(limit, 10))
+      .select('-__v');
 
     const total = await Book.countDocuments(filter);
 
@@ -101,9 +128,44 @@ const getStudentLoans = async (req, res, next) => {
       .populate('bookId', 'title author isbn coverImage')
       .sort('-createdAt');
 
+    const activeLoans = [];
+    const historyLoans = [];
+
+    for (const loan of loans) {
+      if (loan.status === 'active' || loan.status === 'overdue') {
+        // Calculate renewal eligibility
+        let eligible = true;
+        let reason = null;
+
+        if (loan.renewalCount >= loan.maxRenewals) {
+          eligible = false;
+          reason = 'limit_reached';
+        } else {
+          // Check if anyone else has a reservation hold on this book
+          const hasQueue = await Reservation.exists({
+            bookId: loan.bookId,
+            status: { $in: ['queued', 'ready_for_pickup'] },
+          });
+          if (hasQueue) {
+            eligible = false;
+            reason = 'on_hold';
+          }
+        }
+
+        const loanObj = loan.toObject();
+        loanObj.renewalEligibility = { eligible, reason };
+        activeLoans.push(loanObj);
+      } else {
+        historyLoans.push(loan);
+      }
+    }
+
     res.json({
       success: true,
-      data: loans,
+      data: {
+        active: activeLoans,
+        history: historyLoans,
+      },
     });
   } catch (error) {
     next(error);
@@ -115,7 +177,7 @@ const getStudentLoans = async (req, res, next) => {
 // @access  Private/Student
 const renewStudentLoan = async (req, res, next) => {
   try {
-    const loan = await loanService.renewLoan(req.params.id, req.user.id);
+    const loan = await loanService.renewLoan(req.params.id, req.user.id, req.user.collegeId);
     res.json({
       success: true,
       data: loan,

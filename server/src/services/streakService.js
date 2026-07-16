@@ -15,17 +15,21 @@ const QUALIFYING_ACTIONS = [
   'lab_booking',
   'eresource',
   'eresource_read',
+  'check_in',
 ];
+
+const { runInTransaction } = require('../utils/transactionHelper');
+const CheckInLog = require('../models/CheckInLog');
+const { DateTime } = require('luxon');
 
 /**
  * Helper to get the local YYYY-MM-DD string for a user's timezone.
  */
 const getLocalDateString = (dateObj, timezone) => {
   try {
-    return new Date(dateObj).toLocaleDateString('en-CA', { timeZone: timezone });
+    return DateTime.fromJSDate(dateObj).setZone(timezone).toFormat('yyyy-MM-dd');
   } catch (err) {
-    // Fallback if timezone is invalid
-    return new Date(dateObj).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    return DateTime.fromJSDate(dateObj).setZone('Asia/Kolkata').toFormat('yyyy-MM-dd');
   }
 };
 
@@ -35,56 +39,88 @@ const getLocalDateString = (dateObj, timezone) => {
  * CRITICAL: This is the ONLY function permitted to write to the Streak collection.
  */
 const recordQualifyingAction = async (userId, collegeId, actionType) => {
-  // 1. Verify if the action type is qualifying
   if (!QUALIFYING_ACTIONS.includes(actionType)) {
-    // If not qualifying, do nothing
     return null;
   }
 
-  const now = new Date();
-  let streak = await Streak.findOne({ userId });
+  return await runInTransaction(async (session) => {
+    const now = new Date();
+    let streak = await Streak.findOne({ userId }).session(session);
 
-  if (!streak) {
-    // First time ever creating a streak for this user
-    streak = await Streak.create({
-      userId,
-      collegeId,
-      currentStreak: 1,
-      maxStreak: 1,
-      freezesAvailable: 2,
-      lastQualifyingActionAt: now,
-      timezone: 'Asia/Kolkata', // default
-    });
-  } else {
+    if (!streak) {
+      streak = new Streak({
+        userId,
+        collegeId,
+        currentStreak: 0,
+        maxStreak: 0,
+        freezesAvailable: 2,
+        timezone: 'Asia/Kolkata',
+      });
+    }
+
     const timezone = streak.timezone || 'Asia/Kolkata';
     const todayStr = getLocalDateString(now, timezone);
-
-    // Compute dates for yesterday and two days ago in local user timezone
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const yesterdayStr = getLocalDateString(yesterday, timezone);
-
     const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
     const twoDaysAgoStr = getLocalDateString(twoDaysAgo, timezone);
 
-    const lastActionDateStr = getLocalDateString(streak.lastQualifyingActionAt, timezone);
+    // 1. Double check-in check at CheckInLog level
+    let logCreated = false;
+    if (actionType === 'check_in') {
+      try {
+        await CheckInLog.create(
+          [{ collegeId, userId, checkInDate: todayStr, timestamp: now, freezeConsumed: false }],
+          { session }
+        );
+        logCreated = true;
+      } catch (err) {
+        if (err.code === 11000) {
+          const dupErr = new AppError('Already checked in today.', 400);
+          dupErr.code = 'ALREADY_CHECKED_IN';
+          throw dupErr;
+        }
+        throw err;
+      }
+    } else {
+      // For other actions, we also log a check-in automatically to track it in history if they haven't checked in yet!
+      const existingTodayLog = await CheckInLog.findOne({ userId, checkInDate: todayStr }).session(
+        session
+      );
+      if (!existingTodayLog) {
+        await CheckInLog.create(
+          [{ collegeId, userId, checkInDate: todayStr, timestamp: now, freezeConsumed: false }],
+          { session }
+        );
+        logCreated = true;
+      }
+    }
+
+    const lastActionDateStr = streak.lastQualifyingActionAt
+      ? getLocalDateString(streak.lastQualifyingActionAt, timezone)
+      : null;
 
     if (lastActionDateStr === todayStr) {
-      // Already performed a qualifying action today: no-op for streak count
+      // Already checked in today
       streak.lastQualifyingActionAt = now;
-      await streak.save();
+      await streak.save({ session });
       emitStreakUpdate(userId, streak);
       return streak;
     }
 
     if (lastActionDateStr === yesterdayStr) {
-      // Continuous streak increment
+      // Continuous daily progress
       streak.currentStreak += 1;
     } else if (lastActionDateStr === twoDaysAgoStr && streak.freezesAvailable > 0) {
-      // Missed yesterday but has a freeze: consume freeze and treat as continuous
+      // Missed yesterday: consume freeze, log freeze consumed, treat as continuous
       streak.freezesAvailable -= 1;
+      await CheckInLog.create(
+        [{ collegeId, userId, checkInDate: yesterdayStr, timestamp: now, freezeConsumed: true }],
+        { session }
+      );
       streak.currentStreak += 1;
     } else {
-      // Gap is wider: reset streak to 1
+      // Reset streak to 1
       streak.currentStreak = 1;
     }
 
@@ -93,60 +129,61 @@ const recordQualifyingAction = async (userId, collegeId, actionType) => {
     }
 
     streak.lastQualifyingActionAt = now;
-    await streak.save();
-  }
+    await streak.save({ session });
 
-  // 2. Check and process StreakReward milestones crossed by the new currentStreak
-  const rewards = await StreakReward.find({ milestoneThreshold: streak.currentStreak });
-  for (const reward of rewards) {
-    if (reward.rewardType === 'freeze') {
-      const addedFreezes = parseInt(reward.rewardValue, 10) || 0;
-      streak.freezesAvailable += addedFreezes;
-      await streak.save();
+    // 2. Process milestones/rewards
+    const rewards = await StreakReward.find({ milestoneThreshold: streak.currentStreak }).session(
+      session
+    );
+    for (const reward of rewards) {
+      if (reward.rewardType === 'freeze') {
+        const addedFreezes = parseInt(reward.rewardValue, 10) || 0;
+        streak.freezesAvailable += addedFreezes;
+        await streak.save({ session });
 
-      await notificationService.notify(
-        userId,
-        'streak_milestone',
-        `Milestone reached! You earned ${addedFreezes} extra streak freezes.`,
-        reward._id,
-        'StreakReward'
-      );
-    } else if (reward.rewardType === 'badge') {
-      // Try to find a sticker with name or ID matching the badge value
-      let sticker = await Sticker.findOne({ name: reward.rewardValue });
-      if (!sticker && mongoose.isValidObjectId(reward.rewardValue)) {
-        sticker = await Sticker.findById(reward.rewardValue);
-      }
-
-      if (sticker) {
-        // Unlock UserSticker if not already earned
-        const userStickerExists = await UserSticker.findOne({ userId, stickerId: sticker._id });
-        if (!userStickerExists) {
-          await UserSticker.create({ userId, stickerId: sticker._id });
-          await notificationService.notify(
-            userId,
-            'streak_milestone',
-            `Congratulations! You unlocked the "${sticker.name}" sticker for reaching your ${streak.currentStreak}-day streak milestone!`,
-            sticker._id,
-            'Sticker'
-          );
+        await notificationService.notify(
+          userId,
+          'streak_milestone',
+          `Milestone reached! You earned ${addedFreezes} extra streak freezes.`,
+          reward._id,
+          'StreakReward'
+        );
+      } else if (reward.rewardType === 'badge') {
+        let sticker = await Sticker.findOne({ name: reward.rewardValue }).session(session);
+        if (!sticker && mongoose.isValidObjectId(reward.rewardValue)) {
+          sticker = await Sticker.findById(reward.rewardValue).session(session);
         }
+
+        if (sticker) {
+          const userStickerExists = await UserSticker.findOne({
+            userId,
+            stickerId: sticker._id,
+          }).session(session);
+          if (!userStickerExists) {
+            await UserSticker.create([{ userId, stickerId: sticker._id }], { session });
+            await notificationService.notify(
+              userId,
+              'streak_milestone',
+              `Congratulations! You unlocked the "${sticker.name}" sticker for reaching your ${streak.currentStreak}-day streak milestone!`,
+              sticker._id,
+              'Sticker'
+            );
+          }
+        }
+      } else if (reward.rewardType === 'theme') {
+        await notificationService.notify(
+          userId,
+          'streak_milestone',
+          `Milestone reached! You unlocked the visual theme: ${reward.rewardValue}.`,
+          reward._id,
+          'StreakReward'
+        );
       }
-    } else if (reward.rewardType === 'theme') {
-      await notificationService.notify(
-        userId,
-        'streak_milestone',
-        `Milestone reached! You unlocked the visual theme: ${reward.rewardValue}.`,
-        reward._id,
-        'StreakReward'
-      );
     }
-  }
 
-  // 3. Emit updated streak live via socket
-  emitStreakUpdate(userId, streak);
-
-  return streak;
+    emitStreakUpdate(userId, streak);
+    return streak;
+  });
 };
 
 const getOrCreateStreak = async (userId, collegeId) => {
@@ -164,8 +201,80 @@ const getOrCreateStreak = async (userId, collegeId) => {
   return streak;
 };
 
+const useStreakRepair = async (userId) => {
+  let streak = await Streak.findOne({ userId });
+  if (!streak) {
+    throw new AppError('No streak record found to repair.', 404);
+  }
+  if (streak.freezesAvailable <= 0) {
+    throw new AppError('No freezes available.', 400);
+  }
+
+  // Repair streak: deduct freeze, increment streak, and set action timestamp
+  streak.freezesAvailable -= 1;
+
+  // If their streak reset to 0 or 1, restore to maxStreak
+  if (streak.currentStreak <= 1) {
+    streak.currentStreak = Math.max(1, streak.maxStreak);
+  } else {
+    streak.currentStreak += 1;
+  }
+
+  streak.lastQualifyingActionAt = new Date();
+  await streak.save();
+
+  emitStreakUpdate(userId, streak);
+  return streak;
+};
+
+const recalculateStreakFromLog = async (userId) => {
+  const logs = await CheckInLog.find({ userId }).sort({ checkInDate: 1 });
+  let currentStreak = 0;
+  let maxStreak = 0;
+
+  if (logs.length === 0) {
+    const streak = await Streak.findOneAndUpdate(
+      { userId },
+      { currentStreak: 0, maxStreak: 0 },
+      { new: true }
+    );
+    if (streak) emitStreakUpdate(userId, streak);
+    return { currentStreak: 0, maxStreak: 0 };
+  }
+
+  let lastDate = null;
+  for (const log of logs) {
+    const curDate = DateTime.fromISO(log.checkInDate);
+    if (!lastDate) {
+      currentStreak = 1;
+    } else {
+      const diff = curDate.diff(lastDate, 'days').days;
+      if (diff === 1) {
+        currentStreak += 1;
+      } else if (diff > 1) {
+        currentStreak = 1;
+      }
+    }
+    if (currentStreak > maxStreak) {
+      maxStreak = currentStreak;
+    }
+    lastDate = curDate;
+  }
+
+  const streak = await Streak.findOneAndUpdate(
+    { userId },
+    { currentStreak, maxStreak },
+    { new: true }
+  );
+  if (streak) emitStreakUpdate(userId, streak);
+
+  return { currentStreak, maxStreak };
+};
+
 module.exports = {
   recordQualifyingAction,
   getLocalDateString,
   getOrCreateStreak,
+  useStreakRepair,
+  recalculateStreakFromLog,
 };

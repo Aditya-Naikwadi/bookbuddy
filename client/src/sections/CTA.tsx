@@ -1,9 +1,13 @@
 import React, { useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import useAuthStore from '../store/authStore';
 import { motion, useScroll, useTransform, Variants } from 'framer-motion';
 import { Button } from '../components/ui/Button';
 
 export const CTA = () => {
   const containerRef = useRef<HTMLElement>(null);
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuthStore();
   
   // Parallax effects for the background elements
   const { scrollYProgress } = useScroll({
@@ -114,6 +118,22 @@ export const CTA = () => {
           <Button 
             size="lg" 
             className="w-full sm:w-auto bg-white text-void hover:bg-white/90 hover:scale-[1.02] transition-transform duration-300 shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:shadow-[0_0_60px_rgba(255,255,255,0.4)] px-10 h-16 text-lg rounded-xl"
+            onClick={() => {
+              if (isAuthenticated && user) {
+                const role = user.role;
+                if (role === 'college-admin') navigate('/college-admin');
+                else if (role === 'general') navigate('/general-dashboard');
+                else if (role === 'super-admin') navigate('/admin-portal');
+                else navigate('/student-dashboard');
+              } else {
+                const hadAccount = localStorage.getItem('bookbuddy_had_account') === 'true';
+                if (hadAccount) {
+                  navigate('/auth/login');
+                } else {
+                  navigate('/auth/register');
+                }
+              }
+            }}
           >
             Create Free Account
           </Button>

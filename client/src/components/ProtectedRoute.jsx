@@ -2,8 +2,16 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 
 const ProtectedRoute = ({ allowedRoles }) => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, isLoading } = useAuthStore();
   const location = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-void">
+        <div className="w-12 h-12 border-4 border-ember border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     // Redirect to login page but save the location they were trying to access

@@ -2,6 +2,8 @@ const asyncHandler = require('../utils/asyncHandler');
 const Loan = require('../models/Loan');
 const Book = require('../models/Book');
 const AppError = require('../utils/AppError');
+const tenantScope = require('../utils/tenantScope');
+const cursorPagination = require('../utils/cursorPagination');
 const {
   checkoutBook,
   renewLoan: renewLoanService,
@@ -12,31 +14,46 @@ const {
 // @route   GET /api/loans/me
 // @access  Private
 const getMyLoans = asyncHandler(async (req, res) => {
-  const { status, page = 1, limit = 10 } = req.query;
-  const pageSize = Number(limit);
-  const pageNumber = Number(page);
+  const { status, limit = 10, cursor } = req.query;
+  const pageSize = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
 
-  let query = { userId: req.user.id, collegeId: req.user.collegeId };
+  // Securely scope with tenant wrapper
+  const loanRepo = tenantScope(Loan, req);
 
+  const filter = { userId: req.user.id };
   if (status && status !== 'all') {
-    query.status = status;
+    filter.status = status;
   }
 
-  const total = await Loan.countDocuments(query);
-  const loans = await Loan.find(query)
+  // If cursor pagination is requested, apply cursor
+  const decodedCursor = cursorPagination.decode(cursor);
+  if (decodedCursor) {
+    cursorPagination.apply(filter, decodedCursor, 'newest');
+  }
+
+  // Find limit + 1 to check hasMore
+  const loans = await loanRepo
+    .find(filter)
     .populate('bookId', 'title author coverImage format')
-    .sort({ issueDate: -1 })
-    .limit(pageSize)
-    .skip(pageSize * (pageNumber - 1));
+    .sort({ createdAt: -1 })
+    .limit(pageSize + 1);
+
+  const hasMore = loans.length > pageSize;
+  const slicedLoans = loans.slice(0, pageSize);
+
+  let nextCursor = null;
+  if (hasMore && slicedLoans.length > 0) {
+    const lastItem = slicedLoans[slicedLoans.length - 1];
+    nextCursor = cursorPagination.encode(new Date(lastItem.createdAt).getTime(), lastItem._id);
+  }
 
   res.json({
     success: true,
-    data: loans,
+    data: slicedLoans,
     pagination: {
-      page: pageNumber,
+      nextCursor,
+      hasMore,
       limit: pageSize,
-      total,
-      totalPages: Math.ceil(total / pageSize),
     },
   });
 });
@@ -61,17 +78,20 @@ const borrowBookHandler = asyncHandler(async (req, res) => {
 // @route   POST /api/loans/:id/renew
 // @access  Private
 const renewLoan = asyncHandler(async (req, res) => {
-  const loanRecord = await Loan.findOne({
-    _id: req.params.id,
-    userId: req.user.id,
-    collegeId: req.user.collegeId,
-  });
-  if (!loanRecord) {
-    throw new AppError('Active loan not found or unauthorized access.', 404);
+  try {
+    const loan = await renewLoanService(req.params.id, req.user.id, req.user.collegeId);
+    res.json({ success: true, data: loan });
+  } catch (err) {
+    if (err.code) {
+      return res.status(400).json({
+        success: false,
+        error: err.code,
+        message: err.message,
+        meta: err.meta,
+      });
+    }
+    throw err;
   }
-
-  const loan = await renewLoanService(req.params.id, req.user.id);
-  res.json({ success: true, data: loan });
 });
 
 // @desc    Return a loan

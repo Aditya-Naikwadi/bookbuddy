@@ -1,4 +1,3 @@
-// Schema representing digital library documents, textbooks, and resources.
 const mongoose = require('mongoose');
 
 const eResourceSchema = new mongoose.Schema(
@@ -75,6 +74,30 @@ const eResourceSchema = new mongoose.Schema(
     },
     downloadCount: {
       type: Number,
+    },
+    storageKey: {
+      type: String,
+      default: null,
+    },
+    fileSizeBytes: {
+      type: Number,
+      default: 0,
+    },
+    mimeType: {
+      type: String,
+      default: null,
+    },
+    uploadStatus: {
+      type: String,
+      enum: ['pending-validation', 'available', 'rejected'],
+      default: 'available',
+      index: true,
+    },
+    sourceType: {
+      type: String,
+      enum: ['gutenberg', 'internal-upload'],
+      default: 'internal-upload',
+      index: true,
     },
   },
   {

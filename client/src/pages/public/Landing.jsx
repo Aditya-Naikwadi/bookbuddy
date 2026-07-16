@@ -1,5 +1,6 @@
-
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import useAuthStore from '../../store/authStore';
 import { ScrollProgress } from '../../components/ui/ScrollProgress';
 import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
@@ -22,6 +23,18 @@ import { LenisContext } from '../../context/LenisContext';
 const Landing = () => {
   const containerRef = useRef(null);
   const lenisRef = useLenis(containerRef);
+  const { isAuthenticated, user } = useAuthStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const role = user.role;
+      if (role === 'college-admin') navigate('/college-admin', { replace: true });
+      else if (role === 'general') navigate('/general-dashboard', { replace: true });
+      else if (role === 'super-admin') navigate('/admin-portal', { replace: true });
+      else navigate('/student-dashboard', { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
 
   useEffect(() => {
     window.scrollTo(0, 0);

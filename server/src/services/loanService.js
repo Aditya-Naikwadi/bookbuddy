@@ -89,66 +89,105 @@ const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
 };
 
 const returnBook = async (loanId, collegeId) => {
-  // 1. Find active loan
-  const loan = await Loan.findOne({
-    _id: loanId,
-    collegeId,
-    status: { $in: ['active', 'overdue'] },
+  return await runInTransaction(async (session) => {
+    // 1. Find active loan within session
+    const loan = await Loan.findOne({
+      _id: loanId,
+      collegeId,
+      status: { $in: ['active', 'overdue'] },
+    }).session(session);
+    if (!loan) {
+      throw new AppError('Active loan not found.', 404);
+    }
+
+    // 2. Update loan status
+    loan.status = 'returned';
+    loan.returnDate = new Date();
+    await loan.save({ session });
+
+    // 3. Increment copies atomically, ensuring it does not exceed total copies
+    const book = await Book.findOne({ _id: loan.bookId, collegeId }).session(session);
+    if (book) {
+      if (book.copiesAvailable < book.copiesTotal) {
+        book.copiesAvailable += 1;
+        await book.save({ session });
+      }
+    }
+
+    // 4. Promote next hold reservation in queue (reusable service call)
+    await reservationService.promoteNextHold(loan.bookId, collegeId);
+
+    await streakService.recordQualifyingAction(loan.userId, collegeId, 'return');
+
+    return loan;
   });
-  if (!loan) {
-    throw new AppError('Active loan not found.', 404);
-  }
-
-  // 2. Update loan status
-  loan.status = 'returned';
-  loan.returnDate = new Date();
-  await loan.save();
-
-  // 3. Increment copies atomically
-  await Book.findOneAndUpdate({ _id: loan.bookId, collegeId }, { $inc: { copiesAvailable: 1 } });
-
-  // 4. Promote next hold reservation in queue (reusable service call)
-  await reservationService.promoteNextHold(loan.bookId, collegeId);
-
-  await streakService.recordQualifyingAction(loan.userId, collegeId, 'return');
-
-  return loan;
 };
 
-const renewLoan = async (loanId, userId) => {
-  // 1. Find active loan
-  const loan = await Loan.findOne({ _id: loanId, userId, status: 'active' });
-  if (!loan) {
-    throw new AppError('Active loan not found.', 404);
-  }
+const renewLoan = async (loanId, userId, collegeId) => {
+  return await runInTransaction(async (session) => {
+    // 1. Find active or overdue loan in tenant scope
+    const loan = await Loan.findOne({
+      _id: loanId,
+      userId,
+      collegeId,
+      status: { $in: ['active', 'overdue'] },
+    }).session(session);
 
-  // 2. Check if max renewals reached
-  if (loan.renewalCount >= loan.maxRenewals) {
-    throw new AppError('Maximum renewals reached.', 400);
-  }
+    if (!loan) {
+      throw new AppError('Active loan not found.', 404);
+    }
 
-  // 3. Check if others are waiting in queue
-  const hasQueue = await Reservation.exists({
-    bookId: loan.bookId,
-    status: { $in: ['queued', 'ready_for_pickup'] },
+    // 2. Limit check
+    if (loan.renewalCount >= loan.maxRenewals) {
+      const err = new AppError('Maximum renewals reached.', 400);
+      err.code = 'RENEWAL_LIMIT_REACHED';
+      err.meta = { limit: loan.maxRenewals, current: loan.renewalCount };
+      throw err;
+    }
+
+    // 3. Check queue holds from other students
+    const pendingHold = await Reservation.findOne({
+      bookId: loan.bookId,
+      status: { $in: ['queued', 'ready_for_pickup'] },
+      userId: { $ne: userId },
+    }).session(session);
+
+    if (pendingHold) {
+      const err = new AppError('Cannot renew. Other users are waiting in the queue.', 400);
+      err.code = 'HOLD_PENDING';
+      throw err;
+    }
+
+    // 4. Overdue cutoff check (max 7 days overdue)
+    if (loan.status === 'overdue') {
+      const overdueMs = Date.now() - new Date(loan.dueDate).getTime();
+      const overdueDays = Math.max(0, Math.floor(overdueMs / (1000 * 60 * 60 * 24)));
+      if (overdueDays > 7) {
+        const err = new AppError(
+          'Loan is overdue past the 7 days renewal eligibility cutoff.',
+          400
+        );
+        err.code = 'OVERDUE_PAST_CUTOFF';
+        err.meta = { maxDays: 7, currentDays: overdueDays };
+        throw err;
+      }
+    }
+
+    // 5. Extend due date
+    const isOnTime = new Date() <= new Date(loan.dueDate);
+    const newDueDate = new Date(loan.dueDate);
+    newDueDate.setDate(newDueDate.getDate() + config.loanPeriodDays);
+    loan.dueDate = newDueDate;
+    loan.renewalCount += 1;
+    loan.status = 'active'; // Reset status to active upon successful renewal
+    await loan.save({ session });
+
+    if (isOnTime) {
+      await streakService.recordQualifyingAction(userId, loan.collegeId, 'on_time_renewal');
+    }
+
+    return loan;
   });
-  if (hasQueue) {
-    throw new AppError('Cannot renew. Other users are waiting in the queue.', 400);
-  }
-
-  // 4. Renew the loan
-  const isOnTime = new Date() <= new Date(loan.dueDate);
-  const newDueDate = new Date(loan.dueDate);
-  newDueDate.setDate(newDueDate.getDate() + config.loanPeriodDays);
-  loan.dueDate = newDueDate;
-  loan.renewalCount += 1;
-  await loan.save();
-
-  if (isOnTime) {
-    await streakService.recordQualifyingAction(userId, loan.collegeId, 'on_time_renewal');
-  }
-
-  return loan;
 };
 
 module.exports = {

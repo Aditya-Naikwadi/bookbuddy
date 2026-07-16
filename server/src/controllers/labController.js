@@ -13,6 +13,15 @@ const getSeats = asyncHandler(async (req, res) => {
   res.json({ success: true, data: seats });
 });
 
+// @desc    Get availability by lab name and date
+// @route   GET /api/lab/availability
+// @access  Private
+const getAvailability = asyncHandler(async (req, res) => {
+  const { labName, date } = req.query;
+  const data = await labBookingService.getAvailability(req.user.collegeId, labName, date);
+  res.json({ success: true, data });
+});
+
 // @desc    Book a lab seat
 // @route   POST /api/lab/bookings
 // @access  Private
@@ -57,4 +66,4 @@ const cancelBooking = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Booking cancelled' });
 });
 
-module.exports = { getSeats, createBooking, getMyBookings, cancelBooking };
+module.exports = { getSeats, getAvailability, createBooking, getMyBookings, cancelBooking };

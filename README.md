@@ -246,6 +246,8 @@ Database indexes are configured explicitly to speed up query execution paths and
 | `readingprogresses`| `{ userId: 1, eresourceId: 1 }` | Compound, Unique | Fast progress upsert / reading tracker lookup. |
 | `userstickers` | `{ userId: 1, stickerId: 1 }` | Compound, Unique | Award unlocking duplicate prevention. |
 | `streaks` | `{ userId: 1 }` | Single-field, Unique | Daily check-in updates and cron tracking. |
+| `checkinlogs` | `{ userId: 1, checkInDate: 1 }` | Compound, Unique | Daily check-in duplicate prevention. |
+| `readingpositions`| `{ userId: 1, eResourceId: 1 }` | Compound, Unique | Reading bookmark CFI position lookup. |
 
 ### Concurrency Integrity Controls
 1. **Lending Decoupled Decrement**: Checkouts decrease `copiesAvailable` only if it is strictly greater than 0, preventing race condition inventory drops below zero:
@@ -261,8 +263,8 @@ Database indexes are configured explicitly to speed up query execution paths and
 * **Digital Catalog & Search**: Advanced text search across books and digital resources with real-time availability checking.
 * **Loans & Fines Tracker**: View active checkout statuses, renewal limits, and unpaid late fines.
 * **Digital Patron Card**: A virtual card display containing student membership identifiers.
-* **Inline Ebook Reader**: Access, open, and read public-domain (Gutenberg) or internally-uploaded EPUB ebooks directly inside the browser.
-* **Gamification & Engagement**: Check in daily to maintain reading streaks, earn freezes, and unlock stickers/badges.
+* **Inline Ebook Reader**: Access, open, and read public-domain (Gutenberg) or internally-uploaded EPUB ebooks directly inside the browser, featuring range-request partial streaming, Stored-XSS injection scanning of XHTML/HTML/SVG files, SSRF-safe redirect following, and reading bookmark CFI sync.
+* **Gamification & Engagement**: Check in daily to maintain reading streaks, featuring idempotent transaction-locked check-in logs, timezone-correct cron sweep streak protection with freeze log placeholders, badges catalog with unlock statuses, and a log-based streak recalculation tool.
 * **Facilities Management**: Check live workstation seat availability and reserve computer lab timeslots.
 * **Academic Support**: Submit purchase suggestions, file complaints, and send feedback to college administrators.
 
@@ -403,6 +405,15 @@ Below are the primary API entry gateways:
 | `POST /api/dashboards/student/reservations` | Yes | `student` | Places hold on out-of-stock Book catalog item. |
 | `POST /api/dashboards/student/lab-bookings` | Yes | `student` | Reserves computer lab timeslot (locked). |
 | `GET /api/dashboards/college-admin/analytics/summary` | Yes | `college-admin` | Aggregates campus circulation metrics. |
+| `POST /api/checkin` | Yes | `student` | Idempotent daily check-in to extend streak. |
+| `GET /api/streak` | Yes | `student` | Retrieves user's current reading streak and stats. |
+| `GET /api/streak/history` | Yes | `student` | Retrieves check-in history logs for calendar view. |
+| `GET /api/badges` | Yes | `student` | Retrieves badge definitions with student unlock status. |
+| `POST /api/badges` | Yes | `college-admin`, `super-admin` | Creates new badge definition (Zod-validated). |
+| `POST /api/streak/recalculate` | Yes | `student` | Audits and reconstructs streak from check-in logs. |
+| `POST /api/reader/upload` | Yes | `college-admin`, `super-admin` | Uploads and scans EPUB for Stored-XSS vectors. |
+| `GET /api/reader/:resourceId/content` | Yes | `student`, `college-admin` | Streams EPUB file using HTTP range requests. |
+| `PUT /api/reader/:resourceId/position` | Yes | `student` | Syncs current CFI reading position bookmark. |
 
 ---
 

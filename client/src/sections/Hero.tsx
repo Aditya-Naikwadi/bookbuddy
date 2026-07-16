@@ -1,4 +1,6 @@
 import React, { useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import useAuthStore from '../store/authStore';
 import { SectionLabel } from '../components/ui/SectionLabel';
 import { Button } from '../components/ui/Button';
 import { useReducedMotion } from '../hooks/useReducedMotion';
@@ -7,6 +9,8 @@ import { motion, useScroll, useTransform, Variants } from 'framer-motion';
 export const Hero = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuthStore();
   
   // High-performance scroll parallax using Framer Motion
   const { scrollYProgress } = useScroll({
@@ -71,7 +75,17 @@ export const Hero = () => {
             Borrow, reserve, read 70,000+ free books, track your streaks, and never miss a due date — all from one beautifully simple dashboard.
           </motion.p>
           <motion.div variants={textItemVariants} className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4 w-full">
-            <Button size="lg" className="w-full sm:w-auto" onClick={() => window.location.href='/auth/register'}>Get Started Free</Button>
+            <Button size="lg" className="w-full sm:w-auto" onClick={() => {
+              if (isAuthenticated && user) {
+                const role = user.role;
+                if (role === 'college-admin') navigate('/college-admin');
+                else if (role === 'general') navigate('/general-dashboard');
+                else if (role === 'super-admin') navigate('/admin-portal');
+                else navigate('/student-dashboard');
+              } else {
+                navigate('/auth/register');
+              }
+            }}>Get Started Free</Button>
             <Button variant="ghost" size="lg" className="w-full sm:w-auto">Watch Demo ▶</Button>
           </motion.div>
           <motion.div variants={textItemVariants} className="mt-8 md:mt-10 text-xs md:text-sm font-semibold text-muted">

@@ -14,6 +14,9 @@ export const Button: React.FC<ButtonProps> = ({ className, variant = 'primary', 
 
   const handleMouse = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!ref.current) return;
+    const hasReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (hasReducedMotion) return;
+
     const { clientX, clientY } = e;
     const { height, width, left, top } = ref.current.getBoundingClientRect();
     const middleX = clientX - (left + width / 2);

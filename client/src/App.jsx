@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from 'react';
+import { Suspense, lazy, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import useAuthStore from './store/authStore';
@@ -57,10 +57,16 @@ const SavedBookmarks = lazy(() => import('./pages/dashboards/student/SavedBookma
 const LabBooking = lazy(() => import('./pages/dashboards/student/LabBooking'));
 const Support = lazy(() => import('./pages/dashboards/student/Support'));
 const EbookReader = lazy(() => import('./pages/dashboards/student/EbookReader'));
+const Achievements = lazy(() => import('./pages/dashboards/student/Achievements'));
 
 // Component to redirect authenticated users away from Auth routes
 const AuthRedirect = ({ children }) => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, isLoading } = useAuthStore();
+
+  if (isLoading) {
+    return <PageLoader />;
+  }
+
   if (isAuthenticated && user) {
     if (user.role === 'college-admin') return <Navigate to="/college-admin" replace />;
     if (user.role === 'general') return <Navigate to="/general-dashboard" replace />;
@@ -85,6 +91,37 @@ function App() {
     // Prevent splash screen from reloading during the same session
     return !sessionStorage.getItem('bookbuddy_splash_shown');
   });
+
+  const { checkAuth } = useAuthStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  // Handle cross-tab logout synchronization
+  useEffect(() => {
+    const handleStorageChange = (event) => {
+      if (event.key === 'auth-storage') {
+        const authStorage = localStorage.getItem('auth-storage');
+        if (!authStorage) {
+          useAuthStore.setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
+          window.location.href = '/';
+        } else {
+          try {
+            const parsed = JSON.parse(authStorage);
+            if (!parsed.state?.isAuthenticated) {
+              useAuthStore.setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
+              window.location.href = '/';
+            }
+          } catch (e) {
+            console.error('Error syncing auth state across tabs', e);
+          }
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const handleSplashComplete = () => {
     sessionStorage.setItem('bookbuddy_splash_shown', 'true');
@@ -161,6 +198,7 @@ function App() {
                   <Route path="saved" element={<SavedBookmarks />} />
                   <Route path="lab-booking" element={<LabBooking />} />
                   <Route path="support" element={<Support />} />
+                  <Route path="achievements" element={<Achievements />} />
                 </Route>
               </Route>
 

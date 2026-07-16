@@ -1,6 +1,7 @@
 const Fine = require('../models/Fine');
 const asyncHandler = require('../utils/asyncHandler');
-const { payFine: payFineService } = require('../services/fineService');
+const tenantScope = require('../utils/tenantScope');
+const { payFine: payFineService, payAllFines } = require('../services/fineService');
 
 // @desc    Get user's fines
 // @route   GET /api/fines/me
@@ -10,8 +11,12 @@ const getMyFines = asyncHandler(async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 10;
   const skip = (page - 1) * limit;
 
-  const total = await Fine.countDocuments({ userId: req.user._id });
-  const fines = await Fine.find({ userId: req.user._id })
+  // Tenant scoping wrapper
+  const fineRepo = tenantScope(Fine, req);
+
+  const total = await fineRepo.countDocuments({ userId: req.user.id });
+  const fines = await fineRepo
+    .find({ userId: req.user.id })
     .populate({
       path: 'loanId',
       populate: {
@@ -34,7 +39,8 @@ const getMyFines = asyncHandler(async (req, res) => {
 // @route   GET /api/fines/me/summary
 // @access  Private
 const getMyFinesSummary = asyncHandler(async (req, res) => {
-  const fines = await Fine.find({ userId: req.user._id, status: 'unpaid' });
+  const fineRepo = tenantScope(Fine, req);
+  const fines = await fineRepo.find({ userId: req.user.id, status: 'unpaid' });
 
   const totalUnpaid = fines.reduce((acc, fine) => acc + fine.amount, 0);
 
@@ -46,12 +52,21 @@ const getMyFinesSummary = asyncHandler(async (req, res) => {
 // @access  Private
 const payFineHandler = asyncHandler(async (req, res) => {
   const { useWaiver } = req.body;
-  const fine = await payFineService(req.params.id, req.user._id, useWaiver);
+  const fine = await payFineService(req.params.id, req.user.id, req.user.collegeId, useWaiver);
   res.json({ success: true, data: fine });
+});
+
+// @desc    Pay all fines
+// @route   POST /api/fines/pay-all
+// @access  Private
+const payAllFinesHandler = asyncHandler(async (req, res) => {
+  const result = await payAllFines(req.user.id, req.user.collegeId);
+  res.json({ success: true, data: result });
 });
 
 module.exports = {
   getMyFines,
   getMyFinesSummary,
   payFine: payFineHandler,
+  payAllFines: payAllFinesHandler,
 };

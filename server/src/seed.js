@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
 
 // Import all models
+const College = require('./models/College');
 const User = require('./models/User');
 const Book = require('./models/Book');
 const Loan = require('./models/Loan');
@@ -31,6 +32,7 @@ const importData = async () => {
   try {
     await connectDB();
     console.log('Clearing database...');
+    await College.deleteMany();
     await User.deleteMany();
     await Book.deleteMany();
     await Loan.deleteMany();
@@ -51,6 +53,28 @@ const importData = async () => {
     await Streak.deleteMany();
     await UserSticker.deleteMany();
 
+    // Drop stale indexes to prevent validation duplicate key violations
+    try {
+      await Sticker.collection.dropIndex('code_1');
+      console.log('Dropped stale code_1 index from stickers collection.');
+    } catch (err) {
+      // Index might not exist, ignore
+    }
+
+    try {
+      await StreakReward.collection.dropIndex('streakDays_1');
+      console.log('Dropped stale streakDays_1 index from streakrewards collection.');
+    } catch (err) {
+      // Index might not exist, ignore
+    }
+
+    console.log('Seeding College tenant...');
+    const college = await College.create({
+      name: 'Demo College',
+      code: 'COLLEGE_A',
+    });
+    const collegeId = college._id;
+
     console.log('Seeding demo users...');
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash('Demo@123', salt);
@@ -62,7 +86,7 @@ const importData = async () => {
         email: 'student@bookbuddy.com',
         password: hashedPassword, // 'Demo@123'
         role: 'student',
-        collegeId: 'COLLEGE_A',
+        collegeId: collegeId,
         major: 'Computer Science',
       },
       {
@@ -70,7 +94,6 @@ const importData = async () => {
         name: 'Super Admin',
         email: 'admin@bookbuddy.com',
         password: hashedPassword,
-        collegeId: 'GLOBAL',
         role: 'super-admin',
       },
       {
@@ -78,7 +101,7 @@ const importData = async () => {
         name: 'College Admin',
         email: 'collegeadmin@bookbuddy.com',
         password: hashedPassword,
-        collegeId: 'COLLEGE_A',
+        collegeId: collegeId,
         role: 'college-admin',
       },
       {
@@ -86,95 +109,65 @@ const importData = async () => {
         name: 'General User',
         email: 'general@bookbuddy.com',
         password: hashedPassword,
-        collegeId: 'COLLEGE_A',
+        collegeId: collegeId,
         role: 'general',
       },
     ]);
 
     const studentId = users[0]._id;
+    const adminId = users[1]._id;
 
     console.log('Seeding demo books...');
     const books = await Book.create([
       {
-        collegeId: 'COLLEGE_A',
+        collegeId: collegeId,
         title: 'The Pragmatic Programmer',
         author: 'Andrew Hunt, David Thomas',
         isbn: '978-0201616224',
-        category: ['Computer Science', 'Programming'],
-        subjects: ['Software Engineering'],
-        tags: ['best practices'],
-        publishedYear: 1999,
-        totalCopies: 5,
-        availableCopies: 4,
-        availabilityStatus: 'available',
-        location: 'Rack A1, Shelf 2',
-        description: 'A book about software engineering.',
-        coverImage:
-          'https://images-na.ssl-images-amazon.com/images/I/41as+WafrFL._SX396_BO1,204,203,200_.jpg',
+        category: 'Computer Science',
+        copiesTotal: 5,
+        copiesAvailable: 4,
+        shelfLocation: 'Rack A1, Shelf 2',
       },
       {
-        collegeId: 'COLLEGE_A',
+        collegeId: collegeId,
         title: 'Clean Code',
         author: 'Robert C. Martin',
         isbn: '978-0132350884',
-        category: ['Computer Science'],
-        subjects: ['Programming'],
-        tags: ['cleancode'],
-        publishedYear: 2008,
-        totalCopies: 3,
-        availableCopies: 0,
-        availabilityStatus: 'checked_out',
-        location: 'Rack A1, Shelf 3',
-        description: 'A Handbook of Agile Software Craftsmanship.',
-        coverImage:
-          'https://images-na.ssl-images-amazon.com/images/I/41jEbK-jG+L._SX373_BO1,204,203,200_.jpg',
+        category: 'Computer Science',
+        copiesTotal: 3,
+        copiesAvailable: 0,
+        shelfLocation: 'Rack A1, Shelf 3',
       },
       {
-        collegeId: 'COLLEGE_A',
+        collegeId: collegeId,
         title: 'Design Patterns',
         author: 'Erich Gamma',
         isbn: '978-0201633610',
-        category: ['Computer Science', 'Design'],
-        subjects: ['Software Architecture'],
-        tags: ['oop'],
-        publishedYear: 1994,
-        totalCopies: 2,
-        availableCopies: 2,
-        availabilityStatus: 'available',
-        location: 'Rack A2, Shelf 1',
-        description: 'Elements of Reusable Object-Oriented Software.',
-        coverImage:
-          'https://images-na.ssl-images-amazon.com/images/I/51szD9HC9pL._SX395_BO1,204,203,200_.jpg',
+        category: 'Computer Science',
+        copiesTotal: 2,
+        copiesAvailable: 2,
+        shelfLocation: 'Rack A2, Shelf 1',
       },
       {
-        collegeId: 'COLLEGE_A',
+        collegeId: collegeId,
         title: 'Introduction to Algorithms',
         author: 'Thomas H. Cormen',
         isbn: '978-0262033848',
-        category: ['Computer Science', 'Algorithms'],
-        subjects: ['Mathematics'],
-        tags: ['DSA'],
-        publishedYear: 2009,
-        totalCopies: 10,
-        availableCopies: 9,
-        availabilityStatus: 'available',
-        location: 'Rack B1, Shelf 1',
-        description: 'Comprehensive guide to algorithms.',
+        category: 'Computer Science',
+        copiesTotal: 10,
+        copiesAvailable: 9,
+        shelfLocation: 'Rack B1, Shelf 1',
       },
       {
-        collegeId: 'COLLEGE_A',
+        collegeId: collegeId,
         title: 'Refactoring',
         author: 'Martin Fowler',
         isbn: '978-0134757599',
-        category: ['Computer Science'],
-        subjects: ['Software Engineering'],
-        tags: ['refactoring'],
-        publishedYear: 2018,
-        totalCopies: 4,
-        availableCopies: 4,
-        availabilityStatus: 'available',
-        location: 'Rack A1, Shelf 4',
-        description: 'Improving the Design of Existing Code.',
+        category: 'Computer Science',
+        copiesTotal: 4,
+        copiesAvailable: 4,
+        shelfLocation: 'Rack A1, Shelf 4',
       },
     ]);
 
@@ -187,12 +180,14 @@ const importData = async () => {
     activeDueDate.setDate(activeDueDate.getDate() + 9); // Due in 9 days
 
     await Loan.create({
-      collegeId: 'COLLEGE_A',
+      collegeId: collegeId,
       userId: studentId,
       bookId: books[0]._id, // Pragmatic Programmer
       issueDate: activeLoanDate,
       dueDate: activeDueDate,
       status: 'active',
+      maxRenewals: 3,
+      issuedBy: adminId, // Required by Loan schema
     });
 
     // History Loan
@@ -202,32 +197,35 @@ const importData = async () => {
     pastReturnDate.setDate(pastReturnDate.getDate() - 15);
 
     const returnedLoan = await Loan.create({
-      collegeId: 'COLLEGE_A',
+      collegeId: collegeId,
       userId: studentId,
       bookId: books[4]._id, // Refactoring
       issueDate: pastLoanDate,
       dueDate: pastReturnDate,
       returnDate: pastReturnDate,
       status: 'returned',
+      maxRenewals: 3,
+      issuedBy: adminId,
     });
 
     // Hold Queue
     await Reservation.create({
-      collegeId: 'COLLEGE_A',
+      collegeId: collegeId,
       userId: studentId,
       bookId: books[1]._id, // Clean Code (checked out)
       queuePosition: 2,
-      status: 'pending',
+      status: 'queued',
     });
 
     // Fine
     await Fine.create({
-      collegeId: 'COLLEGE_A',
+      collegeId: collegeId,
       userId: studentId,
       loanId: returnedLoan._id,
       daysOverdue: 9,
+      overdueDays: 9,
       amount: 45,
-      reason: 'Overdue: Cracking the Coding Interview',
+      reason: 'Overdue: Refactoring',
       status: 'unpaid',
     });
 
@@ -235,10 +233,11 @@ const importData = async () => {
     const seats = [];
     for (let i = 1; i <= 10; i++) {
       seats.push({
-        collegeId: 'COLLEGE_A',
+        collegeId: collegeId,
+        labName: 'Central Computing Lab',
         seatNumber: `PC-${i.toString().padStart(2, '0')}`,
-        status: i % 5 === 0 ? 'maintenance' : 'available',
-        computerSpecs: 'i7 12700K, 32GB RAM, RTX 3060',
+        maintenanceStatus: i % 5 === 0 ? 'maintenance' : 'operational',
+        specs: 'i7 12700K, 32GB RAM, RTX 3060',
       });
     }
     await LabSeat.create(seats);
@@ -246,19 +245,25 @@ const importData = async () => {
     console.log('Seeding E-Resources...');
     await EResource.create([
       {
+        collegeId: collegeId,
         title: 'Machine Learning Basics',
-        type: 'PDF',
-        url: 'https://example.com/ml-basics.pdf',
+        author: 'Andrew Ng',
+        type: 'pdf',
+        fileUrl: 'https://example.com/ml-basics.pdf',
         category: 'Open Access',
-        status: 'approved',
+        uploadedBy: adminId,
+        moderationStatus: 'approved',
         externalId: -1,
       },
       {
+        collegeId: collegeId,
         title: 'Journal of Computer Science Vol 45',
-        type: 'EPUB',
-        url: 'https://example.com/jcs-v45.epub',
+        author: 'IEEE',
+        type: 'epub',
+        fileUrl: 'https://example.com/jcs-v45.epub',
         category: 'Research Journals',
-        status: 'approved',
+        uploadedBy: adminId,
+        moderationStatus: 'approved',
         externalId: -2,
       },
     ]);
@@ -266,77 +271,49 @@ const importData = async () => {
     console.log('Seeding Stickers & Streak Rewards...');
     await Sticker.create([
       {
-        code: 'STRK_3',
         name: '3-Day Reader',
-        description: 'Read for 3 consecutive days.',
-        icon: '🔥',
-        category: 'streak_milestone',
-        criteriaType: 'streak_days',
-        criteriaValue: 3,
         rarity: 'common',
+        iconUrl: '🔥',
+        criteria: 'Read for 3 consecutive days.',
       },
       {
-        code: 'STRK_7',
         name: 'Week Warrior',
-        description: 'Read for 7 consecutive days.',
-        icon: '📅',
-        category: 'streak_milestone',
-        criteriaType: 'streak_days',
-        criteriaValue: 7,
         rarity: 'common',
+        iconUrl: '📅',
+        criteria: 'Read for 7 consecutive days.',
       },
       {
-        code: 'STRK_14',
         name: 'Fortnight Finisher',
-        description: 'Read for 14 consecutive days.',
-        icon: '⏳',
-        category: 'streak_milestone',
-        criteriaType: 'streak_days',
-        criteriaValue: 14,
         rarity: 'rare',
+        iconUrl: '⏳',
+        criteria: 'Read for 14 consecutive days.',
       },
       {
-        code: 'STRK_30',
         name: 'Month Master',
-        description: 'Read for 30 consecutive days.',
-        icon: '🏆',
-        category: 'streak_milestone',
-        criteriaType: 'streak_days',
-        criteriaValue: 30,
         rarity: 'epic',
+        iconUrl: '🏆',
+        criteria: 'Read for 30 consecutive days.',
       },
       {
-        code: 'EXPL_GENRE_5',
         name: 'Genre Explorer',
-        description: 'Borrow books from 5 different genres.',
-        icon: '🗺️',
-        category: 'exploration',
-        criteriaType: 'genre_count',
-        criteriaValue: 5,
         rarity: 'rare',
+        iconUrl: '🗺️',
+        criteria: 'Borrow books from 5 different genres.',
       },
       {
-        code: 'EXPL_LAB_5',
         name: 'Lab Regular',
-        description: 'Complete 5 lab bookings.',
-        icon: '💻',
-        category: 'exploration',
-        criteriaType: 'lab_count',
-        criteriaValue: 5,
         rarity: 'common',
+        iconUrl: '💻',
+        criteria: 'Complete 5 lab bookings.',
       },
     ]);
 
     await StreakReward.create([
-      { streakDays: 3, rewardType: 'visual_upgrade', rewardPayload: { theme: 'silver_flame' } },
-      { streakDays: 7, rewardType: 'freeze', rewardPayload: {} },
-      { streakDays: 14, rewardType: 'patron_theme', rewardPayload: { theme: 'gold_card' } },
-      {
-        streakDays: 30,
-        rewardType: 'certificate',
-        rewardPayload: { fileUrl: '/certificates/30-day.pdf' },
-      },
-      { streakDays: 60, rewardType: 'early_access', rewardPayload: {} },
+      { milestoneThreshold: 3, rewardType: 'theme', rewardValue: 'silver_flame' },
+      { milestoneThreshold: 7, rewardType: 'freeze', rewardValue: '1' },
+      { milestoneThreshold: 14, rewardType: 'theme', rewardValue: 'gold_card' },
+      { milestoneThreshold: 30, rewardType: 'badge', rewardValue: 'month_master' },
+      { milestoneThreshold: 60, rewardType: 'freeze', rewardValue: '2' },
     ]);
 
     console.log('Database successfully seeded! 🌱');
