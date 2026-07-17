@@ -22,7 +22,7 @@ const getOverview = async (req, res, next) => {
         if (cached) {
           cachedData = JSON.parse(cached);
         }
-      } catch (err) {
+      } catch {
         // ignore cache fetch errors
       }
     }
@@ -138,7 +138,7 @@ const getOverview = async (req, res, next) => {
     if (isRedisReady) {
       try {
         await redisClient.set('metrics:global:latest', JSON.stringify(overviewData), 'EX', 300);
-      } catch (err) {
+      } catch {
         // ignore cache write errors
       }
     }
@@ -212,7 +212,7 @@ const createAdmin = async (req, res, next) => {
       if (isRedisReady) {
         try {
           await redisClient.del(`college:status:${collegeId.toString()}`);
-        } catch (err) {
+        } catch {
           // ignore
         }
       }
@@ -440,7 +440,7 @@ const patchCollegeStatus = async (req, res, next) => {
     if (isRedisReady) {
       try {
         await redisClient.del(`college:status:${college._id.toString()}`);
-      } catch (err) {
+      } catch {
         // ignore
       }
     }

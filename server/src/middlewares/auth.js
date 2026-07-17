@@ -2,7 +2,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
-const config = require('../config');
 const { verifyAccessToken } = require('../utils/token');
 
 const protect = async (req, res, next) => {
@@ -38,7 +37,7 @@ const protect = async (req, res, next) => {
       if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {
         try {
           collegeStatus = await redisClient.get(`college:status:${collegeIdStr}`);
-        } catch (err) {
+        } catch {
           // ignore cache errors, fallback to DB
         }
       }
@@ -54,7 +53,7 @@ const protect = async (req, res, next) => {
         if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {
           try {
             await redisClient.set(`college:status:${collegeIdStr}`, collegeStatus, 'EX', 60);
-          } catch (err) {
+          } catch {
             // ignore cache set errors
           }
         }

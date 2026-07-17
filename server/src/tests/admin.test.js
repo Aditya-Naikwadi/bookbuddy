@@ -333,7 +333,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
       copiesAvailable: 0,
     });
 
-    const bookB = await Book.create({
+    await Book.create({
       collegeId: collegeB._id,
       isbn: '978-2222222222',
       title: 'Book B',
