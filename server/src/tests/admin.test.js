@@ -577,4 +577,158 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
     expect(resFiltered.body.data.length).toBe(1);
     expect(resFiltered.body.data[0].action).toBe('college.create');
   });
+
+  // 9. College Onboarding and Lifecycle State Machine
+  it('9. should transition college status through pending -> active -> suspended -> archived and reject terminal state modifications', async () => {
+    // A. Create a college
+    const collegeRes = await request(app)
+      .post('/api/dashboards/admin-portal/colleges')
+      .set('Authorization', `Bearer ${tokenSuperAdmin}`)
+      .send({ name: 'State University Tech', code: 'SUT' });
+    expect(collegeRes.status).toBe(201);
+    expect(collegeRes.body.data.status).toBe('pending');
+    const collegeId = collegeRes.body.data._id;
+
+    // B. Verify we can list colleges and get college details
+    const listRes = await request(app)
+      .get('/api/dashboards/admin-portal/colleges')
+      .set('Authorization', `Bearer ${tokenSuperAdmin}`);
+    expect(listRes.status).toBe(200);
+    const codes = listRes.body.data.map((c) => c.code);
+    expect(codes).toContain('SUT');
+
+    const detailRes = await request(app)
+      .get(`/api/dashboards/admin-portal/colleges/${collegeId}`)
+      .set('Authorization', `Bearer ${tokenSuperAdmin}`);
+    expect(detailRes.status).toBe(200);
+    expect(detailRes.body.data.status).toBe('pending');
+
+    // C. Provision first admin (transitions college status to active)
+    const adminRes = await request(app)
+      .post('/api/dashboards/admin-portal/admins')
+      .set('Authorization', `Bearer ${tokenSuperAdmin}`)
+      .send({
+        studentId: 'ADM_SUT_001',
+        name: 'SUT Admin',
+        email: 'admin@sut.edu',
+        password: 'password123',
+        collegeId,
+      });
+    expect(adminRes.status).toBe(201);
+
+    // Verify college is now active
+    const activeCollege = await College.findById(collegeId);
+    expect(activeCollege.status).toBe('active');
+
+    // D. Suspend the college
+    const suspendRes = await request(app)
+      .patch(`/api/dashboards/admin-portal/colleges/${collegeId}/status`)
+      .set('Authorization', `Bearer ${tokenSuperAdmin}`)
+      .send({ status: 'suspended' });
+    expect(suspendRes.status).toBe(200);
+    expect(suspendRes.body.data.status).toBe('suspended');
+
+    // E. Archive the college
+    const archiveRes = await request(app)
+      .patch(`/api/dashboards/admin-portal/colleges/${collegeId}/status`)
+      .set('Authorization', `Bearer ${tokenSuperAdmin}`)
+      .send({ status: 'archived' });
+    expect(archiveRes.status).toBe(200);
+    expect(archiveRes.body.data.status).toBe('archived');
+
+    // F. Try to reinstate archived college (should fail since archived is terminal)
+    const failRes = await request(app)
+      .patch(`/api/dashboards/admin-portal/colleges/${collegeId}/status`)
+      .set('Authorization', `Bearer ${tokenSuperAdmin}`)
+      .send({ status: 'active' });
+    expect(failRes.status).toBe(400);
+  });
+
+  // 10. Suspension and Archival Lockout Propagation
+  it('10. should immediately block access for students/admins belonging to suspended/archived colleges', async () => {
+    // Get token for Student A (College A is currently active)
+    const resActive = await request(app)
+      .get('/api/auth/profile')
+      .set('Authorization', `Bearer ${tokenStudentA}`);
+    expect(resActive.status).toBe(200);
+
+    // Suspend College A
+    await request(app)
+      .patch(`/api/dashboards/admin-portal/colleges/${collegeA._id.toString()}/status`)
+      .set('Authorization', `Bearer ${tokenSuperAdmin}`)
+      .send({ status: 'suspended' });
+
+    // Request as Student A again (should fail with 403)
+    const resSuspended = await request(app)
+      .get('/api/auth/profile')
+      .set('Authorization', `Bearer ${tokenStudentA}`);
+    expect(resSuspended.status).toBe(403);
+    expect(resSuspended.body.message).toContain('suspended');
+  });
+
+  // 11. E-Resource Moderation & Staged Publishing State Machine
+  it('11. should enforce staging flow for e-resources: pending -> approved -> published', async () => {
+    // Create an internal resource in pending state
+    const resource = await EResource.create({
+      collegeId: collegeA._id,
+      title: 'Unpublished Internal Book',
+      author: 'Author Internal',
+      type: 'epub',
+      fileUrl: '/api/reader/local/internal.epub',
+      uploadedBy: studentA._id,
+      moderationStatus: 'pending',
+      category: 'Science',
+      storageKey: 'uploads/ebooks/internal.epub',
+      fileSizeBytes: 1000,
+    });
+
+    // Student A tries to stream it (should fail with 403)
+    const resStreamFail = await request(app)
+      .get(`/api/reader/${resource._id.toString()}/content`)
+      .set('Authorization', `Bearer ${tokenStudentA}`);
+    expect(resStreamFail.status).toBe(403);
+
+    // Approve the resource
+    const resApprove = await request(app)
+      .put(`/api/dashboards/admin-portal/moderation/${resource._id.toString()}`)
+      .set('Authorization', `Bearer ${tokenSuperAdmin}`)
+      .send({ status: 'approved', note: 'Looks good' });
+    expect(resApprove.status).toBe(200);
+    expect(resApprove.body.data.moderationStatus).toBe('approved');
+
+    // Student A tries to stream it (should still fail with 403 because it is approved but not published)
+    const resStreamFail2 = await request(app)
+      .get(`/api/reader/${resource._id.toString()}/content`)
+      .set('Authorization', `Bearer ${tokenStudentA}`);
+    expect(resStreamFail2.status).toBe(403);
+
+    // Publish the resource
+    const resPublish = await request(app)
+      .post(`/api/dashboards/admin-portal/moderation/${resource._id.toString()}/publish`)
+      .set('Authorization', `Bearer ${tokenSuperAdmin}`);
+    expect(resPublish.status).toBe(200);
+    expect(resPublish.body.data.moderationStatus).toBe('published');
+
+    // Student A tries to stream it (should bypass the 403 moderation status block, though may 404 on physical file check)
+    const resStreamSuccess = await request(app)
+      .get(`/api/reader/${resource._id.toString()}/content`)
+      .set('Authorization', `Bearer ${tokenStudentA}`);
+    expect(resStreamSuccess.status).toBe(404); // 404 = file not found, which is correct because the physical file doesn't exist
+  });
+
+  // 12. Platform Metrics Aggregation and Cached rollup
+  it('12. should execute metrics aggregation cron job and fetch from cache on overview requests', async () => {
+    // Run cron job manually
+    const { runMetricsAggregation } = require('../services/cronService');
+    const snapshotCount = await runMetricsAggregation();
+    expect(snapshotCount).toBeGreaterThan(0);
+
+    // Request overview (must return successful aggregated metrics)
+    const res = await request(app)
+      .get('/api/dashboards/admin-portal/overview')
+      .set('Authorization', `Bearer ${tokenSuperAdmin}`);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.totalColleges).toBe(2);
+  });
 });

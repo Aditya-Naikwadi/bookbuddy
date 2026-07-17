@@ -19,6 +19,25 @@ const collegeSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    status: {
+      type: String,
+      enum: ['pending', 'active', 'suspended', 'archived'],
+      default: 'pending',
+      index: true,
+    },
+    contactEmail: {
+      type: String,
+      trim: true,
+      lowercase: true,
+    },
+    contactPhone: {
+      type: String,
+      trim: true,
+    },
+    address: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,

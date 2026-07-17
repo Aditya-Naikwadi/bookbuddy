@@ -20,7 +20,7 @@ const protect = async (req, res, next) => {
     const decoded = verifyAccessToken(token);
 
     // Fetch minimal user status
-    const user = await User.findById(decoded.sub).select('isActive');
+    const user = await User.findById(decoded.sub).select('isActive role collegeId');
     if (!user) {
       return next(new AppError('The user belonging to this token no longer exists.', 401));
     }
@@ -29,11 +29,54 @@ const protect = async (req, res, next) => {
       return next(new AppError('Your account has been deactivated.', 401));
     }
 
+    // Check college suspension/archival for non-super-admins
+    if (user.role !== 'super-admin' && user.collegeId) {
+      const collegeIdStr = user.collegeId.toString();
+      let collegeStatus = null;
+
+      const { redisClient } = require('./rateLimiters');
+      if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {
+        try {
+          collegeStatus = await redisClient.get(`college:status:${collegeIdStr}`);
+        } catch (err) {
+          // ignore cache errors, fallback to DB
+        }
+      }
+
+      if (!collegeStatus) {
+        const College = require('../models/College');
+        const college = await College.findById(collegeIdStr).select('status');
+        if (!college) {
+          return next(new AppError('Associated college not found.', 404));
+        }
+        collegeStatus = college.status;
+
+        if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {
+          try {
+            await redisClient.set(`college:status:${collegeIdStr}`, collegeStatus, 'EX', 60);
+          } catch (err) {
+            // ignore cache set errors
+          }
+        }
+      }
+
+      if (collegeStatus === 'suspended') {
+        return next(
+          new AppError('Your college has been suspended by the platform administrator.', 403)
+        );
+      }
+      if (collegeStatus === 'archived') {
+        return next(
+          new AppError('Your college has been archived and is no longer accessible.', 403)
+        );
+      }
+    }
+
     req.user = {
-      id: decoded.sub,
-      _id: decoded.sub, // Compatibility shim to prevent tenant isolation leaks on legacy controllers
-      role: decoded.role,
-      collegeId: decoded.collegeId,
+      id: user._id.toString(),
+      _id: user._id, // Compatibility shim to prevent tenant isolation leaks on legacy controllers
+      role: user.role,
+      collegeId: user.collegeId,
     };
 
     next();

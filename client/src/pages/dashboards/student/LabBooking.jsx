@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAvailability } from '../../../hooks/useAvailability';
 import { useReservation } from '../../../hooks/useReservation';
 import { WorkstationGrid } from '../../../components/student/facilities/WorkstationGrid';
@@ -6,7 +6,7 @@ import { ReservationModal } from '../../../components/student/facilities/Reserva
 import { CancelModal } from '../../../components/student/facilities/CancelModal';
 import { MyReservationsList } from '../../../components/student/facilities/MyReservationsList';
 import { ActiveReservationBanner } from '../../../components/student/facilities/ActiveReservationBanner';
-import { Calendar, Clock, Monitor, RefreshCw, AlertCircle } from 'lucide-react';
+import { Calendar, RefreshCw, AlertCircle } from 'lucide-react';
 
 const LabBooking = () => {
   const [labName] = useState('Central Computing Lab');
@@ -48,11 +48,17 @@ const LabBooking = () => {
   // Track time elapsed since last refresh
   const [secondsSinceUpdate, setSecondsSinceUpdate] = useState(0);
   useEffect(() => {
-    setSecondsSinceUpdate(0);
+    let isMounted = true;
+    Promise.resolve().then(() => {
+      if (isMounted) setSecondsSinceUpdate(0);
+    });
     const interval = setInterval(() => {
       setSecondsSinceUpdate((prev) => prev + 1);
     }, 1000);
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [availability, isRefetching]);
 
   // Handle slot reservation confirmation

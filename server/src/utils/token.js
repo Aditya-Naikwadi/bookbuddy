@@ -2,8 +2,9 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const config = require('../config');
-
 const generateTokenPair = (user) => {
+  const expiry = user.role === 'super-admin' ? '5m' : config.jwt.accessExpiry;
+
   // Access Token payload includes userId (sub), role, and collegeId
   const accessToken = jwt.sign(
     {
@@ -12,7 +13,7 @@ const generateTokenPair = (user) => {
       collegeId: user.collegeId,
     },
     config.jwt.secret,
-    { expiresIn: config.jwt.accessExpiry }
+    { expiresIn: expiry }
   );
 
   // Refresh Token payload contains minimal info (userId) plus a unique identifier to prevent identical token generation in quick succession

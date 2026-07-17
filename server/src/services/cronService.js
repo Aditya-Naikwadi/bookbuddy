@@ -297,6 +297,162 @@ const runStreakReminders = async (mockNow = null) => {
 };
 
 /**
+ * JOB 6: Platform Metrics Aggregation
+ * Aggregates statistics for each college and a global summary, materializing snapshots.
+ */
+const runMetricsAggregation = async () => {
+  const College = require('../models/College');
+  const User = require('../models/User');
+  const EResource = require('../models/EResource');
+  const PlatformMetricSnapshot = require('../models/PlatformMetricSnapshot');
+  const { redisClient } = require('../middlewares/rateLimiters');
+
+  const colleges = await College.find();
+  const snapshotDate = new Date();
+
+  // Accumulate global totals
+  let globalActiveStudents = 0;
+  let globalActiveAdmins = 0;
+  let globalActiveLoans = 0;
+  let globalOverdueLoans = 0;
+  let globalFinesPending = 0;
+  let globalFinesCollected = 0;
+  let globalEResourcesCount = 0;
+  let globalPendingModeration = 0;
+  let globalStorageUsage = 0;
+
+  for (const college of colleges) {
+    const collegeId = college._id;
+
+    // 1. Active students
+    const activeStudents = await User.countDocuments({
+      collegeId,
+      role: 'student',
+      isActive: true,
+    });
+    globalActiveStudents += activeStudents;
+
+    // 2. Active admins
+    const activeAdmins = await User.countDocuments({
+      collegeId,
+      role: 'college-admin',
+      isActive: true,
+    });
+    globalActiveAdmins += activeAdmins;
+
+    // 3. Active loans
+    const activeLoans = await Loan.countDocuments({
+      collegeId,
+      status: 'active',
+    });
+    globalActiveLoans += activeLoans;
+
+    // 4. Overdue loans
+    const overdueLoans = await Loan.countDocuments({
+      collegeId,
+      status: 'overdue',
+    });
+    globalOverdueLoans += overdueLoans;
+
+    // 5. Fines pending (unpaid)
+    const pendingFines = await Fine.aggregate([
+      { $match: { collegeId, status: 'unpaid' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]);
+    const totalFinesPending = pendingFines.length > 0 ? pendingFines[0].total : 0;
+    globalFinesPending += totalFinesPending;
+
+    // 6. Fines collected (paid)
+    const collectedFines = await Fine.aggregate([
+      { $match: { collegeId, status: 'paid' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]);
+    const totalFinesCollected = collectedFines.length > 0 ? collectedFines[0].total : 0;
+    globalFinesCollected += totalFinesCollected;
+
+    // 7. E-resources published (accessible to patrons)
+    const eResourcesCount = await EResource.countDocuments({
+      collegeId,
+      moderationStatus: 'published',
+    });
+    globalEResourcesCount += eResourcesCount;
+
+    // 8. Pending moderation resources
+    const pendingModerationCount = await EResource.countDocuments({
+      collegeId,
+      moderationStatus: { $in: ['pending', 'pending_review'] },
+    });
+    globalPendingModeration += pendingModerationCount;
+
+    // 9. Storage usage in bytes
+    const storageUsage = await EResource.aggregate([
+      { $match: { collegeId } },
+      { $group: { _id: null, total: { $sum: '$fileSizeBytes' } } },
+    ]);
+    const storageUsageBytes = storageUsage.length > 0 ? storageUsage[0].total : 0;
+    globalStorageUsage += storageUsageBytes;
+
+    // Create the snapshot record for this college
+    await PlatformMetricSnapshot.create({
+      collegeId,
+      snapshotDate,
+      activeStudents,
+      activeAdmins,
+      activeLoans,
+      overdueLoans,
+      totalFinesPending,
+      totalFinesCollected,
+      eResourcesCount,
+      pendingModerationCount,
+      storageUsageBytes,
+    });
+  }
+
+  // Create the global snapshot (collegeId = null)
+  await PlatformMetricSnapshot.create({
+    collegeId: null,
+    snapshotDate,
+    activeStudents: globalActiveStudents,
+    activeAdmins: globalActiveAdmins,
+    activeLoans: globalActiveLoans,
+    overdueLoans: globalOverdueLoans,
+    totalFinesPending: globalFinesPending,
+    totalFinesCollected: globalFinesCollected,
+    eResourcesCount: globalEResourcesCount,
+    pendingModerationCount: globalPendingModeration,
+    storageUsageBytes: globalStorageUsage,
+  });
+
+  // Cache the global rollup in Redis
+  if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {
+    try {
+      await redisClient.set(
+        'metrics:global:latest',
+        JSON.stringify({
+          activeStudents: globalActiveStudents,
+          activeAdmins: globalActiveAdmins,
+          activeLoans: globalActiveLoans,
+          overdueLoans: globalOverdueLoans,
+          totalFinesPending: globalFinesPending,
+          totalFinesCollected: globalFinesCollected,
+          eResourcesCount: globalEResourcesCount,
+          pendingModerationCount: globalPendingModeration,
+          storageUsageBytes: globalStorageUsage,
+          totalColleges: colleges.length,
+          snapshotDate,
+        }),
+        'EX',
+        300
+      );
+    } catch (err) {
+      logger.warn(`Failed to cache global metrics rollup: ${err.message}`);
+    }
+  }
+
+  return colleges.length + 1; // Number of snapshots created
+};
+
+/**
  * Schedules all background cron jobs with node-cron.
  */
 const initCronJobs = () => {
@@ -325,6 +481,11 @@ const initCronJobs = () => {
     runJob('Streak Reminders', () => runStreakReminders());
   });
 
+  // Platform Metrics Aggregation: Every 5 minutes
+  cron.schedule('*/5 * * * *', () => {
+    runJob('Platform Metrics Aggregation', runMetricsAggregation);
+  });
+
   logger.info('Cron jobs initialized successfully.');
 };
 
@@ -336,4 +497,5 @@ module.exports = {
   runDueReminders,
   runStreakExpirySweep,
   runStreakReminders,
+  runMetricsAggregation,
 };

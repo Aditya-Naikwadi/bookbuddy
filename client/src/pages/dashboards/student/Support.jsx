@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAcademicSupport } from '../../../hooks/useAcademicSupport';
 import { PurchaseSuggestionForm } from '../../../components/student/support/PurchaseSuggestionForm';
 import { ComplaintForm } from '../../../components/student/support/ComplaintForm';
@@ -30,30 +30,30 @@ const Support = () => {
     liveAnnouncement,
   } = useAcademicSupport();
 
+  const getDraft = (key, fallback) => {
+    try {
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : fallback;
+    } catch (e) {
+      console.error('Failed to load draft', e);
+      return fallback;
+    }
+  };
+
   // Controlled states for drafts
-  const [suggestionFields, setSuggestionFields] = useState({ title: '', author: '', reason: '' });
-  const [complaintFields, setComplaintFields] = useState({ subject: '', description: '' });
-  const [feedbackFields, setFeedbackFields] = useState({ category: '', message: '', rating: 5 });
+  const [suggestionFields, setSuggestionFields] = useState(() =>
+    getDraft(DRAFT_SUGGESTION_KEY, { title: '', author: '', reason: '' })
+  );
+  const [complaintFields, setComplaintFields] = useState(() =>
+    getDraft(DRAFT_COMPLAINT_KEY, { subject: '', description: '' })
+  );
+  const [feedbackFields, setFeedbackFields] = useState(() =>
+    getDraft(DRAFT_FEEDBACK_KEY, { category: '', message: '', rating: 5 })
+  );
 
   // Validation errors
   const [errors, setErrors] = useState({});
   const [successInfo, setSuccessInfo] = useState(null); // { type: '...', refId: '...' }
-
-  // Load drafts on mount
-  useEffect(() => {
-    try {
-      const savedSuggestion = localStorage.getItem(DRAFT_SUGGESTION_KEY);
-      if (savedSuggestion) setSuggestionFields(JSON.parse(savedSuggestion));
-
-      const savedComplaint = localStorage.getItem(DRAFT_COMPLAINT_KEY);
-      if (savedComplaint) setComplaintFields(JSON.parse(savedComplaint));
-
-      const savedFeedback = localStorage.getItem(DRAFT_FEEDBACK_KEY);
-      if (savedFeedback) setFeedbackFields(JSON.parse(savedFeedback));
-    } catch (e) {
-      console.error('Failed to load drafts', e);
-    }
-  }, []);
 
   // Update field and save draft
   const handleFieldChange = (formType, field, value) => {

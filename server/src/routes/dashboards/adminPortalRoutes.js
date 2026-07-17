@@ -6,11 +6,19 @@ const {
   createAdmin,
   createCollege,
   getAuditLogs,
+  listColleges,
+  getCollegeDetails,
+  updateCollege,
+  patchCollegeStatus,
+  getGlobalPendingEResources,
+  moderateEResourceGlobal,
+  publishEResourceGlobal,
 } = require('../../controllers/dashboards/adminPortalController');
 const { protect, requireRole } = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 const auditLog = require('../../middlewares/auditLog');
 const { createCollegeSchema, createAdminSchema } = require('../../validations/admin.validation');
+const { paramIdSchema } = require('../../validations/common.validation');
 
 const { userLimiter, expensiveRouteLimiter } = require('../../middlewares/rateLimiters');
 
@@ -26,7 +34,19 @@ router
   .post(validate(createAdminSchema), auditLog('college_admin.create'), createAdmin);
 router
   .route('/colleges')
+  .get(listColleges)
   .post(validate(createCollegeSchema), auditLog('college.create'), createCollege);
+router
+  .route('/colleges/:id')
+  .get(validate(paramIdSchema), getCollegeDetails)
+  .put(validate(paramIdSchema), updateCollege);
+router.route('/colleges/:id/status').patch(validate(paramIdSchema), patchCollegeStatus);
+
 router.route('/audit-logs').get(expensiveRouteLimiter, getAuditLogs);
+
+// Global content moderation routes
+router.route('/moderation/pending').get(getGlobalPendingEResources);
+router.route('/moderation/:id').put(validate(paramIdSchema), moderateEResourceGlobal);
+router.route('/moderation/:id/publish').post(validate(paramIdSchema), publishEResourceGlobal);
 
 module.exports = router;

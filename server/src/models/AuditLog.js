@@ -18,7 +18,9 @@ const auditLogSchema = new mongoose.Schema(
       index: true,
       enum: [
         'college.create',
+        'college.status_change',
         'college_admin.create',
+        'college_admin.revoke',
         'circulation.checkout',
         'circulation.return',
         'fine.pay',
@@ -27,6 +29,9 @@ const auditLogSchema = new mongoose.Schema(
         'lab_seat.create',
         'lab_seat.update',
         'complaint.resolve',
+        'eresource.moderate',
+        'eresource.publish',
+        'announcement.create',
       ],
     },
     targetType: {

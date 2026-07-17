@@ -32,7 +32,7 @@ const eResourceSchema = new mongoose.Schema(
     },
     moderationStatus: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
+      enum: ['pending', 'pending_review', 'approved', 'rejected', 'published'],
       default: 'pending',
       index: true,
     },
