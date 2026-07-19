@@ -1,4 +1,3 @@
-import React from 'react';
 import { useStreakData } from '../../../hooks/useStreakData';
 import { useCheckIn } from '../../../hooks/useCheckIn';
 import { CheckInButton } from '../../../components/student/achievements/CheckInButton';
@@ -9,7 +8,7 @@ import { MilestoneCelebrationModal } from '../../../features/streak/MilestoneCel
 import { Loader2, AlertCircle } from 'lucide-react';
 
 const Achievements = () => {
-  const { streak, rewards, catalog, earned, isLoading, isError, refetchAll } = useStreakData();
+  const { streak, rewards, catalog, earned, isLoading, isError } = useStreakData();
   const { checkIn, isCheckInPending, repairStreak, isRepairPending, announcement } = useCheckIn();
 
   if (isLoading) {

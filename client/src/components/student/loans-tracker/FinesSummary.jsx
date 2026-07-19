@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Receipt, AlertTriangle, Calendar, Ticket } from 'lucide-react';
+import { Receipt, AlertTriangle, Ticket } from 'lucide-react';
 import { Button } from '../../ui/Button';
 
 export const FinesSummary = ({ totalUnpaid, unpaidCount, userCoupons, onPayAllTrigger }) => {

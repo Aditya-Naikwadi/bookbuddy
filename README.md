@@ -1,6 +1,6 @@
 # 📚 BookBuddy
 
-### A modern, multi-tenant campus library management, digital e-resource hosting, facility reservation, and student engagement platform featuring gamified reading streaks, inline EPUB reading, and real-time operations.
+### A modern, multi-tenant campus library management, digital e-resource hosting, facility reservation, and student engagement platform featuring gamified reading streaks, inline EPUB & PDF reading with live annotations, real-time operations, and integrated fine payments.
 
 ---
 
@@ -24,14 +24,15 @@
 - [🎨 Frontend Architecture & State Flow](#-frontend-architecture--state-flow)
 - [⚙️ Backend Architecture & Pipeline](#️-backend-architecture--pipeline)
 - [🔒 Multi-Tenancy & Data Isolation](#-multi-tenancy--data-isolation)
-- [🛡️ Security Architecture & Rate Limiting](#️-security-architecture--rate-limiting)
+- [🛡️ Security Architecture & Protection Suite](#️-security-architecture--protection-suite)
 - [🗄️ Database Architecture, ERD & Indexing](#️-database-architecture-erd--indexing)
 - [⚡ Concurrency Integrity & Race Condition Protection](#-concurrency-integrity--race-condition-protection)
 - [✨ Portal Feature Matrix](#-portal-feature-matrix)
   - [🎓 Student Portal](#-student-portal)
   - [🏛️ College Admin Portal](#️-college-admin-portal)
   - [🌐 Super Admin Portal](#-super-admin-portal)
-- [📖 Inline EPUB Ebook Reader Architecture](#-inline-epub-ebook-reader-architecture)
+- [📖 Multi-Format E-Resource Reader & Annotation Engine](#-multi-format-e-resource-reader--annotation-engine)
+- [💳 Online Fine Payments & Webhook Subsystem](#-online-fine-payments--webhook-subsystem)
 - [🎮 Gamification & Engagement Subsystem](#-gamification--engagement-subsystem)
 - [⏰ Background Scheduled Cron Jobs](#-background-scheduled-cron-jobs)
 - [🔌 Complete API Reference](#-complete-api-reference)
@@ -39,6 +40,7 @@
 - [🚀 Quick Start & Installation Guide](#-quick-start--installation-guide)
   - [Prerequisites](#prerequisites)
   - [Local Setup](#local-development-setup)
+  - [Database Migrations](#database-migrations)
   - [Docker Compose Launch](#docker-compose-launch)
   - [Testing & Coverage](#running-tests)
 - [📁 Repository Structure](#-repository-structure)
@@ -48,20 +50,21 @@
 
 ## 📖 Overview & Key Differentiators
 
-Traditional library systems act as static catalogs, neglecting modern student expectations for real-time collaboration, digital accessibility, and academic engagement. **BookBuddy** re-imagines the college library as an integrated digital campus hub.
+Traditional library systems act as static catalogs, failing to meet modern student expectations for real-time collaboration, digital accessibility, and interactive academic engagement. **BookBuddy** re-imagines the college library as an integrated digital campus hub.
 
 BookBuddy bridges the gap between platform super-administrators, campus librarians, and students by consolidating:
-1. **Multi-Tenant Physical Inventory Management**: Multi-branch physical book tracking, hold queue reservations, and automated overdue fine calculations.
+1. **Multi-Tenant Physical Inventory Management**: Multi-branch physical book tracking, hold queue reservations with auto-promotion, and automated overdue fine calculations.
 2. **Computer Lab Workstation Reservations**: Real-time seat grid visualization and concurrency-locked time-slot bookings.
-3. **Digital E-Resource Repository & Inline Reader**: In-browser EPUB ebook parsing with HTTP range streaming, Stored-XSS injection scanning, and CFI position syncing across devices.
-4. **Gamified Student Engagement**: Idempotent daily reading check-ins, streak calculations with freeze log buffers, and unlockable achievement stickers and badges.
-5. **Real-Time Communication**: Socket.io WebSocket alerts for instant checkout notifications, queue position updates, and administrative broadcasts.
+3. **Digital E-Resource Repository, Reader & Annotations**: In-browser EPUB & PDF parsing, Stored-XSS injection scanning, HTTP range streaming, CFI/page position synchronization, and persistent text annotations & notes.
+4. **Online Fine Payment Settlement**: Digital fine payment processing with transaction verification and idempotent payment webhook integration.
+5. **Gamified Student Engagement**: Idempotent daily reading check-ins, streak calculations with freeze log buffers, and unlockable achievement stickers and milestone badges.
+6. **Real-Time Event & Notification Network**: Socket.io WebSocket alerts, in-app notification centers, and automated push device token tracking.
 
 ---
 
 ## 🏛️ System Architecture
 
-BookBuddy uses a decoupled, event-driven architecture designed for scalability, tenant isolation, and low-latency client updates.
+BookBuddy uses a decoupled, event-driven architecture designed for high throughput, strict tenant isolation, and sub-second client updates.
 
 ```mermaid
 graph TD
@@ -69,6 +72,7 @@ graph TD
         SPA[React 19 SPA / Vite 8]
         Zustand[Zustand v5 Client Session Store]
         Query[TanStack React Query v5 Data Cache]
+        EpubPDF[Epub.js + PDF.js Reader Engine]
     end
 
     subgraph Transport Layer
@@ -78,8 +82,9 @@ graph TD
 
     subgraph Application Server Layer
         Express[Express 5 API Server]
-        AuthGate[JWT Authentication & Scope Middleware]
-        RateLimit[Rate Limiter Flexible / Express Rate Limit]
+        AuthGate[JWT Authentication & Refresh Token Rotation]
+        CSRFGate[CSRF Double-Submit Protection]
+        RateLimit[Rate Limiter Flexible / Redis Rate Limiter]
         ZodGate[Zod Schema Request Validation]
         CronWorker[Node-Cron Background Scheduler]
     end
@@ -90,12 +95,13 @@ graph TD
     end
 
     SPA <-->|REST Calls| HTTP
-    SPA <-->|Real-time Events| WS
+    SPA <-->|Real-time Events & Alerts| WS
     HTTP --> Express
     WS <--> Express
 
     Express --> AuthGate
-    AuthGate --> RateLimit
+    AuthGate --> CSRFGate
+    CSRFGate --> RateLimit
     RateLimit --> ZodGate
     ZodGate --> MongoDB
 
@@ -110,10 +116,10 @@ graph TD
 
 ### Technical Stack & Rationale
 - **React 19 & Vite 8**: Direct JSX rendering with instantaneous HMR dev server build cycles.
-- **Tailwind CSS v4**: Utility-first styling utilizing CSS native variables and PostCSS integration.
-- **Zustand v5 & TanStack React Query v5**: Zustand persists critical user session state (`auth-storage` in `localStorage`), while React Query handles server state caching, background re-fetching, and optimistic UI updates.
-- **Epub.js**: Client-side parsing and rendering of public domain or uploaded EPUB ebooks without external plugins.
-- **Framer Motion**: Smooth micro-interactions, page transitions, and streak check-in celebratory animations.
+- **Tailwind CSS v4 & PostCSS**: Utility-first styling utilizing CSS native variables and modern dark/light mode themes.
+- **Zustand v5 & TanStack React Query v5**: Zustand handles lightweight UI state and persisted session data (`auth-storage` in `localStorage`), while React Query handles server state caching, optimistic updates, and background re-fetching.
+- **Epub.js & PDF.js Worker**: Client-side document parsing and canvas rendering for EPUB and PDF e-resources without external plugins.
+- **Framer Motion & Canvas Confetti**: Micro-interactions, page transitions, and streak check-in milestone celebrations.
 
 ### Authentication & Session Persistence Flow
 
@@ -125,10 +131,12 @@ sequenceDiagram
     participant Storage as LocalStorage (auth-storage)
     participant Axios as Axios API Client
     participant API as Express Server (/api/auth)
+    participant DB as MongoDB (RefreshToken Model)
 
     Student->>Store: Submit Login Credentials
     Store->>Axios: POST /api/auth/login
     Axios->>API: Send Request Payload
+    API->>DB: Store RefreshToken Document
     API-->>Axios: Return JSON { user, accessToken, refreshToken }
     Axios-->>Store: Resolve Promise
     Store->>Store: Set { user, token, isAuthenticated: true }
@@ -139,6 +147,7 @@ sequenceDiagram
     Axios->>API: API Request with expired Access Token (401 Unauthorized)
     API-->>Axios: 401 Token Expired Response
     Axios->>API: POST /api/auth/refresh (sending Refresh Token)
+    API->>DB: Verify active RefreshToken document
     API-->>Axios: Return new { accessToken }
     Axios->>Store: Update accessToken in state & storage
     Axios->>API: Retry original request with new token
@@ -149,13 +158,14 @@ sequenceDiagram
 
 ## ⚙️ Backend Architecture & Pipeline
 
-Incoming HTTP requests pass through an isolated sequence of middleware gates to sanitize inputs, enforce rate limits, verify JWT signatures, and filter by tenant ID before invoking controller logic.
+Incoming HTTP requests pass through an isolated sequence of middleware gates to sanitize inputs, enforce rate limits, verify JWT signatures & CSRF tokens, and scope to tenant ID before invoking controller logic.
 
 ```mermaid
 graph TD
     Req[HTTP Request] --> GlobalLimit[Global Rate Limiter]
     GlobalLimit --> SecurityHeaders[Helmet Security Headers]
-    SecurityHeaders --> Sanitize[express-mongo-sanitize / NoSQL Defense]
+    SecurityHeaders --> CSRF[CSRF Protection Middleware]
+    CSRF --> Sanitize[express-mongo-sanitize / NoSQL Defense]
     Sanitize --> Logger[Morgan HTTP Logger]
     Logger --> RouteMatch{Match Route Type}
 
@@ -184,7 +194,7 @@ graph TD
 
 ## 🔒 Multi-Tenancy & Data Isolation
 
-BookBuddy enforces multi-tenancy at the middleware layer using `scopeToTenant`. For non-super-admin users, `scopeToTenant` extracts `req.user.collegeId` from the verified JWT and attaches `req.tenantFilter = { collegeId: req.user.collegeId }`. Controllers use this object in all Mongoose queries to prevent cross-tenant data leaks.
+BookBuddy enforces strict multi-tenancy at the middleware layer using `scopeToTenant`. For non-super-admin users, `scopeToTenant` extracts `req.user.collegeId` from the verified JWT and attaches `req.tenantFilter = { collegeId: req.user.collegeId }`. Controllers use this object in all Mongoose queries to prevent cross-tenant data leaks.
 
 ```mermaid
 sequenceDiagram
@@ -221,14 +231,16 @@ sequenceDiagram
 
 ---
 
-## 🛡️ Security Architecture & Rate Limiting
+## 🛡️ Security Architecture & Protection Suite
 
-1. **Authentication**: JWT Access Tokens (short-lived: 15 mins) and Refresh Tokens (long-lived: 7 days, HTTP-only cookie capable).
-2. **Password Hashing**: Passwords stored using `bcrypt` with salt factor 10.
-3. **NoSQL Injection Defense**: `express-mongo-sanitize` strips `$` and `.` characters from incoming `req.body`, `req.query`, and `req.params`.
-4. **HTTP Header Hardening**: `helmet` sets X-Content-Type-Options, X-Frame-Options, Strict-Transport-Security, and Content Security Policies.
-5. **Input Validation**: All POST/PUT request bodies are validated against strict `Zod` schemas before touching controllers.
-6. **Multi-Tier Rate Limiting** (`express-rate-limit` / `rate-limiter-flexible` backed by Redis):
+1. **Authentication & Token Rotation**: Access Tokens (15 mins) and Refresh Tokens stored in MongoDB (`RefreshToken` model) with session invalidation capabilities.
+2. **CSRF Protection**: Optional double-submit CSRF cookie pattern validation (`csrf.js`).
+3. **Password Hashing**: Passwords secured using `bcrypt` with cost factor 10.
+4. **NoSQL Injection Defense**: `express-mongo-sanitize` strips `$` and `.` characters from incoming `req.body`, `req.query`, and `req.params`.
+5. **HTTP Header Hardening**: `helmet` sets X-Content-Type-Options, X-Frame-Options, Strict-Transport-Security, and Content Security Policies.
+6. **E-Resource Stored-XSS Sanitization**: EPUB archives are parsed server-side with `adm-zip` to strip `<script>` tags, inline event handlers (`onload`, `onerror`), and `javascript:` protocol links before storage.
+7. **Input Validation**: All request payloads are validated using strict `Zod` schemas prior to controller execution.
+8. **Multi-Tier Rate Limiting** (`express-rate-limit` / `rate-limiter-flexible` backed by Redis):
 
 | Tier | Window | Max Requests | Key / Identifier | Targeted Endpoints |
 | :--- | :--- | :--- | :--- | :--- |
@@ -253,7 +265,6 @@ erDiagram
     College ||--o{ Fine : fines
     College ||--o{ EResource : hosts
     College ||--o{ ReadingList : publishes
-    College ||--o{ LabSeat : owns
     College ||--o{ LabBooking : books
     College ||--o{ AuditLog : audits
 
@@ -263,21 +274,27 @@ erDiagram
     User ||--o{ EResource : uploads
     User ||--o{ ReadingProgress : tracks
     User ||--o{ Bookmark : writes
+    User ||--o{ Annotation : creates_annotations
+    User ||--o{ Payment : makes_payments
     User ||--o{ ReadingList : curates
     User ||--o{ LabBooking : reserves_seat
     User ||--o{ UserSticker : earns
     User ||--|| Streak : maintains
     User ||--o{ AuditLog : performs
     User ||--o{ CheckInLog : logs_checkin
+    User ||--o{ RefreshToken : authenticates
+    User ||--o{ DeviceToken : registers_devices
 
     Book ||--o{ Loan : checked_out
     Book ||--o{ Reservation : hold_queue
 
     Loan ||--|| Fine : incurs
+    Fine ||--o{ Payment : settled_by
 
     EResource ||--o{ ReadingProgress : progress_for
     EResource ||--o{ Bookmark : references
     EResource ||--o{ ReadingPosition : remembers_position
+    EResource ||--o{ Annotation : annotated_in
 
     Sticker ||--o{ UserSticker : template_for
 ```
@@ -293,21 +310,23 @@ erDiagram
 | `loans` | `{ userId: 1, status: 1 }` | Compound | Student active borrowed books dashboard |
 | `fines` | `{ userId: 1, status: 1 }` | Compound | Outstanding fine balance aggregation |
 | `fines` | `{ loanId: 1 }` | Single-Field, Unique | Fine accrual idempotency (blocks duplicate fines) |
+| `annotations` | `{ userId: 1, eresourceId: 1 }` | Compound | User annotations query per digital resource |
+| `payments` | `{ transactionId: 1 }` | Single-Field, Unique | Payment transaction verification idempotency |
 | `reservations` | `{ bookId: 1, status: 1, queuePosition: 1 }` | Compound | Fast hold-queue promotion on book return |
-| `labseats` | `{ collegeId: 1, labName: 1, seatNumber: 1 }` | Compound, Unique | Workstation seat registry validation |
 | `labbookings` | `{ seatId: 1, date: 1, timeslot: 1, status: 1 }` | Compound, Partial Unique | Concurrency lock (prevents double bookings) |
 | `readingprogresses`| `{ userId: 1, eresourceId: 1 }` | Compound, Unique | E-resource progress upserts |
 | `readingpositions` | `{ userId: 1, eResourceId: 1 }` | Compound, Unique | Ebook CFI bookmark position lookup |
 | `userstickers` | `{ userId: 1, stickerId: 1 }` | Compound, Unique | Prevents duplicate badge/sticker rewards |
 | `streaks` | `{ userId: 1 }` | Single-Field, Unique | Direct streak status lookup and daily update |
 | `checkinlogs` | `{ userId: 1, checkInDate: 1 }` | Compound, Unique | Enforces single check-in per day |
+| `refreshtokens` | `{ token: 1 }`, `{ userId: 1 }` | Single-Field / Compound | Fast session lookup and user logout revocation |
 
 ---
 
 ## ⚡ Concurrency Integrity & Race Condition Protection
 
 1. **Atomic Inventory Decrement**:
-   Checkouts decrease `copiesAvailable` only if `copiesAvailable > 0`, avoiding negative inventory levels under concurrent checkouts:
+   Checkouts decrease `copiesAvailable` only if `copiesAvailable > 0`, avoiding negative inventory levels under concurrent requests:
    ```js
    const updatedBook = await Book.findOneAndUpdate(
      { _id: bookId, collegeId, copiesAvailable: { $gt: 0 } },
@@ -320,7 +339,6 @@ erDiagram
 2. **Partial Unique Index Lock on Lab Bookings**:
    Prevents double bookings for the same seat, date, and timeslot:
    ```js
-   // LabBooking Schema Partial Index
    LabBookingSchema.index(
      { seatId: 1, date: 1, timeslot: 1 },
      { unique: true, partialFilterExpression: { status: 'booked' } }
@@ -330,61 +348,89 @@ erDiagram
 3. **Idempotent Fine Accrual**:
    Unique constraint on `Fine.loanId` prevents background workers from creating duplicate fines for a late return.
 
+4. **Idempotent Fine Payments**:
+   Unique index on `Payment.transactionId` ensures payment webhooks cannot double-credit a student's balance.
+
 ---
 
 ## ✨ Portal Feature Matrix
 
 ### 🎓 Student Portal
-- **Catalog Search**: Full-text physical book & digital asset search with real-time availability.
-- **My Borrowed Books & Fines**: View active loans, due dates, renewal options, and fine amounts.
-- **Digital Patron Card**: Displays a virtual card with barcode for campus library circulation.
-- **Inline EPUB Reader**: Read digital ebooks with dark/light mode, font size toggles, table-of-contents navigation, and auto-synced CFI bookmark positions.
+- **Catalog Search**: Full-text physical book & digital asset search with live availability tracking.
+- **My Borrowed Books & Fine Tracking**: View active loans, due dates, renewals, and fine details.
+- **Digital Patron Card**: Interactive virtual card with barcode & QR code generation for library circulation.
+- **Inline EPUB & PDF Reader**: Read digital ebooks with dark/light mode, typography settings, Table of Contents navigation, and CFI/page autosync.
+- **Highlights & Notes**: Create, edit, highlight, and filter text annotations directly inside e-resources.
+- **Digital Fine Payment Settlement**: Pay overdue library fines online securely with instant digital receipts.
 - **Gamification Suite**: Daily check-ins, streak counts, streak freeze protection, and unlockable achievement badges & stickers.
-- **Computer Lab Reservations**: View live workstation seat maps and reserve computer lab timeslots.
-- **Requests & Feedback**: Submit book purchase recommendations, file complaints, and track resolutions.
+- **Computer Lab Reservations**: View live workstation maps and reserve computer lab timeslots.
+- **Support & Purchase Suggestions**: Submit book purchase recommendations, file complaints, and track status resolutions.
 
 ### 🏛️ College Admin Portal
 - **Circulation Desk**: Atomic book checkouts, check-ins, renewals, and fine collection.
 - **Catalog Management**: Add, update, archive, or remove physical books and digital e-resources.
 - **Patron Management**: Manage student & faculty accounts, modify access statuses, and review activity history.
-- **E-Resource Uploader**: Upload EPUB files with built-in Stored-XSS injection scanning.
+- **E-Resource Uploader**: Upload EPUB & PDF files with built-in Stored-XSS scanning and moderation options.
 - **Lab Workstation Management**: Define lab layouts, add workstation seats, and monitor bookings.
 - **Financial & Analytics Hub**: Monitor circulation metrics, popular titles, and revenue collections.
 
 ### 🌐 Super Admin Portal
 - **Platform Health Overview**: System-wide metrics across all onboarded institutions.
-- **College Onboarding**: Create and configure new college tenants and assign primary college admin credentials.
+- **College Tenant Onboarding**: Create and configure new college tenants and assign primary college admin credentials.
 - **E-Resource Moderation**: Review and verify public e-resources before publishing platform-wide.
-- **Centralized Security Audit Log**: Read-only access to all system mutations and administrative events.
+- **Centralized Security Audit Log**: Read-only access to system mutations and administrative security events.
 
 ---
 
-## 📖 Inline EPUB Ebook Reader Architecture
+## 📖 Multi-Format E-Resource Reader & Annotation Engine
 
-The inline ebook reader provides seamless digital reading directly within the browser:
+The multi-format reader provides digital reading directly within the browser:
 
 ```mermaid
 graph TD
     Client[EbookReader Component] --> StreamReq[HTTP Range Request /api/reader/:id/content]
     StreamReq --> ServerScanner[Server XSS & Content Scanner]
-    ServerScanner --> StreamResp[Stream Partial EPUB Buffer]
-    StreamResp --> EpubJS[Epub.js Client Parser]
+    ServerScanner --> StreamResp[Stream Partial Document Buffer]
+    StreamResp --> ReaderEngine{File Type}
+    ReaderEngine -->|EPUB| EpubJS[Epub.js Engine]
+    ReaderEngine -->|PDF| PDFJS[PDF.js Canvas Renderer]
+
     EpubJS --> Viewport[Reader Viewport Component]
+    PDFJS --> Viewport
+
+    Viewport -->|Text Highlight / Note| AnnotateAPI[POST /api/annotations]
+    AnnotateAPI --> AnnotationDB[(Annotation Model)]
 
     Viewport -->|Page Navigation / Chapter Change| PosUpdate[CFI Position Calculator]
     PosUpdate -->|Debounced Sync| SyncAPI[PUT /api/reader/:id/position]
     SyncAPI --> ReadingPositionDB[(ReadingPosition Model)]
 ```
 
-### Security Measures:
-- **Stored-XSS Scanning**: Uploaded EPUB files (ZIP archives) are inspected server-side using `adm-zip`. XHTML, HTML, and SVG files inside the EPUB are parsed to neutralize `<script>` tags, `javascript:` URIs, and inline event handlers (`onload`, `onerror`).
-- **SSRF Protection**: External HTTP links inside e-resources are sanitized to prevent server-side request forgery.
+---
+
+## 💳 Online Fine Payments & Webhook Subsystem
+
+The fine payment module enables digital settlement of library fines:
+
+```mermaid
+graph TD
+    Student[Student UI] --> InitPay[POST /api/payments/checkout-session]
+    InitPay --> Gateway[Payment Gateway API]
+    Gateway -->> Student: Return Payment Gateway URL / Token
+    Student ->> Gateway: Complete Payment
+    Gateway --> Webhook[POST /api/payments/webhook]
+    Webhook --> Verify[Verify Signature & Transaction ID]
+    Verify --> MarkFine[Update Fine status to 'paid']
+    Verify --> RecordPay[Create Payment Record in MongoDB]
+    RecordPay --> Socket[Socket.io Real-time Payment Confirmation]
+    Socket -->> Student: Instant UI Balance Update & Receipt
+```
 
 ---
 
 ## 🎮 Gamification & Engagement Subsystem
 
-BookBuddy includes a gamification system designed to encourage consistent reading:
+BookBuddy includes a gamification system designed to encourage consistent reading habits:
 
 ```mermaid
 graph TD
@@ -425,9 +471,9 @@ Executed automatically via `node-cron` inside `server/src/services/cronService.j
 | Method | Endpoint | Auth Required | Allowed Roles | Description |
 | :--- | :--- | :---: | :--- | :--- |
 | `POST` | `/api/auth/register` | No | Public | Register a new student account |
-| `POST` | `/api/auth/login` | No | Public | Authenticate credentials & return JWT tokens |
+| `POST` | `/api/auth/login` | No | Public | Authenticate credentials & return JWT access/refresh tokens |
 | `POST` | `/api/auth/refresh` | No | Public | Issue new Access Token using valid Refresh Token |
-| `POST` | `/api/auth/logout` | Yes | All Roles | Revoke current user session |
+| `POST` | `/api/auth/logout` | Yes | All Roles | Revoke current user session & refresh token |
 
 ### 📚 Physical Books & Catalog (`/api/books`, `/api/catalog`)
 
@@ -439,17 +485,30 @@ Executed automatically via `node-cron` inside `server/src/services/cronService.j
 | `PUT` | `/api/books/:id` | Yes | `college-admin` | Update book metadata or copy quantities |
 | `DELETE` | `/api/books/:id` | Yes | `college-admin` | Remove a book title from the catalog |
 
-### 📖 E-Resources & Inline Reader (`/api/reader`, `/api/eresources`)
+### 📖 E-Resources, Reader & Annotations (`/api/eresources`, `/api/reader`, `/api/annotations`)
 
 | Method | Endpoint | Auth Required | Allowed Roles | Description |
 | :--- | :--- | :---: | :--- | :--- |
-| `GET` | `/api/eresources` | Yes | All Roles | List digital e-resources (books, PDFs, EPUBs) |
-| `POST` | `/api/reader/upload` | Yes | `college-admin`, `super-admin` | Upload EPUB file with automated XSS scanning |
-| `GET` | `/api/reader/:resourceId/content` | Yes | All Roles | Stream EPUB content using HTTP range requests |
-| `GET` | `/api/reader/:resourceId/position` | Yes | `student` | Fetch user's saved CFI reading position |
-| `PUT` | `/api/reader/:resourceId/position` | Yes | `student` | Update saved CFI reading position |
+| `GET` | `/api/eresources` | Yes | All Roles | List digital e-resources (EPUBs, PDFs) |
+| `POST` | `/api/reader/upload` | Yes | `college-admin`, `super-admin` | Upload EPUB/PDF file with automated XSS scanning |
+| `GET` | `/api/reader/:resourceId/content` | Yes | All Roles | Stream document content using HTTP range requests |
+| `GET` | `/api/reader/:resourceId/position` | Yes | `student` | Fetch user's saved CFI/page reading position |
+| `PUT` | `/api/reader/:resourceId/position` | Yes | `student` | Update saved CFI/page reading position |
+| `GET` | `/api/annotations` | Yes | `student` | Get user annotations for an e-resource |
+| `POST` | `/api/annotations` | Yes | `student` | Create text highlight or note annotation |
+| `DELETE` | `/api/annotations/:id` | Yes | `student` | Delete specified annotation |
 
-### 🔄 Circulation & Holds (`/api/loans`, `/api/reservations`, `/api/fines`)
+### 💳 Fine Payments (`/api/payments`, `/api/fines`)
+
+| Method | Endpoint | Auth Required | Allowed Roles | Description |
+| :--- | :--- | :---: | :--- | :--- |
+| `GET` | `/api/fines/my-fines` | Yes | `student` | List student unpaid and paid fine history |
+| `POST` | `/api/fines/:id/pay` | Yes | `college-admin` | Record manual cash payment for student fine |
+| `POST` | `/api/payments/checkout-session` | Yes | `student` | Initiate online payment session for fine balance |
+| `POST` | `/api/payments/webhook` | No | Gateway Signature | Webhook handler for idempotent transaction processing |
+| `GET` | `/api/payments/history` | Yes | `student` | Retrieve payment receipts and history |
+
+### 🔄 Circulation & Holds (`/api/loans`, `/api/reservations`)
 
 | Method | Endpoint | Auth Required | Allowed Roles | Description |
 | :--- | :--- | :---: | :--- | :--- |
@@ -457,8 +516,6 @@ Executed automatically via `node-cron` inside `server/src/services/cronService.j
 | `POST` | `/api/dashboards/college-admin/circulation/return` | Yes | `college-admin` | Atomic book return & automatic hold promotion |
 | `POST` | `/api/dashboards/student/reservations` | Yes | `student` | Reserve an out-of-stock physical book |
 | `DELETE` | `/api/dashboards/student/reservations/:id` | Yes | `student` | Cancel active reservation |
-| `GET` | `/api/fines/my-fines` | Yes | `student` | List student unpaid and paid fine history |
-| `POST` | `/api/fines/:id/pay` | Yes | `college-admin` | Record manual payment for student fine |
 
 ### 🎮 Gamification & Streaks (`/api/checkin`, `/api/streak`, `/api/badges`)
 
@@ -543,7 +600,17 @@ RATE_LIMIT_EXPENSIVE_WINDOW_MS=60000
    ```
 
 4. **Configure Environment Variables**:
-   Copy `.env.example` or create `server/.env` with your settings (see [Environment Configuration](#️-environment-configuration-reference)).
+   Create `server/.env` with your settings (see [Environment Configuration](#️-environment-configuration-reference)).
+
+### Database Migrations
+
+Run database migration scripts for index creation and schema hardening:
+
+```bash
+cd server
+npm run migrate:db
+npm run migrate:hardening
+```
 
 5. **Start the API Server**:
    ```bash
@@ -570,18 +637,11 @@ docker-compose up --build
 
 ### Running Tests
 
-Execute Jest unit, integration, and E2E security test suites:
+Execute Jest unit, integration, and security test suites:
 
 ```bash
 cd server
 npm test
-```
-
-Generate test coverage report:
-
-```bash
-cd server
-npm test -- --coverage
 ```
 
 ---
@@ -594,12 +654,15 @@ BookBuddy/
 │   └── workflows/
 │       └── ci.yml              # GitHub Actions CI/CD Pipeline
 ├── client/                     # React 19 Frontend Application (Vite 8 / Tailwind v4)
+│   ├── public/                 # Static assets & PDF.js worker (pdf.worker.min.mjs)
 │   ├── src/
 │   │   ├── api/                # Axios API client connection & interceptors
-│   │   ├── components/         # Shared visual UI primitives & layout elements
-│   │   ├── pages/              # Main application views (lazy-loaded)
-│   │   │   └── dashboards/     # Student, College Admin, and Super Admin portals
-│   │   └── store/              # Zustand global state stores (auth, reader, theme)
+│   │   ├── components/         # Shared UI components & layout elements
+│   │   │   └── student/        # Patron card, ebook reader, support, analytics, streak
+│   │   ├── features/           # Specialized feature modals (milestone celebrations)
+│   │   ├── hooks/              # Custom React hooks (socket, reader, checkin, support)
+│   │   ├── pages/              # Main view routes & dashboards (Student, College Admin, Super Admin)
+│   │   └── store/              # Zustand global state stores (authStore)
 │   ├── package.json
 │   └── vite.config.js
 ├── docs/                       # Architectural Specifications & Deep-Dives
@@ -610,12 +673,14 @@ BookBuddy/
 ├── server/                     # Express Backend Application (CommonJS / Node 20)
 │   ├── src/
 │   │   ├── controllers/        # Express request handlers & business rules
-│   │   ├── middlewares/        # Auth, scoping, Zod validation, and rate limiters
-│   │   ├── models/             # 28 Mongoose models and database index rules
+│   │   │   └── dashboards/     # Student, College Admin, Super Admin dashboard controllers
+│   │   ├── middlewares/        # Auth, CSRF, scoping, Zod validation, rate limiters
+│   │   ├── models/             # 28+ Mongoose models and database index definitions
 │   │   ├── routes/             # REST API routing definitions
+│   │   ├── scripts/            # Database migration and hardening scripts
 │   │   ├── services/           # Decoupled domain business logic & cron service
 │   │   ├── sockets/            # Real-time WebSocket connection handling
-│   │   └── tests/              # Jest integration & security test suites
+│   │   └── tests/              # Jest integration, audit, & security test suites
 │   ├── docker-compose.yml
 │   ├── package.json
 │   └── server.js
@@ -647,4 +712,3 @@ For in-depth architectural specifications, refer to the dedicated documentation 
 ## 📄 License & Maintenance
 
 This repository is maintained by the college IT administration team under the **ISC License**. For deployment guidelines, enterprise onboarding, or security vulnerabilities, contact the platform maintainers.
-

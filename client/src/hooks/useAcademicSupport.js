@@ -1,12 +1,37 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { academicSupportApi } from '../api/academicSupportApi';
 import useAuthStore from '../store/authStore';
-import { useState } from 'react';
+import useSocket from './useSocket';
+import { useState, useEffect } from 'react';
 
 export const useAcademicSupport = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const { socket, isConnected } = useSocket();
   const [liveAnnouncement, setLiveAnnouncement] = useState('');
+
+  // Real-time socket event subscription for ticket updates
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleComplaintUpdated = (updatedTicket) => {
+      if (!updatedTicket || !updatedTicket._id) return;
+
+      queryClient.setQueryData(['my-complaints'], (oldData = []) => {
+        return oldData.map((c) => (c._id === updatedTicket._id ? { ...c, ...updatedTicket } : c));
+      });
+
+      setLiveAnnouncement(`Support ticket update: "${updatedTicket.subject || 'Ticket'}" is now ${updatedTicket.status || 'updated'}.`);
+    };
+
+    socket.on('complaint:updated', handleComplaintUpdated);
+    socket.on('ticket:updated', handleComplaintUpdated);
+
+    return () => {
+      socket.off('complaint:updated', handleComplaintUpdated);
+      socket.off('ticket:updated', handleComplaintUpdated);
+    };
+  }, [socket, queryClient]);
 
   // 1. Query: Fetch My Complaints
   const {
@@ -97,6 +122,7 @@ export const useAcademicSupport = () => {
     mySuggestions,
     myFeedback,
     isLoading,
+    isSocketConnected: isConnected,
     refetchAll: () => {
       refetchComplaints();
       refetchSuggestions();

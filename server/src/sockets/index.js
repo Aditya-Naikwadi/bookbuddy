@@ -62,9 +62,18 @@ const emitStreakUpdate = (userId, streak) => {
   }
 };
 
+const emitComplaintUpdate = (userId, complaint) => {
+  if (io) {
+    const payload = complaint.toObject ? complaint.toObject() : complaint;
+    io.to(`user:${userId}`).emit('complaint:updated', payload);
+    io.to(`user:${userId}`).emit('ticket:updated', payload);
+  }
+};
+
 module.exports = {
   initSockets,
   getIo,
   emitNotification,
   emitStreakUpdate,
+  emitComplaintUpdate,
 };

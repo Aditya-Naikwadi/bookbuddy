@@ -1,50 +1,68 @@
 import { useState, useEffect, useRef } from 'react';
 import apiClient from '../api/client';
 
-export const useReaderPosition = (resourceId, userId, rendition) => {
+export const useReaderPosition = (resourceId, userId, rendition, pdfState) => {
   const [currentCfi, setCurrentCfi] = useState(null);
-  const [percentComplete, setPercentComplete] = useState(0);
+  const [currentPageState, setCurrentPageState] = useState(1);
+  const [percentCompleteState, setPercentCompleteState] = useState(0);
   const [readingTimeSeconds, setReadingTimeSeconds] = useState(0);
+  const [initialPosition, setInitialPosition] = useState(null);
 
   const secondsRef = useRef(0);
   const lastSyncRef = useRef(0);
   const localKey = `bookbuddy_position_${userId}_${resourceId}`;
 
-  // 1. Restore last saved position once rendition is ready
+  // 1. Restore position on mount from backend or local cache
   useEffect(() => {
-    if (!rendition) return;
+    if (!resourceId) return;
 
-    try {
-      const saved = localStorage.getItem(localKey);
-      if (saved) {
-        const { cfi } = JSON.parse(saved);
-        if (cfi) {
-          rendition.display(cfi);
+    const loadSavedPosition = async () => {
+      try {
+        let savedData = null;
+        try {
+          const { data } = await apiClient.get(`/reader/${resourceId}/position`);
+          savedData = data.data;
+        } catch {
+          const cached = localStorage.getItem(localKey);
+          if (cached) savedData = JSON.parse(cached);
         }
-      }
-    } catch (e) {
-      console.error('Failed to load saved position from cache:', e);
-    }
-  }, [rendition, localKey]);
 
-  // 2. Track reading position changes (relocated)
+        if (savedData) {
+          setInitialPosition(savedData);
+          if (savedData.cfi) setCurrentCfi(savedData.cfi);
+          if (savedData.page) setCurrentPageState(savedData.page);
+          if (savedData.progressPercentage) setPercentCompleteState(savedData.progressPercentage);
+        }
+      } catch (e) {
+        console.error('Failed to load saved reader position:', e);
+      }
+    };
+
+    loadSavedPosition();
+  }, [resourceId, localKey]);
+
+  // 2. EPUB position restoration & tracking
   useEffect(() => {
     if (!rendition) return;
 
-    const handleRelocate = (location) => {
+    if (initialPosition?.cfi) {
+      rendition.display(initialPosition.cfi);
+    }
+
+    const handleRelocate = async (location) => {
       const cfi = location.start.cfi;
       const percent = Math.round((location.start.percentage || 0) * 100);
 
       setCurrentCfi(cfi);
-      setPercentComplete(percent);
+      setPercentCompleteState(percent);
+
+      const payload = { cfi, progressPercentage: percent, timestamp: Date.now() };
 
       try {
-        localStorage.setItem(
-          localKey,
-          JSON.stringify({ cfi, percent, timestamp: Date.now() })
-        );
+        localStorage.setItem(localKey, JSON.stringify(payload));
+        await apiClient.put(`/reader/${resourceId}/position`, payload).catch(() => {});
       } catch (e) {
-        console.error('Failed to save position to cache:', e);
+        console.error('Failed to save EPUB position:', e);
       }
     };
 
@@ -52,31 +70,49 @@ export const useReaderPosition = (resourceId, userId, rendition) => {
     return () => {
       rendition.off('relocated', handleRelocate);
     };
-  }, [rendition, localKey]);
+  }, [rendition, initialPosition, resourceId, localKey]);
 
-  // 3. Track reading progress timer & sync to server
+  // 3. PDF position tracking & sync
+  const { page: pdfPage, totalPages: pdfTotalPages } = pdfState || {};
+  useEffect(() => {
+    if (!pdfPage || !pdfTotalPages || pdfTotalPages <= 0) return;
+
+    const percent = Math.round((pdfPage / pdfTotalPages) * 100);
+    const payload = { page: pdfPage, totalPages: pdfTotalPages, progressPercentage: percent, timestamp: Date.now() };
+
+    try {
+      localStorage.setItem(localKey, JSON.stringify(payload));
+      apiClient.put(`/reader/${resourceId}/position`, payload).catch(() => {});
+    } catch (e) {
+      console.error('Failed to save PDF position:', e);
+    }
+  }, [pdfPage, pdfTotalPages, resourceId, localKey]);
+
+  const currentPage = pdfState?.page || currentPageState;
+  const percentComplete = pdfState?.page && pdfState?.totalPages 
+    ? Math.round((pdfState.page / pdfState.totalPages) * 100) 
+    : percentCompleteState;
+
+  // 4. Reading time counter & periodic heartbeat
   useEffect(() => {
     if (!resourceId) return;
 
-    // Heartbeat sync helper
     const syncProgressToServer = async (seconds) => {
       try {
         await apiClient.post(`/eresources/${resourceId}/progress`, {
           dailySecondsToday: seconds,
           readingTimeMinutes: Math.floor(seconds / 60),
-        });
+        }).catch(() => {});
         lastSyncRef.current = seconds;
       } catch (e) {
-        console.error('Failed to sync reading progress to server:', e);
+        console.error('Failed to sync reading time:', e);
       }
     };
 
-    // Incremental timer loop
     const timer = setInterval(() => {
       secondsRef.current += 1;
       setReadingTimeSeconds(secondsRef.current);
 
-      // Heartbeat sync every 30 seconds
       if (secondsRef.current - lastSyncRef.current >= 30) {
         syncProgressToServer(secondsRef.current);
       }
@@ -84,7 +120,6 @@ export const useReaderPosition = (resourceId, userId, rendition) => {
 
     return () => {
       clearInterval(timer);
-      // Final sync on exit if there is unsynced time
       if (secondsRef.current > lastSyncRef.current) {
         syncProgressToServer(secondsRef.current);
       }
@@ -93,8 +128,10 @@ export const useReaderPosition = (resourceId, userId, rendition) => {
 
   return {
     currentCfi,
+    currentPage,
     percentComplete,
     readingTimeSeconds,
+    initialPosition,
   };
 };
 

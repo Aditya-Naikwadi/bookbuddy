@@ -137,7 +137,20 @@ const renewLoan = async (loanId, userId, collegeId) => {
       throw new AppError('Active loan not found.', 404);
     }
 
-    // 2. Limit check
+    // 2. Unpaid fine limit check
+    const unpaidFines = await Fine.find({ userId, status: 'unpaid' }).session(session);
+    const totalUnpaidFine = unpaidFines.reduce((sum, f) => sum + f.amount, 0);
+    const maxFineLimit = config.unpaidFineLimit || 100;
+    if (totalUnpaidFine > maxFineLimit) {
+      const err = new AppError(
+        `Cannot renew. Unpaid fines of ₹${totalUnpaidFine.toFixed(2)} exceed the limit of ₹${maxFineLimit}.`,
+        400
+      );
+      err.code = 'UNPAID_FINES_EXCEEDED';
+      throw err;
+    }
+
+    // 3. Limit check
     if (loan.renewalCount >= loan.maxRenewals) {
       const err = new AppError('Maximum renewals reached.', 400);
       err.code = 'RENEWAL_LIMIT_REACHED';

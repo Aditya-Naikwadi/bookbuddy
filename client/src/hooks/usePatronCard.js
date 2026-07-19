@@ -9,7 +9,14 @@ const fetchProfile = async () => {
 
 export const usePatronCard = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [cachedData, setCachedData] = useState(null);
+  const [cachedData] = useState(() => {
+    try {
+      const cache = localStorage.getItem('bookbuddy_patron_card_cache');
+      return cache ? JSON.parse(cache) : null;
+    } catch {
+      return null;
+    }
+  });
 
   // Monitor network connection status
   useEffect(() => {
@@ -18,16 +25,6 @@ export const usePatronCard = () => {
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-
-    // Initial load of cached data from localStorage
-    try {
-      const cache = localStorage.getItem('bookbuddy_patron_card_cache');
-      if (cache) {
-        setCachedData(JSON.parse(cache));
-      }
-    } catch (e) {
-      console.error('Failed to parse patron card cache', e);
-    }
 
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -39,18 +36,32 @@ export const usePatronCard = () => {
   const { data: liveProfile, isLoading, isError } = useQuery({
     queryKey: ['user-profile'],
     queryFn: fetchProfile,
-    enabled: isOnline, // Only fetch if we are online
+    enabled: isOnline,
     retry: 1,
   });
 
-  // Update offline cache when live data is successfully fetched
+  // Fetch 30-second rotating token from backend
+  const { data: tokenData } = useQuery({
+    queryKey: ['patron-card-token'],
+    queryFn: async () => {
+      try {
+        const { data } = await apiClient.get('/patron-card/token');
+        return data.data;
+      } catch {
+        return null;
+      }
+    },
+    enabled: isOnline,
+    refetchInterval: 30000,
+  });
+
+  // Update offline cache in LocalStorage when live data is available
   useEffect(() => {
     if (liveProfile) {
       const newCache = {
         profile: liveProfile,
         timestamp: Date.now(),
       };
-      setCachedData(newCache);
       try {
         localStorage.setItem('bookbuddy_patron_card_cache', JSON.stringify(newCache));
       } catch (e) {
@@ -60,7 +71,6 @@ export const usePatronCard = () => {
   }, [liveProfile]);
 
   // Determine which profile data to display
-  // If we are online and have live data, use it; otherwise fall back to cache
   const activeProfile = liveProfile || cachedData?.profile || null;
 
   // Format cache date for display
@@ -74,11 +84,17 @@ export const usePatronCard = () => {
     });
   }
 
+  const defaultExpiresAt = tokenData?.expiresAt ? tokenData.expiresAt : null;
+
   return {
     profile: activeProfile,
-    isLoading: isLoading && !activeProfile, // Only show loading if there is no cache fallback available
-    isError: isError && !activeProfile, // Only show error if there is no cache fallback
+    rotatingToken: tokenData?.token || activeProfile?.qrCodeData || activeProfile?.studentId,
+    expiresAt: defaultExpiresAt,
+    isLoading: isLoading && !activeProfile,
+    isError: isError && !activeProfile,
     isOnline,
     cachedAt: cachedAtStr,
   };
 };
+
+export default usePatronCard;

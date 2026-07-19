@@ -1,4 +1,3 @@
-import React from 'react';
 import { Calendar, Clock, Monitor } from 'lucide-react';
 
 export const ActiveReservationBanner = ({ bookings = [] }) => {

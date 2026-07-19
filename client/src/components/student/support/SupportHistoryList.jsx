@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { MessageSquare, AlertTriangle, ThumbsUp, Calendar, Clock, Star } from 'lucide-react';
+import { useState } from 'react';
+import { MessageSquare, AlertTriangle, ThumbsUp, Calendar, Star } from 'lucide-react';
 import { Badge } from '../../ui/Badge';
 
 export const SupportHistoryList = ({

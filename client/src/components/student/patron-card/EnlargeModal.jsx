@@ -1,9 +1,41 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { X, Smartphone, AlertCircle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
 export const EnlargeModal = ({ isOpen, onClose, studentId, name, triggerRef }) => {
   const modalRef = useRef(null);
+
+  const getFocusableElements = useCallback(() => {
+    if (!modalRef.current) return [];
+    return Array.from(
+      modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+    );
+  }, []);
+
+  const handleTabKey = useCallback(
+    (e) => {
+      const focusable = getFocusableElements();
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          last.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === last) {
+          first.focus();
+          e.preventDefault();
+        }
+      }
+    },
+    [getFocusableElements]
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -31,36 +63,7 @@ export const EnlargeModal = ({ isOpen, onClose, studentId, name, triggerRef }) =
         }
       };
     }
-  }, [isOpen]);
-
-  const getFocusableElements = () => {
-    if (!modalRef.current) return [];
-    return Array.from(
-      modalRef.current.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      )
-    );
-  };
-
-  const handleTabKey = (e) => {
-    const focusable = getFocusableElements();
-    if (focusable.length === 0) return;
-
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-
-    if (e.shiftKey) {
-      if (document.activeElement === first) {
-        last.focus();
-        e.preventDefault();
-      }
-    } else {
-      if (document.activeElement === last) {
-        first.focus();
-        e.preventDefault();
-      }
-    }
-  };
+  }, [isOpen, onClose, getFocusableElements, handleTabKey, triggerRef]);
 
   if (!isOpen) return null;
 

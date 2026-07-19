@@ -170,7 +170,11 @@ const resolveTicket = async (req, res, next) => {
     ticket.resolutionMessage = req.body.resolutionMessage;
     ticket.resolvedBy = req.user.id;
     ticket.resolvedAt = new Date();
+    ticket.lastAdminReplyAt = new Date();
     await ticket.save();
+
+    const { emitComplaintUpdate } = require('../../sockets');
+    emitComplaintUpdate(ticket.submittedBy, ticket);
 
     await notificationService.notify(
       ticket.submittedBy,

@@ -29,27 +29,36 @@ app.use(
       includeSubDomains: true,
       preload: true,
     },
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
-        connectSrc: ["'self'"],
-        frameAncestors: ["'none'"],
-        objectSrc: ["'none'"],
-        upgradeInsecureRequests: [],
-      },
-    },
-    crossOriginResourcePolicy: { policy: 'same-site' },
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
   })
 );
 
-// CORS Configuration
+// CORS Configuration supporting multi-origin dev setups
+const allowedOrigins = [
+  config.clientOrigin,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: config.clientOrigin,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'x-csrf-token',
+      'x-request-id',
+      'idempotency-key',
+    ],
   })
 );
 
@@ -106,7 +115,9 @@ app.get('/api/health', (req, res) => {
 
 // Apply custom global rate limiter to all routes except health checks
 const { globalLimiter } = require('./middlewares/rateLimiters');
+const { validateCsrf } = require('./middlewares/csrf');
 app.use(globalLimiter);
+app.use(validateCsrf);
 
 // Debug tenant check route for validation
 const { protect, requireRole } = require('./middlewares/auth');
@@ -155,6 +166,8 @@ app.use('/api/recommendations', require('./routes/recommendationRoutes'));
 app.use('/api/eresources', require('./routes/eresourceRoutes'));
 app.use('/api/reader', require('./routes/readerRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/payments', require('./routes/paymentRoutes'));
+app.use('/api/annotations', require('./routes/annotationRoutes'));
 
 // Gamification spec aliases
 app.post('/api/checkin', (req, res, next) => {

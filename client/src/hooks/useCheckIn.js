@@ -91,7 +91,7 @@ export const useCheckIn = () => {
   // 2. Repair Streak Mutation
   const repairMutation = useMutation({
     mutationFn: streakApi.repairStreak,
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['streak', 'me'] });
       queryClient.invalidateQueries({ queryKey: ['stickers', 'me'] });
       setAnnouncement('Streak repaired successfully! Your freezes saved your progress.');

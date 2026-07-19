@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
-import { Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff, CheckCircle2, GraduationCap, Globe, Building2, Shield, Sparkles } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,6 +20,41 @@ const GithubIcon = () => (
   </svg>
 );
 
+const DEMO_ACCOUNTS = [
+  {
+    role: 'Student',
+    email: 'student@bookbuddy.com',
+    password: 'Demo@123',
+    icon: GraduationCap,
+    badge: 'Student',
+    color: 'border-indigo-500/40 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20'
+  },
+  {
+    role: 'General',
+    email: 'general@bookbuddy.com',
+    password: 'Demo@123',
+    icon: Globe,
+    badge: 'General',
+    color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+  },
+  {
+    role: 'College Admin',
+    email: 'collegeadmin@bookbuddy.com',
+    password: 'Demo@123',
+    icon: Building2,
+    badge: 'College Admin',
+    color: 'border-purple-500/40 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20'
+  },
+  {
+    role: 'Super Admin',
+    email: 'admin@bookbuddy.com',
+    password: 'Demo@123',
+    icon: Shield,
+    badge: 'Super Admin',
+    color: 'border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+  }
+];
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,6 +66,15 @@ const Login = () => {
   const { login, isLoading, error } = useAuthStore();
 
   const from = location.state?.from?.pathname || '/student-dashboard';
+
+  const handleQuickLogin = async (demoEmail, demoPassword) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    const success = await login(demoEmail, demoPassword);
+    if (success) {
+      navigate(from, { replace: true });
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,10 +104,44 @@ const Login = () => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full">
       <motion.h2 
         initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-        className="text-xl font-serif font-bold text-ink mb-5 text-center"
+        className="text-xl font-serif font-bold text-ink mb-3 text-center"
       >
         Welcome Back
       </motion.h2>
+
+      {/* Quick Demo Accounts Selection */}
+      <motion.div 
+        initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+        className="mb-5 p-3 rounded-xl bg-surface/40 border border-edge/60 backdrop-blur-sm shadow-inner"
+      >
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[11px] font-semibold tracking-wider text-muted uppercase flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-ember" /> Quick Demo Access
+          </span>
+          <span className="text-[10px] text-muted/80">Click to autofill & login</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {DEMO_ACCOUNTS.map((acc) => {
+            const Icon = acc.icon;
+            return (
+              <button
+                key={acc.role}
+                type="button"
+                onClick={() => handleQuickLogin(acc.email, acc.password)}
+                title={`Login as ${acc.role} (${acc.email})`}
+                className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-all text-xs font-medium cursor-pointer ${acc.color}`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <div className="overflow-hidden leading-tight">
+                  <div className="font-semibold text-[11px] truncate">{acc.badge}</div>
+                  <div className="text-[9px] opacity-75 truncate">{acc.email}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </motion.div>
       
       {error && (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}

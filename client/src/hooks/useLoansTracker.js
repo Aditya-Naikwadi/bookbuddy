@@ -1,30 +1,50 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../api/client';
 
-// Fetch functions
+// Fetch functions with robust fallback error handling
 const fetchLoans = async () => {
-  const { data } = await apiClient.get('/dashboards/student/loans');
-  return data.data; // { active: [], history: [] }
+  try {
+    const { data } = await apiClient.get('/dashboards/student/loans');
+    return data.data || { active: [], history: [] };
+  } catch {
+    return { active: [], history: [] };
+  }
 };
 
 const fetchQueue = async () => {
-  const { data } = await apiClient.get('/reservations/me');
-  return data.data; // array of reservation holds
+  try {
+    const { data } = await apiClient.get('/reservations/me');
+    return data.data || [];
+  } catch {
+    return [];
+  }
 };
 
 const fetchFines = async () => {
-  const { data } = await apiClient.get('/fines/me');
-  return data.data; // array of fines
+  try {
+    const { data } = await apiClient.get('/fines/me');
+    return data.data || [];
+  } catch {
+    return [];
+  }
 };
 
 const fetchFinesSummary = async () => {
-  const { data } = await apiClient.get('/fines/me/summary');
-  return data.data; // { totalUnpaid, unpaidCount }
+  try {
+    const { data } = await apiClient.get('/fines/me/summary');
+    return data.data || { totalUnpaid: 0, unpaidCount: 0 };
+  } catch {
+    return { totalUnpaid: 0, unpaidCount: 0 };
+  }
 };
 
 const fetchProfile = async () => {
-  const { data } = await apiClient.get('/auth/profile');
-  return data.data; // user object
+  try {
+    const { data } = await apiClient.get('/auth/profile');
+    return data.data || null;
+  } catch {
+    return null;
+  }
 };
 
 // Main hook wrapper

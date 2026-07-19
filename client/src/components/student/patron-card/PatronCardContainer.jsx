@@ -5,7 +5,7 @@ import { CardBack } from './CardBack';
 import { EnlargeModal } from './EnlargeModal';
 import { PatronCardSkeleton } from './PatronCardSkeleton';
 import { useReducedMotion } from '../../../hooks/useReducedMotion';
-import { AlertTriangle, WifiOff, RefreshCw, Maximize2, Download, HelpCircle, ArrowRightLeft } from 'lucide-react';
+import { AlertTriangle, WifiOff, Maximize2, Download, ArrowRightLeft } from 'lucide-react';
 import { Button } from '../../ui/Button';
 
 export const PatronCardContainer = () => {

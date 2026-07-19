@@ -1,5 +1,4 @@
 import { HelpCircle, Trash2, Loader2 } from 'lucide-react';
-import { Button } from '../../ui/Button';
 
 export const QueueHoldsList = ({ queue, onCancelHoldTrigger, isCancelling, cancellingHoldId }) => {
   if (queue.length === 0) {

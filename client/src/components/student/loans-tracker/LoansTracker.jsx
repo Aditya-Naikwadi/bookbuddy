@@ -6,7 +6,7 @@ import { FineBreakdownItem } from './FineBreakdownItem';
 import { QueueHoldsList } from './QueueHoldsList';
 import { HistoryList } from './HistoryList';
 import { PaymentDialog } from './PaymentDialog';
-import { Loader2, Search, Filter, BookOpen, AlertTriangle, Receipt, CreditCard, Sparkles } from 'lucide-react';
+import { Loader2, Search, Filter, BookOpen, AlertTriangle, Sparkles, CheckCircle } from 'lucide-react';
 import { Button } from '../../ui/Button';
 
 export const LoansTracker = ({ defaultTab = 'loans' }) => {
@@ -379,7 +379,7 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
       <PaymentDialog
         isOpen={isPayOpen}
         onClose={() => setIsPayOpen(false)}
-        triggerRef={{ current: triggerButtonRef.current }}
+        triggerRef={triggerButtonRef}
         fineItem={selectedFine}
         allFines={unpaidFinesList}
         totalAmount={useWaiverForSelected ? 0 : selectedFine ? selectedFine.amount : totalUnpaidAmount}

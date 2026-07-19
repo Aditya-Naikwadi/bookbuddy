@@ -36,6 +36,10 @@ const userSchema = new mongoose.Schema(
       },
       index: true,
     },
+    cardSecret: {
+      type: String,
+      select: false,
+    },
     refreshTokenHash: {
       type: String,
       select: false,
@@ -83,8 +87,12 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Hash password before saving
+// Hash password and generate cardSecret before saving
 userSchema.pre('save', async function () {
+  if (!this.cardSecret) {
+    const crypto = require('crypto');
+    this.cardSecret = crypto.randomBytes(32).toString('hex');
+  }
   if (!this.isModified('password')) return;
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);

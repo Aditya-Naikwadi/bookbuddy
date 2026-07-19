@@ -42,6 +42,9 @@ const complaintSchema = new mongoose.Schema(
     resolvedAt: {
       type: Date,
     },
+    lastAdminReplyAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,

@@ -14,12 +14,12 @@ const Support = () => {
   const [mainTab, setMainTab] = useState('submit'); // 'submit' | 'history'
   const [subForm, setSubForm] = useState('suggestion'); // 'suggestion' | 'complaint' | 'feedback'
 
-  // Fetch support data and mutation submission states
   const {
     complaints,
     mySuggestions,
     myFeedback,
     isLoading,
+    isSocketConnected,
     refetchAll,
     submitSuggestion,
     isSubmittingSuggestion,
@@ -88,7 +88,6 @@ const Support = () => {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      // Move focus to first invalid field programmatically for accessibility
       setTimeout(() => {
         const firstErrKey = Object.keys(newErrors)[0];
         document.getElementById(`suggestion-${firstErrKey}`)?.focus();
@@ -99,7 +98,6 @@ const Support = () => {
     try {
       const response = await submitSuggestion(suggestionFields);
       setSuccessInfo({ type: 'Purchase Suggestion', refId: response._id });
-      // Reset state and clear draft
       setSuggestionFields({ title: '', author: '', reason: '' });
       localStorage.removeItem(DRAFT_SUGGESTION_KEY);
     } catch (err) {
@@ -184,6 +182,13 @@ const Support = () => {
             Request new library resources, lodge complaints, or send general feedback to college admins.
           </p>
         </div>
+
+        {isSocketConnected && (
+          <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Live Real-Time Sync</span>
+          </div>
+        )}
       </div>
 
       {/* Main Tab Toggle System */}

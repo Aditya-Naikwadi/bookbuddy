@@ -20,7 +20,7 @@ export const useReservation = () => {
   const createBookingMutation = useMutation({
     mutationFn: ({ seatId, startTime, endTime }) =>
       facilitiesApi.createBooking(seatId, startTime, endTime),
-    onSuccess: (data) => {
+    onSuccess: () => {
       // Invalidate availability and booking lists
       queryClient.invalidateQueries({ queryKey: ['lab-availability'] });
       queryClient.invalidateQueries({ queryKey: ['my-lab-bookings'] });

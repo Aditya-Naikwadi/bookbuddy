@@ -38,6 +38,14 @@ const labBookingSchema = new mongoose.Schema(
       default: 'booked',
       index: true,
     },
+    confirmationToken: {
+      type: String,
+      default: null,
+    },
+    tokenExpiresAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -46,6 +54,8 @@ const labBookingSchema = new mongoose.Schema(
 
 // Compound index optimized for query paths
 labBookingSchema.index({ seatId: 1, date: 1, status: 1 });
+labBookingSchema.index({ userId: 1, date: 1, status: 1 });
+labBookingSchema.index({ userId: 1, status: 1, startTime: 1, endTime: 1 });
 
 // Concurrency control: partial unique index so that a timeslot can only be booked by one person at a time
 labBookingSchema.index(

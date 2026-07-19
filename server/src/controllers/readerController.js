@@ -229,7 +229,7 @@ const streamEbookContent = async (req, res, next) => {
 };
 
 /**
- * @desc    Get reading position
+ * @desc    Get reading position (supports EPUB cfi & PDF page)
  * @route   GET /api/reader/:resourceId/position
  * @access  Private
  */
@@ -237,16 +237,28 @@ const getReadingPosition = async (req, res, next) => {
   try {
     const { resourceId } = req.params;
 
-    const position = await ReadingPosition.findOne({
-      userId: req.user.id,
+    const resource = await EResource.findById(resourceId);
+    const positionDoc = await ReadingPosition.findOne({
+      userId: req.user.id || req.user._id,
       resourceId,
       collegeId: req.user.collegeId,
     });
 
+    const isPdf =
+      resource &&
+      (resource.type === 'pdf' ||
+        resource.fileType === 'pdf' ||
+        resource.fileUrl?.toLowerCase().endsWith('.pdf'));
+
     res.json({
       success: true,
       data: {
-        position: position ? position.position : '',
+        resourceId,
+        fileType: isPdf ? 'pdf' : 'epub',
+        position: positionDoc ? positionDoc.position : '',
+        cfi: positionDoc ? positionDoc.cfi : null,
+        page: positionDoc ? positionDoc.page : isPdf ? 1 : null,
+        progressPercentage: positionDoc ? positionDoc.progressPercentage : 0,
       },
     });
   } catch (err) {
@@ -255,32 +267,76 @@ const getReadingPosition = async (req, res, next) => {
 };
 
 /**
- * @desc    Set/upsert reading position
+ * @desc    Set/upsert reading position validating fileType (cfi for epub, page for pdf)
  * @route   PUT /api/reader/:resourceId/position
  * @access  Private
  */
 const setReadingPosition = async (req, res, next) => {
   try {
     const { resourceId } = req.params;
-    const { position } = req.body;
+    const { cfi, page, progressPercentage, position } = req.body;
 
-    if (position === undefined || position === null) {
-      throw new AppError('Position value is required.', 400);
+    const resource = await EResource.findById(resourceId);
+    if (!resource) {
+      throw new AppError('E-resource not found.', 404);
+    }
+
+    const isPdf =
+      resource.type === 'pdf' ||
+      resource.fileType === 'pdf' ||
+      resource.fileUrl?.toLowerCase().endsWith('.pdf');
+
+    // Validation branching based on resource fileType
+    if (isPdf) {
+      if (page === undefined || page === null || typeof page !== 'number') {
+        throw new AppError('Invalid payload: "page" (number) is required for PDF resources.', 400);
+      }
+    } else {
+      if (!cfi && !position) {
+        throw new AppError('Invalid payload: "cfi" is required for EPUB resources.', 400);
+      }
+    }
+
+    const updateFields = {
+      position: isPdf ? String(page) : cfi || position,
+      progressPercentage: progressPercentage || 0,
+    };
+
+    if (isPdf) {
+      updateFields.page = page;
+    } else {
+      updateFields.cfi = cfi || position;
     }
 
     const updated = await ReadingPosition.findOneAndUpdate(
       {
-        userId: req.user.id,
+        userId: req.user.id || req.user._id,
         resourceId,
         collegeId: req.user.collegeId,
       },
-      {
-        position,
-      },
+      updateFields,
       {
         new: true,
         upsert: true,
       }
+    );
+
+    // Write/increment today's ReadingActivityLog row for historical time-series analytics
+    const ReadingActivityLog = require('../models/ReadingActivityLog');
+    const todayStr = new Date().toISOString().split('T')[0];
+    const pagesDelta = req.body.pagesDelta || 1;
+    const minutesDelta = req.body.minutesDelta || 2;
+
+    await ReadingActivityLog.findOneAndUpdate(
+      {
+        userId: req.user.id || req.user._id,
+        date: todayStr,
+      },
+      {
+        $setOnInsert: { collegeId: req.user.collegeId },
+        $inc: { pagesRead: pagesDelta, minutesRead: minutesDelta },
+      },
+      { upsert: true, new: true }
     );
 
     res.json({

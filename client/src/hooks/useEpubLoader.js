@@ -1,40 +1,40 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 // In-memory cache for book instances to prevent parsing the same book twice in the same session
 const bookCache = new Map();
 
 export const useEpubLoader = (url, viewerRef) => {
+  const [book, setBook] = useState(null);
   const [rendition, setRendition] = useState(null);
   const [toc, setToc] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const bookRef = useRef(null);
 
   useEffect(() => {
     if (!url || !viewerRef.current) return;
 
     let active = true;
-    setIsLoading(true);
-    setError(null);
 
     const initEpub = async () => {
       try {
-        // Dynamic import to lazy-load epubjs only when needed
         const { default: ePub } = await import('epubjs');
 
         if (!active) return;
 
-        let book;
+        let loadedBook;
         if (bookCache.has(url)) {
-          book = bookCache.get(url);
+          loadedBook = bookCache.get(url);
         } else {
-          book = ePub(url);
-          bookCache.set(url, book);
+          loadedBook = ePub(url);
+          bookCache.set(url, loadedBook);
         }
-        bookRef.current = book;
+
+        if (active) {
+          setBook(loadedBook);
+        }
 
         // Load TOC navigation structure
-        book.loaded.navigation
+        loadedBook.loaded.navigation
           .then((nav) => {
             if (active) {
               setToc(nav.toc || []);
@@ -45,18 +45,17 @@ export const useEpubLoader = (url, viewerRef) => {
           });
 
         // Initialize Epub.js rendition
-        const newRendition = book.renderTo(viewerRef.current, {
+        const newRendition = loadedBook.renderTo(viewerRef.current, {
           width: '100%',
           height: '100%',
           spread: 'none',
-          flow: 'paginated', // standard page-by-page layout
+          flow: 'paginated',
         });
 
         if (active) {
           setRendition(newRendition);
         }
 
-        // Trigger display and update loading status
         newRendition
           .display()
           .then(() => {
@@ -84,22 +83,16 @@ export const useEpubLoader = (url, viewerRef) => {
 
     return () => {
       active = false;
-      if (rendition) {
-        try {
-          rendition.destroy();
-        } catch (e) {
-          // ignore destroy errors on cleanup
-        }
-      }
     };
-  }, [url]);
+  }, [url, viewerRef]);
 
   return {
-    book: bookRef.current,
+    book,
     rendition,
     toc,
     isLoading,
     error,
   };
 };
+
 export default useEpubLoader;

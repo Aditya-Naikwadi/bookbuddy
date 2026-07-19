@@ -61,13 +61,34 @@ const LabBooking = () => {
     };
   }, [availability, isRefetching]);
 
+  // Helper to check time slot overlap
+  const isTimeOverlap = (startA, endA, startB, endB) => {
+    if (!startA || !endA || !startB || !endB) return false;
+    return new Date(startA) < new Date(endB) && new Date(endA) > new Date(startB);
+  };
+
   // Handle slot reservation confirmation
   const handleConfirmReservation = async () => {
     if (!selectedSlot) return;
     setErrorMessage('');
     
+    // 1. Client-side same-user double-booking prevention
+    const existingOverlap = myBookings?.find(
+      (b) => (b.status === 'booked' || b.status === 'confirmed') && 
+             isTimeOverlap(b.startTime, b.endTime, selectedSlot.startTime, selectedSlot.endTime)
+    );
+
+    if (existingOverlap) {
+      setErrorMessage(
+        `Double-Booking Prevention: You already hold an active reservation for Workstation ${
+          existingOverlap.seatId?.seatNumber || 'seat'
+        } during this overlapping time slot.`
+      );
+      return;
+    }
+
     try {
-      // startTime/endTime must be in ISO format
+      // startTime/endTime in ISO format
       await createBooking({
         seatId: selectedSlot.seatId,
         startTime: selectedSlot.startTime,
@@ -76,7 +97,13 @@ const LabBooking = () => {
       // Close modal on success
       setSelectedSlot(null);
     } catch (err) {
-      setErrorMessage(err.message || 'Failed to complete reservation. Please try again.');
+      if (err.response?.status === 409 || err.status === 409) {
+        setErrorMessage(
+          err.response?.data?.message || '409 Conflict: You or another user already hold a reservation for this slot.'
+        );
+      } else {
+        setErrorMessage(err.message || 'Failed to complete reservation. Please try again.');
+      }
     }
   };
 

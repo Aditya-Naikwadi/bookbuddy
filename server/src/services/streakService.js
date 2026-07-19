@@ -132,6 +132,7 @@ const recordQualifyingAction = async (userId, collegeId, actionType) => {
     await streak.save({ session });
 
     // 2. Process milestones/rewards
+    const newlyUnlocked = [];
     const rewards = await StreakReward.find({ milestoneThreshold: streak.currentStreak }).session(
       session
     );
@@ -161,6 +162,7 @@ const recordQualifyingAction = async (userId, collegeId, actionType) => {
           }).session(session);
           if (!userStickerExists) {
             await UserSticker.create([{ userId, stickerId: sticker._id }], { session });
+            newlyUnlocked.push(sticker);
             await notificationService.notify(
               userId,
               'streak_milestone',
@@ -182,7 +184,9 @@ const recordQualifyingAction = async (userId, collegeId, actionType) => {
     }
 
     emitStreakUpdate(userId, streak);
-    return streak;
+    const resultObj = streak.toObject ? streak.toObject() : { ...streak };
+    resultObj.newlyUnlocked = newlyUnlocked;
+    return resultObj;
   });
 };
 

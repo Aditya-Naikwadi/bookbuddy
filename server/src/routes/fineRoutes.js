@@ -18,5 +18,10 @@ router.get('/me/summary', getMyFinesSummary);
 
 router.post('/pay-all', idempotency, payAllFines);
 router.post('/:id/pay', validate(paramIdSchema), idempotency, payFine);
+router.post(
+  '/:id/create-checkout-session',
+  validate(paramIdSchema),
+  require('../controllers/paymentController').createCheckoutSession
+);
 
 module.exports = router;

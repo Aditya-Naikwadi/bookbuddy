@@ -3,6 +3,7 @@ const LabBooking = require('../models/LabBooking');
 const AppError = require('../utils/AppError');
 const config = require('../config');
 const { recordQualifyingAction } = require('./streakService');
+const { runInTransaction } = require('../utils/transactionHelper');
 
 /**
  * Helper to normalize a Date to UTC midnight
@@ -72,62 +73,98 @@ const getAvailability = async (collegeId, labName, dateStr) => {
  * Creates a slot reservation with collision safety
  */
 const createBooking = async (userId, seatId, collegeId, startTimeInput, endTimeInput) => {
-  const startTime = new Date(startTimeInput);
-  const endTime = new Date(endTimeInput);
+  return await runInTransaction(async (session) => {
+    const startTime = new Date(startTimeInput);
+    const endTime = new Date(endTimeInput);
 
-  // Validate start < end
-  if (startTime.getTime() >= endTime.getTime()) {
-    throw new AppError('Start time must be before end time.', 400);
-  }
+    // Validate start < end
+    if (startTime.getTime() >= endTime.getTime()) {
+      throw new AppError('Start time must be before end time.', 400);
+    }
 
-  // Validate duration is exactly 1 hour
-  const durationMs = endTime.getTime() - startTime.getTime();
-  if (durationMs !== 60 * 60 * 1000) {
-    throw new AppError('Bookings must be made in exactly 1-hour slots.', 400);
-  }
+    // Validate duration is exactly 1 hour
+    const durationMs = endTime.getTime() - startTime.getTime();
+    if (durationMs !== 60 * 60 * 1000) {
+      throw new AppError('Bookings must be made in exactly 1-hour slots.', 400);
+    }
 
-  // Validate starts on the hour
-  if (
-    startTime.getUTCMinutes() !== 0 ||
-    startTime.getUTCSeconds() !== 0 ||
-    startTime.getUTCMilliseconds() !== 0
-  ) {
-    throw new AppError('Bookings must align with the start of the hour.', 400);
-  }
+    // Validate starts on the hour
+    if (
+      startTime.getUTCMinutes() !== 0 ||
+      startTime.getUTCSeconds() !== 0 ||
+      startTime.getUTCMilliseconds() !== 0
+    ) {
+      throw new AppError('Bookings must align with the start of the hour.', 400);
+    }
 
-  // Validate within operating hours
-  const startHour = startTime.getUTCHours();
-  const endHour = endTime.getUTCHours();
-  if (
-    startHour < config.labOperatingHours.startHour ||
-    endHour > config.labOperatingHours.endHour
-  ) {
-    throw new AppError('Booking falls outside of lab operating hours.', 400);
-  }
+    // Validate within operating hours
+    const startHour = startTime.getUTCHours();
+    const endHour = endTime.getUTCHours();
+    if (
+      startHour < config.labOperatingHours.startHour ||
+      endHour > config.labOperatingHours.endHour
+    ) {
+      throw new AppError('Booking falls outside of lab operating hours.', 400);
+    }
 
-  // Normalize date to UTC midnight
-  const date = normalizeToUTCMidnight(startTime);
-
-  // Retrieve and verify seat
-  const seat = await LabSeat.findOne({ _id: seatId, collegeId });
-  if (!seat) {
-    throw new AppError('Lab seat not found.', 404);
-  }
-
-  if (seat.maintenanceStatus !== 'operational') {
-    throw new AppError('This seat is currently unavailable (maintenance/retired).', 400);
-  }
-
-  try {
-    const booking = await LabBooking.create({
-      collegeId,
+    // 1. Cross-seat same-user double-booking conflict check
+    const userOverlap = await LabBooking.findOne({
       userId,
-      seatId,
-      date,
-      startTime,
-      endTime,
       status: 'booked',
-    });
+      startTime: { $lt: endTime },
+      endTime: { $gt: startTime },
+    }).session(session);
+
+    if (userOverlap) {
+      const err = new AppError(
+        'You already hold an active lab seat reservation during this overlapping time slot.',
+        409
+      );
+      err.statusCode = 409;
+      throw err;
+    }
+
+    // 2. Target seat availability conflict check
+    const seatOverlap = await LabBooking.findOne({
+      seatId,
+      status: 'booked',
+      startTime: { $lt: endTime },
+      endTime: { $gt: startTime },
+    }).session(session);
+
+    if (seatOverlap) {
+      const err = new AppError('slot already booked', 409);
+      err.statusCode = 409;
+      throw err;
+    }
+
+    // Normalize date to UTC midnight
+    const date = normalizeToUTCMidnight(startTime);
+
+    // Retrieve and verify seat
+    const seat = await LabSeat.findOne({ _id: seatId, collegeId }).session(session);
+    if (!seat) {
+      throw new AppError('Lab seat not found.', 404);
+    }
+
+    if (seat.maintenanceStatus !== 'operational') {
+      throw new AppError('This seat is currently unavailable (maintenance/retired).', 400);
+    }
+
+    const [booking] = await LabBooking.create(
+      [
+        {
+          collegeId,
+          userId,
+          seatId,
+          date,
+          startTime,
+          endTime,
+          status: 'booked',
+        },
+      ],
+      { session }
+    );
 
     // Record streak action
     let streakData = null;
@@ -137,14 +174,16 @@ const createBooking = async (userId, seatId, collegeId, startTimeInput, endTimeI
       // Don't fail the booking if streak service fails
     }
 
-    return { booking, streakData };
-  } catch (error) {
-    // Catch MongoDB duplicate key error (code 11000)
-    if (error.code === 11000) {
-      throw new AppError('slot already booked', 409);
-    }
-    throw error;
-  }
+    // Generate signed verification token encoding bookingId & expiry for QR scan-in
+    const { generatePatronToken } = require('../utils/patronTokenUtil');
+    const tokenObj = generatePatronToken(userId, booking._id.toString());
+
+    const bookingResult = booking.toObject ? booking.toObject() : { ...booking };
+    bookingResult.verificationToken = tokenObj.token;
+    bookingResult.tokenExpiresAt = tokenObj.expiresAt;
+
+    return { booking: bookingResult, streakData };
+  });
 };
 
 /**

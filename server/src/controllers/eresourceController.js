@@ -1,5 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
 const EResource = require('../models/EResource');
+const AppError = require('../utils/AppError');
 const { recordQualifyingAction } = require('../services/streakService');
 
 // @desc    Get internal e-resources
@@ -26,14 +27,63 @@ const listInternalResources = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Update progress (already in external, but master prompt asks for it here too)
+// @desc    Student upload material for moderation
+// @route   POST /api/eresources/submit
+// @access  Private (Student)
+const submitEResource = asyncHandler(async (req, res) => {
+  const userId = req.user.id || req.user._id;
+  const { title, category, description } = req.body;
+
+  if (!title) {
+    throw new AppError('Title is required for material submission.', 400);
+  }
+
+  const fileUrl = req.file
+    ? `/uploads/ebooks/${req.file.filename}`
+    : `/uploads/ebooks/student-${Date.now()}.pdf`;
+
+  const resource = await EResource.create({
+    collegeId: req.user.collegeId,
+    title,
+    category: category || 'General Academic',
+    description: description || '',
+    type: req.file && req.file.originalname?.endsWith('.epub') ? 'epub' : 'pdf',
+    fileUrl,
+    uploadedBy: userId,
+    moderationStatus: 'pending',
+    source: 'internal',
+    sourceType: 'student-upload',
+    uploadStatus: 'available',
+  });
+
+  res.status(201).json({
+    success: true,
+    message: 'E-resource material submitted successfully. Pending staff moderation.',
+    data: resource,
+  });
+});
+
+// @desc    Get student's own submissions
+// @route   GET /api/eresources/my-submissions
+// @access  Private (Student)
+const getMySubmissions = asyncHandler(async (req, res) => {
+  const userId = req.user.id || req.user._id;
+
+  const submissions = await EResource.find({ uploadedBy: userId }).sort({ createdAt: -1 }).lean();
+
+  res.json({
+    success: true,
+    data: submissions,
+  });
+});
+
+// @desc    Update progress
 // @route   POST /api/eresources/:id/progress
 // @access  Private
 const updateProgress = asyncHandler(async (req, res) => {
   const { dailySecondsToday } = req.body;
 
   if (dailySecondsToday >= 180) {
-    // 3 minutes = 180 seconds
     await recordQualifyingAction(req.user.id, req.user.collegeId, 'eresource');
   }
 
@@ -42,5 +92,7 @@ const updateProgress = asyncHandler(async (req, res) => {
 
 module.exports = {
   listInternalResources,
+  submitEResource,
+  getMySubmissions,
   updateProgress,
 };

@@ -1,7 +1,6 @@
-import React from 'react';
 import { Book, ShieldAlert, Sparkles } from 'lucide-react';
 
-export const CardFront = ({ profile, isOnline }) => {
+export const CardFront = ({ profile,  }) => {
   const { name = 'Student', studentId = 'N/A', major = 'N/A', membershipStatus = 'active', validTill } = profile || {};
 
   const isExpired = membershipStatus === 'expired';

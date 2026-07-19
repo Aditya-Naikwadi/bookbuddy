@@ -37,6 +37,10 @@ const notificationSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+    readAt: {
+      type: Date,
+      default: null,
+    },
     relatedId: {
       type: mongoose.Schema.Types.ObjectId,
     },

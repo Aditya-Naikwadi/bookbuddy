@@ -98,31 +98,6 @@ function App() {
     checkAuth();
   }, [checkAuth]);
 
-  // Handle cross-tab logout synchronization
-  useEffect(() => {
-    const handleStorageChange = (event) => {
-      if (event.key === 'auth-storage') {
-        const authStorage = localStorage.getItem('auth-storage');
-        if (!authStorage) {
-          useAuthStore.setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
-          window.location.href = '/';
-        } else {
-          try {
-            const parsed = JSON.parse(authStorage);
-            if (!parsed.state?.isAuthenticated) {
-              useAuthStore.setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
-              window.location.href = '/';
-            }
-          } catch (e) {
-            console.error('Error syncing auth state across tabs', e);
-          }
-        }
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
   const handleSplashComplete = () => {
     sessionStorage.setItem('bookbuddy_splash_shown', 'true');
     setShowSplash(false);

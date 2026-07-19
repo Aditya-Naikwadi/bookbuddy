@@ -31,7 +31,7 @@ export const LoanCard = ({ loan, urgency, onRenewTrigger, isRenewing, renewingLo
   const diffTime = due.getTime() - now.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  let statusText = '';
+  let statusText;
   if (isOverdue) {
     statusText = `${Math.abs(diffDays)} days overdue`;
   } else if (isDueSoon) {

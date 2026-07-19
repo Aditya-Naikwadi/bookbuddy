@@ -2,17 +2,16 @@
 const Book = require('../../models/Book');
 const Loan = require('../../models/Loan');
 const Fine = require('../../models/Fine');
+const config = require('../../config');
 const EResource = require('../../models/EResource');
 const ReadingList = require('../../models/ReadingList');
 const ReadingProgress = require('../../models/ReadingProgress');
 const Bookmark = require('../../models/Bookmark');
 const SavedSearch = require('../../models/SavedSearch');
-const LabSeat = require('../../models/LabSeat');
 const LabBooking = require('../../models/LabBooking');
 const BookSuggestion = require('../../models/BookSuggestion');
 const Feedback = require('../../models/Feedback');
 const Complaint = require('../../models/Complaint');
-const Streak = require('../../models/Streak');
 const UserSticker = require('../../models/UserSticker');
 const NotificationPreference = require('../../models/NotificationPreference');
 const Reservation = require('../../models/Reservation');
@@ -128,6 +127,11 @@ const getStudentLoans = async (req, res, next) => {
       .populate('bookId', 'title author isbn coverImage')
       .sort('-createdAt');
 
+    // Calculate unpaid fine total
+    const unpaidFines = await Fine.find({ userId: req.user.id, status: 'unpaid' });
+    const totalUnpaidFine = unpaidFines.reduce((sum, f) => sum + f.amount, 0);
+    const maxFineLimit = config.unpaidFineLimit || 100;
+
     const activeLoans = [];
     const historyLoans = [];
 
@@ -137,7 +141,10 @@ const getStudentLoans = async (req, res, next) => {
         let eligible = true;
         let reason = null;
 
-        if (loan.renewalCount >= loan.maxRenewals) {
+        if (totalUnpaidFine > maxFineLimit) {
+          eligible = false;
+          reason = `Blocked: ₹${totalUnpaidFine.toFixed(2)} unpaid fines exceed the ₹${maxFineLimit} limit`;
+        } else if (loan.renewalCount >= loan.maxRenewals) {
           eligible = false;
           reason = 'limit_reached';
         } else {
@@ -1028,7 +1035,218 @@ const updateNotificationPreferences = async (req, res, next) => {
   }
 };
 
+// @desc    Get aggregated student dashboard overview (Fast single-query payload)
+// @route   GET /api/dashboards/student/overview
+// @access  Private/Student
+const getStudentOverview = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const collegeId = req.user.collegeId;
+
+    // Run parallel lightweight database queries using .lean()
+    const [
+      loans,
+      unpaidFines,
+      reservations,
+      streak,
+      recentReadingProgress,
+      recommendations,
+      unreadNotificationsCount,
+    ] = await Promise.all([
+      Loan.find({ userId, status: { $in: ['active', 'overdue'] } })
+        .populate('bookId', 'title author isbn category format coverImage')
+        .sort('-createdAt')
+        .lean(),
+
+      Fine.find({ userId, status: 'unpaid' }).lean(),
+
+      Reservation.find({ userId, status: { $in: ['queued', 'ready_for_pickup'] } })
+        .populate('bookId', 'title author category coverImage')
+        .sort('-createdAt')
+        .lean(),
+
+      streakService.getOrCreateStreak(userId, collegeId),
+
+      ReadingProgress.findOne({ userId })
+        .sort('-lastReadAt')
+        .populate('eresourceId', 'title author type format coverUrl')
+        .lean(),
+
+      Book.find({ ...req.tenantFilter })
+        .select('title author category coverImage copiesAvailable maxLoanDays rating')
+        .sort('-createdAt')
+        .limit(6)
+        .lean(),
+
+      notificationService
+        .getMyNotifications(userId, { read: 'false', limit: 1 })
+        .then((r) => r.total || 0)
+        .catch(() => 0),
+    ]);
+
+    // Batch query reservation holds for active loan books (Solves N+1 query loop)
+    const bookIds = loans.map((l) => l.bookId?._id || l.bookId).filter(Boolean);
+    let heldBookIdsSet = new Set();
+    if (bookIds.length > 0) {
+      const queuedHolds = await Reservation.find({
+        bookId: { $in: bookIds },
+        status: { $in: ['queued', 'ready_for_pickup'] },
+      })
+        .select('bookId')
+        .lean();
+      heldBookIdsSet = new Set(queuedHolds.map((h) => (h.bookId ? h.bookId.toString() : '')));
+    }
+
+    const totalUnpaidFine = unpaidFines.reduce((sum, f) => sum + (f.amount || 0), 0);
+    const maxFineLimit = config.unpaidFineLimit || 100;
+
+    const activeLoans = loans.map((loan) => {
+      let eligible = true;
+      let reason = null;
+
+      if (totalUnpaidFine > maxFineLimit) {
+        eligible = false;
+        reason = `Blocked: ₹${totalUnpaidFine.toFixed(2)} unpaid fines exceed the ₹${maxFineLimit} limit`;
+      } else if (loan.renewalCount >= (loan.maxRenewals || 2)) {
+        eligible = false;
+        reason = 'limit_reached';
+      } else if (
+        loan.bookId &&
+        heldBookIdsSet.has(loan.bookId._id ? loan.bookId._id.toString() : loan.bookId.toString())
+      ) {
+        eligible = false;
+        reason = 'on_hold';
+      }
+
+      return {
+        ...loan,
+        renewalEligibility: { eligible, reason },
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: req.user.id,
+          name: req.user.name,
+          email: req.user.email,
+          studentId: req.user.studentId || req.user.idNumber || 'STU-1001',
+          role: req.user.role,
+          collegeId: req.user.collegeId,
+        },
+        activeLoans,
+        finesSummary: {
+          totalUnpaid: totalUnpaidFine,
+          unpaidCount: unpaidFines.length,
+        },
+        reservations,
+        streak: {
+          currentStreak: streak?.currentStreak || 0,
+          maxStreak: streak?.maxStreak || 0,
+          freezesAvailable: streak?.freezesAvailable || 0,
+          lastQualifyingActionAt: streak?.lastQualifyingActionAt,
+          todayComplete: streak?.lastQualifyingActionAt
+            ? new Date(streak.lastQualifyingActionAt).toDateString() === new Date().toDateString()
+            : false,
+        },
+        recentReadingProgress,
+        recommendations,
+        unreadNotificationsCount,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const analyticsCacheMap = new Map();
+const ANALYTICS_CACHE_TTL = 60 * 1000; // 60 seconds
+
+// @desc    Get historical reading analytics for last 7/30 days
+// @route   GET /api/dashboards/student/reading-analytics
+// @access  Private/Student
+const getStudentReadingAnalytics = async (req, res, next) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const range = req.query.range || req.query.days;
+    const days = range === 'month' || parseInt(range, 10) === 30 ? 30 : 7;
+    const cacheKey = `${userId}:${days}`;
+
+    // Check cache hit
+    const cached = analyticsCacheMap.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < ANALYTICS_CACHE_TTL) {
+      return res.json({
+        success: true,
+        data: cached.data,
+      });
+    }
+
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - (days - 1));
+    const startDateStr = startDate.toISOString().split('T')[0];
+
+    const ReadingActivityLog = require('../../models/ReadingActivityLog');
+    const logs = await ReadingActivityLog.find({
+      userId,
+      date: { $gte: startDateStr },
+    }).lean();
+
+    const logsByDate = new Map();
+    logs.forEach((l) => logsByDate.set(l.date, l));
+
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const analytics = [];
+    let totalPagesRead = 0;
+    let totalMinutesRead = 0;
+
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(endDate.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayLabel = dayNames[d.getDay()];
+
+      const activity = logsByDate.get(dateStr);
+      const pagesRead = activity ? activity.pagesRead || 0 : 0;
+      const minutesRead = activity ? activity.minutesRead || 0 : 0;
+
+      totalPagesRead += pagesRead;
+      totalMinutesRead += minutesRead;
+
+      analytics.push({
+        date: dateStr,
+        day: dayLabel,
+        pagesRead,
+        minutesRead,
+      });
+    }
+
+    const isEmpty = totalPagesRead === 0 && totalMinutesRead === 0;
+
+    const responseData = {
+      days,
+      isEmpty,
+      totalPagesRead,
+      totalMinutesRead,
+      analytics,
+    };
+
+    // Store in cache
+    analyticsCacheMap.set(cacheKey, { timestamp: Date.now(), data: responseData });
+
+    res.json({
+      success: true,
+      data: responseData,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
+  getStudentReadingAnalytics,
+  getStudentOverview,
   getStudentCatalog,
   getStudentRecommendations,
   getStudentLoans,

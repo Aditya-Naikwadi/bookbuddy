@@ -2,6 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const {
+  getStudentReadingAnalytics,
+  getStudentOverview,
   getStudentCatalog,
   getStudentRecommendations,
   getStudentLoans,
@@ -83,6 +85,10 @@ router.use(requireRole('student'));
 router.use(scopeToTenant);
 router.use(userLimiter);
 
+// Aggregated Dashboard Overview & Analytics
+router.get('/overview', getStudentOverview);
+router.get('/reading-analytics', getStudentReadingAnalytics);
+
 // Catalog & OPAC
 router.get('/catalog', expensiveRouteLimiter, getStudentCatalog);
 router.get('/catalog/recommendations', expensiveRouteLimiter, getStudentRecommendations);
@@ -100,6 +106,10 @@ router.get('/fines', getStudentFines);
 
 // EResources
 router.get('/eresources', getStudentEResources);
+router.get(
+  '/eresources/my-submissions',
+  require('../../controllers/eresourceController').getMySubmissions
+);
 router.get('/eresources/:id', validate(paramIdSchema), getStudentEResourceDetails);
 router.post('/eresources', validate(createEResourceSchema), uploadStudentEResource);
 

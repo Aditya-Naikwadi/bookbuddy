@@ -1,13 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
-import { Flame, Sparkles, X, CheckSquare, Gift } from 'lucide-react';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { Flame, Sparkles, X, Gift } from 'lucide-react';
 
 export const MilestoneCelebrationModal = () => {
   const [open, setOpen] = useState(false);
   const [payload, setPayload] = useState(null);
   const closeBtnRef = useRef(null);
-
-  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     const handleStreakUpdate = (e) => {

@@ -1,5 +1,4 @@
 // Authentication and authorization middlewares.
-const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const { verifyAccessToken } = require('../utils/token');

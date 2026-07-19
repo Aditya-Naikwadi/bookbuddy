@@ -1,10 +1,30 @@
 // Controller handling authentication lifecycles (register, login, token refresh, and logout).
 const User = require('../models/User');
 const College = require('../models/College');
+const RefreshToken = require('../models/RefreshToken');
 const AppError = require('../utils/AppError');
 const { generateTokenPair, hashToken } = require('../utils/token');
-const jwt = require('jsonwebtoken');
 const config = require('../config');
+
+// Helper to set httpOnly refresh token cookie
+const setRefreshTokenCookie = (res, token) => {
+  res.cookie('refreshToken', token, {
+    httpOnly: true,
+    secure: config.nodeEnv === 'production',
+    sameSite: 'strict',
+    path: '/api/auth',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+};
+
+const clearRefreshTokenCookie = (res) => {
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: config.nodeEnv === 'production',
+    sameSite: 'strict',
+    path: '/api/auth',
+  });
+};
 
 // @desc    Register a new user (public student/admin signup)
 // @route   POST /api/auth/register
@@ -13,12 +33,10 @@ const registerUser = async (req, res, next) => {
   try {
     const { studentId, name, email, password, role, collegeId } = req.body;
 
-    // Disallow public registration of administrative/privileged roles
     if (role === 'super-admin' || role === 'college-admin') {
       return next(new AppError('Public registration of administrative roles is forbidden.', 403));
     }
 
-    // Verify College exists if collegeId is provided
     if (collegeId) {
       const college = await College.findById(collegeId);
       if (!college || !college.isActive) {
@@ -26,13 +44,11 @@ const registerUser = async (req, res, next) => {
       }
     }
 
-    // Check unique credentials
     const userExists = await User.findOne({ $or: [{ email }, { studentId }] });
     if (userExists) {
       return next(new AppError('User with this email or Student ID already exists.', 400));
     }
 
-    // Create the User (password is hashed in pre-save middleware)
     const user = await User.create({
       studentId,
       name,
@@ -42,19 +58,15 @@ const registerUser = async (req, res, next) => {
       collegeId: role === 'super-admin' ? undefined : collegeId,
     });
 
-    // Generate tokens
     const { accessToken, refreshToken, hash } = generateTokenPair(user);
 
-    // Save refresh token hash
-    user.refreshTokenHash = hash;
-    await user.save();
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: config.nodeEnv === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    await RefreshToken.create({
+      userId: user._id,
+      tokenHash: hash,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
+
+    setRefreshTokenCookie(res, refreshToken);
 
     res.status(201).json({
       success: true,
@@ -67,7 +79,6 @@ const registerUser = async (req, res, next) => {
         collegeId: user.collegeId,
       },
       accessToken,
-      refreshToken,
     });
   } catch (error) {
     next(error);
@@ -82,7 +93,6 @@ const loginUser = async (req, res, next) => {
     const { email, studentId, password } = req.body;
     const credential = email || studentId;
 
-    // Query user and select the password field explicitly
     const user = await User.findOne({
       $or: [{ email: credential }, { studentId: credential }],
     }).select('+password');
@@ -100,19 +110,15 @@ const loginUser = async (req, res, next) => {
       return next(new AppError('Invalid credentials.', 401));
     }
 
-    // Generate tokens
     const { accessToken, refreshToken, hash } = generateTokenPair(user);
 
-    // Save refresh token hash
-    user.refreshTokenHash = hash;
-    await user.save();
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: config.nodeEnv === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    await RefreshToken.create({
+      userId: user._id,
+      tokenHash: hash,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
+
+    setRefreshTokenCookie(res, refreshToken);
 
     res.json({
       success: true,
@@ -125,14 +131,13 @@ const loginUser = async (req, res, next) => {
         collegeId: user.collegeId,
       },
       accessToken,
-      refreshToken,
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Refresh access token
+// @desc    Refresh access token & rotate refresh token
 // @route   POST /api/auth/refresh
 // @access  Public
 const refreshToken = async (req, res, next) => {
@@ -143,52 +148,61 @@ const refreshToken = async (req, res, next) => {
       return next(new AppError('No refresh token provided.', 401));
     }
 
-    let decoded;
-    try {
-      decoded = jwt.verify(clientToken, config.jwt.refreshSecret);
-    } catch {
+    const clientHash = hashToken(clientToken);
+
+    const existingTokenDoc = await RefreshToken.findOne({ tokenHash: clientHash }).select(
+      '+tokenHash'
+    );
+
+    if (!existingTokenDoc) {
+      clearRefreshTokenCookie(res);
       return next(new AppError('Invalid or expired refresh token.', 401));
     }
 
-    const clientHash = hashToken(clientToken);
+    // THEFT DETECTION: If token doc was already revoked (reused revoked token)
+    if (existingTokenDoc.revokedAt) {
+      // Revoke ALL sessions for this user!
+      await RefreshToken.updateMany({ userId: existingTokenDoc.userId }, { revokedAt: new Date() });
 
-    // Fetch user and explicitly select refreshTokenHash and isActive
-    const user = await User.findById(decoded.userId).select('+refreshTokenHash +isActive');
+      clearRefreshTokenCookie(res);
+      return next(
+        new AppError('Security Warning: Session reuse detected. All sessions revoked.', 401)
+      );
+    }
+
+    // Expiration check
+    if (existingTokenDoc.expiresAt < new Date()) {
+      existingTokenDoc.revokedAt = new Date();
+      await existingTokenDoc.save();
+
+      clearRefreshTokenCookie(res);
+      return next(new AppError('Refresh token expired.', 401));
+    }
+
+    const user = await User.findById(existingTokenDoc.userId).select('+isActive');
     if (!user || !user.isActive) {
+      clearRefreshTokenCookie(res);
       return next(new AppError('User is deactivated or does not exist.', 401));
     }
 
-    // Verify stored refresh token hash matches the client token's hash
-    if (!user.refreshTokenHash || user.refreshTokenHash !== clientHash) {
-      // Security measure: invalidate token hash on mismatch to mitigate replay attacks
-      user.refreshTokenHash = undefined;
-      await user.save();
+    // ROTATION: Revoke current token and record replacement
+    const { accessToken, refreshToken: newRefreshToken, hash: newHash } = generateTokenPair(user);
 
-      res.clearCookie('refreshToken', {
-        httpOnly: true,
-        secure: config.nodeEnv === 'production',
-        sameSite: 'lax',
-      });
-      return next(new AppError('Refresh token mismatch. Revoking access.', 401));
-    }
+    existingTokenDoc.revokedAt = new Date();
+    existingTokenDoc.replacedBy = newHash;
+    await existingTokenDoc.save();
 
-    // Rotate token pair
-    const { accessToken, refreshToken: newRefreshToken, hash } = generateTokenPair(user);
-
-    user.refreshTokenHash = hash;
-    await user.save();
-
-    res.cookie('refreshToken', newRefreshToken, {
-      httpOnly: true,
-      secure: config.nodeEnv === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    await RefreshToken.create({
+      userId: user._id,
+      tokenHash: newHash,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
+
+    setRefreshTokenCookie(res, newRefreshToken);
 
     res.json({
       success: true,
       accessToken,
-      refreshToken: newRefreshToken,
     });
   } catch (error) {
     next(error);
@@ -197,20 +211,17 @@ const refreshToken = async (req, res, next) => {
 
 // @desc    Logout user & invalidate refresh token
 // @route   POST /api/auth/logout
-// @access  Private
+// @access  Public / Private
 const logoutUser = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (user) {
-      user.refreshTokenHash = undefined;
-      await user.save();
+    const clientToken = req.cookies?.refreshToken || req.body?.refreshToken;
+
+    if (clientToken) {
+      const clientHash = hashToken(clientToken);
+      await RefreshToken.updateOne({ tokenHash: clientHash }, { revokedAt: new Date() });
     }
 
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: config.nodeEnv === 'production',
-      sameSite: 'lax',
-    });
+    clearRefreshTokenCookie(res);
 
     res.json({
       success: true,

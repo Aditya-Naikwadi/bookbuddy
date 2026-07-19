@@ -13,6 +13,8 @@
     "dev": "nodemon src/server.js",
     "dev:start": "nodemon src/server.js",
     "build": "echo 'Building backend... No compilation needed for Node.js CommonJS'",
+    "migrate:db": "node src/scripts/migrateIndicesAndDefaults.js",
+    "migrate:hardening": "node src/scripts/migrateProductionHardening.js",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "jest src/tests --runInBand --detectOpenHandles --forceExit"

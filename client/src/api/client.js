@@ -1,38 +1,75 @@
 import axios from 'axios';
 
+let inMemoryAccessToken = null;
+let inMemoryCsrfToken = null;
+
+export const getInMemoryToken = () => inMemoryAccessToken;
+export const setInMemoryToken = (token) => {
+  inMemoryAccessToken = token;
+};
+
+export const getCsrfToken = () => inMemoryCsrfToken;
+export const setCsrfToken = (csrf) => {
+  inMemoryCsrfToken = csrf;
+};
+
+function getCookie(name) {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  if (match) return decodeURIComponent(match[2]);
+  return null;
+}
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Send cookies with cross-origin requests
+  withCredentials: true,
 });
 
-// Request interceptor to add token from Zustand persistent storage
-apiClient.interceptors.request.use((config) => {
-  let token = null;
-  const authStorage = localStorage.getItem('auth-storage');
-  if (authStorage) {
-    try {
-      const parsed = JSON.parse(authStorage);
-      token = parsed.state?.token;
-    } catch (e) {
-      console.error('Failed to parse auth-storage from localStorage', e);
+export const fetchCsrfToken = async () => {
+  try {
+    const { data } = await apiClient.get('/auth/csrf-token');
+    if (data?.csrfToken) {
+      setCsrfToken(data.csrfToken);
+      return data.csrfToken;
+    }
+  } catch {
+    const cookieCsrf = getCookie('_csrf');
+    if (cookieCsrf) {
+      setCsrfToken(cookieCsrf);
+      return cookieCsrf;
     }
   }
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+};
+
+// Request Interceptor
+apiClient.interceptors.request.use(
+  (config) => {
+    if (inMemoryAccessToken) {
+      config.headers.Authorization = `Bearer ${inMemoryAccessToken}`;
+    }
+
+    // Attach CSRF header on state-changing requests
+    const stateChangingMethods = ['post', 'put', 'delete', 'patch'];
+    if (stateChangingMethods.includes(config.method?.toLowerCase())) {
+      const csrf = inMemoryCsrfToken || getCookie('_csrf');
+      if (csrf) {
+        config.headers['x-csrf-token'] = csrf;
+      }
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 let isRefreshing = false;
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
+  failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
@@ -42,18 +79,18 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// Response interceptor to handle global errors like 401 and refresh access token
+// Response Interceptor for 401 handling
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Prevent infinite loops or attempts to refresh on auth endpoints
     if (
       !originalRequest ||
       originalRequest.url?.includes('/auth/refresh') ||
       originalRequest.url?.includes('/auth/login') ||
-      originalRequest.url?.includes('/auth/register')
+      originalRequest.url?.includes('/auth/register') ||
+      originalRequest.url?.includes('/auth/csrf-token')
     ) {
       return Promise.reject(error);
     }
@@ -63,13 +100,11 @@ apiClient.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
-          .then(token => {
+          .then((token) => {
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return apiClient(originalRequest);
           })
-          .catch(err => {
-            return Promise.reject(err);
-          });
+          .catch((err) => Promise.reject(err));
       }
 
       originalRequest._retry = true;
@@ -78,23 +113,7 @@ apiClient.interceptors.response.use(
       try {
         const { data } = await apiClient.post('/auth/refresh');
         const newToken = data.accessToken;
-
-        // Update localStorage
-        const authStorage = localStorage.getItem('auth-storage');
-        if (authStorage) {
-          try {
-            const parsed = JSON.parse(authStorage);
-            parsed.state.token = newToken;
-            parsed.state.isAuthenticated = true;
-            localStorage.setItem('auth-storage', JSON.stringify(parsed));
-          } catch (e) {
-            console.error('Failed to update auth-storage localStorage', e);
-          }
-        }
-
-        // Dynamically update Zustand store at runtime to avoid circular dependency
-        const authStoreModule = await import('../store/authStore');
-        authStoreModule.default.setState({ token: newToken, isAuthenticated: true });
+        setInMemoryToken(newToken);
 
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         processQueue(null, newToken);
@@ -104,25 +123,11 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         isRefreshing = false;
-
-        // Revoke state and clean up on refresh failure
-        const authStorage = localStorage.getItem('auth-storage');
-        if (authStorage) {
-          try {
-            const parsed = JSON.parse(authStorage);
-            parsed.state.token = null;
-            parsed.state.user = null;
-            parsed.state.isAuthenticated = false;
-            localStorage.setItem('auth-storage', JSON.stringify(parsed));
-          } catch (e) {
-            console.error('Failed to clean auth-storage localStorage', e);
-          }
-        }
+        setInMemoryToken(null);
 
         const authStoreModule = await import('../store/authStore');
-        authStoreModule.default.setState({ token: null, user: null, isAuthenticated: false });
+        authStoreModule.default.setState({ user: null, isAuthenticated: false, isLoading: false });
 
-        window.location.href = '/auth/login';
         return Promise.reject(refreshError);
       }
     }

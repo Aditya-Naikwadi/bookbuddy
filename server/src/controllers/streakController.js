@@ -92,6 +92,7 @@ const checkIn = asyncHandler(async (req, res) => {
       lastQualifyingDate: lastQualifyingDateStr,
       freezesAvailable: streak.freezesAvailable,
       todayComplete: true,
+      newlyUnlocked: streak.newlyUnlocked || [],
     },
   });
 });

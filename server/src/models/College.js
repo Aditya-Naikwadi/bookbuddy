@@ -19,6 +19,10 @@ const collegeSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    maxFineLimit: {
+      type: Number,
+      default: 100,
+    },
     status: {
       type: String,
       enum: ['pending', 'active', 'suspended', 'archived'],
