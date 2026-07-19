@@ -38,6 +38,7 @@
 - [🔌 Complete API Reference](#-complete-api-reference)
 - [⚙️ Environment Configuration Reference](#️-environment-configuration-reference)
 - [🚀 Quick Start & Installation Guide](#-quick-start--installation-guide)
+  - [🔑 Demo Accounts for Portal Testing](#-demo-accounts-for-portal-testing)
   - [Prerequisites](#prerequisites)
   - [Local Setup](#local-development-setup)
   - [Database Migrations](#database-migrations)
@@ -573,6 +574,17 @@ RATE_LIMIT_EXPENSIVE_WINDOW_MS=60000
 ---
 
 ## 🚀 Quick Start & Installation Guide
+
+### 🔑 Demo Accounts for Portal Testing
+
+| Role / Dashboard | Email / Identifier | Password | Target Dashboard Route |
+| :--- | :--- | :--- | :--- |
+| **Student** | `student@bookbuddy.com` *(or `STU1001`)* | `Demo@123` | `/student-dashboard` |
+| **General User** | `general@bookbuddy.com` | `Demo@123` | `/general-dashboard` |
+| **College Admin** | `collegeadmin@bookbuddy.com` | `Demo@123` | `/college-admin` |
+| **Super Admin** | `admin@bookbuddy.com` | `Demo@123` | `/admin-portal` |
+
+*Note: Centralized demo accounts are stored in [client/src/constants/demoAccounts.js](file:///c:/Users/naikw/OneDrive/Desktop/project/BookBuddy/client/src/constants/demoAccounts.js) and [server/src/config/demoAccounts.js](file:///c:/Users/naikw/OneDrive/Desktop/project/BookBuddy/server/src/config/demoAccounts.js).*
 
 ### Prerequisites
 - **Node.js**: `v20.x` or later (`node -v`)
