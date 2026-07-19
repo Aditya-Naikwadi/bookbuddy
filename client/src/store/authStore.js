@@ -1,7 +1,12 @@
 import { create } from 'zustand';
-import apiClient, { getInMemoryToken, setInMemoryToken, fetchCsrfToken } from '../api/client';
+import apiClient, { getInMemoryToken, setInMemoryToken, fetchCsrfToken, setOnUnauthorizedCallback } from '../api/client';
 
-const useAuthStore = create((set) => ({
+const useAuthStore = create((set) => {
+  setOnUnauthorizedCallback(() => {
+    set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+  });
+
+  return {
   user: null,
   token: null, // Virtual accessor for backwards-compatibility getters in hooks
   isAuthenticated: false,
@@ -120,6 +125,7 @@ const useAuthStore = create((set) => ({
       return false;
     }
   },
-}));
+};
+});
 
 export default useAuthStore;

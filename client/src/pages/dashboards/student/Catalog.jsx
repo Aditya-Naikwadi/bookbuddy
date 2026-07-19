@@ -324,7 +324,7 @@ const Catalog = () => {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 [content-visibility:auto] [contain-intrinsic-size:1px_300px]">
               {books.map((book) => (
                 <div 
                   key={book._id} 
@@ -350,7 +350,13 @@ const Catalog = () => {
                   {/* Thumbnail / Cover section */}
                   <div className="h-44 bg-surface/50 w-full relative flex items-center justify-center border-b border-edge/35 overflow-hidden">
                     {book.coverImage ? (
-                      <img src={book.coverImage} alt="" className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300" />
+                      <img 
+                        src={book.coverImage} 
+                        alt="" 
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300 aspect-[3/4]" 
+                      />
                     ) : (
                       <div className="flex flex-col items-center text-muted/30 select-none">
                         <BookOpen size={40} />

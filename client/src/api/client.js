@@ -79,6 +79,11 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
+let onUnauthorizedCallback = null;
+export const setOnUnauthorizedCallback = (cb) => {
+  onUnauthorizedCallback = cb;
+};
+
 // Response Interceptor for 401 handling
 apiClient.interceptors.response.use(
   (response) => response,
@@ -125,8 +130,9 @@ apiClient.interceptors.response.use(
         isRefreshing = false;
         setInMemoryToken(null);
 
-        const authStoreModule = await import('../store/authStore');
-        authStoreModule.default.setState({ user: null, isAuthenticated: false, isLoading: false });
+        if (onUnauthorizedCallback) {
+          onUnauthorizedCallback();
+        }
 
         return Promise.reject(refreshError);
       }

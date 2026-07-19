@@ -1,4 +1,3 @@
-import React from 'react';
 import { Flame, CheckCircle, Loader2 } from 'lucide-react';
 import { Button } from '../../ui/Button';
 

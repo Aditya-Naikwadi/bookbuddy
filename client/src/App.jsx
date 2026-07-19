@@ -5,9 +5,10 @@ import useAuthStore from './store/authStore';
 import { AnimatePresence } from 'framer-motion';
 import { SplashScreen } from './components/ui/SplashScreen';
 
-// Eagerly loaded components (Critical for initial render)
-import Landing from './pages/public/Landing';
 import ProtectedRoute from './components/ProtectedRoute';
+
+// Lazy loaded public pages
+const Landing = lazy(() => import('./pages/public/Landing'));
 
 // Lazy loaded layout components
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));

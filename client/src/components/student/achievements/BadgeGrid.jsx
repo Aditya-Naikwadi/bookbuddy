@@ -1,4 +1,3 @@
-import React from 'react';
 import { Lock, Award } from 'lucide-react';
 import { Badge } from '../../ui/Badge';
 

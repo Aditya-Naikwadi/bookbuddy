@@ -1,9 +1,9 @@
-import React from 'react';
+
 import { Check, Flame, AlertCircle } from 'lucide-react';
 
 export const StreakCalendar = ({
   currentStreak = 0,
-  lastQualifyingDate,
+  lastQualifyingDate,     
   todayComplete = false,
   timezone = 'Asia/Kolkata',
 }) => {
@@ -65,8 +65,8 @@ export const StreakCalendar = ({
         {days.map((day) => {
           const status = getDayStatus(day.dateStr, day.isToday);
           
-          let statusText = 'Missed';
-          let statusClasses = 'bg-slate-50 text-slate-300 border-slate-100';
+          let statusText;
+          let statusClasses;
           let icon = null;
 
           if (status === 'checked') {
