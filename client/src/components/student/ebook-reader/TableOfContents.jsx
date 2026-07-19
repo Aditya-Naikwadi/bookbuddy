@@ -1,4 +1,4 @@
-import { Menu, BookOpen, SkipBack, ListTree } from 'lucide-react';
+import { BookOpen, SkipBack, ListTree } from 'lucide-react';
 
 export const TableOfContents = ({ toc = [], pdfOutline = [], isPdf = false, onJumpToLocation, onJumpToPdfPage, onClose }) => {
   return (

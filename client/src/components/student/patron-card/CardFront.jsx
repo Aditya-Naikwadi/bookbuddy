@@ -1,4 +1,4 @@
-import { Book, ShieldAlert, Sparkles } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 
 export const CardFront = ({ profile,  }) => {
   const { name = 'Student', studentId = 'N/A', major = 'N/A', membershipStatus = 'active', validTill } = profile || {};

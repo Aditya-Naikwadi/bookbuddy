@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { BookOpen, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { LoanCard } from './LoanCard';
 
 // Urgency levels calculation utility
-export const getUrgencyGroup = (dueDate) => {
+const getUrgencyGroup = (dueDate) => {
   const due = new Date(dueDate);
   const now = new Date();
   

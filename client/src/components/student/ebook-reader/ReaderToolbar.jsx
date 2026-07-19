@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Menu, Settings, X, ArrowLeft, ArrowRight, ChevronLeft, LayoutGrid } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Menu, Settings, X, ArrowRight, ChevronLeft } from 'lucide-react';
 
 export const ReaderToolbar = ({
   title,
@@ -11,15 +10,15 @@ export const ReaderToolbar = ({
   onPrevPage,
   onNextPage,
   onClose,
-  settingsOpen,
-  tocOpen,
+  settingsOpen = false,
+  tocOpen = false,
 }) => {
   const [isVisible, setIsVisible] = useState(true);
   const hideTimeoutRef = useRef(null);
   const containerRef = useRef(null);
 
   // Manage visibility timeout
-  const resetHideTimeout = () => {
+  const resetHideTimeout = useCallback(() => {
     setIsVisible(true);
     if (hideTimeoutRef.current) {
       clearTimeout(hideTimeoutRef.current);
@@ -32,7 +31,7 @@ export const ReaderToolbar = ({
     hideTimeoutRef.current = setTimeout(() => {
       setIsVisible(false);
     }, 3000);
-  };
+  }, [settingsOpen, tocOpen]);
 
   // Visibility triggers: mouse move, screen taps, active focus changes
   useEffect(() => {
@@ -52,7 +51,12 @@ export const ReaderToolbar = ({
     window.addEventListener('touchstart', handleActivity);
     document.addEventListener('focusin', handleFocusIn);
 
-    resetHideTimeout();
+    // Schedule auto-hide timer after mount
+    if (!settingsOpen && !tocOpen && !containerRef.current?.contains(document.activeElement)) {
+      hideTimeoutRef.current = setTimeout(() => {
+        setIsVisible(false);
+      }, 3000);
+    }
 
     return () => {
       window.removeEventListener('mousemove', handleActivity);
@@ -63,7 +67,7 @@ export const ReaderToolbar = ({
         clearTimeout(hideTimeoutRef.current);
       }
     };
-  }, [settingsOpen, tocOpen]);
+  }, [settingsOpen, tocOpen, resetHideTimeout]);
 
   return (
     <div

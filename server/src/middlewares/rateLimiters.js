@@ -2,7 +2,6 @@ const { RateLimiterRedis, RateLimiterMemory } = require('rate-limiter-flexible')
 const Redis = require('ioredis');
 const config = require('../config');
 const logger = require('../utils/logger');
-const AppError = require('../utils/AppError');
 
 let redisClient = null;
 let redisReady = false;
@@ -144,7 +143,7 @@ const globalLimiter = async (req, res, next) => {
         userId = decoded.sub;
         key = `user:${userId}`;
       }
-    } catch (err) {
+    } catch {
       // Fallback to IP if token is invalid or expired
     }
   }

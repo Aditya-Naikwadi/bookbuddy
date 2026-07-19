@@ -6,7 +6,6 @@ import { useSocket } from '../../../hooks/useSocket';
 import {
   Bell,
   X,
-  Check,
   CheckCheck,
   Flame,
   BookOpen,

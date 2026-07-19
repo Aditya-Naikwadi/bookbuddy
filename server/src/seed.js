@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
 
@@ -57,14 +56,14 @@ const importData = async () => {
     try {
       await Sticker.collection.dropIndex('code_1');
       console.log('Dropped stale code_1 index from stickers collection.');
-    } catch (err) {
+    } catch {
       // Index might not exist, ignore
     }
 
     try {
       await StreakReward.collection.dropIndex('streakDays_1');
       console.log('Dropped stale streakDays_1 index from streakrewards collection.');
-    } catch (err) {
+    } catch {
       // Index might not exist, ignore
     }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Monitor, Calendar, Clock, ShieldCheck, X, Loader2 } from 'lucide-react';
 import { Button } from '../../ui/Button';
 

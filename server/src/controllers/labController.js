@@ -2,7 +2,6 @@ const asyncHandler = require('express-async-handler');
 const LabSeat = require('../models/LabSeat');
 const LabBooking = require('../models/LabBooking');
 const labBookingService = require('../services/labBookingService');
-const { recordQualifyingAction } = require('../services/streakService');
 const events = require('../sockets/events');
 
 // @desc    Get all lab seats

@@ -1,4 +1,3 @@
-import React from 'react';
 import { MessageSquare, Loader2, Star } from 'lucide-react';
 import { Button } from '../../ui/Button';
 

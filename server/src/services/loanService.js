@@ -6,7 +6,6 @@ const Fine = require('../models/Fine');
 const AppError = require('../utils/AppError');
 const config = require('../config');
 const streakService = require('./streakService');
-const notificationService = require('./notificationService');
 const reservationService = require('./reservationService');
 const { runInTransaction } = require('../utils/transactionHelper');
 

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { Monitor, Hammer, ShieldAlert, Check } from 'lucide-react';
 
 export const WorkstationGrid = ({

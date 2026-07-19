@@ -28,7 +28,7 @@ const { DateTime } = require('luxon');
 const getLocalDateString = (dateObj, timezone) => {
   try {
     return DateTime.fromJSDate(dateObj).setZone(timezone).toFormat('yyyy-MM-dd');
-  } catch (err) {
+  } catch {
     return DateTime.fromJSDate(dateObj).setZone('Asia/Kolkata').toFormat('yyyy-MM-dd');
   }
 };
@@ -92,7 +92,6 @@ const recordQualifyingAction = async (userId, collegeId, actionType) => {
           [{ collegeId, userId, checkInDate: todayStr, timestamp: now, freezeConsumed: false }],
           { session }
         );
-        logCreated = true;
       }
     }
 

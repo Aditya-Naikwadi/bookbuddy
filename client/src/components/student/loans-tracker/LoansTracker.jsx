@@ -81,7 +81,7 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
   const userCoupons = profile?.fineWaiverCoupons || 0;
 
   // 2. Event Handlers
-  const handleRenew = async (loan, btnRef) => {
+  const handleRenew = async (loan) => {
     setLiveAnnouncement(`Attempting to renew "${loan.bookId?.title}"...`);
     try {
       const res = await renewLoan(loan._id);
@@ -100,7 +100,7 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
     try {
       await cancelHold(holdId);
       setLiveAnnouncement('Reservation hold cancelled successfully.');
-    } catch (err) {
+    } catch {
       setLiveAnnouncement('Failed to cancel reservation hold.');
     }
   };

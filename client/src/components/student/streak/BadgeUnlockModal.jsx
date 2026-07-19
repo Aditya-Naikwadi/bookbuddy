@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Award, Share2, Check, X, Sparkles, Trophy, Star } from 'lucide-react';
+import { Share2, Check, X, Sparkles, Trophy } from 'lucide-react';
 
 export const BadgeUnlockModal = ({ unlockedBadges = [], onClose }) => {
   const [copied, setCopied] = useState(false);

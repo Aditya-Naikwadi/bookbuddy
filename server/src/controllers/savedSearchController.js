@@ -1,6 +1,5 @@
 const asyncHandler = require('../utils/asyncHandler');
 const SavedSearch = require('../models/SavedSearch');
-const AppError = require('../utils/AppError');
 
 // @desc    Get my saved searches
 // @route   GET /api/saved-searches/me

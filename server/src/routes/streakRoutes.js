@@ -23,5 +23,8 @@ router.route('/history').get(getStreakHistory);
 router.route('/badges').get(getBadges).post(createBadge);
 router.route('/recalculate').post(recalculateMyStreak);
 router.route('/rewards').get(getRewardsLadder);
+router.route('/repair').post(repairStreak);
+router.route('/stickers').get(getMyStickers);
+router.route('/stickers/catalog').get(getStickerCatalog);
 
 module.exports = router;

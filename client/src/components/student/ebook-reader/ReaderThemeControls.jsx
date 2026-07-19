@@ -1,4 +1,3 @@
-import React from 'react';
 import { Type, Check } from 'lucide-react';
 
 export const ReaderThemeControls = ({
