@@ -24,6 +24,8 @@
 - [🎨 Frontend Architecture & State Flow](#-frontend-architecture--state-flow)
 - [⚙️ Backend Architecture & Pipeline](#️-backend-architecture--pipeline)
 - [🔒 Multi-Tenancy & Data Isolation](#-multi-tenancy--data-isolation)
+- [🎛️ Tenant Service Selection & Feature-Gated Dashboards](#️-tenant-service-selection--feature-gated-dashboards)
+- [📥 Bulk Student Roster Upload & Web Worker Engine](#-bulk-student-roster-upload--web-worker-engine)
 - [🛡️ Security Architecture & Protection Suite](#️-security-architecture--protection-suite)
 - [🗄️ Database Architecture, ERD & Indexing](#️-database-architecture-erd--indexing)
 - [⚡ Concurrency Integrity & Race Condition Protection](#-concurrency-integrity--race-condition-protection)
@@ -44,6 +46,7 @@
   - [Database Migrations](#database-migrations)
   - [Docker Compose Launch](#docker-compose-launch)
   - [Testing & Coverage](#running-tests)
+- [🌐 Production Build & Deployment Guide](#-production-build--deployment-guide)
 - [📁 Repository Structure](#-repository-structure)
 - [📄 License & Maintenance](#-license--maintenance)
 
@@ -229,6 +232,49 @@ sequenceDiagram
     Service-->>Controller: Checkout Complete
     Controller-->>Admin: HTTP 201 Created (JSON Response)
 ```
+
+---
+
+## 🎛️ Tenant Service Selection & Feature-Gated Dashboards
+
+BookBuddy implements a data-driven feature-gating system where each college institution's enabled service modules dictate the layout, navigation, and accessible routes across both College Admin and Student portals.
+
+1. **Service Selection Wizard (Tenant Onboarding Step 3)**:
+   - When a college administrator registers their institution, Step 3 of the onboarding wizard provisions their tenant's service modules (`selectedServices: string[]`).
+   - Grouped into 4 service categories: **Core** (Catalog, Circulation, Patron Card, Fines), **Engagement** (E-Resources, Reading Lists, AI Recommendations, Gamification), **Facilities** (Lab & Seat Booking, Helpdesk), and **Analytics**.
+   - Offers preset service bundles (**Essentials Bundle**, **Full Suite**) with individual toggle customization and inline dependency resolution (e.g. enabling *Gamification* automatically resolves and checks *AI Recommendations*).
+   - Enforces core service validation before proceeding.
+
+2. **FeatureFlagProvider & Hooks**:
+   - `FeatureFlagProvider` (`client/src/context/FeatureFlagContext.jsx`) fetches the college's active feature config (`GET /api/college/:id/features`) once per session via `@tanstack/react-query`.
+   - Exposes `useFeature(key)` and `useFeatureFlags()` hooks throughout the client component tree without prop-drilling.
+
+3. **Data-Driven Navigation & Route Guards**:
+   - Navigation configurations (`client/src/config/navigation.js`) drive both desktop sidebar and mobile bottom navigation in `DashboardLayout.jsx`. Disabled features are automatically omitted from student navigation menus.
+   - Page routes wrapped with `<FeatureGate feature="..." isPageGate>` present a friendly fallback page (`FeatureUnavailablePage.jsx`) if accessed by direct URL.
+
+---
+
+## 📥 Bulk Student Roster Upload & Web Worker Engine
+
+The College Admin Dashboard features an enterprise bulk student import engine designed to handle rosters of thousands of student records seamlessly without blocking main-thread UI rendering.
+
+1. **Non-Blocking Web Worker Parsing**:
+   - Uploaded CSV files are parsed in a dedicated background Web Worker (`client/src/workers/csvParser.worker.js`) via Vite Web Worker imports (`new Worker(new URL('./csvParser.worker.js', import.meta.url), { type: 'module' })`).
+   - Runs client-side validation for required fields (`Student ID`, `Full Name`, `Email`), email regex syntax, and intra-file duplicate Student IDs.
+
+2. **Virtualized Preview Table & Inline Data Cleaning**:
+   - `UploadPreviewTable.jsx` utilizes windowed rendering to display thousands of candidate rows at 60 FPS.
+   - Each row displays status indicators (`Valid`, `Warning`, `Error`). Admins can double-click cells to edit malformed emails or missing fields inline with instant re-validation.
+   - Includes an `ErrorOnlyFilterToggle.jsx` switch to filter preview rows directly to error records.
+
+3. **Adapted CSV Template Generator**:
+   - `TemplateDownloadButton.jsx` reads `useFeatureFlags()` and generates a CSV template whose columns dynamically adapt to the college's active features (e.g. adding *Preferred Lab* if Facilities Booking is enabled).
+
+4. **Async Upload Job Status & Error CSV Export**:
+   - Submitting an import triggers asynchronous backend processing (`POST /api/college/:id/students/bulk-upload`).
+   - `UploadProgressPanel.jsx` polls job status using exponential backoff (1.5s → 3s → 6s).
+   - Upon completion, `UploadResultSummary.jsx` displays processed/failed statistics, offers a downloadable CSV error report for failed rows, and provides a one-click action to re-upload just the corrected failed subset.
 
 ---
 
@@ -707,6 +753,48 @@ BookBuddy/
 ├── .gitignore
 └── README.md
 ```
+
+---
+
+## 🌐 Production Build & Deployment Guide
+
+BookBuddy is engineered for zero-downtime, high-performance production deployment across cloud platforms (Vercel, Render, AWS Elastic Beanstalk, Docker Swarm, Kubernetes).
+
+### 1. Production Build Commands
+
+```bash
+# 1. Install client dependencies & build optimized client bundle
+cd client
+npm install
+npm run build
+
+# 2. Test server in production mode
+cd ../server
+npm install
+NODE_ENV=production npm start
+```
+
+### 2. SPA Route Rewrites (`vercel.json`)
+For client-side single page application routing (`react-router-dom`), `vercel.json` is configured in the root directory:
+```json
+{
+  "buildCommand": "npm install --prefix client && npm run build --prefix client",
+  "outputDirectory": "client/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+### 3. Production Environment Checklist
+- Set `NODE_ENV=production` on the API server.
+- Configure production MongoDB Atlas connection string (`MONGODB_URI`) with replica set support.
+- Configure Redis host (`REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`) for rate limiting and cache storage.
+- Provide strong random JWT secret strings (`JWT_SECRET`, `REFRESH_TOKEN_SECRET`) with 64+ characters.
+- Ensure CORS origin (`CLIENT_URL`) matches your production frontend domain.
 
 ---
 
