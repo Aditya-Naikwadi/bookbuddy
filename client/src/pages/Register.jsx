@@ -33,13 +33,13 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (role === 'college-admin') {
+      navigate('/register');
+      return;
+    }
     const success = await register(name, email, password, studentId, role);
     if (success) {
-      if (role === 'college-admin') {
-        navigate('/college-admin', { replace: true });
-      } else {
-        navigate('/general-dashboard', { replace: true });
-      }
+      navigate('/general-dashboard', { replace: true });
     }
   };
 
@@ -166,9 +166,14 @@ const Register = () => {
               onChange={(e) => setRole(e.target.value)}
               className="w-full p-2.5 text-sm bg-surface/50 border border-edge rounded-xl text-ink focus:outline-none focus:ring-2 focus:ring-ember/50 transition-all appearance-none cursor-pointer shadow-sm disabled:opacity-50"
             >
-              <option value="general" className="bg-deep text-ink">General</option>
-              <option value="college-admin" className="bg-deep text-ink">Admin</option>
+              <option value="general" className="bg-deep text-ink">General Patron</option>
+              <option value="college-admin" className="bg-deep text-ink">College Admin (Onboarding Wizard)</option>
             </select>
+            {role === 'college-admin' && (
+              <p className="text-[11px] text-amber-400 mt-1">
+                College Admin accounts are provisioned via Institution Tenant Onboarding. Submitting will open the Onboarding Wizard.
+              </p>
+            )}
           </motion.div>
         </div>
         

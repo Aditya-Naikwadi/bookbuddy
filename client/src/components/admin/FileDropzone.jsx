@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { UploadCloud, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { UploadCloud, FileText, AlertCircle } from 'lucide-react';
 
 export default function FileDropzone({ onFileSelected, isParsing = false }) {
   const [isDragOver, setIsDragOver] = useState(false);
@@ -16,7 +16,6 @@ export default function FileDropzone({ onFileSelected, isParsing = false }) {
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      // 10MB limit
       setError('File size exceeds 10MB sanity limit.');
       return;
     }

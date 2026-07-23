@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import featureApi from '../../api/featureApi';
 
 export default function UploadProgressPanel({ jobId, totalRows = 100, onComplete }) {
@@ -15,7 +15,7 @@ export default function UploadProgressPanel({ jobId, totalRows = 100, onComplete
       try {
         const res = await featureApi.getUploadJobStatus(jobId);
 
-        if (res.status === 'completed' || progress >= 100) {
+        if (res.status === 'completed') {
           setProgress(100);
           setProcessed(res.processed || totalRows);
           setFailed(res.failed || 0);
@@ -23,14 +23,13 @@ export default function UploadProgressPanel({ jobId, totalRows = 100, onComplete
           return;
         }
 
-        // Increment progress for smooth feedback
         setProgress((prev) => {
           const next = Math.min(95, prev + Math.floor(Math.random() * 25) + 15);
           setProcessed(Math.floor((totalRows * next) / 100));
           return next;
         });
 
-        delay = Math.min(8000, delay * 1.5); // Exponential backoff
+        delay = Math.min(8000, delay * 1.5);
         timerId = setTimeout(pollStatus, delay);
       } catch (err) {
         console.error('Job status polling error:', err);
@@ -56,7 +55,6 @@ export default function UploadProgressPanel({ jobId, totalRows = 100, onComplete
         </p>
       </div>
 
-      {/* Progress Bar */}
       <div className="space-y-2">
         <div className="flex justify-between text-xs font-semibold text-slate-600">
           <span>Processing Roster</span>
@@ -70,7 +68,6 @@ export default function UploadProgressPanel({ jobId, totalRows = 100, onComplete
         </div>
       </div>
 
-      {/* Live Counter Stats */}
       <div className="grid grid-cols-2 gap-4 pt-2">
         <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
           <span className="text-xs text-slate-500 font-medium">Processed</span>

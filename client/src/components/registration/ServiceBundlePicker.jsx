@@ -1,4 +1,3 @@
-import React from 'react';
 import { Sparkles, Layers, Check } from 'lucide-react';
 
 export default function ServiceBundlePicker({
@@ -43,7 +42,6 @@ export default function ServiceBundlePicker({
                 : 'bg-white/10 hover:bg-white/20 border-white/10 text-slate-200'
             }`}
           >
-
             {isEssentialsSelected && <Check size={14} />}
             <span>Essentials Bundle</span>
           </button>

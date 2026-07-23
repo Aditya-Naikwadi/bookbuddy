@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import featureApi from '../../api/featureApi';
 import ServiceCard from './ServiceCard';
 import ServiceBundlePicker from './ServiceBundlePicker';
 import ServiceDependencyNotice from './ServiceDependencyNotice';
-import { AlertCircle, CheckCircle2, Building2, ArrowRight } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
 
 export default function ServiceSelectionStep({
   selectedServices = [],
@@ -29,7 +29,6 @@ export default function ServiceSelectionStep({
     loadServices();
   }, []);
 
-  // Ensure default core selection if empty on first load
   useEffect(() => {
     if (services.length > 0 && selectedServices.length === 0) {
       const coreKeys = services
@@ -48,7 +47,6 @@ export default function ServiceSelectionStep({
     const targetService = services.find((s) => s.key === key);
     const newNotices = [];
 
-    // Dependency check when enabling
     if (!isCurrentlySelected && targetService?.dependencies) {
       targetService.dependencies.forEach((depKey) => {
         if (!updated.includes(depKey)) {
@@ -108,17 +106,14 @@ export default function ServiceSelectionStep({
         </p>
       </div>
 
-      {/* Bundle Selection */}
       <ServiceBundlePicker
         services={services}
         selectedKeys={selectedServices}
         onSelectBundle={handleSelectBundle}
       />
 
-      {/* Dependency Notices */}
       <ServiceDependencyNotice notices={dependencyNotices} />
 
-      {/* Grouped Service Cards */}
       <div className="space-y-8">
         {Object.entries(categories).map(([categoryName, categoryServices]) => (
           <div key={categoryName} className="space-y-3">
@@ -143,7 +138,6 @@ export default function ServiceSelectionStep({
         ))}
       </div>
 
-      {/* Core Service Validation Warning */}
       {!coreServicesSelected && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-center gap-3">
           <AlertCircle size={18} className="shrink-0" />
@@ -153,7 +147,6 @@ export default function ServiceSelectionStep({
         </div>
       )}
 
-      {/* Navigation Footer */}
       <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="text-xs text-slate-500 flex items-center gap-2">
           <CheckCircle2 size={16} className="text-emerald-500" />

@@ -1,6 +1,5 @@
-import React from 'react';
 import { Download, FileSpreadsheet } from 'lucide-react';
-import { useFeatureFlags } from '../../context/FeatureFlagContext';
+import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 
 export default function TemplateDownloadButton() {
   const { isFeatureEnabled } = useFeatureFlags();

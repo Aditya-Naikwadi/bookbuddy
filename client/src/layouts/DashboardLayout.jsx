@@ -1,4 +1,3 @@
-import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import {
   Book,
@@ -15,7 +14,7 @@ import {
 } from 'lucide-react';
 import NotificationCenter from '../components/student/NotificationCenter';
 import useAuthStore from '../store/authStore';
-import { useFeatureFlags } from '../context/FeatureFlagContext';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { STUDENT_NAV_ITEMS, COLLEGE_ADMIN_NAV_ITEMS } from '../config/navigation';
 
 const DashboardLayout = () => {

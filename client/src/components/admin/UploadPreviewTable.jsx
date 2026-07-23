@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import RowValidationBadge from './RowValidationBadge';
-import { Edit2, Check, AlertCircle } from 'lucide-react';
-import { useFeatureFlags } from '../../context/FeatureFlagContext';
+import { Edit2, Check } from 'lucide-react';
+import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 
 export default function UploadPreviewTable({
   rows = [],
@@ -9,10 +9,10 @@ export default function UploadPreviewTable({
   showErrorsOnly = false,
 }) {
   const { isFeatureEnabled } = useFeatureFlags();
-  const [editingCell, setEditingCell] = useState(null); // { rowId, field }
+  const [editingCell, setEditingCell] = useState(null);
   const [editValue, setEditValue] = useState('');
   const [page, setPage] = useState(1);
-  const pageSize = 50; // Virtualized pagination window for high performance
+  const pageSize = 50;
 
   const filteredRows = useMemo(() => {
     if (!showErrorsOnly) return rows;
@@ -35,7 +35,6 @@ export default function UploadPreviewTable({
     const { field } = editingCell;
     const updatedRow = { ...row, [field]: editValue.trim() };
 
-    // Re-validate row on client
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const errors = [];
     const warnings = [];
@@ -59,7 +58,6 @@ export default function UploadPreviewTable({
 
   return (
     <div className="space-y-4">
-      {/* Table Container */}
       <div className="overflow-x-auto border border-slate-200 rounded-2xl bg-white shadow-sm">
         <table className="w-full text-left border-collapse min-w-[700px]">
           <thead>
@@ -88,37 +86,30 @@ export default function UploadPreviewTable({
                   <RowValidationBadge status={row.status} errorCount={row.errors.length} />
                 </td>
 
-                {/* Student ID Cell */}
                 <td className="py-3 px-4 font-mono font-semibold text-slate-900">
                   {renderEditableCell(row, 'studentId', row.studentId)}
                 </td>
 
-                {/* Name Cell */}
                 <td className="py-3 px-4 font-medium text-slate-900">
                   {renderEditableCell(row, 'name', row.name)}
                 </td>
 
-                {/* Email Cell */}
                 <td className="py-3 px-4">
                   {renderEditableCell(row, 'email', row.email)}
                 </td>
 
-                {/* Department Cell */}
                 <td className="py-3 px-4">
                   {renderEditableCell(row, 'department', row.department)}
                 </td>
 
-                {/* Facilities Cell */}
                 {isFeatureEnabled('facilities') && (
                   <td className="py-3 px-4">{renderEditableCell(row, 'preferredLab', row.preferredLab)}</td>
                 )}
 
-                {/* Gamification Cell */}
                 {isFeatureEnabled('gamification') && (
                   <td className="py-3 px-4">{renderEditableCell(row, 'house', row.house)}</td>
                 )}
 
-                {/* Validation Notes */}
                 <td className="py-3 px-4 max-w-xs">
                   {row.errors.length > 0 && (
                     <span className="text-rose-600 font-semibold block line-clamp-1">
@@ -146,7 +137,6 @@ export default function UploadPreviewTable({
         </table>
       </div>
 
-      {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-2 text-xs text-slate-500">
           <span>

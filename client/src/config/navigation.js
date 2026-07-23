@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   LayoutDashboard,
   Search,
@@ -29,7 +28,7 @@ export const STUDENT_NAV_ITEMS = [
     label: 'Dashboard Home',
     icon: LayoutDashboard,
     route: '/student-dashboard',
-    feature: null, // Always enabled
+    feature: null,
   },
   {
     key: 'catalog',
@@ -123,7 +122,7 @@ export const COLLEGE_ADMIN_NAV_ITEMS = [
     label: 'Bulk Student Upload',
     icon: UploadCloud,
     route: '/college-admin/bulk-upload',
-    feature: null, // Admin feature
+    feature: null,
   },
   {
     key: 'patrons',

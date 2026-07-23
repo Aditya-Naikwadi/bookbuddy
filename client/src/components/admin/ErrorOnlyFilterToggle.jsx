@@ -1,5 +1,4 @@
-import React from 'react';
-import { Filter, AlertCircle } from 'lucide-react';
+import { Filter } from 'lucide-react';
 
 export default function ErrorOnlyFilterToggle({
   showErrorsOnly,

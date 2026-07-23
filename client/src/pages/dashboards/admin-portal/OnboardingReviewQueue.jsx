@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Building2,
   CheckCircle,
@@ -25,8 +25,7 @@ export default function OnboardingReviewQueue() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchPendingRequests = async () => {
-    setIsLoading(true);
+  const fetchPendingRequests = useCallback(async () => {
     try {
       const res = await registrationApi.getPendingOnboardings();
       setRequests(res.data || []);
@@ -39,11 +38,11 @@ export default function OnboardingReviewQueue() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchPendingRequests();
-  }, []);
+  }, [fetchPendingRequests]);
 
   const handleApprove = async (reqId, legalName) => {
     if (!window.confirm(`Are you sure you want to approve tenant onboarding for ${legalName}? This will atomically create the College tenant and primary College Admin account.`)) {

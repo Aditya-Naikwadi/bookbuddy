@@ -1,4 +1,3 @@
-import React from 'react';
 import { CheckCircle2, AlertOctagon, Download, RefreshCw, ArrowLeft } from 'lucide-react';
 
 export default function UploadResultSummary({
@@ -46,7 +45,6 @@ export default function UploadResultSummary({
         </p>
       </div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
           <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total</span>
@@ -64,7 +62,6 @@ export default function UploadResultSummary({
         </div>
       </div>
 
-      {/* Failed Rows Detail & Error Report */}
       {failedCount > 0 && (
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-3">
           <div className="flex items-center justify-between">
@@ -87,7 +84,6 @@ export default function UploadResultSummary({
         </div>
       )}
 
-      {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-100">
         <button
           type="button"

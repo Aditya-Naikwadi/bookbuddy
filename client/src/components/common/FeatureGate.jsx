@@ -1,5 +1,4 @@
-import React from 'react';
-import { useFeatureFlags } from '../../context/FeatureFlagContext';
+import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 import FeatureUnavailablePage from '../../pages/public/FeatureUnavailablePage';
 
 export function FeatureGate({ feature, fallback = null, isPageGate = false, children }) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import TemplateDownloadButton from '../../../components/admin/TemplateDownloadButton';
 import FileDropzone from '../../../components/admin/FileDropzone';
 import UploadPreviewTable from '../../../components/admin/UploadPreviewTable';
@@ -6,10 +6,9 @@ import ErrorOnlyFilterToggle from '../../../components/admin/ErrorOnlyFilterTogg
 import UploadProgressPanel from '../../../components/admin/UploadProgressPanel';
 import UploadResultSummary from '../../../components/admin/UploadResultSummary';
 import featureApi from '../../../api/featureApi';
-import { UploadCloud, CheckCircle2, AlertTriangle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { UploadCloud, AlertTriangle, ArrowRight } from 'lucide-react';
 
 export default function StudentUploadPage() {
-  // State Machine: 'idle' | 'parsing' | 'previewing' | 'submitting' | 'processing' | 'complete'
   const [uploadState, setUploadState] = useState('idle');
   const [selectedFile, setSelectedFile] = useState(null);
   const [parsedRows, setParsedRows] = useState([]);
@@ -28,7 +27,6 @@ export default function StudentUploadPage() {
     reader.onload = (e) => {
       const content = e.target.result;
 
-      // Spawn Web Worker for non-main-thread CSV parsing
       try {
         const worker = new Worker(
           new URL('../../../workers/csvParser.worker.js', import.meta.url),
@@ -51,7 +49,6 @@ export default function StudentUploadPage() {
         worker.postMessage({ fileContent: content });
       } catch (err) {
         console.warn('Fallback inline parsing:', err);
-        // Direct parse fallback if Worker constructor unavailable
         parseInline(content);
       }
     };
@@ -59,7 +56,6 @@ export default function StudentUploadPage() {
   };
 
   const parseInline = (text) => {
-    // Simple inline parser fallback
     const lines = text.split('\n').filter((l) => l.trim().length > 0);
     if (lines.length < 2) {
       setWorkerError('File must contain a header row and at least one student row.');
@@ -147,7 +143,6 @@ export default function StudentUploadPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-600 mb-1">
@@ -165,7 +160,6 @@ export default function StudentUploadPage() {
         {uploadState === 'idle' && <TemplateDownloadButton />}
       </div>
 
-      {/* STATE 1: IDLE / DROPZONE */}
       {uploadState === 'idle' && (
         <div className="space-y-6">
           <FileDropzone onFileSelected={handleFileSelected} />
@@ -199,7 +193,6 @@ export default function StudentUploadPage() {
         </div>
       )}
 
-      {/* STATE 2: PARSING LOADER */}
       {uploadState === 'parsing' && (
         <div className="py-20 text-center space-y-3 bg-white border border-slate-200 rounded-3xl shadow-sm">
           <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
@@ -212,10 +205,8 @@ export default function StudentUploadPage() {
         </div>
       )}
 
-      {/* STATE 3: PREVIEWING TABLE & EDITING */}
       {uploadState === 'previewing' && (
         <div className="space-y-6">
-          {/* Summary Stats Banner */}
           <div className="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
             <div className="flex items-center gap-4 flex-wrap">
               <div className="text-xs">
@@ -281,7 +272,6 @@ export default function StudentUploadPage() {
             </div>
           )}
 
-          {/* Virtualized Preview Table */}
           <UploadPreviewTable
             rows={parsedRows}
             onRowUpdate={handleRowUpdate}
@@ -290,7 +280,6 @@ export default function StudentUploadPage() {
         </div>
       )}
 
-      {/* STATE 4: PROCESSING JOB */}
       {uploadState === 'processing' && (
         <UploadProgressPanel
           jobId={activeJobId}
@@ -299,7 +288,6 @@ export default function StudentUploadPage() {
         />
       )}
 
-      {/* STATE 5: COMPLETE SUMMARY */}
       {uploadState === 'complete' && (
         <UploadResultSummary
           result={jobResult}
