@@ -15,6 +15,9 @@
     "build": "echo 'Building backend... No compilation needed for Node.js CommonJS'",
     "migrate:db": "node src/scripts/migrateIndicesAndDefaults.js",
     "migrate:hardening": "node src/scripts/migrateProductionHardening.js",
+    "db:clear": "node src/scripts/clearDatabase.js",
+    "seed": "node src/seed.js",
+    "seed:dataset": "node src/scripts/seedMultiTenantDataset.js",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "jest src/tests --runInBand --detectOpenHandles --forceExit"
@@ -37,6 +40,7 @@
     "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.3",
     "luxon": "^3.7.2",
+    "mongodb": "^7.5.0",
     "mongoose": "^9.7.1",
     "morgan": "^1.11.0",
     "multer": "^2.2.0",

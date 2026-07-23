@@ -79,7 +79,6 @@ const registerUser = async (req, res, next) => {
         collegeId: user.collegeId,
       },
       accessToken,
-      refreshToken,
     });
   } catch (error) {
     next(error);
@@ -93,9 +92,14 @@ const loginUser = async (req, res, next) => {
   try {
     const { email, studentId, password } = req.body;
     const credential = email || studentId;
+    const normalizedEmail = email
+      ? email.trim().toLowerCase()
+      : credential
+        ? credential.trim().toLowerCase()
+        : '';
 
     const user = await User.findOne({
-      $or: [{ email: credential }, { studentId: credential }],
+      $or: [{ email: normalizedEmail }, { email: credential }, { studentId: credential }],
     }).select('+password');
 
     if (!user) {
@@ -132,7 +136,6 @@ const loginUser = async (req, res, next) => {
         collegeId: user.collegeId,
       },
       accessToken,
-      refreshToken,
     });
   } catch (error) {
     next(error);
@@ -205,7 +208,6 @@ const refreshToken = async (req, res, next) => {
     res.json({
       success: true,
       accessToken,
-      refreshToken: newRefreshToken,
     });
   } catch (error) {
     next(error);

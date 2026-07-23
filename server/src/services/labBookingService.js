@@ -170,7 +170,7 @@ const createBooking = async (userId, seatId, collegeId, startTimeInput, endTimeI
     let streakData = null;
     try {
       streakData = await recordQualifyingAction(userId, collegeId, 'lab_booking');
-    } catch (err) {
+    } catch {
       // Don't fail the booking if streak service fails
     }
 

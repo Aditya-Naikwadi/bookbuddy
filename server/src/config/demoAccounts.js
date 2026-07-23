@@ -30,8 +30,8 @@ const DEMO_ACCOUNTS = [
   {
     studentId: 'LIB2001',
     name: 'Super Admin',
-    email: 'admin@bookbuddy.com',
-    password: 'Demo@123',
+    email: 'SuperAdmin@bookbuddy.com',
+    password: 'superadmin',
     role: 'super-admin',
     dashboardRoute: '/admin-portal',
   },

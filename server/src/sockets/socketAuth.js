@@ -12,7 +12,7 @@ const socketAuth = async (socket, next) => {
     let decoded;
     try {
       decoded = verifyAccessToken(token);
-    } catch (err) {
+    } catch {
       return next(new Error('Invalid or expired authentication token'));
     }
 
@@ -34,7 +34,7 @@ const socketAuth = async (socket, next) => {
     };
 
     next();
-  } catch (error) {
+  } catch {
     next(new Error('Internal server error during socket authentication'));
   }
 };

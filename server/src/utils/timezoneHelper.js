@@ -33,7 +33,7 @@ const isHoursBeforeMidnight = (time, timezone, hoursBefore) => {
     const dt = DateTime.fromJSDate(time).setZone(timezone);
     const targetHour = (24 - hoursBefore) % 24;
     return dt.hour === targetHour;
-  } catch (err) {
+  } catch {
     // Fallback to UTC if timezone is invalid
     const targetHour = (24 - hoursBefore) % 24;
     return time.getUTCHours() === targetHour;

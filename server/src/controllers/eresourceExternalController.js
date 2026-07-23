@@ -5,6 +5,7 @@ const EResource = require('../models/EResource');
 const { recordQualifyingAction } = require('../services/streakService');
 const events = require('../sockets/events');
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
 // @desc    Browse / Search external Gutenberg books
 // @route   GET /api/eresources/external
@@ -121,7 +122,7 @@ const proxyContent = asyncHandler(async (req, res) => {
 
     response.data.pipe(res);
   } catch (error) {
-    console.error(`[Proxy Content] Failed to fetch ${targetUrl}`);
+    logger.error(`[Proxy Content] Failed to fetch ${targetUrl}: ${error.message}`);
     throw new AppError('Failed to proxy content from upstream server', 502);
   }
 });

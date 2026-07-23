@@ -33,8 +33,8 @@ export const DEMO_ACCOUNTS = [
     role: 'Super Admin',
     roleKey: 'super-admin',
     studentId: 'LIB2001',
-    email: 'admin@bookbuddy.com',
-    password: 'Demo@123',
+    email: 'SuperAdmin@bookbuddy.com',
+    password: 'superadmin',
     dashboardRoute: '/admin-portal',
     description: 'Access to system-wide overview, college admin management, global content moderation, audit logs, and system settings.'
   }

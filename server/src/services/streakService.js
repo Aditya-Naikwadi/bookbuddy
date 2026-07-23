@@ -66,14 +66,12 @@ const recordQualifyingAction = async (userId, collegeId, actionType) => {
     const twoDaysAgoStr = getLocalDateString(twoDaysAgo, timezone);
 
     // 1. Double check-in check at CheckInLog level
-    let logCreated = false;
     if (actionType === 'check_in') {
       try {
         await CheckInLog.create(
           [{ collegeId, userId, checkInDate: todayStr, timestamp: now, freezeConsumed: false }],
           { session }
         );
-        logCreated = true;
       } catch (err) {
         if (err.code === 11000) {
           const dupErr = new AppError('Already checked in today.', 400);

@@ -38,7 +38,7 @@
 - [🔌 Complete API Reference](#-complete-api-reference)
 - [⚙️ Environment Configuration Reference](#️-environment-configuration-reference)
 - [🚀 Quick Start & Installation Guide](#-quick-start--installation-guide)
-  - [🔑 Demo Accounts for Portal Testing](#-demo-accounts-for-portal-testing)
+  - [🔑 Initial Accounts for Portal Testing](#-initial-accounts-for-portal-testing--management)
   - [Prerequisites](#prerequisites)
   - [Local Setup](#local-development-setup)
   - [Database Migrations](#database-migrations)
@@ -575,16 +575,16 @@ RATE_LIMIT_EXPENSIVE_WINDOW_MS=60000
 
 ## 🚀 Quick Start & Installation Guide
 
-### 🔑 Demo Accounts for Portal Testing
+### 🔑 Initial Accounts for Portal Testing & Management
 
 | Role / Dashboard | Email / Identifier | Password | Target Dashboard Route |
 | :--- | :--- | :--- | :--- |
+| **Super Admin** | `SuperAdmin@bookbuddy.com` | `superadmin` | `/admin-portal` |
+| **College Admin** | `collegeadmin@bookbuddy.com` | `Demo@123` | `/college-admin` |
 | **Student** | `student@bookbuddy.com` *(or `STU1001`)* | `Demo@123` | `/student-dashboard` |
 | **General User** | `general@bookbuddy.com` | `Demo@123` | `/general-dashboard` |
-| **College Admin** | `collegeadmin@bookbuddy.com` | `Demo@123` | `/college-admin` |
-| **Super Admin** | `admin@bookbuddy.com` | `Demo@123` | `/admin-portal` |
 
-*Note: Centralized demo accounts are stored in [client/src/constants/demoAccounts.js](file:///c:/Users/naikw/OneDrive/Desktop/project/BookBuddy/client/src/constants/demoAccounts.js) and [server/src/config/demoAccounts.js](file:///c:/Users/naikw/OneDrive/Desktop/project/BookBuddy/server/src/config/demoAccounts.js).*
+*Note: All authentication is verified dynamically against MongoDB via Express API routes. Run `npm run seed:dataset` in `server/` to initialize or refresh these records.*
 
 ### Prerequisites
 - **Node.js**: `v20.x` or later (`node -v`)
@@ -614,14 +614,21 @@ RATE_LIMIT_EXPENSIVE_WINDOW_MS=60000
 4. **Configure Environment Variables**:
    Create `server/.env` with your settings (see [Environment Configuration](#️-environment-configuration-reference)).
 
-### Database Migrations
+### Database Management, Indexing & Multi-Tenant Seeding
 
-Run database migration scripts for index creation and schema hardening:
+Run the following utility scripts in `server/` to manage database indexes and test data:
 
 ```bash
 cd server
+
+# 1. Synchronize schema indexes and defaults
 npm run migrate:db
-npm run migrate:hardening
+
+# 2. Seed production-ready multi-tenant dataset (3 Colleges, 21 Role Accounts)
+npm run seed:dataset
+
+# 3. Purge all mock data and sample documents (Leaves clean empty database)
+npm run db:clear
 ```
 
 5. **Start the API Server**:

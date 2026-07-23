@@ -16,6 +16,14 @@ const app = require('../app');
 const User = require('../models/User');
 const College = require('../models/College');
 
+const getCookieFromRes = (res, cookieName) => {
+  const cookies = res.headers['set-cookie'];
+  if (!cookies) return undefined;
+  const cookie = cookies.find((c) => c.startsWith(`${cookieName}=`));
+  if (!cookie) return undefined;
+  return cookie.split(';')[0].split('=')[1];
+};
+
 describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
   let collegeA;
   let collegeB;
@@ -67,7 +75,8 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
     expect(res.body.accessToken).toBeDefined();
-    expect(res.body.refreshToken).toBeDefined();
+    const cookieToken = getCookieFromRes(res, 'refreshToken');
+    expect(cookieToken).toBeDefined();
     expect(res.body.user.password).toBeUndefined();
     expect(res.body.user.refreshTokenHash).toBeUndefined();
   });
@@ -82,7 +91,8 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.accessToken).toBeDefined();
-    expect(res.body.refreshToken).toBeDefined();
+    const cookieToken = getCookieFromRes(res, 'refreshToken');
+    expect(cookieToken).toBeDefined();
   });
 
   // Assertion 3: Login with wrong password returns 401
@@ -168,21 +178,20 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
       password: studentAData.password,
     });
 
-    const oldRefreshToken = loginRes.body.refreshToken;
+    const oldRefreshToken = getCookieFromRes(loginRes, 'refreshToken');
 
     // First rotation request
     const refreshRes1 = await request(app)
       .post('/api/auth/refresh')
-      .send({ refreshToken: oldRefreshToken });
+      .set('Cookie', [`refreshToken=${oldRefreshToken}`]);
 
     expect(refreshRes1.status).toBe(200);
     expect(refreshRes1.body.accessToken).toBeDefined();
-    expect(refreshRes1.body.refreshToken).toBeDefined();
 
     // Replay attack: try using oldRefreshToken again (must be rejected)
     const refreshRes2 = await request(app)
       .post('/api/auth/refresh')
-      .send({ refreshToken: oldRefreshToken });
+      .set('Cookie', [`refreshToken=${oldRefreshToken}`]);
 
     expect(refreshRes2.status).toBe(401);
   });
@@ -194,13 +203,14 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
       password: studentAData.password,
     });
 
-    const { accessToken, refreshToken } = loginRes.body;
+    const refreshToken = getCookieFromRes(loginRes, 'refreshToken');
+    const accessToken = loginRes.body.accessToken;
 
     // Logout
     const logoutRes = await request(app)
       .post('/api/auth/logout')
       .set('Authorization', `Bearer ${accessToken}`)
-      .send({ refreshToken });
+      .set('Cookie', [`refreshToken=${refreshToken}`]);
 
     expect(logoutRes.status).toBe(200);
 

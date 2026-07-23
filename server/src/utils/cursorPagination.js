@@ -12,7 +12,7 @@ const cursorPagination = {
       const decoded = Buffer.from(cursorStr, 'base64').toString('ascii');
       const [sortValue, lastId] = decoded.split('_');
       return { sortValue, lastId };
-    } catch (err) {
+    } catch {
       return null;
     }
   },

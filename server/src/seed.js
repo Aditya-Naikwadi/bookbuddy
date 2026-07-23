@@ -77,6 +77,7 @@ const importData = async () => {
     console.log('Seeding demo users...');
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash('Demo@123', salt);
+    const superAdminPassword = await bcrypt.hash('superadmin', salt);
 
     const users = await User.create([
       {
@@ -91,8 +92,8 @@ const importData = async () => {
       {
         studentId: 'LIB2001',
         name: 'Super Admin',
-        email: 'admin@bookbuddy.com',
-        password: hashedPassword,
+        email: 'SuperAdmin@bookbuddy.com',
+        password: superAdminPassword,
         role: 'super-admin',
       },
       {
@@ -240,32 +241,6 @@ const importData = async () => {
       });
     }
     await LabSeat.create(seats);
-
-    console.log('Seeding E-Resources...');
-    await EResource.create([
-      {
-        collegeId: collegeId,
-        title: 'Machine Learning Basics',
-        author: 'Andrew Ng',
-        type: 'pdf',
-        fileUrl: 'https://example.com/ml-basics.pdf',
-        category: 'Open Access',
-        uploadedBy: adminId,
-        moderationStatus: 'approved',
-        externalId: -1,
-      },
-      {
-        collegeId: collegeId,
-        title: 'Journal of Computer Science Vol 45',
-        author: 'IEEE',
-        type: 'epub',
-        fileUrl: 'https://example.com/jcs-v45.epub',
-        category: 'Research Journals',
-        uploadedBy: adminId,
-        moderationStatus: 'approved',
-        externalId: -2,
-      },
-    ]);
 
     console.log('Seeding Stickers & Streak Rewards...');
     await Sticker.create([

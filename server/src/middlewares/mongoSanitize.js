@@ -34,7 +34,7 @@ const mongoSanitize = (req, res, next) => {
         configurable: true,
         enumerable: true,
       });
-    } catch (err) {
+    } catch {
       // Fallback in case JSON serialization/redefinition fails
       sanitizeObject(req.query);
     }

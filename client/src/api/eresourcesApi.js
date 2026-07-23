@@ -26,6 +26,6 @@ export const getContentUrl = (resourceId, format) => {
 };
 
 export const saveProgress = async (resourceId, { lastPosition, percentComplete }) => {
-  // Mock success response for progress tracking contract
-  return { success: true, resourceId, lastPosition, percentComplete };
+  const { data } = await apiClient.post(`/eresources/${resourceId}/progress`, { lastPosition, percentComplete });
+  return data;
 };

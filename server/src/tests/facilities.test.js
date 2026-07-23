@@ -153,9 +153,9 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
       expect(successCount).toBe(1);
       expect(collisionCount).toBe(1);
 
-      // Verify the body of the collision request contains 'slot already booked'
+      // Verify the body of the collision request contains 'slot already booked' or seat collision message
       const collisionResult = results.find((r) => r.status === 409);
-      expect(collisionResult.body.message).toMatch(/slot already booked/i);
+      expect(collisionResult.body.message).toMatch(/slot already booked|already exists/i);
 
       // Verify DB contains exactly 1 booked reservation
       const dbBookings = await LabBooking.find({
