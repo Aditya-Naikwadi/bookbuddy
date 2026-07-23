@@ -56,16 +56,18 @@ const sendEmail = async (userId, userEmail, type, message) => {
   const status = deliveryResult.success ? 'sent' : 'failed';
   const error = deliveryResult.success ? null : deliveryResult.error;
 
-  const logEntry = await NotificationLog.create({
-    userId,
-    channel: 'email',
-    type,
-    status,
-    provider,
-    error,
-  });
+  if (userId) {
+    await NotificationLog.create({
+      userId,
+      channel: 'email',
+      type,
+      status,
+      provider,
+      error,
+    });
+  }
 
-  return logEntry;
+  return { status, provider, error };
 };
 
 /**
@@ -267,6 +269,29 @@ const markAllRead = async (userId) => {
   return true;
 };
 
+/**
+ * Registration Email Helpers
+ */
+const sendStudentVerificationEmail = async (email, name, otp) => {
+  const message = `Hello ${name}, your BookBuddy verification code is: ${otp}. This code is valid for 15 minutes.`;
+  return await sendEmail(null, email, 'student_verification', message);
+};
+
+const sendAdminDomainVerificationEmail = async (email, adminName, domain, token) => {
+  const message = `Hello ${adminName}, please verify domain ownership for ${domain} using token link: /api/registration/verify-domain?token=${token}`;
+  return await sendEmail(null, email, 'admin_domain_verification', message);
+};
+
+const sendTenantOnboardingApprovalEmail = async (email, adminName, collegeName) => {
+  const message = `Congratulations ${adminName}! Your institution (${collegeName}) has been approved. You can now log into BookBuddy as College Admin.`;
+  return await sendEmail(null, email, 'tenant_onboarding_approval', message);
+};
+
+const sendTenantOnboardingRejectionEmail = async (email, adminName, collegeName, reason) => {
+  const message = `Hello ${adminName}, your institution onboarding request for (${collegeName}) was not approved. Reason: ${reason}. You may edit and resubmit your application.`;
+  return await sendEmail(null, email, 'tenant_onboarding_rejection', message);
+};
+
 module.exports = {
   notify,
   sendEmail,
@@ -277,4 +302,8 @@ module.exports = {
   getMyNotifications,
   markRead,
   markAllRead,
+  sendStudentVerificationEmail,
+  sendAdminDomainVerificationEmail,
+  sendTenantOnboardingApprovalEmail,
+  sendTenantOnboardingRejectionEmail,
 };

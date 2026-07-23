@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 // Lazy loaded public pages
 const Landing = lazy(() => import('./pages/public/Landing'));
+const RegistrationPage = lazy(() => import('./pages/public/RegistrationPage'));
 
 // Lazy loaded layout components
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
@@ -22,6 +23,7 @@ const Register = lazy(() => import('./pages/Register'));
 const AdminDashboardHome = lazy(() => import('./pages/dashboards/admin-portal/AdminDashboardHome'));
 const SystemOverview = lazy(() => import('./pages/dashboards/admin-portal/SystemOverview'));
 const CollegeAdminManager = lazy(() => import('./pages/dashboards/admin-portal/CollegeAdminManager'));
+const OnboardingReviewQueue = lazy(() => import('./pages/dashboards/admin-portal/OnboardingReviewQueue'));
 const GlobalContentModeration = lazy(() => import('./pages/dashboards/admin-portal/GlobalContentModeration'));
 const AuditLogs = lazy(() => import('./pages/dashboards/admin-portal/AuditLogs'));
 const SystemSettings = lazy(() => import('./pages/dashboards/admin-portal/SystemSettings'));
@@ -38,6 +40,7 @@ const SystemConfig = lazy(() => import('./pages/dashboards/college-admin/SystemC
 const Facilities = lazy(() => import('./pages/dashboards/college-admin/Facilities'));
 const Helpdesk = lazy(() => import('./pages/dashboards/college-admin/Helpdesk'));
 const Analytics = lazy(() => import('./pages/dashboards/college-admin/Analytics'));
+const StudentUploadPage = lazy(() => import('./pages/dashboards/college-admin/StudentUploadPage'));
 
 // Lazy loaded General Dashboard Features
 const GeneralDashboardHome = lazy(() => import('./pages/dashboards/general/GeneralDashboardHome'));
@@ -86,6 +89,8 @@ const PageLoader = () => (
 
 import { QueryProvider } from './providers/QueryProvider';
 import { ThemeProvider } from './context/ThemeContext';
+import { FeatureFlagProvider } from './context/FeatureFlagContext';
+import FeatureGate from './components/common/FeatureGate';
 
 function App() {
   const [showSplash, setShowSplash] = useState(() => {
@@ -107,17 +112,19 @@ function App() {
   return (
     <ThemeProvider>
       <QueryProvider>
-        <AnimatePresence>
-          {showSplash && (
-            <SplashScreen onComplete={handleSplashComplete} />
-          )}
-        </AnimatePresence>
+        <FeatureFlagProvider>
+          <AnimatePresence>
+            {showSplash && (
+              <SplashScreen onComplete={handleSplashComplete} />
+            )}
+          </AnimatePresence>
         <Router>
           <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              {/* Public Landing Page */}
+              {/* Public Landing Page & Dual Registration */}
               <Route path="/" element={<Landing />} />
+              <Route path="/register" element={<RegistrationPage />} />
 
               {/* Auth Routes */}
               <Route path="/auth" element={<AuthRedirect><AuthLayout /></AuthRedirect>}>
@@ -133,6 +140,7 @@ function App() {
                   <Route path="admin-portal" element={<AdminDashboardHome />} />
                   <Route path="admin-portal/overview" element={<SystemOverview />} />
                   <Route path="admin-portal/college-admins" element={<CollegeAdminManager />} />
+                  <Route path="admin-portal/registration-queue" element={<OnboardingReviewQueue />} />
                   <Route path="admin-portal/moderation" element={<GlobalContentModeration />} />
                   <Route path="admin-portal/audit-logs" element={<AuditLogs />} />
                   <Route path="admin-portal/settings" element={<SystemSettings />} />
@@ -141,6 +149,7 @@ function App() {
                 {/* College Admin Routes */}
                 <Route element={<ProtectedRoute allowedRoles={['college-admin']} />}>
                   <Route path="college-admin" element={<CollegeAdminDashboardHome />} />
+                  <Route path="college-admin/bulk-upload" element={<StudentUploadPage />} />
                   <Route path="college-admin/patrons" element={<PatronManagement />} />
                   <Route path="college-admin/circulation" element={<Circulation />} />
                   <Route path="college-admin/cataloging" element={<Cataloging />} />
@@ -164,17 +173,17 @@ function App() {
                 {/* Student Specific Routes */}
                 <Route element={<ProtectedRoute allowedRoles={['student']} />}>
                   <Route path="student-dashboard" element={<StudentDashboardHome />} />
-                  <Route path="catalog" element={<Catalog />} />
-                  <Route path="loans" element={<MyLoans />} />
-                  <Route path="fines" element={<Fines />} />
-                  <Route path="patron-card" element={<PatronCard />} />
-                  <Route path="e-resources" element={<EResources />} />
-                  <Route path="reading-lists" element={<ReadingLists />} />
-                  <Route path="recommendations" element={<Recommendations />} />
-                  <Route path="saved" element={<SavedBookmarks />} />
-                  <Route path="lab-booking" element={<LabBooking />} />
-                  <Route path="support" element={<Support />} />
-                  <Route path="achievements" element={<Achievements />} />
+                  <Route path="catalog" element={<FeatureGate feature="catalog" isPageGate><Catalog /></FeatureGate>} />
+                  <Route path="loans" element={<FeatureGate feature="loans" isPageGate><MyLoans /></FeatureGate>} />
+                  <Route path="fines" element={<FeatureGate feature="fines" isPageGate><Fines /></FeatureGate>} />
+                  <Route path="patron-card" element={<FeatureGate feature="patron-card" isPageGate><PatronCard /></FeatureGate>} />
+                  <Route path="e-resources" element={<FeatureGate feature="e-resources" isPageGate><EResources /></FeatureGate>} />
+                  <Route path="reading-lists" element={<FeatureGate feature="reading-lists" isPageGate><ReadingLists /></FeatureGate>} />
+                  <Route path="recommendations" element={<FeatureGate feature="recommendations" isPageGate><Recommendations /></FeatureGate>} />
+                  <Route path="saved" element={<FeatureGate feature="saved" isPageGate><SavedBookmarks /></FeatureGate>} />
+                  <Route path="lab-booking" element={<FeatureGate feature="facilities" isPageGate><LabBooking /></FeatureGate>} />
+                  <Route path="support" element={<FeatureGate feature="support" isPageGate><Support /></FeatureGate>} />
+                  <Route path="achievements" element={<FeatureGate feature="gamification" isPageGate><Achievements /></FeatureGate>} />
                 </Route>
               </Route>
 
@@ -186,6 +195,7 @@ function App() {
           </Suspense>
         </ErrorBoundary>
       </Router>
+    </FeatureFlagProvider>
     </QueryProvider>
     </ThemeProvider>
   );

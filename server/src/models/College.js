@@ -8,12 +8,34 @@ const collegeSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    shortName: {
+      type: String,
+      trim: true,
+    },
     code: {
       type: String,
       required: true,
       unique: true,
       uppercase: true,
       trim: true,
+    },
+    slug: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: true,
+      trim: true,
+    },
+    institutionType: {
+      type: String,
+      enum: ['university', 'college', 'school', 'training_institute'],
+      default: 'college',
+    },
+    domain: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      index: true,
     },
     isActive: {
       type: Boolean,
@@ -25,7 +47,7 @@ const collegeSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'active', 'suspended', 'archived'],
+      enum: ['pending', 'pending_review', 'active', 'suspended', 'archived', 'rejected'],
       default: 'pending',
       index: true,
     },
@@ -42,6 +64,12 @@ const collegeSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    configuredDepartments: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
   },
   {
     timestamps: true,

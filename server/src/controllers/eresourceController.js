@@ -69,7 +69,9 @@ const submitEResource = asyncHandler(async (req, res) => {
 const getMySubmissions = asyncHandler(async (req, res) => {
   const userId = req.user.id || req.user._id;
 
-  const submissions = await EResource.find({ uploadedBy: userId }).sort({ createdAt: -1 }).lean();
+  const submissions = await EResource.find({ uploadedBy: userId, ...req.tenantFilter })
+    .sort({ createdAt: -1 })
+    .lean();
 
   res.json({
     success: true,

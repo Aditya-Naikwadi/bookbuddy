@@ -81,6 +81,20 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
     expect(res.body.user.refreshTokenHash).toBeUndefined();
   });
 
+  it('1b. should register a public user without explicit collegeId and assign default active college', async () => {
+    const res = await request(app).post('/api/auth/register').send({
+      studentId: 'STU_NO_COLLEGE',
+      name: 'Public Signup User',
+      email: 'nocollege@bookbuddy.com',
+      password: 'password123',
+      role: 'general',
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.user.collegeId).toBeDefined();
+  });
+
   // Assertion 2: Login with correct credentials returns tokens
   it('2. should login successfully with correct credentials', async () => {
     const res = await request(app).post('/api/auth/login').send({

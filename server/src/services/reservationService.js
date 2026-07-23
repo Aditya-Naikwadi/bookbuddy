@@ -77,17 +77,25 @@ const getQueuePosition = async (userId, bookId) => {
 };
 
 const promoteNextHold = async (bookId, collegeId) => {
-  const nextHold = await Reservation.findOne({
-    bookId,
-    status: 'queued',
-    collegeId,
-  }).sort('queuePosition');
+  const nextHold = await Reservation.findOneAndUpdate(
+    {
+      bookId,
+      status: 'queued',
+      collegeId,
+    },
+    {
+      $set: {
+        status: 'ready_for_pickup',
+        readyAt: new Date(),
+      },
+    },
+    {
+      sort: { queuePosition: 1 },
+      returnDocument: 'after',
+    }
+  );
 
   if (nextHold) {
-    nextHold.status = 'ready_for_pickup';
-    nextHold.readyAt = new Date();
-    await nextHold.save();
-
     const notificationService = require('./notificationService');
     await notificationService.notify(
       nextHold.userId,

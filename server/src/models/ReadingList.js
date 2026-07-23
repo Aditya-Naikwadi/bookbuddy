@@ -8,7 +8,6 @@ const readingListSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'College',
       required: true,
-      index: true,
     },
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -26,7 +25,6 @@ const readingListSchema = new mongoose.Schema(
       type: String,
       enum: ['private', 'public'],
       default: 'private',
-      index: true,
     },
     items: [
       {

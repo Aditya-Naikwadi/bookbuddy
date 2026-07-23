@@ -31,7 +31,7 @@ const clearRefreshTokenCookie = (res) => {
 // @access  Public
 const registerUser = async (req, res, next) => {
   try {
-    const { studentId, name, email, password, role, collegeId } = req.body;
+    let { studentId, name, email, password, role, collegeId } = req.body;
 
     if (role === 'super-admin' || role === 'college-admin') {
       return next(new AppError('Public registration of administrative roles is forbidden.', 403));
@@ -41,6 +41,11 @@ const registerUser = async (req, res, next) => {
       const college = await College.findById(collegeId);
       if (!college || !college.isActive) {
         return next(new AppError('The specified college is inactive or does not exist.', 400));
+      }
+    } else {
+      const defaultCollege = await College.findOne({ isActive: true });
+      if (defaultCollege) {
+        collegeId = defaultCollege._id;
       }
     }
 

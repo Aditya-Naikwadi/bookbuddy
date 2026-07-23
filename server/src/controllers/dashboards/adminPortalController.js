@@ -597,6 +597,219 @@ const publishEResourceGlobal = async (req, res, next) => {
   }
 };
 
+// @desc    Get pending tenant onboarding applications
+// @route   GET /api/dashboards/admin-portal/onboardings/pending
+// @access  Private/SuperAdmin
+const getPendingOnboardings = async (req, res, next) => {
+  try {
+    const RegistrationRequest = require('../../models/RegistrationRequest');
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+
+    const total = await RegistrationRequest.countDocuments({
+      type: 'tenant_onboarding',
+      status: 'pending_review',
+    });
+
+    const requests = await RegistrationRequest.find({
+      type: 'tenant_onboarding',
+      status: 'pending_review',
+    })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit, 10));
+
+    res.json({
+      success: true,
+      data: requests,
+      pagination: {
+        total,
+        page: parseInt(page, 10),
+        pages: Math.ceil(total / parseInt(limit, 10)),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Approve tenant onboarding application (Atomic Transaction)
+// @route   POST /api/dashboards/admin-portal/onboardings/:requestId/approve
+// @access  Private/SuperAdmin
+const approveTenantOnboarding = async (req, res, next) => {
+  try {
+    const RegistrationRequest = require('../../models/RegistrationRequest');
+    const { runInTransaction } = require('../../utils/transactionHelper');
+    const { sendTenantOnboardingApprovalEmail } = require('../../services/notificationService');
+
+    const regRequest = await RegistrationRequest.findOne({
+      _id: req.params.requestId,
+      type: 'tenant_onboarding',
+      status: 'pending_review',
+    });
+
+    if (!regRequest) {
+      return next(new AppError('Pending tenant onboarding application not found.', 404));
+    }
+
+    const {
+      legalName,
+      shortName,
+      institutionType,
+      domain,
+      address,
+      contactPhone,
+      adminName,
+      adminEmail,
+      passwordHash,
+      desiredSlug,
+    } = regRequest.tenantData;
+
+    // Execute atomic creation of College + College Admin User inside MongoDB transaction
+    const { college, adminUser } = await runInTransaction(async (session) => {
+      // 1. Create College tenant
+      const collegeCode = (desiredSlug || 'TENANT').toUpperCase();
+      const addressString = typeof address === 'object' ? JSON.stringify(address) : address || '';
+
+      const newCollegeDocs = await College.create(
+        [
+          {
+            name: legalName,
+            shortName: shortName || legalName,
+            code: collegeCode,
+            slug: desiredSlug,
+            institutionType: institutionType || 'college',
+            domain,
+            status: 'active',
+            isActive: true,
+            contactEmail: adminEmail,
+            contactPhone,
+            address: addressString,
+          },
+        ],
+        { session }
+      );
+
+      const createdCollege = newCollegeDocs[0];
+
+      // 2. Create initial College Admin User
+      const newAdminDocs = await User.create(
+        [
+          {
+            studentId: 'ADMIN-001',
+            name: adminName,
+            email: adminEmail,
+            password: passwordHash,
+            role: 'college-admin',
+            collegeId: createdCollege._id,
+            isEmailVerified: true,
+            membershipStatus: 'active',
+          },
+        ],
+        { session }
+      );
+
+      const createdAdmin = newAdminDocs[0];
+
+      // 3. Mark RegistrationRequest as approved
+      regRequest.status = 'approved';
+      regRequest.reviewedAt = new Date();
+      regRequest.reviewedBy = req.user.id;
+      await regRequest.save({ session });
+
+      return { college: createdCollege, adminUser: createdAdmin };
+    });
+
+    // 4. Send Approval Email
+    await sendTenantOnboardingApprovalEmail(adminEmail, adminName, legalName);
+
+    // 5. Audit Log
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: 'registration_request.approve',
+      targetType: 'College',
+      targetId: college._id,
+      collegeId: college._id,
+      metadata: { legalName, domain, adminEmail },
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    });
+
+    res.json({
+      success: true,
+      message: `Tenant ${legalName} approved and activated successfully.`,
+      data: {
+        college,
+        adminUser: {
+          id: adminUser._id,
+          name: adminUser.name,
+          email: adminUser.email,
+          role: adminUser.role,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Reject tenant onboarding application
+// @route   POST /api/dashboards/admin-portal/onboardings/:requestId/reject
+// @access  Private/SuperAdmin
+const rejectTenantOnboarding = async (req, res, next) => {
+  try {
+    const RegistrationRequest = require('../../models/RegistrationRequest');
+    const { sendTenantOnboardingRejectionEmail } = require('../../services/notificationService');
+    const { reason } = req.body;
+
+    if (!reason || reason.trim() === '') {
+      return next(new AppError('Rejection reason is required.', 400));
+    }
+
+    const regRequest = await RegistrationRequest.findOne({
+      _id: req.params.requestId,
+      type: 'tenant_onboarding',
+      status: 'pending_review',
+    });
+
+    if (!regRequest) {
+      return next(new AppError('Pending tenant onboarding application not found.', 404));
+    }
+
+    regRequest.status = 'rejected';
+    regRequest.tenantData.rejectionReason = reason.trim();
+    regRequest.reviewedAt = new Date();
+    regRequest.reviewedBy = req.user.id;
+    await regRequest.save();
+
+    // Send rejection email notification
+    await sendTenantOnboardingRejectionEmail(
+      regRequest.tenantData.adminEmail,
+      regRequest.tenantData.adminName,
+      regRequest.tenantData.legalName,
+      reason
+    );
+
+    // Audit log
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: 'registration_request.reject',
+      targetType: 'RegistrationRequest',
+      targetId: regRequest._id,
+      metadata: { legalName: regRequest.tenantData.legalName, reason },
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    });
+
+    res.json({
+      success: true,
+      message: `Tenant onboarding application for ${regRequest.tenantData.legalName} rejected.`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getOverview,
   getAdmins,
@@ -610,4 +823,7 @@ module.exports = {
   getGlobalPendingEResources,
   moderateEResourceGlobal,
   publishEResourceGlobal,
+  getPendingOnboardings,
+  approveTenantOnboarding,
+  rejectTenantOnboarding,
 };

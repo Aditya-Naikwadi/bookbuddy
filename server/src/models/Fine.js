@@ -8,13 +8,11 @@ const fineSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'College',
       required: true,
-      index: true,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     loanId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -35,7 +33,6 @@ const fineSchema = new mongoose.Schema(
       type: String,
       enum: ['unpaid', 'paid', 'waived'],
       default: 'unpaid',
-      index: true,
     },
     paidAt: {
       type: Date,

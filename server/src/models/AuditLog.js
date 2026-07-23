@@ -5,7 +5,6 @@ const auditLogSchema = new mongoose.Schema(
     actorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
       index: true,
     },
     actorRole: {
@@ -32,6 +31,12 @@ const auditLogSchema = new mongoose.Schema(
         'eresource.moderate',
         'eresource.publish',
         'announcement.create',
+        'registration_request.submit',
+        'registration_request.approve',
+        'registration_request.reject',
+        'registration_request.resubmit',
+        'registration_request.verify_email',
+        'registration_request.verify_domain',
       ],
     },
     targetType: {

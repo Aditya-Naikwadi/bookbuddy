@@ -13,11 +13,15 @@ const {
   getGlobalPendingEResources,
   moderateEResourceGlobal,
   publishEResourceGlobal,
+  getPendingOnboardings,
+  approveTenantOnboarding,
+  rejectTenantOnboarding,
 } = require('../../controllers/dashboards/adminPortalController');
 const { protect, requireRole } = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 const auditLog = require('../../middlewares/auditLog');
 const { createCollegeSchema, createAdminSchema } = require('../../validations/admin.validation');
+const { rejectOnboardingSchema } = require('../../validations/registration.validation');
 const { paramIdSchema } = require('../../validations/common.validation');
 
 const { userLimiter, expensiveRouteLimiter } = require('../../middlewares/rateLimiters');
@@ -48,5 +52,10 @@ router.route('/audit-logs').get(expensiveRouteLimiter, getAuditLogs);
 router.route('/moderation/pending').get(getGlobalPendingEResources);
 router.route('/moderation/:id').put(validate(paramIdSchema), moderateEResourceGlobal);
 router.route('/moderation/:id/publish').post(validate(paramIdSchema), publishEResourceGlobal);
+
+// Tenant onboarding review routes
+router.route('/onboardings/pending').get(getPendingOnboardings);
+router.route('/onboardings/:requestId/approve').post(approveTenantOnboarding);
+router.route('/onboardings/:requestId/reject').post(validate(rejectOnboardingSchema), rejectTenantOnboarding);
 
 module.exports = router;
