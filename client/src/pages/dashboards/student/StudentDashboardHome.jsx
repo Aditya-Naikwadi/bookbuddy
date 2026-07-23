@@ -57,17 +57,18 @@ export const StudentDashboardHome = () => {
 
   // Extract data from unified overview endpoint with robust fallbacks
   const studentUser = overview?.user || authUser || {};
-  const studentName = studentUser?.name || 'Student';
-  const firstName = studentName.split(' ')[0];
-  const activeLoans = overview?.activeLoans || [];
+  const studentName = typeof studentUser?.name === 'string' ? studentUser.name : 'Student';
+  const firstName = (studentName.split(' ')[0]) || 'Student';
+  const activeLoans = Array.isArray(overview?.activeLoans) ? overview.activeLoans : [];
   const finesSummary = overview?.finesSummary || { totalUnpaid: 0, unpaidCount: 0 };
-  const reservations = overview?.reservations || [];
+  const reservations = Array.isArray(overview?.reservations) ? overview.reservations : [];
   const streak = overview?.streak || { currentStreak: 0, freezesAvailable: 0, todayComplete: false };
   const recentProgress = overview?.recentReadingProgress;
-  const recommendations = overview?.recommendations || [];
+  const eresource = typeof recentProgress?.eresourceId === 'object' && recentProgress?.eresourceId !== null ? recentProgress.eresourceId : null;
+  const recommendations = Array.isArray(overview?.recommendations) ? overview.recommendations : [];
   const unreadNotificationsCount = overview?.unreadNotificationsCount || 0;
 
-  const totalFine = finesSummary.totalUnpaid || 0;
+  const totalFine = Number(finesSummary?.totalUnpaid || 0);
   const { currentStreak = 0, freezesAvailable = 0, todayComplete = false } = streak;
 
   // Greeting based on time of day
@@ -250,7 +251,7 @@ export const StudentDashboardHome = () => {
           {/* Student Pass Badge Widget */}
           <div className="bg-white/10 backdrop-blur-xl border border-white/15 rounded-2xl p-4 sm:p-5 flex items-center gap-4 min-w-[280px]">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg ring-2 ring-white/20">
-              {firstName[0]}
+              {(firstName && firstName[0]) ? firstName[0].toUpperCase() : 'S'}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">Pass ID #{studentUser?.studentId || 'STU-1001'}</p>
@@ -307,7 +308,7 @@ export const StudentDashboardHome = () => {
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Unpaid Fines</p>
             <p className={`text-2xl font-black mt-1 font-mono ${totalFine > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-              ₹{totalFine.toFixed(2)}
+              ₹{(isNaN(totalFine) ? 0 : totalFine).toFixed(2)}
             </p>
             <p className="text-[10px] text-slate-500 mt-0.5">{totalFine > 0 ? 'Payment required' : 'Clear balance'}</p>
           </div>
@@ -517,7 +518,7 @@ export const StudentDashboardHome = () => {
           )}
 
           {/* Section: Resume Reading E-Resource Card */}
-          {recentProgress?.eresourceId && (
+          {eresource && (
             <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-6 rounded-3xl shadow-lg border border-indigo-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4 min-w-0">
                 <div className="w-12 h-16 rounded-lg bg-indigo-600/40 flex items-center justify-center font-bold text-indigo-300 flex-shrink-0">
@@ -525,12 +526,12 @@ export const StudentDashboardHome = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-300">Resume Digital Reading</p>
-                  <h4 className="font-bold text-sm text-white truncate">{recentProgress.eresourceId?.title || 'Digital Resource'}</h4>
-                  <p className="text-xs text-slate-400">Page {recentProgress.currentPage || 1} • Last read recently</p>
+                  <h4 className="font-bold text-sm text-white truncate">{eresource.title || 'Digital Resource'}</h4>
+                  <p className="text-xs text-slate-400">Page {recentProgress?.currentPage || 1} • Last read recently</p>
                 </div>
               </div>
               <button
-                onClick={() => navigate(`/eresources/read/${recentProgress.eresourceId._id}`)}
+                onClick={() => navigate(`/eresources/read/${eresource._id || eresource.id}`)}
                 className="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-400 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 flex-shrink-0"
               >
                 <span>Continue Reading</span>

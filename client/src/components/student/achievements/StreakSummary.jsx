@@ -1,5 +1,4 @@
-import React from 'react';
-import { Flame, Snowflake, ShieldCheck, Trophy, RotateCcw } from 'lucide-react';
+import { Flame, Snowflake, Trophy, RotateCcw } from 'lucide-react';
 import { Button } from '../../ui/Button';
 
 export const StreakSummary = ({

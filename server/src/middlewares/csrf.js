@@ -22,7 +22,11 @@ const getCsrfTokenController = (req, res) => {
 };
 
 const validateCsrf = (req, res, next) => {
-  if (config.nodeEnv === 'test' || process.env.NODE_ENV === 'test') {
+  if (
+    (config.nodeEnv === 'test' || process.env.NODE_ENV === 'test') &&
+    process.env.TEST_CSRF !== 'true' &&
+    !req.cookies?._csrf
+  ) {
     return next();
   }
 

@@ -155,7 +155,7 @@ describe('ITEM 1 — Auth: httpOnly Cookies, Refresh Token Rotation, Theft Detec
   });
 
   test('1.5 Client source code audit: No access or refresh token is written to localStorage', () => {
-    const clientSrcDir = path.join(__dirname, '../../../../client/src');
+    const clientSrcDir = path.join(__dirname, '../../../client/src');
     if (!fs.existsSync(clientSrcDir)) {
       return;
     }

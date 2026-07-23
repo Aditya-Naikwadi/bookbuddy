@@ -199,7 +199,8 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
     // Logout
     const logoutRes = await request(app)
       .post('/api/auth/logout')
-      .set('Authorization', `Bearer ${accessToken}`);
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ refreshToken });
 
     expect(logoutRes.status).toBe(200);
 

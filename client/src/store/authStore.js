@@ -29,15 +29,16 @@ const useAuthStore = create((set) => {
       });
       return true;
     } catch (error) {
-      if (import.meta.env.DEV && !error.response && password === 'Demo@123') {
+      if (import.meta.env.DEV && password === 'Demo@123') {
         let demoUser = null;
-        if (email === 'student@bookbuddy.com' || email === 'STU1001') {
+        const normalizedEmail = (email || '').toLowerCase().trim();
+        if (normalizedEmail === 'student@bookbuddy.com' || normalizedEmail === 'stu1001') {
           demoUser = { _id: 'STU1001', name: 'Demo Student', role: 'student', email: 'student@bookbuddy.com' };
-        } else if (email === 'general@bookbuddy.com') {
+        } else if (normalizedEmail === 'general@bookbuddy.com' || normalizedEmail === 'gen4001') {
           demoUser = { _id: 'GEN4001', name: 'General User', role: 'general', email: 'general@bookbuddy.com' };
-        } else if (email === 'collegeadmin@bookbuddy.com') {
+        } else if (normalizedEmail === 'collegeadmin@bookbuddy.com' || normalizedEmail === 'col3001') {
           demoUser = { _id: 'COL3001', name: 'College Admin', role: 'college-admin', email: 'collegeadmin@bookbuddy.com' };
-        } else if (email === 'admin@bookbuddy.com') {
+        } else if (normalizedEmail === 'admin@bookbuddy.com' || normalizedEmail === 'lib2001') {
           demoUser = { _id: 'LIB2001', name: 'Super Admin', role: 'super-admin', email: 'admin@bookbuddy.com' };
         }
 
@@ -99,7 +100,14 @@ const useAuthStore = create((set) => {
   checkAuth: async () => {
     const currentToken = getInMemoryToken();
     if (import.meta.env.DEV && currentToken?.startsWith('demo-jwt-token')) {
-      set({ isLoading: false, isAuthenticated: true });
+      const currentRole = currentToken.replace('demo-jwt-token-', '');
+      let demoUser = null;
+      if (currentRole === 'student') demoUser = { _id: 'STU1001', name: 'Demo Student', role: 'student', email: 'student@bookbuddy.com' };
+      else if (currentRole === 'general') demoUser = { _id: 'GEN4001', name: 'General User', role: 'general', email: 'general@bookbuddy.com' };
+      else if (currentRole === 'college-admin') demoUser = { _id: 'COL3001', name: 'College Admin', role: 'college-admin', email: 'collegeadmin@bookbuddy.com' };
+      else if (currentRole === 'super-admin') demoUser = { _id: 'LIB2001', name: 'Super Admin', role: 'super-admin', email: 'admin@bookbuddy.com' };
+
+      set((state) => ({ user: state.user || demoUser, isLoading: false, isAuthenticated: true }));
       return true;
     }
 

@@ -54,12 +54,13 @@ export const EnlargeModal = ({ isOpen, onClose, studentId, name, triggerRef }) =
         }
       };
 
+      const triggerEl = triggerRef?.current;
       window.addEventListener('keydown', handleKeyDown);
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
         // Focus return to trigger button
-        if (triggerRef?.current) {
-          triggerRef.current.focus();
+        if (triggerEl) {
+          triggerEl.focus();
         }
       };
     }

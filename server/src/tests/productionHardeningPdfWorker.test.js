@@ -3,7 +3,7 @@ const path = require('path');
 
 describe('ITEM 3 — Localize PDF.js Worker Bundle for Offline Operation', () => {
   test('3.1 pdf.worker.min.mjs exists in client/public and is non-empty (>500KB)', () => {
-    const workerPublicPath = path.join(__dirname, '../../../../client/public/pdf.worker.min.mjs');
+    const workerPublicPath = path.join(__dirname, '../../../client/public/pdf.worker.min.mjs');
     expect(fs.existsSync(workerPublicPath)).toBe(true);
 
     const stat = fs.statSync(workerPublicPath);
@@ -13,7 +13,7 @@ describe('ITEM 3 — Localize PDF.js Worker Bundle for Offline Operation', () =>
   test('3.2 EbookReader.jsx uses local workerSrc path instead of external Cloudflare CDN', () => {
     const readerComponentPath = path.join(
       __dirname,
-      '../../../../client/src/pages/dashboards/student/EbookReader.jsx'
+      '../../../client/src/pages/dashboards/student/EbookReader.jsx'
     );
     expect(fs.existsSync(readerComponentPath)).toBe(true);
 

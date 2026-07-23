@@ -25,6 +25,7 @@ const DEMO_ACCOUNTS = [
     role: 'Student',
     email: 'student@bookbuddy.com',
     password: 'Demo@123',
+    dashboardRoute: '/student-dashboard',
     icon: GraduationCap,
     badge: 'Student',
     color: 'border-indigo-500/40 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20'
@@ -33,6 +34,7 @@ const DEMO_ACCOUNTS = [
     role: 'General',
     email: 'general@bookbuddy.com',
     password: 'Demo@123',
+    dashboardRoute: '/general-dashboard',
     icon: Globe,
     badge: 'General',
     color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
@@ -41,6 +43,7 @@ const DEMO_ACCOUNTS = [
     role: 'College Admin',
     email: 'collegeadmin@bookbuddy.com',
     password: 'Demo@123',
+    dashboardRoute: '/college-admin',
     icon: Building2,
     badge: 'College Admin',
     color: 'border-purple-500/40 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20'
@@ -49,6 +52,7 @@ const DEMO_ACCOUNTS = [
     role: 'Super Admin',
     email: 'admin@bookbuddy.com',
     password: 'Demo@123',
+    dashboardRoute: '/admin-portal',
     icon: Shield,
     badge: 'Super Admin',
     color: 'border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
@@ -65,14 +69,13 @@ const Login = () => {
   const location = useLocation();
   const { login, isLoading, error } = useAuthStore();
 
-  const from = location.state?.from?.pathname || '/student-dashboard';
-
-  const handleQuickLogin = async (demoEmail, demoPassword) => {
+  const handleQuickLogin = async (demoEmail, demoPassword, dashboardRoute) => {
     setEmail(demoEmail);
     setPassword(demoPassword);
     const success = await login(demoEmail, demoPassword);
     if (success) {
-      navigate(from, { replace: true });
+      const targetPath = location.state?.from?.pathname || dashboardRoute || '/student-dashboard';
+      navigate(targetPath, { replace: true });
     }
   };
 
@@ -80,7 +83,14 @@ const Login = () => {
     e.preventDefault();
     const success = await login(email, password);
     if (success) {
-      navigate(from, { replace: true });
+      const user = useAuthStore.getState().user;
+      let defaultRoute = '/student-dashboard';
+      if (user?.role === 'college-admin') defaultRoute = '/college-admin';
+      else if (user?.role === 'general') defaultRoute = '/general-dashboard';
+      else if (user?.role === 'super-admin') defaultRoute = '/admin-portal';
+
+      const targetPath = location.state?.from?.pathname || defaultRoute;
+      navigate(targetPath, { replace: true });
     }
   };
 
@@ -128,7 +138,7 @@ const Login = () => {
               <button
                 key={acc.role}
                 type="button"
-                onClick={() => handleQuickLogin(acc.email, acc.password)}
+                onClick={() => handleQuickLogin(acc.email, acc.password, acc.dashboardRoute)}
                 title={`Login as ${acc.role} (${acc.email})`}
                 className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-all text-xs font-medium cursor-pointer ${acc.color}`}
               >

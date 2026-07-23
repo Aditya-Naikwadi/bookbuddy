@@ -30,6 +30,15 @@ export const PaymentDialog = ({
   const [paymentRef, setPaymentRef] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen) {
+      setStep('confirm');
+      setErrorMessage('');
+    }
+  }
+
   const getFocusableElements = () => {
     if (!dialogRef.current) return [];
     return Array.from(
@@ -41,28 +50,28 @@ export const PaymentDialog = ({
 
   // Handle focus return and Escape key
   useEffect(() => {
-    if (isOpen) {
-      setStep('confirm');
-      setErrorMessage('');
-      const focusable = getFocusableElements();
-      if (focusable.length > 0) {
-        setTimeout(() => focusable[0].focus(), 50);
-      }
+    if (!isOpen) return;
 
-      const handleKeyDown = (e) => {
-        if (e.key === 'Escape' && step !== 'paying' && step !== 'verifying_webhook') {
-          onClose();
-        }
-      };
+    const triggerEl = triggerRef?.current;
 
-      window.addEventListener('keydown', handleKeyDown);
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-        if (triggerRef?.current) {
-          triggerRef.current.focus();
-        }
-      };
+    const focusable = getFocusableElements();
+    if (focusable.length > 0) {
+      setTimeout(() => focusable[0].focus(), 50);
     }
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && step !== 'paying' && step !== 'verifying_webhook') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (triggerEl) {
+        triggerEl.focus();
+      }
+    };
   }, [isOpen, step, onClose, triggerRef]);
 
   // Launch Razorpay PCI-compliant checkout popup

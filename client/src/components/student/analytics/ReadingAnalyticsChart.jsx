@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BarChart2, TrendingUp, BookOpen, Clock, Calendar } from 'lucide-react';
+import { BarChart2, BookOpen, Clock, Calendar } from 'lucide-react';
 
 const fetchReadingAnalytics = async (days) => {
   const { data } = await apiClient.get(`/dashboards/student/reading-analytics?days=${days}`);
@@ -20,13 +20,13 @@ export const ReadingAnalyticsChart = () => {
     staleTime: 60000,
   });
 
-  const chartPoints = analyticsData?.analytics || [];
-  const isEmpty = analyticsData?.isEmpty || chartPoints.every((p) => p.pagesRead === 0 && p.minutesRead === 0);
+  const chartPoints = Array.isArray(analyticsData?.analytics) ? analyticsData.analytics : [];
+  const isEmpty = analyticsData?.isEmpty || chartPoints.length === 0 || chartPoints.every((p) => (p?.pagesRead || 0) === 0 && (p?.minutesRead || 0) === 0);
 
-  const totalPages = analyticsData?.totalPagesRead || chartPoints.reduce((acc, p) => acc + (p.pagesRead || 0), 0);
-  const totalMinutes = analyticsData?.totalMinutesRead || chartPoints.reduce((acc, p) => acc + (p.minutesRead || 0), 0);
+  const totalPages = analyticsData?.totalPagesRead ?? chartPoints.reduce((acc, p) => acc + (p?.pagesRead || 0), 0);
+  const totalMinutes = analyticsData?.totalMinutesRead ?? chartPoints.reduce((acc, p) => acc + (p?.minutesRead || 0), 0);
 
-  const values = chartPoints.map((p) => (activeMetric === 'pages' ? p.pagesRead : p.minutesRead));
+  const values = chartPoints.map((p) => (activeMetric === 'pages' ? (p?.pagesRead || 0) : (p?.minutesRead || 0)));
   const maxValue = Math.max(...values, 10);
 
   return (
@@ -152,13 +152,13 @@ export const ReadingAnalyticsChart = () => {
             </div>
 
             {chartPoints.map((point, index) => {
-              const val = activeMetric === 'pages' ? point.pagesRead : point.minutesRead;
-              const heightPct = Math.max(6, (val / maxValue) * 100);
-              const isHovered = hoveredPoint?.date === point.date;
+              const val = activeMetric === 'pages' ? (point?.pagesRead || 0) : (point?.minutesRead || 0);
+              const heightPct = Math.max(6, (val / Math.max(maxValue, 1)) * 100);
+              const isHovered = hoveredPoint?.date === point?.date;
 
               return (
                 <div
-                  key={point.date || index}
+                  key={point?.date || index}
                   onMouseEnter={() => setHoveredPoint(point)}
                   onMouseLeave={() => setHoveredPoint(null)}
                   className="flex-1 flex flex-col items-center justify-end h-full group relative cursor-pointer z-10"
@@ -172,9 +172,9 @@ export const ReadingAnalyticsChart = () => {
                         exit={{ opacity: 0, y: 5 }}
                         className="absolute bottom-full mb-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1.5 rounded-xl shadow-xl z-30 whitespace-nowrap pointer-events-none"
                       >
-                        <p>{point.date}</p>
+                        <p>{point?.date || 'Today'}</p>
                         <p className="text-indigo-300 dark:text-indigo-600 font-extrabold">
-                          {point.pagesRead} Pages • {point.minutesRead} Mins
+                          {point?.pagesRead || 0} Pages • {point?.minutesRead || 0} Mins
                         </p>
                       </motion.div>
                     )}
@@ -196,7 +196,7 @@ export const ReadingAnalyticsChart = () => {
 
                   {/* Day Label (X-Axis) */}
                   <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-2 truncate max-w-full">
-                    {days === 7 ? point.day : point.date.split('-')[2]}
+                    {days === 7 ? (point?.day || '') : (point?.date && typeof point.date === 'string' && point.date.includes('-') ? point.date.split('-')[2] : (point?.date || ''))}
                   </span>
                 </div>
               );

@@ -227,21 +227,12 @@ const getMyNotifications = async (userId, options = {}) => {
   }
 
   const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
-  let total = await NotificationLog.countDocuments(filter);
-  let notifications = await NotificationLog.find(filter)
+  const total = await Notification.countDocuments(filter);
+  const notifications = await Notification.find(filter)
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(parseInt(limit, 10))
     .lean();
-
-  if (total === 0) {
-    total = await Notification.countDocuments(filter);
-    notifications = await Notification.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit, 10))
-      .lean();
-  }
 
   return {
     notifications,

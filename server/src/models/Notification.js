@@ -24,6 +24,8 @@ const notificationSchema = new mongoose.Schema(
         'streak_milestone',
         'streak_at_risk',
         'general',
+        'LOAN_DUE',
+        'loan_due',
       ],
       required: true,
       index: true,

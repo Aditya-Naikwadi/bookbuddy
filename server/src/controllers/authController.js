@@ -79,6 +79,7 @@ const registerUser = async (req, res, next) => {
         collegeId: user.collegeId,
       },
       accessToken,
+      refreshToken,
     });
   } catch (error) {
     next(error);
@@ -131,6 +132,7 @@ const loginUser = async (req, res, next) => {
         collegeId: user.collegeId,
       },
       accessToken,
+      refreshToken,
     });
   } catch (error) {
     next(error);
@@ -203,6 +205,7 @@ const refreshToken = async (req, res, next) => {
     res.json({
       success: true,
       accessToken,
+      refreshToken: newRefreshToken,
     });
   } catch (error) {
     next(error);
@@ -219,6 +222,9 @@ const logoutUser = async (req, res, next) => {
     if (clientToken) {
       const clientHash = hashToken(clientToken);
       await RefreshToken.updateOne({ tokenHash: clientHash }, { revokedAt: new Date() });
+    } else if (req.user?._id || req.user?.id) {
+      const userId = req.user._id || req.user.id;
+      await RefreshToken.updateMany({ userId, revokedAt: null }, { revokedAt: new Date() });
     }
 
     clearRefreshTokenCookie(res);
