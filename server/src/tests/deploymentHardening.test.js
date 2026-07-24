@@ -45,8 +45,9 @@ describe('Master Vercel Deployment Hardening Integration Tests', () => {
     // Restore env & connection
     process.env.MONGO_URI = origUri;
     process.env.MONGODB_URI = origMUri;
-    global._mongooseConn.promise = cachedPromise;
-    global._mongooseConn.conn = cachedConn;
+    global._mongooseConn.promise = null;
+    global._mongooseConn.conn = null;
+    await connectDB();
   });
 
   it('4. Cross-Site Cookie Policy Resolution: should set sameSite: "none" and secure: true for production cross-site requests', () => {

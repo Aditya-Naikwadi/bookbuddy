@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 
-beforeEach(() => {
+beforeEach(async () => {
+  if (mongoose.connection.readyState === 0 && process.env.MONGO_URI) {
+    await mongoose.connect(process.env.MONGO_URI);
+  }
   const { resetAllLimiters } = require('../middlewares/rateLimiters');
   resetAllLimiters();
 });

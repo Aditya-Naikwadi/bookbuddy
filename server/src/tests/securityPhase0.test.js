@@ -92,7 +92,7 @@ describe('Phase 0 Emergency Security Patch Integration Tests', () => {
       .send({ bookId: outOfStockBook._id.toString() });
 
     expect(createRes.status).toBe(200);
-    const reservationId = createRes.body.data._id;
+    const reservationId = createRes.body.data._id || createRes.body.data.id;
 
     // User B attempts to DELETE User A's reservation
     const deleteRes = await request(app)

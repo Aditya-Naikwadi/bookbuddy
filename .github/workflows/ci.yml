@@ -24,10 +24,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-          cache-dependency-path: 'server/package-lock.json'
 
-      - name: Install Dependencies
+      - name: Install Server Dependencies
         run: |
           cd server
           npm install --legacy-peer-deps
@@ -36,6 +34,23 @@ jobs:
         run: |
           cd server
           npm run lint
+
+      - name: Validate Required Environment Variables
+        run: |
+          node -e "
+            const required = ['MONGO_URI', 'JWT_SECRET', 'JWT_REFRESH_SECRET', 'CLIENT_ORIGIN'];
+            const missing = required.filter(k => !process.env[k]);
+            if (missing.length > 0) {
+              console.error('Missing required CI env vars:', missing);
+              process.exit(1);
+            }
+            console.log('CI Environment variables validation passed.');
+          "
+        env:
+          MONGO_URI: mongodb://localhost:27017/bookbuddy_test
+          JWT_SECRET: testjwtsecretkey999
+          JWT_REFRESH_SECRET: testjwtrefreshsecretkey999
+          CLIENT_ORIGIN: http://localhost:5173
 
       - name: Run Tests
         env:
@@ -51,9 +66,10 @@ jobs:
           cd server
           npm test
 
-      - name: Build Check
+      - name: Install Client & Build Check
         run: |
-          cd server
+          cd client
+          npm install --legacy-peer-deps
           npm run build
 
   deploy:

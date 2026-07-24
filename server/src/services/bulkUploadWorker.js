@@ -259,6 +259,19 @@ const processBulkUploadJob = async (jobId, filePath) => {
       }
     }
 
+    // Flush any remaining items in chunk after loop ends
+    if (chunk.length > 0) {
+      try {
+        const inserted = await User.insertMany(chunk, { ordered: false });
+        job.succeededRows += inserted.length;
+      } catch (insertErr) {
+        if (insertErr.insertedDocs) {
+          job.succeededRows += insertErr.insertedDocs.length;
+        }
+      }
+      chunk = [];
+    }
+
     // Write error report CSV if any failures occurred
     if (job.failedRows > 0) {
       const reportUrl = await writeErrorReportCsv(jobId, job.errorDetails);

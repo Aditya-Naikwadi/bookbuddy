@@ -46,9 +46,21 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
     await Feedback.deleteMany({});
     await Complaint.deleteMany({});
 
+    await LabBooking.syncIndexes();
+
     // Seed Colleges
-    collegeA = await College.create({ name: 'Facilities College A', code: 'FCA' });
-    collegeB = await College.create({ name: 'Facilities College B', code: 'FCB' });
+    collegeA = await College.create({
+      name: 'Facilities College A',
+      code: 'FCA',
+      selectedServices: ['facilities_booking', 'catalog_management'],
+      enabledFeatures: ['facilities_booking', 'catalog_management'],
+    });
+    collegeB = await College.create({
+      name: 'Facilities College B',
+      code: 'FCB',
+      selectedServices: ['facilities_booking', 'catalog_management'],
+      enabledFeatures: ['facilities_booking', 'catalog_management'],
+    });
 
     // Seed Admins
     adminA = await User.create({

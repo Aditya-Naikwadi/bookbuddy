@@ -46,8 +46,12 @@ describe('Direct REST Endpoints Integration Tests', () => {
     await LabSeat.deleteMany({});
     await LabBooking.deleteMany({});
 
-    // Seed College
-    collegeA = await College.create({ name: 'REST Test College A', code: 'RTCA' });
+    collegeA = await College.create({
+      name: 'REST Test College A',
+      code: 'RTCA',
+      selectedServices: ['facilities_booking', 'catalog_management'],
+      enabledFeatures: ['facilities_booking', 'catalog_management'],
+    });
 
     // Seed Student
     studentA = await User.create({
@@ -208,7 +212,7 @@ describe('Direct REST Endpoints Integration Tests', () => {
       expect(joinRes.body.data.userId.toString()).toBe(studentA._id.toString());
       expect(joinRes.body.data.collegeId.toString()).toBe(collegeA._id.toString());
 
-      const reservationId = joinRes.body.data._id;
+      const reservationId = joinRes.body.data._id || joinRes.body.data.id;
 
       const leaveRes = await request(app)
         .delete(`/api/reservations/${reservationId}`)

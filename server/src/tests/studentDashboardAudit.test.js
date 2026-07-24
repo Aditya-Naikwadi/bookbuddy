@@ -42,10 +42,11 @@ describe('Backend Audit Fixes Unit Tests (Items 1 - 3)', () => {
     await Fine.deleteMany({});
     await LabSeat.deleteMany({});
     await LabBooking.deleteMany({});
-    // 1. Seed College
     college = await College.create({
       name: 'Audit Test University',
       code: 'ATU999',
+      selectedServices: ['facilities_booking', 'catalog_management'],
+      enabledFeatures: ['facilities_booking', 'catalog_management'],
     });
 
     // 2. Seed Student User

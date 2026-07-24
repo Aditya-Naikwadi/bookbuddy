@@ -127,7 +127,7 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
     it('should correctly resolve transitive dependencies (e.g. gamification -> catalog_management)', async () => {
       // Update selectedServices to ['gamification']
       const patchRes = await request(app)
-        .patch(`/api/college/${collegeA._id}/features`)
+        .patch(`/api/services/college/${collegeA._id}/features`)
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({
           selectedServices: ['gamification'],
@@ -145,7 +145,7 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
     it('should enforce tenant isolation on feature updates', async () => {
       // Admin A tries to modify College B's features
       const res = await request(app)
-        .patch(`/api/college/${collegeB._id}/features`)
+        .patch(`/api/services/college/${collegeB._id}/features`)
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({ selectedServices: ['analytics'] });
 
@@ -168,7 +168,7 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
     it('should allow request when feature is enabled for tenant', async () => {
       // Enable facilities_booking for College A
       await request(app)
-        .patch(`/api/college/${collegeA._id}/features`)
+        .patch(`/api/services/college/${collegeA._id}/features`)
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({ selectedServices: ['facilities_booking'] });
 

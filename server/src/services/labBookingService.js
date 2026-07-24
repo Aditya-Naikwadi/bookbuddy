@@ -151,20 +151,31 @@ const createBooking = async (userId, seatId, collegeId, startTimeInput, endTimeI
       throw new AppError('This seat is currently unavailable (maintenance/retired).', 400);
     }
 
-    const [booking] = await LabBooking.create(
-      [
-        {
-          collegeId,
-          userId,
-          seatId,
-          date,
-          startTime,
-          endTime,
-          status: 'booked',
-        },
-      ],
-      { session }
-    );
+    let booking;
+    try {
+      const created = await LabBooking.create(
+        [
+          {
+            collegeId,
+            userId,
+            seatId,
+            date,
+            startTime,
+            endTime,
+            status: 'booked',
+          },
+        ],
+        { session }
+      );
+      booking = created[0];
+    } catch (createErr) {
+      if (createErr.code === 11000 || createErr.message?.includes('E11000')) {
+        const err = new AppError('slot already booked', 409);
+        err.statusCode = 409;
+        throw err;
+      }
+      throw createErr;
+    }
 
     // Record streak action
     let streakData = null;

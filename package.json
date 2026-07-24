@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "BookBuddy Campus Library & Digital Hub",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "build": "npm install --prefix server --legacy-peer-deps && npm install --prefix client --legacy-peer-deps && npm run build --prefix client",
     "start": "node server/src/server.js"

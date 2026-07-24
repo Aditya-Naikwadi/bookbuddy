@@ -1,8 +1,14 @@
 const request = require('supertest');
 const app = require('../app');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 
 describe('Google OAuth 2.0 Single Sign-On Integration Tests', () => {
+  beforeAll(async () => {
+    if (mongoose.connection.readyState === 0 && process.env.MONGO_URI) {
+      await mongoose.connect(process.env.MONGO_URI);
+    }
+  });
   it('should reject Google auth request when idToken is missing', async () => {
     const res = await request(app).post('/api/auth/google').send({});
 

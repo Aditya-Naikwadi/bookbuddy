@@ -74,6 +74,17 @@ describe('API Rate Limiting & Input Validation Hardening Tests', () => {
   });
 
   afterAll(async () => {
+    delete process.env.RATE_LIMIT_GLOBAL_MAX;
+    delete process.env.RATE_LIMIT_AUTH_MAX;
+    delete process.env.RATE_LIMIT_AUTH_IP_MAX;
+    delete process.env.RATE_LIMIT_AUTH_EMAIL_MAX;
+    delete process.env.RATE_LIMIT_AUTH_WINDOW_MS;
+    delete require.cache[require.resolve('../config')];
+    delete require.cache[require.resolve('../middlewares/rateLimiters')];
+    delete require.cache[require.resolve('../app')];
+    const { resetAllLimiters } = require('../middlewares/rateLimiters');
+    resetAllLimiters();
+
     if (mongoose.connection.readyState !== 0) {
       await mongoose.connection.db.dropDatabase();
       await mongoose.connection.close();
