@@ -117,9 +117,10 @@ const getHealthStatus = async () => {
     isHealthy,
     statusCode: isHealthy ? 200 : 503,
     payload: {
-      status: isHealthy ? 'healthy' : 'degraded',
+      status: isHealthy ? 'ok' : 'degraded',
       success: isHealthy,
       dbState: dbStatus,
+      dbConnection: dbStatus,
       dbReadyState: readyState,
       redisConnection: redisStatus,
       environment: config.nodeEnv,
