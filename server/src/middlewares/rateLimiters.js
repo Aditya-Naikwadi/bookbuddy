@@ -11,9 +11,9 @@ const isMock = RateLimiterRedis.name === 'MockRateLimiterRedis';
 
 if (isTest && isMock) {
   redisReady = true;
-} else if (config.redisUrl || !isTest) {
+} else if (config.redisUrl) {
   try {
-    redisClient = new Redis(config.redisUrl || 'redis://127.0.0.1:6379', {
+    redisClient = new Redis(config.redisUrl, {
       maxRetriesPerRequest: 1,
       connectTimeout: 2000,
       reconnectOnError: () => false,
