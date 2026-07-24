@@ -1,24 +1,37 @@
 const crypto = require('crypto');
 const AppError = require('../utils/AppError');
 const config = require('../config');
+const logger = require('../utils/logger');
 
 const generateCsrfToken = () => {
   return crypto.randomBytes(32).toString('hex');
 };
 
 const getCsrfTokenController = (req, res) => {
-  const csrfToken = generateCsrfToken();
-  res.cookie('_csrf', csrfToken, {
-    httpOnly: false, // Read by frontend script to set x-csrf-token header
-    secure: config.nodeEnv === 'production',
-    sameSite: 'strict',
-    path: '/',
-    maxAge: 24 * 60 * 60 * 1000,
-  });
-  res.json({
-    success: true,
-    csrfToken,
-  });
+  try {
+    const csrfToken = generateCsrfToken();
+    try {
+      res.cookie('_csrf', csrfToken, {
+        httpOnly: false, // Read by frontend script to set x-csrf-token header
+        secure: config.nodeEnv === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+    } catch (cookieErr) {
+      logger.warn('Failed to set _csrf cookie:', cookieErr.message);
+    }
+    return res.json({
+      success: true,
+      csrfToken,
+    });
+  } catch (err) {
+    logger.error('CSRF Generation Error:', err.message);
+    return res.json({
+      success: true,
+      csrfToken: crypto.randomBytes(32).toString('hex'),
+    });
+  }
 };
 
 const validateCsrf = (req, res, next) => {
@@ -45,7 +58,7 @@ const validateCsrf = (req, res, next) => {
     '/api/v1/auth/refresh',
     '/api/v1/registration',
   ];
-  const isExempt = exemptPaths.some((path) => req.originalUrl.startsWith(path));
+  const isExempt = exemptPaths.some((path) => req.originalUrl?.startsWith(path) || req.url?.startsWith(path));
 
   const csrfCookie = req.cookies?._csrf;
   const csrfHeader = req.headers['x-csrf-token'] || req.body?._csrf;
