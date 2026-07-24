@@ -18,7 +18,9 @@ async function ensureDbConnection() {
       console.error('[Vercel Serverless] Database connection error:', err.message);
     }
   } else {
-    console.warn('[Vercel Serverless] Warning: Neither MONGO_URI nor MONGODB_URI environment variable is defined in Vercel settings.');
+    console.warn(
+      '[Vercel Serverless] Warning: Neither MONGO_URI nor MONGODB_URI environment variable is defined in Vercel settings.'
+    );
   }
 }
 
@@ -28,5 +30,14 @@ module.exports = async (req, res) => {
   } catch (err) {
     console.error('[Vercel Serverless] Connection handler error:', err.message);
   }
+
+  // Preserve and normalize request URL to match Express /api routes
+  const matchedPath = req.headers['x-matched-path'];
+  if (matchedPath && matchedPath.startsWith('/api')) {
+    req.url = matchedPath;
+  } else if (req.url && !req.url.startsWith('/api')) {
+    req.url = `/api${req.url.startsWith('/') ? '' : '/'}${req.url}`;
+  }
+
   return app(req, res);
 };
