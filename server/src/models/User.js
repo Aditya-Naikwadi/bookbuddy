@@ -61,6 +61,21 @@ const userSchema = new mongoose.Schema(
       enum: ['active', 'suspended', 'expired'],
       default: 'active',
     },
+    status: {
+      type: String,
+      enum: ['invited', 'active', 'disabled'],
+      default: 'active',
+    },
+    invitedVia: {
+      type: String,
+      enum: ['self_registration', 'bulk_upload'],
+      default: 'self_registration',
+    },
+    invitationToken: {
+      type: String,
+      default: null,
+      select: false,
+    },
     validTill: {
       type: Date,
       default: () => {
@@ -90,8 +105,9 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Compound unique index for student ID scoped to collegeId
+// Compound unique indexes scoped to collegeId
 userSchema.index({ collegeId: 1, studentId: 1 }, { unique: true, sparse: true });
+userSchema.index({ collegeId: 1, email: 1 }, { unique: true, sparse: true });
 
 // Hash password and generate cardSecret before saving
 userSchema.pre('save', async function () {
@@ -100,7 +116,8 @@ userSchema.pre('save', async function () {
     this.cardSecret = crypto.randomBytes(32).toString('hex');
   }
   if (!this.isModified('password')) return;
-  const salt = await bcrypt.genSalt(12);
+  if (typeof this.password === 'string' && /^\$2[aby]\$\d{2}\$/.test(this.password)) return;
+  const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
 

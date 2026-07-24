@@ -70,6 +70,24 @@ const collegeSchema = new mongoose.Schema(
         trim: true,
       },
     ],
+    selectedServices: [
+      {
+        type: String,
+        lowercase: true,
+        trim: true,
+      },
+    ],
+    enabledFeatures: [
+      {
+        type: String,
+        lowercase: true,
+        trim: true,
+      },
+    ],
+    featureLimits: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
   },
   {
     timestamps: true,

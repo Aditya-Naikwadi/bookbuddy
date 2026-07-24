@@ -2,18 +2,23 @@ import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Search,
-  Filter,
-  X,
   SlidersHorizontal,
-  ArrowUpDown,
+  X,
   BookOpen,
   MapPin,
-  RotateCcw,
+  CheckCircle2,
+  Clock,
+  BookX,
+  SearchCode,
 } from 'lucide-react';
 import ResultCard from '../../../components/general/ResultCard';
 import useLocalBookmarks from '../../../hooks/useLocalBookmarks';
+import StickyControlBar from '../../../components/general/StickyControlBar';
+import ActiveFilterChips from '../../../components/general/ActiveFilterChips';
+import StatSummaryStrip from '../../../components/general/StatSummaryStrip';
+import VirtualizedCardGrid from '../../../components/general/VirtualizedCardGrid';
+import MobileFilterSheet from '../../../components/general/MobileFilterSheet';
 
-// Mock Catalog Database for Public Search
 const CATALOG_BOOKS = [
   {
     id: 'b-1',
@@ -117,48 +122,52 @@ const GENRES = ['All', 'Computer Science', 'Architecture', 'Economics', 'Biology
 const AVAILABILITY_OPTIONS = ['All', 'Available', 'On Hold', 'Checked Out'];
 const FORMAT_OPTIONS = ['All', 'Hardcover', 'Paperback', 'Reference'];
 
+const SORT_OPTIONS = [
+  { value: 'relevance', label: 'Sort: Relevance' },
+  { value: 'title', label: 'Title (A-Z)' },
+  { value: 'newest', label: 'Publication Year (Newest)' },
+  { value: 'available', label: 'Most Available Copies' },
+];
+
 const GeneralSearch = () => {
   const [searchParams] = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
-  const initialFilter = searchParams.get('filter');
 
   const { toggleBookmark, isBookmarked } = useLocalBookmarks();
 
-  const [query, setQuery] = useState(initialQuery);
+  const [rawQuery, setRawQuery] = useState(initialQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [selectedGenre, setSelectedGenre] = useState('All');
-  const [selectedAvailability, setSelectedAvailability] = useState(initialFilter === 'new' ? 'All' : 'All');
+  const [selectedAvailability, setSelectedAvailability] = useState('All');
   const [selectedFormat, setSelectedFormat] = useState('All');
   const [sortBy, setSortBy] = useState('relevance');
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [viewMode, setViewMode] = useState('grid');
+  const [showFiltersSheet, setShowFiltersSheet] = useState(false);
+  const [genreSearch, setGenreSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedLocationBook, setSelectedLocationBook] = useState(null);
 
-  // Trigger loading effect on search filter changes
+  // Debounce search query changes (~300ms)
   useEffect(() => {
+    setLoading(true);
     const timer = setTimeout(() => {
+      setDebouncedQuery(rawQuery);
       setLoading(false);
     }, 300);
     return () => clearTimeout(timer);
-  }, [query, selectedGenre, selectedAvailability, selectedFormat, sortBy]);
+  }, [rawQuery]);
 
   const filteredBooks = useMemo(() => {
     return CATALOG_BOOKS.filter((book) => {
-      // Search Query Matching
-      const q = query.toLowerCase().trim();
+      const q = debouncedQuery.toLowerCase().trim();
       const matchesQuery =
         !q ||
         book.title.toLowerCase().includes(q) ||
         book.author.toLowerCase().includes(q) ||
         book.genre.toLowerCase().includes(q);
 
-      // Genre Filter
       const matchesGenre = selectedGenre === 'All' || book.genre === selectedGenre;
-
-      // Availability Filter
-      const matchesAvailability =
-        selectedAvailability === 'All' || book.availabilityStatus === selectedAvailability;
-
-      // Format Filter
+      const matchesAvailability = selectedAvailability === 'All' || book.availabilityStatus === selectedAvailability;
       const matchesFormat = selectedFormat === 'All' || book.format === selectedFormat;
 
       return matchesQuery && matchesGenre && matchesAvailability && matchesFormat;
@@ -166,234 +175,209 @@ const GeneralSearch = () => {
       if (sortBy === 'title') return a.title.localeCompare(b.title);
       if (sortBy === 'newest') return parseInt(b.year, 10) - parseInt(a.year, 10);
       if (sortBy === 'available') return b.availableCopies - a.availableCopies;
-      return 0; // relevance default
+      return 0;
     });
-  }, [query, selectedGenre, selectedAvailability, selectedFormat, sortBy]);
+  }, [debouncedQuery, selectedGenre, selectedAvailability, selectedFormat, sortBy]);
 
-  const handleResetFilters = () => {
-    setQuery('');
+  // Compute stat summary metrics
+  const stats = useMemo(() => {
+    const available = filteredBooks.filter((b) => b.availabilityStatus === 'Available').length;
+    const onHold = filteredBooks.filter((b) => b.availabilityStatus === 'On Hold').length;
+    const checkedOut = filteredBooks.filter((b) => b.availabilityStatus === 'Checked Out').length;
+
+    return [
+      { label: 'Total Matches', value: filteredBooks.length, icon: BookOpen, colorClass: 'text-indigo-600', bgBadgeClass: 'bg-indigo-50 text-indigo-700' },
+      { label: 'Available', value: available, icon: CheckCircle2, colorClass: 'text-emerald-600', bgBadgeClass: 'bg-emerald-50 text-emerald-700' },
+      { label: 'On Hold', value: onHold, icon: Clock, colorClass: 'text-amber-600', bgBadgeClass: 'bg-amber-50 text-amber-700' },
+      { label: 'Checked Out', value: checkedOut, icon: BookX, colorClass: 'text-rose-600', bgBadgeClass: 'bg-rose-50 text-rose-700' },
+    ];
+  }, [filteredBooks]);
+
+  const activeChips = [
+    { key: 'query', label: 'Keyword', value: debouncedQuery },
+    { key: 'genre', label: 'Genre', value: selectedGenre },
+    { key: 'availability', label: 'Status', value: selectedAvailability },
+    { key: 'format', label: 'Format', value: selectedFormat },
+  ];
+
+  const handleRemoveChip = (key) => {
+    if (key === 'query') setRawQuery('');
+    if (key === 'genre') setSelectedGenre('All');
+    if (key === 'availability') setSelectedAvailability('All');
+    if (key === 'format') setSelectedFormat('All');
+  };
+
+  const handleResetAll = () => {
+    setRawQuery('');
+    setDebouncedQuery('');
     setSelectedGenre('All');
     setSelectedAvailability('All');
     setSelectedFormat('All');
     setSortBy('relevance');
   };
 
-  return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 tracking-tight">
-            Advanced Catalog Search
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Search physical book collections, filter by genre and availability, and pinpoint shelf locations.
-          </p>
-        </div>
+  const filteredGenresList = GENRES.filter((g) => g.toLowerCase().includes(genreSearch.toLowerCase()));
 
-        <button
-          onClick={() => setShowMobileFilters(!showMobileFilters)}
-          className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-50 text-indigo-700 font-semibold text-xs rounded-xl border border-indigo-200"
-        >
-          <Filter className="w-4 h-4" />
-          <span>Filters & Refinements</span>
-        </button>
+  const filterContent = (
+    <div className="space-y-5">
+      {/* Genre Filter with Search within Facet */}
+      <div>
+        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+          Genre / Subject
+        </label>
+        <div className="relative mb-2">
+          <SearchCode className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={genreSearch}
+            onChange={(e) => setGenreSearch(e.target.value)}
+            placeholder="Search genres..."
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200/80 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+        </div>
+        <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+          {filteredGenresList.map((genre) => (
+            <button
+              key={genre}
+              onClick={() => setSelectedGenre(genre)}
+              className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between ${
+                selectedGenre === genre ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <span>{genre}</span>
+              {selectedGenre === genre && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Main Content Layout: Faceted Filter Sidebar + Results */}
-      <div className="flex flex-col md:flex-row gap-6 items-start">
-        {/* Faceted Filter Sidebar */}
-        <aside
-          className={`w-full md:w-64 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6 flex-shrink-0 ${
-            showMobileFilters ? 'block' : 'hidden md:block'
-          }`}
-        >
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
-              <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
-              <span>Faceted Filters</span>
-            </div>
+      {/* Availability Filter */}
+      <div className="border-t border-slate-100 pt-4">
+        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+          Status & Availability
+        </label>
+        <div className="space-y-1">
+          {AVAILABILITY_OPTIONS.map((status) => (
             <button
-              onClick={handleResetFilters}
-              title="Reset all filters"
-              className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"
+              key={status}
+              onClick={() => setSelectedAvailability(status)}
+              className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between ${
+                selectedAvailability === status ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-50'
+              }`}
             >
-              <RotateCcw className="w-3 h-3" /> Reset
+              <span>{status}</span>
+              {selectedAvailability === status && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Format Filter */}
+      <div className="border-t border-slate-100 pt-4">
+        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+          Binding / Format
+        </label>
+        <div className="space-y-1">
+          {FORMAT_OPTIONS.map((format) => (
+            <button
+              key={format}
+              onClick={() => setSelectedFormat(format)}
+              className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between ${
+                selectedFormat === format ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <span>{format}</span>
+              {selectedFormat === format && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="h-[calc(100vh-4rem)] flex flex-col overflow-hidden max-w-7xl mx-auto p-3 sm:p-4 gap-3 font-sans">
+      {/* Sticky Control Bar */}
+      <StickyControlBar
+        searchQuery={rawQuery}
+        onSearchChange={setRawQuery}
+        onClearSearch={() => setRawQuery('')}
+        placeholder="Search catalog by title, author, or discipline..."
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        sortOptions={SORT_OPTIONS}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onOpenMobileFilters={() => setShowFiltersSheet(true)}
+        resultCount={filteredBooks.length}
+        filterSlot={
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <StatSummaryStrip items={stats} />
+            <button
+              onClick={() => setShowFiltersSheet(true)}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 hover:bg-indigo-100 transition-all ml-auto"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>Faceted Filters</span>
             </button>
           </div>
+        }
+      />
 
-          {/* Genre Filter */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-              Genre / Subject
-            </label>
-            <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
-              {GENRES.map((genre) => (
-                <button
-                  key={genre}
-                  onClick={() => setSelectedGenre(genre)}
-                  className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between ${
-                    selectedGenre === genre
-                      ? 'bg-indigo-50 text-indigo-700 font-bold'
-                      : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <span>{genre}</span>
-                  {selectedGenre === genre && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
-                </button>
-              ))}
+      {/* Active Filter Chips */}
+      <ActiveFilterChips chips={activeChips} onRemoveChip={handleRemoveChip} onResetAll={handleResetAll} />
+
+      {/* Virtualized Cards Grid Container */}
+      <VirtualizedCardGrid
+        items={filteredBooks}
+        loading={loading}
+        viewMode={viewMode}
+        columns="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+        emptyState={
+          <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200/80 shadow-sm text-center space-y-4 max-w-md my-auto">
+            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl w-12 h-12 mx-auto flex items-center justify-center">
+              <BookOpen className="w-6 h-6" />
             </div>
+            <h3 className="text-base font-bold text-slate-900">No Matching Catalog Items</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              We couldn’t find any physical books matching your active search query and filter combination.
+            </p>
+            <button
+              onClick={handleResetAll}
+              className="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+            >
+              Clear All Filters
+            </button>
           </div>
+        }
+        renderItem={(book) => (
+          <ResultCard
+            key={book.id}
+            book={book}
+            isBookmarked={isBookmarked(book.id)}
+            onToggleBookmark={toggleBookmark}
+            onViewLocation={(b) => setSelectedLocationBook(b)}
+          />
+        )}
+      />
 
-          {/* Availability Filter */}
-          <div className="border-t border-slate-100 pt-4">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-              Status & Availability
-            </label>
-            <div className="space-y-1">
-              {AVAILABILITY_OPTIONS.map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setSelectedAvailability(status)}
-                  className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between ${
-                    selectedAvailability === status
-                      ? 'bg-indigo-50 text-indigo-700 font-bold'
-                      : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <span>{status}</span>
-                  {selectedAvailability === status && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Format Filter */}
-          <div className="border-t border-slate-100 pt-4">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-              Binding / Format
-            </label>
-            <div className="space-y-1">
-              {FORMAT_OPTIONS.map((format) => (
-                <button
-                  key={format}
-                  onClick={() => setSelectedFormat(format)}
-                  className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between ${
-                    selectedFormat === format
-                      ? 'bg-indigo-50 text-indigo-700 font-bold'
-                      : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <span>{format}</span>
-                  {selectedFormat === format && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
-                </button>
-              ))}
-            </div>
-          </div>
-        </aside>
-
-        {/* Results Area */}
-        <main className="flex-1 w-full space-y-6">
-          {/* Search Controls & Sorting */}
-          <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-            <div className="relative flex items-center">
-              <Search className="w-5 h-5 absolute left-4 text-slate-400" />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search catalog by title, author, or discipline..."
-                className="w-full pl-11 pr-10 py-3 text-sm bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white transition-all shadow-inner"
-              />
-              {query && (
-                <button
-                  onClick={() => setQuery('')}
-                  className="absolute right-3.5 p-1 text-slate-400 hover:text-slate-600 rounded-md"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs border-t border-slate-100 pt-3">
-              <div className="flex items-center gap-2 text-slate-600">
-                <span className="font-bold text-slate-900">{filteredBooks.length}</span>
-                <span>items found</span>
-                {(selectedGenre !== 'All' || selectedAvailability !== 'All' || selectedFormat !== 'All' || query) && (
-                  <span className="bg-indigo-50 text-indigo-700 font-semibold px-2 py-0.5 rounded-md">
-                    Filtered
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
-                <span className="text-slate-500 font-medium">Sort by:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
-                >
-                  <option value="relevance">Relevance</option>
-                  <option value="title">Title (A - Z)</option>
-                  <option value="newest">Publication Year (Newest)</option>
-                  <option value="available">Most Copies Available</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Results Grid / Loading / Empty State */}
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <ResultCard loading />
-              <ResultCard loading />
-              <ResultCard loading />
-              <ResultCard loading />
-              <ResultCard loading />
-              <ResultCard loading />
-            </div>
-          ) : filteredBooks.length === 0 ? (
-            <div className="bg-white p-12 rounded-2xl border border-slate-200/80 shadow-sm text-center space-y-4">
-              <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl w-12 h-12 mx-auto flex items-center justify-center">
-                <BookOpen className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900">No Matching Catalog Items</h3>
-              <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                We couldn’t find any physical books matching your active query and filter combination. Try clearing your filters or broadening your search keywords.
-              </p>
-              <button
-                onClick={handleResetFilters}
-                className="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
-              >
-                Clear All Filters
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredBooks.map((book) => (
-                <ResultCard
-                  key={book.id}
-                  book={book}
-                  isBookmarked={isBookmarked(book.id)}
-                  onToggleBookmark={toggleBookmark}
-                  onViewLocation={(b) => setSelectedLocationBook(b)}
-                />
-              ))}
-            </div>
-          )}
-        </main>
-      </div>
+      {/* Mobile/Desktop Faceted Filters Sheet */}
+      <MobileFilterSheet
+        isOpen={showFiltersSheet}
+        onClose={() => setShowFiltersSheet(false)}
+        title="Faceted Catalog Filters"
+        onResetAll={handleResetAll}
+      >
+        {filterContent}
+      </MobileFilterSheet>
 
       {/* Shelf Location Modal */}
       {selectedLocationBook && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative animate-in fade-in zoom-in-95 duration-200 space-y-5">
+          <div className="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-slate-100 relative animate-in fade-in zoom-in-95 duration-200 space-y-4">
             <button
               onClick={() => setSelectedLocationBook(null)}
-              className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -403,12 +387,12 @@ const GeneralSearch = () => {
                 <MapPin className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">{selectedLocationBook.title}</h3>
+                <h3 className="text-sm font-bold text-slate-900">{selectedLocationBook.title}</h3>
                 <p className="text-xs text-slate-500">Physical Shelf Mapping</p>
               </div>
             </div>
 
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3 text-xs">
+            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2.5 text-xs">
               <div className="flex justify-between py-1 border-b border-slate-200/60">
                 <span className="text-slate-500 font-medium">Shelf Code</span>
                 <span className="font-bold text-indigo-900">{selectedLocationBook.location}</span>
@@ -423,13 +407,9 @@ const GeneralSearch = () => {
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-500 italic bg-amber-50/60 p-3 rounded-xl border border-amber-200/60">
-              Note: As a public visitor, present the shelf location code to the circulation desk for on-site reading access.
-            </p>
-
             <button
               onClick={() => setSelectedLocationBook(null)}
-              className="w-full py-2.5 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition-colors"
+              className="w-full py-2.5 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-600/20"
             >
               Close Location Guide
             </button>

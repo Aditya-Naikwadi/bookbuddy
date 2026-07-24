@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import apiClient, { setInMemoryToken, fetchCsrfToken, setOnUnauthorizedCallback } from '../api/client';
+import apiClient, { setInMemoryToken, fetchCsrfToken, setOnUnauthorizedCallback, broadcastLogout } from '../api/client';
 
 const useAuthStore = create((set) => {
   setOnUnauthorizedCallback(() => {
@@ -61,13 +61,14 @@ const useAuthStore = create((set) => {
     }
   },
 
-  logout: async () => {
+  logout: async (allDevices = false) => {
     try {
-      await apiClient.post('/auth/logout');
+      await apiClient.post('/auth/logout', { allDevices });
     } catch (err) {
       console.error('Logout failed on server', err);
     } finally {
       setInMemoryToken(null);
+      broadcastLogout();
       set({ user: null, token: null, isAuthenticated: false, isLoading: false });
     }
   },

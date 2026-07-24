@@ -153,6 +153,8 @@ app.all(
   }
 );
 app.use('/api/v1/catalog', require('./routes/catalogRoutes'));
+app.use('/api/services', require('./routes/serviceRoutes'));
+app.use('/api/college/:id', require('./routes/bulkUploadRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/registration', require('./routes/registrationRoutes'));
 app.use('/api/books', require('./routes/bookRoutes'));

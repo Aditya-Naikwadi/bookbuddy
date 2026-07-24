@@ -225,8 +225,12 @@ const refreshToken = async (req, res, next) => {
 const logoutUser = async (req, res, next) => {
   try {
     const clientToken = req.cookies?.refreshToken || req.body?.refreshToken;
+    const allDevices = req.body?.allDevices === true;
 
-    if (clientToken) {
+    if (allDevices && (req.user?._id || req.user?.id)) {
+      const userId = req.user._id || req.user.id;
+      await RefreshToken.updateMany({ userId, revokedAt: null }, { revokedAt: new Date() });
+    } else if (clientToken) {
       const clientHash = hashToken(clientToken);
       await RefreshToken.updateOne({ tokenHash: clientHash }, { revokedAt: new Date() });
     } else if (req.user?._id || req.user?.id) {
@@ -238,7 +242,7 @@ const logoutUser = async (req, res, next) => {
 
     res.json({
       success: true,
-      message: 'Logged out successfully.',
+      message: allDevices ? 'Logged out of all devices successfully.' : 'Logged out successfully.',
     });
   } catch (error) {
     next(error);

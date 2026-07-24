@@ -8,6 +8,7 @@ const {
   getAvailability,
 } = require('../controllers/labController');
 const { protect } = require('../middlewares/auth');
+const requireFeature = require('../middlewares/requireFeature');
 const validate = require('../middlewares/validate');
 const { paramIdSchema } = require('../validations/common.validation');
 const {
@@ -16,6 +17,7 @@ const {
 } = require('../validations/facilities.validation');
 
 router.use(protect);
+router.use(requireFeature('facilities_booking'));
 
 router.route('/seats').get(getSeats);
 router.route('/availability').get(validate(getAvailabilitySchema), getAvailability);

@@ -80,7 +80,7 @@ const registerStudent = async (req, res, next) => {
     const otpExpires = new Date(Date.now() + 15 * 60 * 1000);
 
     // Hash password
-    const salt = await bcrypt.genSalt(12);
+    const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
     // 6. Create or update RegistrationRequest
@@ -121,11 +121,11 @@ const registerStudent = async (req, res, next) => {
       });
     }
 
-    // 7. Send verification OTP email
-    await sendStudentVerificationEmail(normalizedEmail, name, otp);
+    // 7. Send verification OTP email asynchronously
+    sendStudentVerificationEmail(normalizedEmail, name, otp).catch(() => {});
 
-    // 8. Log audit entry
-    await AuditLog.create({
+    // 8. Log audit entry asynchronously
+    AuditLog.create({
       actorRole: 'student',
       action: 'registration_request.submit',
       targetType: 'RegistrationRequest',
@@ -133,7 +133,7 @@ const registerStudent = async (req, res, next) => {
       collegeId: college._id,
       metadata: { email: normalizedEmail, studentId },
       ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
-    });
+    }).catch(() => {});
 
     res.status(201).json({
       success: true,
@@ -300,7 +300,7 @@ const submitTenantOnboarding = async (req, res, next) => {
     }
 
     // Hash admin password
-    const salt = await bcrypt.genSalt(12);
+    const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
     // Generate domain verification token
@@ -340,23 +340,23 @@ const submitTenantOnboarding = async (req, res, next) => {
       },
     });
 
-    // Send domain verification email link
-    await sendAdminDomainVerificationEmail(
+    // Send domain verification email link asynchronously
+    sendAdminDomainVerificationEmail(
       normalizedAdminEmail,
       adminName,
       normalizedDomain,
       domainVerificationToken
-    );
+    ).catch(() => {});
 
-    // Audit log
-    await AuditLog.create({
+    // Audit log asynchronously
+    AuditLog.create({
       actorRole: 'applicant',
       action: 'registration_request.submit',
       targetType: 'RegistrationRequest',
       targetId: onboardingRequest._id,
       metadata: { legalName, domain: normalizedDomain, adminEmail: normalizedAdminEmail },
       ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
-    });
+    }).catch(() => {});
 
     res.status(201).json({
       success: true,

@@ -68,6 +68,55 @@ apiClient.interceptors.request.use(
 let isRefreshing = false;
 let failedQueue = [];
 
+const authChannel =
+  typeof window !== 'undefined' && 'BroadcastChannel' in window
+    ? new BroadcastChannel('bookbuddy_auth_channel')
+    : null;
+
+export const broadcastLogout = () => {
+  if (authChannel) {
+    authChannel.postMessage({ type: 'LOGOUT' });
+  }
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.setItem('bookbuddy_logout', Date.now().toString());
+  }
+};
+
+export const broadcastTokenRefreshed = (token) => {
+  if (authChannel) {
+    authChannel.postMessage({ type: 'TOKEN_REFRESHED', token });
+  }
+};
+
+let onUnauthorizedCallback = null;
+export const setOnUnauthorizedCallback = (cb) => {
+  onUnauthorizedCallback = cb;
+};
+
+if (authChannel) {
+  authChannel.onmessage = (event) => {
+    if (event.data?.type === 'TOKEN_REFRESHED' && event.data?.token) {
+      setInMemoryToken(event.data.token);
+    } else if (event.data?.type === 'LOGOUT') {
+      setInMemoryToken(null);
+      if (onUnauthorizedCallback) {
+        onUnauthorizedCallback();
+      }
+    }
+  };
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'bookbuddy_logout') {
+      setInMemoryToken(null);
+      if (onUnauthorizedCallback) {
+        onUnauthorizedCallback();
+      }
+    }
+  });
+}
+
 const processQueue = (error, token = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
@@ -77,11 +126,6 @@ const processQueue = (error, token = null) => {
     }
   });
   failedQueue = [];
-};
-
-let onUnauthorizedCallback = null;
-export const setOnUnauthorizedCallback = (cb) => {
-  onUnauthorizedCallback = cb;
 };
 
 // Response Interceptor for 401 handling
@@ -119,6 +163,7 @@ apiClient.interceptors.response.use(
         const { data } = await apiClient.post('/auth/refresh');
         const newToken = data.accessToken;
         setInMemoryToken(newToken);
+        broadcastTokenRefreshed(newToken);
 
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         processQueue(null, newToken);
@@ -129,6 +174,7 @@ apiClient.interceptors.response.use(
         processQueue(refreshError, null);
         isRefreshing = false;
         setInMemoryToken(null);
+        broadcastLogout();
 
         if (onUnauthorizedCallback) {
           onUnauthorizedCallback();

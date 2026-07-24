@@ -17,7 +17,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         changeOrigin: true,
         secure: false,
       },
@@ -25,20 +25,38 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/three') || id.includes('node_modules/@react-three')) {
-            return 'vendor-three';
-          }
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-            return 'vendor-react';
-          }
-          if (id.includes('node_modules/gsap')) {
-            return 'vendor-gsap';
-          }
-          if (id.includes('node_modules/framer-motion')) {
-            return 'vendor-framer';
+          if (id.includes('node_modules')) {
+            if (id.includes('pdfjs-dist')) {
+              return 'vendor-pdfjs';
+            }
+            if (id.includes('epubjs')) {
+              return 'vendor-epubjs';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-lucide';
+            }
+            if (id.includes('three') || id.includes('@react-three')) {
+              return 'vendor-three';
+            }
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor-react';
+            }
+            if (id.includes('react-router')) {
+              return 'vendor-router';
+            }
+            if (id.includes('@tanstack')) {
+              return 'vendor-tanstack';
+            }
+            if (id.includes('gsap')) {
+              return 'vendor-gsap';
+            }
+            if (id.includes('framer-motion')) {
+              return 'vendor-framer';
+            }
           }
         },
       },
