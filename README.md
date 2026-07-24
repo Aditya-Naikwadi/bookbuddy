@@ -7,7 +7,8 @@
 [![CI Pipeline](https://github.com/Aditya-Naikwadi/BookBuddy/actions/workflows/ci.yml/badge.svg)](https://github.com/Aditya-Naikwadi/BookBuddy/actions/workflows/ci.yml)
 ![Node.js](https://img.shields.io/badge/Node.js-20.x-339933?logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-5.x-000000?logo=express&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-9.x-47A248?logo=mongodb&logoColor=white)
+![MongoDB Driver](https://img.shields.io/badge/MongoDB_Driver-6.x-47A248?logo=mongodb&logoColor=white)
+![Mongoose](https://img.shields.io/badge/Mongoose-9.x-880000?logo=mongoose&logoColor=white)
 ![React](https://img.shields.io/badge/React-19.x-61DAFB?logo=react&logoColor=black)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-06B6D4?logo=tailwindcss&logoColor=white)
 ![Socket.io](https://img.shields.io/badge/Socket.io-4.x-010101?logo=socketdotio&logoColor=white)
@@ -871,13 +872,23 @@ npm install
 NODE_ENV=production npm start
 ```
 
-### 2. SPA Route Rewrites (`vercel.json`)
-For client-side single page application routing (`react-router-dom`), `vercel.json` is configured in the root directory:
+### 2. Vercel Serverless & SPA Configuration (`vercel.json`)
+For client-side single page application routing (`react-router-dom`), serverless functions, and dependency installation flags, `vercel.json` is configured in the root directory:
 ```json
 {
-  "buildCommand": "npm install --prefix client && npm run build --prefix client",
+  "installCommand": "npm install --legacy-peer-deps && npm install --prefix server --legacy-peer-deps && npm install --prefix client --legacy-peer-deps",
+  "buildCommand": "npm run build --prefix client",
   "outputDirectory": "client/dist",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "server/src/**"
+    }
+  },
   "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
