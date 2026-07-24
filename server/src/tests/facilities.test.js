@@ -24,11 +24,9 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
   let collegeA;
   let collegeB;
   let adminA;
-  let adminB;
   let studentA;
   let studentB;
   let tokenAdminA;
-  let tokenAdminB;
   let tokenStudentA;
   let tokenStudentB;
 
@@ -71,7 +69,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
       role: 'college-admin',
       collegeId: collegeA._id,
     });
-    adminB = await User.create({
+    await User.create({
       studentId: 'ADM_FAC_002',
       name: 'Admin B',
       email: 'admin.b@facilities.com',
@@ -100,7 +98,6 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
 
     // Generate JWTs
     tokenAdminA = generateTokenPair(adminA).accessToken;
-    tokenAdminB = generateTokenPair(adminB).accessToken;
     tokenStudentA = generateTokenPair(studentA).accessToken;
     tokenStudentB = generateTokenPair(studentB).accessToken;
   });
@@ -382,7 +379,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
       expect(resEditSeat.status).toBe(404);
 
       // Create booking for College B (Student B)
-      const bookingB = await LabBooking.create({
+      await LabBooking.create({
         collegeId: collegeB._id,
         userId: studentB._id,
         seatId: seatB._id,

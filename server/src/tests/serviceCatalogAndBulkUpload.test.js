@@ -22,10 +22,8 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
   let collegeA;
   let collegeB;
   let adminA;
-  let adminB;
   let superAdmin;
   let tokenAdminA;
-  let tokenAdminB;
   let tokenSuperAdmin;
   let studentA;
   let tokenStudentA;
@@ -78,7 +76,7 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
     });
     tokenAdminA = generateTokenPair(adminA).accessToken;
 
-    adminB = await User.create({
+    await User.create({
       studentId: 'ADM-B1',
       name: 'Admin Beta',
       email: 'admin@beta.edu',
@@ -87,7 +85,6 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
       collegeId: collegeB._id,
       isEmailVerified: true,
     });
-    tokenAdminB = generateTokenPair(adminB).accessToken;
 
     superAdmin = await User.create({
       studentId: 'SA-99',

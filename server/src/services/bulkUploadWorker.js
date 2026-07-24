@@ -20,7 +20,7 @@ const emitProgressEvent = (jobId, data) => {
     if (io) {
       io.to(`job:${jobId}`).emit('upload:progress', data);
     }
-  } catch (err) {
+  } catch {
     // Ignore socket error if Socket.io is not initialized in test/standalone env
   }
 };
