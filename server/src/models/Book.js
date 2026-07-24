@@ -58,4 +58,25 @@ bookSchema.index({ collegeId: 1, category: 1 });
 // Text index for search
 bookSchema.index({ title: 'text', author: 'text' });
 
+// Algolia Search Index Sync Hooks
+bookSchema.post('save', async function (doc) {
+  try {
+    const { saveBookToAlgolia } = require('../utils/algolia');
+    await saveBookToAlgolia(doc);
+  } catch {
+    // Non-blocking
+  }
+});
+
+bookSchema.post('findOneAndDelete', async function (doc) {
+  if (doc && doc._id) {
+    try {
+      const { deleteBookFromAlgolia } = require('../utils/algolia');
+      await deleteBookFromAlgolia(doc._id);
+    } catch {
+      // Non-blocking
+    }
+  }
+});
+
 module.exports = mongoose.model('Book', bookSchema);

@@ -31,8 +31,10 @@
   "dependencies": {
     "@sentry/node": "^8.55.2",
     "adm-zip": "^0.6.0",
+    "algoliasearch": "^5.56.0",
     "axios": "^1.18.0",
     "bcrypt": "^6.0.0",
+    "cloudinary": "^2.10.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

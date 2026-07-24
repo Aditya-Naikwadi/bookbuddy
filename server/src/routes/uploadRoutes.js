@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { generatePresignedUploadUrl } = require('../utils/storage');
+const { generateCloudinarySignature } = require('../utils/cloudinary');
 const AppError = require('../utils/AppError');
 const { protect } = require('../middlewares/auth');
 
@@ -26,6 +27,29 @@ router.post('/presigned-url', protect, async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: uploadMeta,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * @desc    Generate Cloudinary upload signature for direct CDN browser upload
+ * @route   POST /api/v1/uploads/cloudinary-signature
+ * @access  Private
+ */
+router.post('/cloudinary-signature', protect, async (req, res, next) => {
+  try {
+    const { folder, tags } = req.body;
+
+    const signatureData = generateCloudinarySignature({
+      folder: folder || 'bookbuddy',
+      tags: tags || [],
+    });
+
+    res.status(200).json({
+      success: true,
+      data: signatureData,
     });
   } catch (err) {
     next(err);
