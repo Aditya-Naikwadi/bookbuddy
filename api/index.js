@@ -31,11 +31,8 @@ module.exports = async (req, res) => {
     console.error('[Vercel Serverless] Connection handler error:', err.message);
   }
 
-  // Preserve and normalize request URL to match Express /api routes
-  const matchedPath = req.headers['x-matched-path'];
-  if (matchedPath && matchedPath.startsWith('/api')) {
-    req.url = matchedPath;
-  } else if (req.url && !req.url.startsWith('/api')) {
+  // Ensure request URL has valid /api prefix for Express router matching
+  if (req.url && !req.url.startsWith('/api')) {
     req.url = `/api${req.url.startsWith('/') ? '' : '/'}${req.url}`;
   }
 
