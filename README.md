@@ -1,6 +1,6 @@
 # 📚 BookBuddy
 
-### A modern, multi-tenant campus library management, digital e-resource hosting, facility reservation, and student engagement platform featuring gamified reading streaks, inline EPUB & PDF reading with live annotations, real-time operations, and integrated fine payments.
+### A modern, multi-tenant campus library management, digital e-resource hosting, facility reservation, and student engagement platform featuring gamified reading streaks, inline EPUB & PDF reading with live annotations, real-time operations, external book catalog aggregation (Open Library & Google Books), and integrated fine payments.
 
 ---
 
@@ -13,6 +13,7 @@
 ![Socket.io](https://img.shields.io/badge/Socket.io-4.x-010101?logo=socketdotio&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-5.x-DC382D?logo=redis&logoColor=white)
 ![Zod](https://img.shields.io/badge/Zod-4.x-3E67B1?logo=zod&logoColor=white)
+![Open Library API](https://img.shields.io/badge/Open_Library-API_v1-006699?logo=openlibrary&logoColor=white)
 ![License](https://img.shields.io/badge/License-ISC-blue.svg)
 
 ---
@@ -23,11 +24,13 @@
 - [🏛️ System Architecture](#️-system-architecture)
 - [🎨 Frontend Architecture & State Flow](#-frontend-architecture--state-flow)
 - [⚙️ Backend Architecture & Pipeline](#️-backend-architecture--pipeline)
+- [🌐 External Book Catalog & Open Library Integration](#-external-book-catalog--open-library-integration)
 - [🔒 Multi-Tenancy & Data Isolation](#-multi-tenancy--data-isolation)
 - [🎛️ Tenant Service Selection & Feature-Gated Dashboards](#️-tenant-service-selection--feature-gated-dashboards)
 - [📥 Bulk Student Roster Upload & Web Worker Engine](#-bulk-student-roster-upload--web-worker-engine)
 - [🛡️ Security Architecture & Protection Suite](#️-security-architecture--protection-suite)
 - [🗄️ Database Architecture, ERD & Indexing](#️-database-architecture-erd--indexing)
+- [🗃️ Database Migrations, Backup & CLI Utilities](#️-database-migrations-backup--cli-utilities)
 - [⚡ Concurrency Integrity & Race Condition Protection](#-concurrency-integrity--race-condition-protection)
 - [✨ Portal Feature Matrix](#-portal-feature-matrix)
   - [🎓 Student Portal](#-student-portal)
@@ -43,7 +46,7 @@
   - [🔑 Initial Accounts for Portal Testing](#-initial-accounts-for-portal-testing--management)
   - [Prerequisites](#prerequisites)
   - [Local Setup](#local-development-setup)
-  - [Database Migrations](#database-migrations)
+  - [Database Management, Indexing & Seeding](#database-management-indexing--multi-tenant-seeding)
   - [Docker Compose Launch](#docker-compose-launch)
   - [Testing & Coverage](#running-tests)
 - [🌐 Production Build & Deployment Guide](#-production-build--deployment-guide)
@@ -60,15 +63,16 @@ BookBuddy bridges the gap between platform super-administrators, campus libraria
 1. **Multi-Tenant Physical Inventory Management**: Multi-branch physical book tracking, hold queue reservations with auto-promotion, and automated overdue fine calculations.
 2. **Computer Lab Workstation Reservations**: Real-time seat grid visualization and concurrency-locked time-slot bookings.
 3. **Digital E-Resource Repository, Reader & Annotations**: In-browser EPUB & PDF parsing, Stored-XSS injection scanning, HTTP range streaming, CFI/page position synchronization, and persistent text annotations & notes.
-4. **Online Fine Payment Settlement**: Digital fine payment processing with transaction verification and idempotent payment webhook integration.
-5. **Gamified Student Engagement**: Idempotent daily reading check-ins, streak calculations with freeze log buffers, and unlockable achievement stickers and milestone badges.
-6. **Real-Time Event & Notification Network**: Socket.io WebSocket alerts, in-app notification centers, and automated push device token tracking.
+4. **External Book Catalog Aggregation**: Automated metadata enrichment and search resolution across Open Library API, Google Books API, and Project Gutenberg.
+5. **Online Fine Payment Settlement**: Digital fine payment processing with transaction verification and idempotent payment webhook integration.
+6. **Gamified Student Engagement**: Idempotent daily reading check-ins, streak calculations with freeze log buffers, and unlockable achievement stickers and milestone badges.
+7. **Real-Time Event & Notification Network**: Socket.io WebSocket alerts, in-app notification centers, and automated push device token tracking.
 
 ---
 
 ## 🏛️ System Architecture
 
-BookBuddy uses a decoupled, event-driven architecture designed for high throughput, strict tenant isolation, and sub-second client updates.
+BookBuddy uses a decoupled, event-driven architecture designed for high throughput, strict tenant isolation, sub-second client updates, and fault-tolerant external API aggregation.
 
 ```mermaid
 graph TD
@@ -91,11 +95,18 @@ graph TD
         RateLimit[Rate Limiter Flexible / Redis Rate Limiter]
         ZodGate[Zod Schema Request Validation]
         CronWorker[Node-Cron Background Scheduler]
+        Aggregator[Unified Book Aggregator]
     end
 
     subgraph Data & Caching Layer
         Redis[(Redis Store / Distributed Rate Limit & Cache)]
         MongoDB[(MongoDB 9 Primary Database / Mongoose ODM)]
+    end
+
+    subgraph External Services & APIs
+        OL[Open Library API]
+        GB[Google Books API]
+        Gutenberg[Project Gutenberg / Gutendex]
     end
 
     SPA <-->|REST Calls| HTTP
@@ -112,6 +123,10 @@ graph TD
     RateLimit <-->|Token Bucket / Leaky Bucket| Redis
     Express <-->|Status Cache / Session Store| Redis
     CronWorker -->|Scheduled Automated Tasks| MongoDB
+    CronWorker --> Aggregator
+    Aggregator <-->|Rate-Limited & Backed Off| OL
+    Aggregator <-->|Fallback Metadata| GB
+    Aggregator <-->|Public E-Resource Catalog| Gutenberg
 ```
 
 ---
@@ -193,6 +208,50 @@ graph TD
     Controller -->|Error Thrown| ErrorHandler[Global Error Handler / AppError]
     ErrorHandler --> JSONResponse[Formatted JSON Error Response]
 ```
+
+---
+
+## 🌐 External Book Catalog & Open Library Integration
+
+BookBuddy features a production-grade external book catalog integration service layer (`OpenLibraryService`, `GoogleBooksService`, `GutenbergService`, `BookAggregator`) designed for rate-limited, fault-tolerant book discovery and metadata enrichment.
+
+```mermaid
+graph TD
+    SearchReq[Catalog Search Request / ISBN Resolution] --> Aggregator[BookAggregator Service]
+    Aggregator --> OLService[OpenLibraryService]
+    Aggregator --> GBService[GoogleBooksService]
+    Aggregator --> GutenbergService[GutenbergService]
+
+    subgraph Open Library Rate Guard
+        OLService --> RateGuard{Time Since Last Request < 550ms?}
+        RateGuard -->|Yes| Delay[Sleep remaining ms]
+        Delay --> ExecOL[Execute Request with User-Agent]
+        RateGuard -->|No| ExecOL
+        ExecOL --> OLSuccess{HTTP 200 OK?}
+        OLSuccess -->|No 429/5xx| Backoff[Exponential Backoff Retry]
+        Backoff --> ExecOL
+        OLSuccess -->|Yes| NormalizeOL[Normalize to BookBuddy Book Schema]
+    end
+
+    subgraph Secondary Provider Resolution
+        GBService --> ExecGB[Fetch Google Books API]
+        ExecGB --> NormalizeGB[Normalize Cover & Categories]
+        GutenbergService --> ExecGut[Fetch Gutendex EPUB Links]
+        ExecGut --> NormalizeGut[Normalize Public Domain Asset]
+    end
+
+    NormalizeOL --> Merge[Merge Metadata & Cover Images]
+    NormalizeGB --> Merge
+    NormalizeGut --> Merge
+    Merge --> Cache[(MongoDB / Redis Catalog Cache)]
+```
+
+### Key Capabilities & Policy Compliance
+1. **Mandated User-Agent Header**: Requests to Open Library API strictly specify an identified user-agent header (`OPEN_LIBRARY_USER_AGENT=BookBuddy/1.0 (dev@bookbuddy.com)`), satisfying Open Library API terms of service.
+2. **Rate Limit Guard (< 2 Req/Sec)**: Implements an internal rate limiter (`_rateLimitGuard`) enforcing a minimum 550ms delay between consecutive outbound HTTP requests, preventing IP throttling.
+3. **Resilient Retry with Exponential Backoff**: Transient errors (`429 Too Many Requests`, `5xx Server Errors`) automatically trigger exponential backoff retries with random jitter (`Math.pow(2, retryCount) * 1000 + randomJitter`).
+4. **High-Resolution Cover Mapping**: Dynamically resolves Open Library cover IDs (`cover_i`) and ISBNs (ISBN-10 / ISBN-13) to Open Library high-resolution cover endpoints (`https://covers.openlibrary.org/b/id/{id}-L.jpg`).
+5. **Memory-Efficient Bulk Dump Parser**: Includes a stream-based parser script (`server/src/scripts/parseOpenLibraryDump.js`) utilizing Node.js `readline` interfaces to stream multi-gigabyte Open Library `.json.gz` data dumps in `O(1)` memory.
 
 ---
 
@@ -370,6 +429,31 @@ erDiagram
 
 ---
 
+## 🗃️ Database Migrations, Backup & CLI Utilities
+
+BookBuddy provides a comprehensive suite of migration and maintenance scripts under `server/src/scripts/` and `server/migrations/`:
+
+### Database Migration Scripts
+| Script / Command | File Path | Purpose / Action Taken |
+| :--- | :--- | :--- |
+| `npm run migrate:db` | `server/src/scripts/migrateIndicesAndDefaults.js` | Populates default `maxFineLimit: 100` on Colleges and generates 32-byte hex `cardSecret` tokens for users. |
+| `npm run migrate:up` | `server/migrations/` | Runs all pending `migrate-mongo` migration scripts. |
+| `npm run migrate:down` | `server/migrations/` | Rolls back the last `migrate-mongo` migration step. |
+| `npm run migrate:hardening` | `server/src/scripts/migrateProductionHardening.js` | Applies strict production indexing rules, compound unique constraints, and schema validations. |
+| `node src/scripts/migrateNotificationReadFields.js` | `server/src/scripts/migrateNotificationReadFields.js` | Converts legacy boolean `read: true/false` notification fields to timestamped `readAt: Date` values. |
+
+### Database Backup & Maintenance Utilities
+| Script / Command | File Path | Purpose / Action Taken |
+| :--- | :--- | :--- |
+| `node src/scripts/backupDatabase.js` | `server/src/scripts/backupDatabase.js` | Creates timestamped JSON/BSON collection dumps under `server/backups/`. |
+| `node src/scripts/restoreDatabase.js` | `server/src/scripts/restoreDatabase.js` | Restores MongoDB collections from target backup archive folders. |
+| `npm run db:clear` | `server/src/scripts/clearDatabase.js` | Safely purges sample documents while retaining index definitions and system configuration. |
+| `node src/scripts/purgeMockData.js` | `server/src/scripts/purgeMockData.js` | Selectively deletes test patrons and mock circulation records. |
+| `node src/scripts/openLibraryCron.js` | `server/src/scripts/openLibraryCron.js` | Triggers manual CLI execution of the Open Library external catalog ingestion worker. |
+| `node src/scripts/parseOpenLibraryDump.js` | `server/src/scripts/parseOpenLibraryDump.js` | Parses compressed Open Library `.json.gz` bulk data dumps in `O(1)` memory. |
+
+---
+
 ## ⚡ Concurrency Integrity & Race Condition Protection
 
 1. **Atomic Inventory Decrement**:
@@ -403,7 +487,7 @@ erDiagram
 ## ✨ Portal Feature Matrix
 
 ### 🎓 Student Portal
-- **Catalog Search**: Full-text physical book & digital asset search with live availability tracking.
+- **Catalog Search**: Full-text physical book & digital asset search with live availability tracking and external metadata enrichment.
 - **My Borrowed Books & Fine Tracking**: View active loans, due dates, renewals, and fine details.
 - **Digital Patron Card**: Interactive virtual card with barcode & QR code generation for library circulation.
 - **Inline EPUB & PDF Reader**: Read digital ebooks with dark/light mode, typography settings, Table of Contents navigation, and CFI/page autosync.
@@ -500,7 +584,7 @@ graph TD
 
 ## ⏰ Background Scheduled Cron Jobs
 
-Executed automatically via `node-cron` inside `server/src/services/cronService.js`:
+Executed automatically via `node-cron` inside `server/src/services/cronService.js` and `server/src/services/aggregationCronWorker.js`:
 
 | Job Name | Schedule | Purpose / Action Taken |
 | :--- | :--- | :--- |
@@ -508,6 +592,7 @@ Executed automatically via `node-cron` inside `server/src/services/cronService.j
 | **Hold Reservation Expiry** | `0 * * * *` (Hourly) | Expire uncollected hold reservations exceeding the pickup window and promotes the next patron in line. |
 | **Due Date Reminders** | `0 9 * * *` (9 AM Daily) | Dispatches WebSocket & in-app notifications for loans due within 24–48 hours. |
 | **Streak Expiry & Reminders** | `0 * * * *` (Hourly) | Resets active reading streaks if no check-in occurred within the user's timezone day (or consumes a streak freeze). Sends reminder notifications 3 hours before midnight to users at risk. |
+| **External Catalog Ingestion** | `0 3 * * *` (3 AM Daily) | Dispatches `aggregationCronWorker` to sync metadata, covers, and subjects from Open Library & Google Books APIs. |
 
 ---
 
@@ -604,6 +689,11 @@ JWT_REFRESH_EXPIRY=7d
 # Redis Configuration (Distributed Rate Limiting & Caching)
 REDIS_URL=redis://localhost:6379
 
+# External API Configuration (Open Library & Google Books)
+OPEN_LIBRARY_USER_AGENT=BookBuddy/1.0 (dev@bookbuddy.com)
+OPEN_LIBRARY_BASE_URL=https://openlibrary.org
+GOOGLE_BOOKS_API_KEY=your_google_books_api_key_optional
+
 # Rate Limiting Parameters
 RATE_LIMIT_GLOBAL_MAX=100
 RATE_LIMIT_GLOBAL_WINDOW_MS=60000
@@ -670,10 +760,16 @@ cd server
 # 1. Synchronize schema indexes and defaults
 npm run migrate:db
 
-# 2. Seed production-ready multi-tenant dataset (3 Colleges, 21 Role Accounts)
+# 2. Execute pending database migrations
+npm run migrate:up
+
+# 3. Apply production hardening indexes
+npm run migrate:hardening
+
+# 4. Seed production-ready multi-tenant dataset (3 Colleges, 21 Role Accounts)
 npm run seed:dataset
 
-# 3. Purge all mock data and sample documents (Leaves clean empty database)
+# 5. Purge mock data and reset clean state
 npm run db:clear
 ```
 
@@ -736,14 +832,15 @@ BookBuddy/
 │       ├── backend-design.md   # Express middleware, handlers, and job scheduling
 │       └── database-design.md  # Mongoose schemas, indexes, and concurrency locks
 ├── server/                     # Express Backend Application (CommonJS / Node 20)
+│   ├── migrations/             # migrate-mongo migration files
 │   ├── src/
 │   │   ├── controllers/        # Express request handlers & business rules
 │   │   │   └── dashboards/     # Student, College Admin, Super Admin dashboard controllers
 │   │   ├── middlewares/        # Auth, CSRF, scoping, Zod validation, rate limiters
 │   │   ├── models/             # 28+ Mongoose models and database index definitions
 │   │   ├── routes/             # REST API routing definitions
-│   │   ├── scripts/            # Database migration and hardening scripts
-│   │   ├── services/           # Decoupled domain business logic & cron service
+│   │   ├── scripts/            # Migration, backup, restore, & Open Library scripts
+│   │   ├── services/           # Decoupled domain business logic, external API clients, & cron worker
 │   │   ├── sockets/            # Real-time WebSocket connection handling
 │   │   └── tests/              # Jest integration, audit, & security test suites
 │   ├── docker-compose.yml
@@ -794,6 +891,7 @@ For client-side single page application routing (`react-router-dom`), `vercel.js
 - Configure production MongoDB Atlas connection string (`MONGODB_URI`) with replica set support.
 - Configure Redis host (`REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`) for rate limiting and cache storage.
 - Provide strong random JWT secret strings (`JWT_SECRET`, `REFRESH_TOKEN_SECRET`) with 64+ characters.
+- Configure `OPEN_LIBRARY_USER_AGENT` with valid platform contact details.
 - Ensure CORS origin (`CLIENT_URL`) matches your production frontend domain.
 
 ---
