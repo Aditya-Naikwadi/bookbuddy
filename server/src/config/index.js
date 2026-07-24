@@ -24,13 +24,28 @@ if (!process.env.MONGO_URI && process.env.MONGODB_URI) {
 const missingEnv = requiredEnv.filter((key) => !process.env[key]);
 
 if (missingEnv.length > 0) {
-  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+  if (process.env.VERCEL) {
     console.warn(
       `⚠️ Warning: Missing environment variables on serverless start: [${missingEnv.join(', ')}]. Using safe runtime fallbacks.`
     );
-  } else {
+  } else if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
     console.warn(
       `⚠️ Warning: Missing required environment variables: [${missingEnv.join(', ')}]. Using dev fallbacks.`
+    );
+  }
+}
+
+if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
+  const prodRequired = [
+    'GOOGLE_BOOKS_API_KEY',
+    'RAZORPAY_KEY_ID',
+    'RAZORPAY_WEBHOOK_SECRET',
+    'REDIS_URL',
+  ];
+  const missingProdEnv = prodRequired.filter((key) => !process.env[key]);
+  if (missingProdEnv.length > 0) {
+    throw new Error(
+      `❌ Fatal Startup Error: Missing required production environment variables: [${missingProdEnv.join(', ')}].`
     );
   }
 }
