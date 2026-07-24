@@ -188,8 +188,66 @@ graph TD
 
 ---
 
-## 9. Known Limitations & Technical Debt
+## 10. Single-Screen Zero-Scroll Architecture
 
-1. **Inconsistent Token Storage**: `apiClient` request interceptor reads from `'token'` in localStorage, whereas `authStore.js` persists in `'auth-storage'`.
-2. **Scaffolded Sockets**: Real-time events catalog is declared in the backend, but frontend integration is in placeholder status (no active websocket events subscription in the UI).
-3. **Theme persistence**: Theme context saves theme configuration directly to local storage as `'theme'`, which is separate from Zustand store persistence.
+BookBuddy adopts a zero-scroll, fixed-frame layout paradigm across all public and general user portals.
+
+```
+┌─────────────────────────────────────────────┐
+│ Page header (title, subtitle)                │  fixed
+├─────────────────────────────────────────────┤
+│ Sticky control bar: search + filters/tabs +   │  fixed
+│ sort + view toggle + active-filter chips +     │
+│ compact stat summary                          │
+├─────────────────────────────────────────────┤
+│                                               │
+│   Content area — grid of compact cards,       │  fills remaining
+│   virtualized, internally scrollable          │  viewport height,
+│                                               │  own scrollbar
+└─────────────────────────────────────────────┘
+```
+
+- **Outer Container**: `height: calc(100vh - 4rem)`, `overflow: hidden`.
+- **Sticky Controls**: Search inputs, sort dropdowns, and category tabs remain permanently visible at top.
+- **Internal Virtualized Scroll**: Only the content area scrolls internally via `VirtualizedCardGrid` (`flex-1 min-h-0 overflow-y-auto`).
+
+---
+
+## 11. Shared Reusable Component Suite
+
+- **`StickyControlBar`**: Debounced search input, tab/filter slots, sort options, view mode toggle (Grid/List), and ARIA live region.
+- **`ActiveFilterChips`**: Removable filter pills with single-chip and clear-all removal.
+- **`StatSummaryStrip`**: Compact inline summary row giving at-a-glance result counts (Available, On Hold, Checked Out, Category breakdowns).
+- **`VirtualizedCardGrid`**: Fixed-height internally-scrolling container (`flex-1 min-h-0 overflow-y-auto`) with responsive grid columns (1 / 2 / 3 columns).
+- **`MobileFilterSheet`**: Accessible slide-over / bottom-sheet modal for faceted filtering with search-within-facet capability.
+- **`SparklineChart`**: Lightweight SVG inline trend visualizer.
+- **`DonutChart`**: Compact SVG category breakdown chart.
+- **`AnnouncementTicker`**: Slim auto-advancing priority-color-coded notice banner.
+
+---
+
+## 12. Vite Bundle Splitting & Production Performance
+
+`vite.config.js` is optimized for production bundle loading using explicit manual vendor chunk splitting:
+
+```javascript
+build: {
+  chunkSizeWarningLimit: 1000,
+  rollupOptions: {
+    output: {
+      manualChunks: {
+        'vendor-react': ['react', 'react-dom'],
+        'vendor-router': ['react-router-dom'],
+        'vendor-lucide': ['lucide-react'],
+        'vendor-tanstack': ['@tanstack/react-query'],
+        'vendor-framer': ['framer-motion'],
+        'vendor-epubjs': ['epubjs'],
+        'vendor-pdfjs': ['pdfjs-dist'],
+      },
+    },
+  },
+}
+```
+
+This ensures vendor libraries are cached efficiently by browsers, avoiding large single-bundle downloads on initial page load.
+

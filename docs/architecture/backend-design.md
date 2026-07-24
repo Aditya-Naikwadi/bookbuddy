@@ -303,3 +303,70 @@ labBookingSchema.index({ seatId: 1, date: 1, timeslot: 1, status: 1 }, { unique:
 ### 3. Queue Positioning (Hold Queue)
 *Concurrences risk:* Multiple holds getting promoted to the same position, or multiple threads promoting the next hold simultaneously.
 *Atomic Solution:* `promoteNextHold` uses atomic Mongoose status transitions (`pending` -> `ready_for_pickup`) and updates position sequences atomically via transaction blocks or filter-locked updates to guarantee sequence numbers don't conflict.
+
+---
+
+## 10. Service Catalog & Tenant Feature Flag Architecture
+
+BookBuddy enforces multi-tenant feature entitlement at the backend routing level using a dynamic Service Catalog and Redis-cached feature flags.
+
+```mermaid
+graph TD
+    Client[HTTP Client] --> RequireFeature[requireFeature 'facilities_booking']
+    RequireFeature --> RedisCheck{Redis Cache Hit? college:features:id}
+    RedisCheck -->|Cache Hit| EnforceCheck{Feature Enabled?}
+    RedisCheck -->|Cache Miss| QueryDB[serviceCatalogService.getEffectiveFeaturesForCollege]
+    QueryDB --> TransitiveResolve[Resolve Transitive Dependencies]
+    TransitiveResolve --> SetCache[Cache in Redis TTL 1 hr]
+    SetCache --> EnforceCheck
+    EnforceCheck -->|Yes| Next[Route Controller]
+    EnforceCheck -->|No| Reject[HTTP 403 Feature Disabled]
+```
+
+- **Transitive Dependency Resolution**: Enabling a feature automatically activates all required parent services (e.g., `gamification` -> `catalog_management`).
+- **Super-Admin Bypass**: Platform Super-Admins bypass feature gating checks to maintain operational administration.
+
+---
+
+## 11. Asynchronous Stream-Parsed Bulk Student Upload Pipeline
+
+To handle high-volume student roster onboarding without blocking the Node.js event loop or HTTP requests, BookBuddy utilizes an asynchronous worker pipeline.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Admin as College Admin
+    participant API as POST /api/college/:id/students/bulk-upload
+    participant Job as UploadJob Model
+    participant Worker as bulkUploadWorker.js
+    participant DB as User Collection
+    participant Socket as Socket.io Room
+
+    Admin->>API: Upload CSV File (Multipart Form)
+    API->>Job: Create UploadJob (status: 'pending')
+    API-->>Admin: HTTP 202 Accepted { jobId }
+    
+    API->>Worker: Trigger processUploadJob(jobId, filePath)
+    Worker->>Worker: Stream-parse CSV (csv-parser)
+    Worker->>Worker: Validate row fields & tenant scoping
+    
+    rect rgb(30, 41, 59)
+        Note over Worker,DB: Chunked Unordered Ingestion (Chunk Size: 500)
+        Worker->>DB: User.insertMany(chunk, { ordered: false })
+        Worker->>Socket: Emit bulk-upload:progress { processed, total }
+    end
+
+    Worker->>Job: Update status: 'completed', errorReportPath if errors
+    Worker->>Socket: Emit bulk-upload:completed { total, successful, failed }
+```
+
+---
+
+## 12. Persistent Sessions, Token Rotation & Theft Detection
+
+Session security is anchored by short-lived JWT access tokens (~15m) and Redis-backed refresh tokens stored in `httpOnly`, `SameSite: strict` cookies (~30d).
+
+- **Token Rotation**: Every refresh request revokes the old token, issues a new token pair, and links parentage.
+- **Theft Reuse Detection**: If a previously rotated (revoked) refresh token is presented, the system detects a token theft attempt, revokes **all** active session tokens for that user ID, and logs a security audit warning.
+- **Multi-Device Logout**: Supports `allDevices: true` to invalidate all sessions across all logged-in devices simultaneously.
+

@@ -14,13 +14,39 @@ Entities in BookBuddy are organized by functional business domain. All models us
 Stores institutions registered on the platform.
 - `name` (String, required): The full name of the college.
 - `code` (String, required, unique): Unique institution shortcode.
+- `selectedServices` (Array of Strings): Service keys licensed by tenant.
+- `enabledFeatures` (Array of Strings): Active feature flags computed after resolving transitive dependencies.
+- `featureLimits` (Object): Custom numerical limits per feature (e.g. `{ maxStudents: 5000 }`).
+
+#### Collection: `services`
+Canonical service catalog master table.
+- `key` (String, required, unique): Unique service key (e.g. `catalog_management`, `facilities_booking`).
+- `name` (String, required): Human-readable service name.
+- `category` (String, required): Functional category.
+- `dependsOn` (Array of Strings): Array of parent service keys required by this service.
+- `isActive` (Boolean, default: true): Platform activation flag.
+
+#### Collection: `uploadjobs`
+Tracks asynchronous bulk student CSV upload state and diagnostics.
+- `collegeId` (ObjectId, ref: 'College', required, indexed): Tenant association.
+- `uploadedBy` (ObjectId, ref: 'User', required): Admin initiating upload.
+- `originalFilename` (String, required): Uploaded CSV filename.
+- `status` (String, enum: `['pending', 'processing', 'completed', 'failed']`, default: 'pending').
+- `totalRecords` (Number, default: 0).
+- `processedRecords` (Number, default: 0).
+- `successfulRecords` (Number, default: 0).
+- `failedRecords` (Number, default: 0).
+- `errorReportPath` (String): Path to downloadable error report CSV.
 
 #### Collection: `users`
 Represents students, library/college admins, and system super-admins.
-- `studentId` (String, required, unique): Unique college registration/card ID.
+- `studentId` (String, required): College registration/card ID (scoped per college).
 - `name` (String, required): Full name of the user.
-- `email` (String, required, unique): Email address (lowercase).
-- `password` (String, required, select: false): Bcrypt hashed password.
+- `email` (String, required): Email address (lowercase, scoped per college).
+- `password` (String, required, select: false): Bcrypt hashed password (salt factor 10).
+- `status` (String, enum: `['active', 'invited', 'suspended']`, default: 'active').
+- `invitedVia` (String, enum: `['manual', 'bulk_upload', 'self_registration']`).
+- `invitationToken` (String): Temporary invitation token for bulk-imported accounts.
 - `avatar` (String, default: ""): URL to avatar image.
 - `collegeId` (ObjectId, ref: 'College', required for non-super-admins, indexed): Tenant association.
 - `refreshTokenHash` (String, select: false): Hash of active refresh token.
@@ -32,32 +58,30 @@ Represents students, library/college admins, and system super-admins.
 - `savedBookmarks` (Array of ObjectIds, ref: 'Book'): Bookmarked catalog ids.
 - `searchHistory` (Array of subdocuments): `{ query: String, timestamp: Date }`.
 
-#### Collection: `auditlogs`
-System-wide audit trail for admin mutations.
-- `userId` (ObjectId, ref: 'User', required, indexed): Admin who initiated the change.
-- `collegeId` (ObjectId, ref: 'College', required, indexed): Tenant scoped location.
-- `action` (String, required): Action name (e.g. `circulation.checkout`, `cataloging.createBook`).
-- `entityType` (String, required): Targeted model (e.g., `Book`, `Loan`).
-- `entityId` (ObjectId, required): ID of target document.
-- `details` (Object): Structured key-value diff payload.
-- `ipAddress` (String): Client IP.
-
-#### Collection: `cronrunlogs`
-Periodic background job execution logs.
-- `jobName` (String, required): Name of cron task.
-- `startedAt` (Date, required): Timestamp of execution start.
-- `finishedAt` (Date): Timestamp of execution end.
-- `status` (String, enum: `['success', 'failed']`, required).
-- `affectedCount` (Integer, default: 0): Records modified.
-- `errorMessage` (String): Diagnostic stack on failure.
-
 ---
 
-### Domain B: Library Operations
+### Index Reference Table Updates
 
-#### Collection: `books`
-Physical catalog resources.
-- `collegeId` (ObjectId, ref: 'College', required, indexed): Tenant scoping.
+| Targeted Collection | Index Declaration | Index Type | Query Path Served |
+| :--- | :--- | :--- | :--- |
+| `users` | `{ collegeId: 1, email: 1 }` | Compound, Unique | Multi-tenant user login & duplicate check. |
+| `users` | `{ collegeId: 1, studentId: 1 }` | Compound, Unique | Multi-tenant student ID duplicate check. |
+| `services` | `{ key: 1 }` | Single-field, Unique | Service catalog lookup. |
+| `uploadjobs` | `{ collegeId: 1, status: 1 }` | Compound | Tenant upload job monitoring. |
+| `users` | `{ email: 1 }` | Single-field, Unique | Login auth lookup. |
+| `users` | `{ studentId: 1 }` | Single-field, Unique | Member registration and circulation identification. |
+| `loans` | `{ collegeId: 1, status: 1 }` | Compound | College admin Active vs Overdue loans queues. |
+| `loans` | `{ userId: 1, status: 1 }` | Compound | Student loans dashboard lookup. |
+| `fines` | `{ userId: 1, status: 1 }` | Compound | Student outstanding fine check (unpaid total). |
+| `fines` | `{ loanId: 1 }` | Single-field, Unique | Fine accrual idempotency (ensuring one fine per loan). |
+| `reservations` | `{ bookId: 1, status: 1 }` | Compound | Hold queue promotion lookup. |
+| `reservations` | `{ userId: 1, status: 1, requestDate: -1 }` | Compound | Student queue active/cancelled view. |
+| `labseats` | `{ collegeId: 1, labName: 1, seatNumber: 1 }` | Compound, Unique | Seat registry validation. |
+| `labbookings` | `{ seatId: 1, date: 1, status: 1 }` | Compound | Lab availability checker (hourly timeslots). |
+| `labbookings` | `{ seatId: 1, date: 1, timeslot: 1, status: 1 }` | Compound, Unique (Partial) | Concurrency lock to prevent double booking. |
+| `readingprogresses`| `{ userId: 1, eresourceId: 1 }` | Compound, Unique | Fast progress upsert / reading tracker lookup. |
+| `userstickers` | `{ userId: 1, stickerId: 1 }` | Compound, Unique | Award unlocking duplicate prevention. |
+| `streaks` | `{ userId: 1 }` | Single-field, Unique | Daily check-in updates and cron tracking. |
 - `isbn` (String, required): Standard book number.
 - `title` (String, required, indexed): Book title.
 - `author` (String, required): Book author.
