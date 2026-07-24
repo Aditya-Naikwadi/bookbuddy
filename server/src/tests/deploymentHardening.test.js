@@ -5,7 +5,6 @@ const { generatePresignedUploadUrl } = require('../utils/storage');
 const { getAuthCookieOptions } = require('../utils/cookieOptions');
 
 describe('Master Vercel Deployment Hardening Integration Tests', () => {
-
   it('1. Health Check Endpoint: should return HTTP 200 with dbReadyState: 1 and dbState: "connected"', async () => {
     const res = await request(app).get('/api/health');
 

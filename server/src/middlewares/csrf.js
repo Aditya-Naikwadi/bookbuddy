@@ -58,7 +58,9 @@ const validateCsrf = (req, res, next) => {
     '/api/v1/auth/refresh',
     '/api/v1/registration',
   ];
-  const isExempt = exemptPaths.some((path) => req.originalUrl?.startsWith(path) || req.url?.startsWith(path));
+  const isExempt = exemptPaths.some(
+    (path) => req.originalUrl?.startsWith(path) || req.url?.startsWith(path)
+  );
 
   const csrfCookie = req.cookies?._csrf;
   const csrfHeader = req.headers['x-csrf-token'] || req.body?._csrf;

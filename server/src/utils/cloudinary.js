@@ -4,8 +4,8 @@ const logger = require('./logger');
 const isCloudinaryConfigured = () => {
   return Boolean(
     process.env.CLOUDINARY_CLOUD_NAME &&
-      process.env.CLOUDINARY_API_KEY &&
-      process.env.CLOUDINARY_API_SECRET
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
   );
 };
 
@@ -25,7 +25,8 @@ const generateCloudinarySignature = ({ folder = 'bookbuddy', tags = [] }) => {
   if (!isCloudinaryConfigured()) {
     return {
       configured: false,
-      message: 'Cloudinary credentials (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) are not set.',
+      message:
+        'Cloudinary credentials (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) are not set.',
     };
   }
 

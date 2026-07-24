@@ -1,8 +1,11 @@
 const { generateCloudinarySignature, isCloudinaryConfigured } = require('../utils/cloudinary');
-const { searchBooksInAlgolia, isAlgoliaConfigured, saveBookToAlgolia } = require('../utils/algolia');
+const {
+  searchBooksInAlgolia,
+  isAlgoliaConfigured,
+  saveBookToAlgolia,
+} = require('../utils/algolia');
 
 describe('Cloudinary & Algolia Integration Helper Tests', () => {
-
   it('1. Cloudinary Signature Generator: should generate valid upload signature or report unconfigured state', () => {
     const res = generateCloudinarySignature({ folder: 'test_uploads' });
 

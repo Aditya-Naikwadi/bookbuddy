@@ -115,7 +115,9 @@ const googleAuthHandler = async (req, res, next) => {
     }
 
     if (!user.isActive) {
-      return next(new AppError('Your account has been deactivated. Please contact your librarian.', 403));
+      return next(
+        new AppError('Your account has been deactivated. Please contact your librarian.', 403)
+      );
     }
 
     const { accessToken, refreshToken, hash } = generateTokenPair(user);
