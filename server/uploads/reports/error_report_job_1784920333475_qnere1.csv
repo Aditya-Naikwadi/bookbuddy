@@ -1,0 +1,3 @@
+Row,Student ID,Email,Error Reason
+4,STU-103,invalid-email,"Invalid email address format."
+5,STU-101,alice@alpha.edu,"Duplicate studentId or email within uploaded file."
