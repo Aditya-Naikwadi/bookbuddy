@@ -4,6 +4,7 @@ import useAuthStore from '../store/authStore';
 import { Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const GoogleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -28,22 +29,39 @@ const Login = () => {
   
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isLoading, error } = useAuthStore();
+  const { login, loginWithGoogle, isLoading, error } = useAuthStore();
+
+  const handlePostAuthNavigate = () => {
+    const user = useAuthStore.getState().user;
+    let defaultRoute = '/student-dashboard';
+    if (user?.role === 'college-admin') defaultRoute = '/college-admin';
+    else if (user?.role === 'general') defaultRoute = '/general-dashboard';
+    else if (user?.role === 'super-admin') defaultRoute = '/admin-portal';
+
+    const targetPath = location.state?.from?.pathname || defaultRoute;
+    navigate(targetPath, { replace: true });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const success = await login(email, password);
     if (success) {
-      const user = useAuthStore.getState().user;
-      let defaultRoute = '/student-dashboard';
-      if (user?.role === 'college-admin') defaultRoute = '/college-admin';
-      else if (user?.role === 'general') defaultRoute = '/general-dashboard';
-      else if (user?.role === 'super-admin') defaultRoute = '/admin-portal';
-
-      const targetPath = location.state?.from?.pathname || defaultRoute;
-      navigate(targetPath, { replace: true });
+      handlePostAuthNavigate();
     }
   };
+
+  const triggerGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      const idToken = tokenResponse.access_token || tokenResponse.id_token;
+      const success = await loginWithGoogle(idToken);
+      if (success) {
+        handlePostAuthNavigate();
+      }
+    },
+    onError: (err) => {
+      console.error('Google Login Error:', err);
+    },
+  });
 
   // Validates either format: a valid email format, or a valid student ID format (min length of 4)
   const isIdentifierValid = email.includes('@') ? (email.length > 3 && email.includes('.')) : (email.trim().length >= 4);
@@ -175,11 +193,23 @@ const Login = () => {
           </div>
           
           <div className="grid grid-cols-2 gap-3 mt-4">
-            <Button type="button" variant="ghost" disabled={isLoading} className="w-full flex items-center justify-center gap-2 border-edge hover:bg-surface/60 h-9">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={isLoading}
+              onClick={() => triggerGoogleLogin()}
+              className="w-full flex items-center justify-center gap-2 border-edge hover:bg-surface/60 h-9"
+            >
               <GoogleIcon />
               <span className="text-xs">Google</span>
             </Button>
-            <Button type="button" variant="ghost" disabled={isLoading} className="w-full flex items-center justify-center gap-2 border-edge hover:bg-surface/60 h-9">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-2 border-edge hover:bg-surface/60 h-9 opacity-50 cursor-not-allowed"
+              title="GitHub OAuth coming soon"
+            >
               <GithubIcon />
               <span className="text-xs">GitHub</span>
             </Button>

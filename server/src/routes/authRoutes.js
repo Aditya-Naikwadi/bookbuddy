@@ -7,6 +7,7 @@ const {
   logoutUser,
   getUserProfile,
 } = require('../controllers/authController');
+const { googleAuthHandler } = require('../controllers/googleAuthController');
 const { getCsrfTokenController } = require('../middlewares/csrf');
 const { protect } = require('../middlewares/auth');
 const validate = require('../middlewares/validate');
@@ -24,6 +25,10 @@ router.post('/register', authLimiter, validate(registerSchema), registerUser);
 // @desc    Login user
 // @access  Public
 router.post('/login', authLimiter, validate(loginSchema), loginUser);
+
+// @desc    Google OAuth 2.0 Single Sign-On
+// @access  Public
+router.post('/google', authLimiter, googleAuthHandler);
 
 // @desc    Refresh token rotation
 // @access  Public
