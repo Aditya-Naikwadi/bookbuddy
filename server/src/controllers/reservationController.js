@@ -1,5 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const Reservation = require('../models/Reservation');
+const ReservationDTO = require('../dtos/ReservationDTO');
+const AppError = require('../utils/AppError');
 const { joinQueue, leaveQueue } = require('../services/reservationService');
 
 // @desc    Join reservation queue
@@ -8,7 +10,7 @@ const { joinQueue, leaveQueue } = require('../services/reservationService');
 const joinQueueHandler = asyncHandler(async (req, res) => {
   const { bookId } = req.body;
   const reservation = await joinQueue(req.user.id, bookId, req.user.collegeId);
-  res.json({ success: true, data: reservation });
+  res.json({ success: true, data: ReservationDTO.transform(reservation) });
 });
 
 // @desc    Get my reservations
@@ -28,7 +30,7 @@ const getMyReservations = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    data: reservations,
+    data: ReservationDTO.transformMany(reservations),
     pagination: {
       page,
       limit,
@@ -42,7 +44,14 @@ const getMyReservations = asyncHandler(async (req, res) => {
 // @route   DELETE /api/reservations/:id
 // @access  Private
 const leaveQueueHandler = asyncHandler(async (req, res) => {
-  const reservation = await leaveQueue(req.params.id, req.user.id);
+  const reservationDoc = await Reservation.findById(req.params.id);
+  const currentUserId = (req.user.id || req.user._id).toString();
+
+  if (!reservationDoc || reservationDoc.userId.toString() !== currentUserId) {
+    throw new AppError('Reservation not found.', 404);
+  }
+
+  const reservation = await leaveQueue(req.params.id, currentUserId);
   res.json({ success: true, data: reservation });
 });
 

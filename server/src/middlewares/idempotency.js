@@ -1,78 +1,60 @@
-const PaymentAttempt = require('../models/PaymentAttempt');
+const NodeCache = require('node-cache');
+const { redisClient } = require('./rateLimiters');
+const AppError = require('../utils/AppError');
+
+// Memory fallback cache (TTL 24 hours = 86400s)
+const memoryCache = new NodeCache({ stdTTL: 86400 });
 
 /**
- * Middleware to enforce exactly-once execution on key mutations (like payments).
- * Captures responses and replays them on duplicate requests.
+ * Idempotency middleware storing response per Idempotency-Key header for 24h.
  */
-const idempotency = async (req, res, next) => {
-  const key = req.headers['idempotency-key'] || req.headers['x-idempotency-key'];
-  if (!key) {
-    return next();
+const requireIdempotency = async (req, res, next) => {
+  const idempotencyKey = req.headers['idempotency-key'] || req.headers['x-idempotency-key'];
+
+  if (!idempotencyKey) {
+    return next(
+      new AppError('Idempotency-Key header is required for this financial transaction.', 400)
+    );
   }
 
-  // Idempotency keys should be valid strings
-  if (typeof key !== 'string' || key.trim().length < 10) {
-    return res.status(400).json({
-      success: false,
-      message: 'Invalid Idempotency-Key format. Provide a unique string.',
-    });
-  }
+  const cacheKey = `idempotency:${idempotencyKey}`;
 
-  try {
-    const attempt = await PaymentAttempt.findOne({ idempotencyKey: key });
-    if (attempt) {
-      if (attempt.status === 'completed') {
-        // Replay cached successful response
-        return res.status(200).json(attempt.responsePayload);
-      }
-      if (attempt.status === 'pending') {
-        // Block overlapping double-submit
-        return res.status(409).json({
-          success: false,
-          error: 'TRANSACTION_IN_PROGRESS',
-          message:
-            'Another request with this key is currently in progress. Please retry in a few seconds.',
-        });
-      }
-      // If previous attempt failed, allow retry by updating status back to pending
-      attempt.status = 'pending';
-      await attempt.save();
-    } else {
-      // Create new pending log entry
-      await PaymentAttempt.create({
-        idempotencyKey: key,
-        userId: req.user.id,
-        status: 'pending',
-        amount: 0,
-      });
+  // 1. Check for cached response
+  let cachedData = null;
+  if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {
+    try {
+      const raw = await redisClient.get(cacheKey);
+      if (raw) cachedData = JSON.parse(raw);
+    } catch {
+      cachedData = memoryCache.get(cacheKey);
     }
+  } else {
+    cachedData = memoryCache.get(cacheKey);
+  }
 
-    // Override res.json to capture response payload on success/failure
-    const originalJson = res.json;
-    res.json = function (body) {
-      if (res.statusCode >= 200 && res.statusCode < 300) {
-        PaymentAttempt.updateOne(
-          { idempotencyKey: key },
-          {
-            status: 'completed',
-            responsePayload: body,
-            amount: body.data?.amount || 0,
-            fineIds: body.data?.fineIds || (body.data?._id ? [body.data._id] : []),
-          }
-        ).catch((err) => console.error('Failed to update completed payment attempt', err));
-      } else {
-        // Reset to failed on error so client can retry with same key
-        PaymentAttempt.updateOne({ idempotencyKey: key }, { status: 'failed' }).catch((err) =>
-          console.error('Failed to reset payment attempt status', err)
-        );
-      }
-      return originalJson.call(this, body);
+  if (cachedData) {
+    res.setHeader('X-Cache-Lookup', 'HIT-Idempotency');
+    return res.status(cachedData.statusCode).json(cachedData.body);
+  }
+
+  // 2. Intercept res.json to capture response for caching
+  const originalJson = res.json.bind(res);
+  res.json = function (body) {
+    const responsePayload = {
+      statusCode: res.statusCode,
+      body,
     };
 
-    next();
-  } catch (err) {
-    next(err);
-  }
+    if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {
+      redisClient.set(cacheKey, JSON.stringify(responsePayload), 'EX', 86400).catch(() => {});
+    } else {
+      memoryCache.set(cacheKey, responsePayload);
+    }
+
+    return originalJson(body);
+  };
+
+  next();
 };
 
-module.exports = idempotency;
+module.exports = requireIdempotency;

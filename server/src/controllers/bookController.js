@@ -1,4 +1,5 @@
 const Book = require('../models/Book');
+const BookDTO = require('../dtos/BookDTO');
 const asyncHandler = require('express-async-handler');
 
 // @desc    Get all books with search, filter & pagination
@@ -48,7 +49,7 @@ const getBooks = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    books,
+    books: BookDTO.transformMany(books),
     page,
     pages: Math.ceil(count / pageSize),
     total: count,
@@ -62,7 +63,7 @@ const getBookById = asyncHandler(async (req, res) => {
   const book = await Book.findOne({ _id: req.params.id, ...req.tenantFilter });
 
   if (book) {
-    res.json({ success: true, book });
+    res.json({ success: true, book: BookDTO.transform(book) });
   } else {
     res.status(404);
     throw new Error('Book not found');

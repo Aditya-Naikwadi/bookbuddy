@@ -48,7 +48,7 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      return callback(null, true);
+      return callback(new Error('Not allowed by CORS'), false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -152,59 +152,119 @@ app.all(
     });
   }
 );
+const deprecationWarning = require('./middlewares/deprecationWarning');
+
+// Canonical API Version 1 Routes
 app.use('/api/v1/catalog', require('./routes/catalogRoutes'));
-app.use('/api/services', require('./routes/serviceRoutes'));
-app.use('/api/college/:id', require('./routes/bulkUploadRoutes'));
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/registration', require('./routes/registrationRoutes'));
-app.use('/api/books', require('./routes/bookRoutes'));
-app.use('/api/loans', require('./routes/loanRoutes'));
-app.use('/api/fines', require('./routes/fineRoutes'));
-app.use('/api/patron-card', require('./routes/patronCardRoutes'));
-app.use('/api/reservations', require('./routes/reservationRoutes'));
-app.use('/api/reading-lists', require('./routes/readingListRoutes'));
-app.use('/api/bookmarks', require('./routes/bookmarkRoutes'));
-app.use('/api/saved-searches', require('./routes/savedSearchRoutes'));
-app.use('/api/recommendations', require('./routes/recommendationRoutes'));
-app.use('/api/eresources', require('./routes/eresourceRoutes'));
-app.use('/api/reader', require('./routes/readerRoutes'));
-app.use('/api/notifications', require('./routes/notificationRoutes'));
-app.use('/api/payments', require('./routes/paymentRoutes'));
-app.use('/api/annotations', require('./routes/annotationRoutes'));
+app.use('/api/v1/services', require('./routes/serviceRoutes'));
+app.use('/api/v1/college/:id', require('./routes/bulkUploadRoutes'));
+app.use('/api/v1/auth', require('./routes/authRoutes'));
+app.use('/api/v1/registration', require('./routes/registrationRoutes'));
+app.use('/api/v1/books', require('./routes/bookRoutes'));
+app.use('/api/v1/loans', require('./routes/loanRoutes'));
+app.use('/api/v1/fines', require('./routes/fineRoutes'));
+app.use('/api/v1/patron-card', require('./routes/patronCardRoutes'));
+app.use('/api/v1/reservations', require('./routes/reservationRoutes'));
+app.use('/api/v1/reading-lists', require('./routes/readingListRoutes'));
+app.use('/api/v1/bookmarks', require('./routes/bookmarkRoutes'));
+app.use('/api/v1/saved-searches', require('./routes/savedSearchRoutes'));
+app.use('/api/v1/recommendations', require('./routes/recommendationRoutes'));
+app.use('/api/v1/eresources', require('./routes/eresourceRoutes'));
+app.use('/api/v1/reader', require('./routes/readerRoutes'));
+app.use('/api/v1/notifications', require('./routes/notificationRoutes'));
+app.use('/api/v1/payments', require('./routes/paymentRoutes'));
+app.use('/api/v1/annotations', require('./routes/annotationRoutes'));
+app.use('/api/v1/aggregator', require('./routes/aggregatorRoutes'));
+
+const { getOpenApiSpec } = require('./docs/openapi');
+app.get('/api/v1/docs/swagger.json', (req, res) => res.json(getOpenApiSpec()));
+app.use('/api/v1/dashboards/admin-portal', require('./routes/dashboards/adminPortalRoutes'));
+app.use('/api/v1/dashboards/college-admin', require('./routes/dashboards/collegeAdminRoutes'));
+app.use('/api/v1/dashboards/student', require('./routes/dashboards/studentDashboardRoutes'));
+app.use('/api/v1/dashboards/general', require('./routes/dashboards/generalDashboardRoutes'));
+app.use('/api/v1/lab', require('./routes/labRoutes'));
+app.use('/api/v1/feedback', require('./routes/feedbackRoutes'));
+app.use('/api/v1/complaints', require('./routes/complaintRoutes'));
+app.use('/api/v1/book-suggestions', require('./routes/bookSuggestionRoutes'));
+app.use('/api/v1/eresources/external', require('./routes/eresourceExternalRoutes'));
+app.use('/api/v1/google-books', require('./routes/googleBooksRoutes'));
+app.use('/api/v1/streak', require('./routes/streakRoutes'));
+app.use('/api/v1/stickers', require('./routes/stickerRoutes'));
+
+// Deprecated Legacy Unversioned Routes (Supported with 90-day deprecation headers)
+app.use('/api/catalog', deprecationWarning, require('./routes/catalogRoutes'));
+app.use('/api/services', deprecationWarning, require('./routes/serviceRoutes'));
+app.use('/api/college/:id', deprecationWarning, require('./routes/bulkUploadRoutes'));
+app.use('/api/auth', deprecationWarning, require('./routes/authRoutes'));
+app.use('/api/registration', deprecationWarning, require('./routes/registrationRoutes'));
+app.use('/api/books', deprecationWarning, require('./routes/bookRoutes'));
+app.use('/api/loans', deprecationWarning, require('./routes/loanRoutes'));
+app.use('/api/fines', deprecationWarning, require('./routes/fineRoutes'));
+app.use('/api/patron-card', deprecationWarning, require('./routes/patronCardRoutes'));
+app.use('/api/reservations', deprecationWarning, require('./routes/reservationRoutes'));
+app.use('/api/reading-lists', deprecationWarning, require('./routes/readingListRoutes'));
+app.use('/api/bookmarks', deprecationWarning, require('./routes/bookmarkRoutes'));
+app.use('/api/saved-searches', deprecationWarning, require('./routes/savedSearchRoutes'));
+app.use('/api/recommendations', deprecationWarning, require('./routes/recommendationRoutes'));
+app.use('/api/eresources', deprecationWarning, require('./routes/eresourceRoutes'));
+app.use('/api/reader', deprecationWarning, require('./routes/readerRoutes'));
+app.use('/api/notifications', deprecationWarning, require('./routes/notificationRoutes'));
+app.use('/api/payments', deprecationWarning, require('./routes/paymentRoutes'));
+app.use('/api/annotations', deprecationWarning, require('./routes/annotationRoutes'));
 
 // Gamification spec aliases
-app.post('/api/checkin', (req, res, next) => {
+app.post('/api/checkin', deprecationWarning, (req, res, next) => {
   req.url = '/checkin';
   require('./routes/streakRoutes')(req, res, next);
 });
-app.get('/api/streak', (req, res, next) => {
+app.get('/api/streak', deprecationWarning, (req, res, next) => {
   req.url = '/me';
   require('./routes/streakRoutes')(req, res, next);
 });
-app.get('/api/streak/history', (req, res, next) => {
+app.get('/api/streak/history', deprecationWarning, (req, res, next) => {
   req.url = '/history';
   require('./routes/streakRoutes')(req, res, next);
 });
-app.use('/api/badges', (req, res, next) => {
+app.use('/api/badges', deprecationWarning, (req, res, next) => {
   req.url = '/badges' + (req.url === '/' ? '' : req.url);
   require('./routes/streakRoutes')(req, res, next);
 });
 
-// Dashboard Routes
-app.use('/api/dashboards/admin-portal', require('./routes/dashboards/adminPortalRoutes'));
-app.use('/api/dashboards/college-admin', require('./routes/dashboards/collegeAdminRoutes'));
-app.use('/api/dashboards/student', require('./routes/dashboards/studentDashboardRoutes'));
-app.use('/api/dashboards/general', require('./routes/dashboards/generalDashboardRoutes'));
+// Dashboard Routes (Deprecated unversioned aliases)
+app.use(
+  '/api/dashboards/admin-portal',
+  deprecationWarning,
+  require('./routes/dashboards/adminPortalRoutes')
+);
+app.use(
+  '/api/dashboards/college-admin',
+  deprecationWarning,
+  require('./routes/dashboards/collegeAdminRoutes')
+);
+app.use(
+  '/api/dashboards/student',
+  deprecationWarning,
+  require('./routes/dashboards/studentDashboardRoutes')
+);
+app.use(
+  '/api/dashboards/general',
+  deprecationWarning,
+  require('./routes/dashboards/generalDashboardRoutes')
+);
 
-// Feature Routes
-app.use('/api/lab', require('./routes/labRoutes'));
-app.use('/api/feedback', require('./routes/feedbackRoutes'));
-app.use('/api/complaints', require('./routes/complaintRoutes'));
-app.use('/api/book-suggestions', require('./routes/bookSuggestionRoutes'));
-app.use('/api/eresources/external', require('./routes/eresourceExternalRoutes'));
-app.use('/api/google-books', require('./routes/googleBooksRoutes'));
-app.use('/api/streak', require('./routes/streakRoutes'));
-app.use('/api/stickers', require('./routes/stickerRoutes'));
+// Feature Routes (Deprecated unversioned aliases)
+app.use('/api/lab', deprecationWarning, require('./routes/labRoutes'));
+app.use('/api/feedback', deprecationWarning, require('./routes/feedbackRoutes'));
+app.use('/api/complaints', deprecationWarning, require('./routes/complaintRoutes'));
+app.use('/api/book-suggestions', deprecationWarning, require('./routes/bookSuggestionRoutes'));
+app.use(
+  '/api/eresources/external',
+  deprecationWarning,
+  require('./routes/eresourceExternalRoutes')
+);
+app.use('/api/google-books', deprecationWarning, require('./routes/googleBooksRoutes'));
+app.use('/api/streak', deprecationWarning, require('./routes/streakRoutes'));
+app.use('/api/stickers', deprecationWarning, require('./routes/stickerRoutes'));
 
 // Error Handlers
 app.use(notFound);

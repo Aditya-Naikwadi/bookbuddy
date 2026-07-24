@@ -35,7 +35,16 @@ const validateCsrf = (req, res, next) => {
     return next();
   }
 
-  const exemptPaths = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh'];
+  const exemptPaths = [
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/auth/refresh',
+    '/api/registration',
+    '/api/v1/auth/login',
+    '/api/v1/auth/register',
+    '/api/v1/auth/refresh',
+    '/api/v1/registration',
+  ];
   const isExempt = exemptPaths.some((path) => req.originalUrl.startsWith(path));
 
   const csrfCookie = req.cookies?._csrf;

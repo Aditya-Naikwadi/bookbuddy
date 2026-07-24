@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "8b3f8f11-7443-4bbf-bb87-6e6912384a86",
-    "name": "BookBuddy API - Production & Dev Portal",
-    "description": "Comprehensive Postman collection containing all route groupings for students, college admins, and super admins across all phases of development.",
+    "name": "BookBuddy API - Production & Dev Portal (v1)",
+    "description": "Comprehensive Postman collection containing all canonical /api/v1/ route groupings for students, college admins, and super admins.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -24,9 +24,9 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/api/auth/register",
+              "raw": "{{base_url}}/api/v1/auth/register",
               "host": ["{{base_url}}"],
-              "path": ["api", "auth", "register"]
+              "path": ["api", "v1", "auth", "register"]
             }
           }
         },
@@ -45,9 +45,9 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/api/auth/login",
+              "raw": "{{base_url}}/api/v1/auth/login",
               "host": ["{{base_url}}"],
-              "path": ["api", "auth", "login"]
+              "path": ["api", "v1", "auth", "login"]
             }
           }
         },
@@ -66,9 +66,9 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/api/auth/refresh",
+              "raw": "{{base_url}}/api/v1/auth/refresh",
               "host": ["{{base_url}}"],
-              "path": ["api", "auth", "refresh"]
+              "path": ["api", "v1", "auth", "refresh"]
             }
           }
         }
@@ -88,9 +88,9 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/dashboards/student/catalog",
+              "raw": "{{base_url}}/api/v1/dashboards/student/catalog",
               "host": ["{{base_url}}"],
-              "path": ["api", "dashboards", "student", "catalog"]
+              "path": ["api", "v1", "dashboards", "student", "catalog"]
             }
           }
         },
@@ -114,9 +114,9 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/api/dashboards/student/reservations",
+              "raw": "{{base_url}}/api/v1/dashboards/student/reservations",
               "host": ["{{base_url}}"],
-              "path": ["api", "dashboards", "student", "reservations"]
+              "path": ["api", "v1", "dashboards", "student", "reservations"]
             }
           }
         },
@@ -140,9 +140,9 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/api/dashboards/student/lab-bookings",
+              "raw": "{{base_url}}/api/v1/dashboards/student/lab-bookings",
               "host": ["{{base_url}}"],
-              "path": ["api", "dashboards", "student", "lab-bookings"]
+              "path": ["api", "v1", "dashboards", "student", "lab-bookings"]
             }
           }
         },
@@ -157,9 +157,9 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/dashboards/student/streak",
+              "raw": "{{base_url}}/api/v1/dashboards/student/streak",
               "host": ["{{base_url}}"],
-              "path": ["api", "dashboards", "student", "streak"]
+              "path": ["api", "v1", "dashboards", "student", "streak"]
             }
           }
         }
@@ -188,9 +188,9 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/api/dashboards/college-admin/circulation/checkout",
+              "raw": "{{base_url}}/api/v1/dashboards/college-admin/circulation/checkout",
               "host": ["{{base_url}}"],
-              "path": ["api", "dashboards", "college-admin", "circulation", "checkout"]
+              "path": ["api", "v1", "dashboards", "college-admin", "circulation", "checkout"]
             }
           }
         },
@@ -214,9 +214,9 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/api/dashboards/college-admin/circulation/return",
+              "raw": "{{base_url}}/api/v1/dashboards/college-admin/circulation/return",
               "host": ["{{base_url}}"],
-              "path": ["api", "dashboards", "college-admin", "circulation", "return"]
+              "path": ["api", "v1", "dashboards", "college-admin", "circulation", "return"]
             }
           }
         },
@@ -231,9 +231,9 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/dashboards/college-admin/analytics/summary",
+              "raw": "{{base_url}}/api/v1/dashboards/college-admin/analytics/summary",
               "host": ["{{base_url}}"],
-              "path": ["api", "dashboards", "college-admin", "analytics", "summary"]
+              "path": ["api", "v1", "dashboards", "college-admin", "analytics", "summary"]
             }
           }
         }
@@ -262,9 +262,9 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/api/dashboards/admin-portal/admins",
+              "raw": "{{base_url}}/api/v1/dashboards/admin-portal/admins",
               "host": ["{{base_url}}"],
-              "path": ["api", "dashboards", "admin-portal", "admins"]
+              "path": ["api", "v1", "dashboards", "admin-portal", "admins"]
             }
           }
         },
@@ -279,9 +279,9 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/dashboards/admin-portal/audit-trail?limit=25",
+              "raw": "{{base_url}}/api/v1/dashboards/admin-portal/audit-trail?limit=25",
               "host": ["{{base_url}}"],
-              "path": ["api", "dashboards", "admin-portal", "audit-trail"],
+              "path": ["api", "v1", "dashboards", "admin-portal", "audit-trail"],
               "query": [
                 {
                   "key": "limit",
