@@ -1,0 +1,35 @@
+[
+  {
+    "_id": "6a624c12a933e93e25f162b3",
+    "name": "Tech University",
+    "code": "TECH_UNIV",
+    "isActive": true,
+    "maxFineLimit": 100,
+    "status": "pending",
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.759Z",
+    "updatedAt": "2026-07-23T17:14:58.759Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162b4",
+    "name": "Liberal Arts College",
+    "code": "LIB_ARTS",
+    "isActive": true,
+    "maxFineLimit": 150,
+    "status": "pending",
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.760Z",
+    "updatedAt": "2026-07-23T17:14:58.760Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162b5",
+    "name": "Metropolitan State University",
+    "code": "METRO_STATE",
+    "isActive": true,
+    "maxFineLimit": 120,
+    "status": "pending",
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.760Z",
+    "updatedAt": "2026-07-23T17:14:58.760Z"
+  }
+]

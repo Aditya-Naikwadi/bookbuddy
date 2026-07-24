@@ -316,7 +316,7 @@ const setReadingPosition = async (req, res, next) => {
       },
       updateFields,
       {
-        new: true,
+        returnDocument: 'after',
         upsert: true,
       }
     );
@@ -336,7 +336,7 @@ const setReadingPosition = async (req, res, next) => {
         $setOnInsert: { collegeId: req.user.collegeId },
         $inc: { pagesRead: pagesDelta, minutesRead: minutesDelta },
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     res.json({

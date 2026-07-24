@@ -588,7 +588,7 @@ const upsertReadingProgress = async (req, res, next) => {
           lastReadAt: new Date(),
         },
       },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
+      { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
     );
 
     res.json({

@@ -202,6 +202,7 @@ app.use('/api/feedback', require('./routes/feedbackRoutes'));
 app.use('/api/complaints', require('./routes/complaintRoutes'));
 app.use('/api/book-suggestions', require('./routes/bookSuggestionRoutes'));
 app.use('/api/eresources/external', require('./routes/eresourceExternalRoutes'));
+app.use('/api/google-books', require('./routes/googleBooksRoutes'));
 app.use('/api/streak', require('./routes/streakRoutes'));
 app.use('/api/stickers', require('./routes/stickerRoutes'));
 

@@ -43,7 +43,7 @@ const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
     const book = await Book.findOneAndUpdate(
       { _id: bookId, collegeId, copiesAvailable: { $gt: 0 } },
       { $inc: { copiesAvailable: -1 } },
-      { new: true, session }
+      { returnDocument: 'after', session }
     );
     if (!book) {
       throw new AppError('No copies available for this book.', 400);

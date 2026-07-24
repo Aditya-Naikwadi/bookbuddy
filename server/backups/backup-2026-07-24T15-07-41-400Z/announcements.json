@@ -1,0 +1,41 @@
+[
+  {
+    "_id": "6a637fa1058b65d116893326",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "title": "Midterm Extended Library Hours",
+    "content": "The main reading hall will remain open until 11:30 PM throughout examination week.",
+    "priority": "Notice",
+    "category": "Operational",
+    "isActive": true,
+    "startDate": "2026-07-24T15:07:13.643Z",
+    "__v": 0,
+    "createdAt": "2026-07-24T15:07:13.654Z",
+    "updatedAt": "2026-07-24T15:07:13.654Z"
+  },
+  {
+    "_id": "6a637fa1058b65d116893327",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "title": "Scheduled Network Maintenance",
+    "content": "Wi-Fi services in Section B will undergo scheduled maintenance on Friday 2-4 PM.",
+    "priority": "Warning",
+    "category": "Maintenance",
+    "isActive": true,
+    "startDate": "2026-07-24T15:07:13.646Z",
+    "__v": 0,
+    "createdAt": "2026-07-24T15:07:13.656Z",
+    "updatedAt": "2026-07-24T15:07:13.656Z"
+  },
+  {
+    "_id": "6a637fa1058b65d116893328",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "title": "Urgent: Reserve Desk Relocation",
+    "content": "All course reserve pick-ups have temporarily moved to Desk 2 near North Entrance.",
+    "priority": "Urgent",
+    "category": "Operational",
+    "isActive": true,
+    "startDate": "2026-07-24T15:07:13.646Z",
+    "__v": 0,
+    "createdAt": "2026-07-24T15:07:13.656Z",
+    "updatedAt": "2026-07-24T15:07:13.656Z"
+  }
+]

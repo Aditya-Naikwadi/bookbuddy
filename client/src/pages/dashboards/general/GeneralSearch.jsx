@@ -19,104 +19,7 @@ import StatSummaryStrip from '../../../components/general/StatSummaryStrip';
 import VirtualizedCardGrid from '../../../components/general/VirtualizedCardGrid';
 import MobileFilterSheet from '../../../components/general/MobileFilterSheet';
 
-const CATALOG_BOOKS = [
-  {
-    id: 'b-1',
-    title: 'Principles of Modern Architecture & Urban Planning',
-    author: 'Elena Rostova',
-    genre: 'Architecture',
-    year: '2024',
-    format: 'Hardcover',
-    availabilityStatus: 'Available',
-    availableCopies: 4,
-    location: 'Floor 2, Shelf A-14',
-    description: 'A comprehensive study of modern sustainable architecture.',
-  },
-  {
-    id: 'b-2',
-    title: 'Data Structures and Algorithms in Python',
-    author: 'Alan Turing Jr.',
-    genre: 'Computer Science',
-    year: '2023',
-    format: 'Paperback',
-    availabilityStatus: 'Available',
-    availableCopies: 2,
-    location: 'Floor 3, Shelf CS-08',
-    description: 'Essential algorithmic patterns and optimization techniques.',
-  },
-  {
-    id: 'b-3',
-    title: 'Global Economic Trends & Financial Markets',
-    author: 'Marcus Vance',
-    genre: 'Economics',
-    year: '2024',
-    format: 'Hardcover',
-    availabilityStatus: 'Checked Out',
-    availableCopies: 0,
-    location: 'Floor 1, Shelf EC-02',
-    description: 'Analysis of global trade patterns and fiscal policy.',
-  },
-  {
-    id: 'b-4',
-    title: 'Biochemistry & Molecular Biology Essentials',
-    author: 'Sarah Lin',
-    genre: 'Biology',
-    year: '2023',
-    format: 'Hardcover',
-    availabilityStatus: 'Available',
-    availableCopies: 5,
-    location: 'Floor 3, Shelf BIO-12',
-    description: 'Cellular mechanics, genetics, and metabolic processes.',
-  },
-  {
-    id: 'b-5',
-    title: 'History of World Literature: Antiquity to Modernity',
-    author: 'Clara Oswald',
-    genre: 'Literature',
-    year: '2022',
-    format: 'Paperback',
-    availabilityStatus: 'On Hold',
-    availableCopies: 1,
-    location: 'Floor 2, Shelf LIT-05',
-    description: 'Comparative literature across eastern and western canons.',
-  },
-  {
-    id: 'b-6',
-    title: 'Quantum Computing Principles & Mathematical Models',
-    author: 'David Deutsch',
-    genre: 'Computer Science',
-    year: '2024',
-    format: 'Hardcover',
-    availabilityStatus: 'Available',
-    availableCopies: 3,
-    location: 'Floor 3, Shelf CS-19',
-    description: 'Quantum circuits, qubits, and state vectors.',
-  },
-  {
-    id: 'b-7',
-    title: 'Environmental Science & Climate Resiliency',
-    author: 'Rachel Carson III',
-    genre: 'Environmental Science',
-    year: '2023',
-    format: 'Paperback',
-    availabilityStatus: 'Available',
-    availableCopies: 6,
-    location: 'Floor 1, Shelf ENV-04',
-    description: 'Ecological preservation strategies and climate data modeling.',
-  },
-  {
-    id: 'b-8',
-    title: 'Organic Chemistry Laboratory Handbook',
-    author: 'Robert Burns Woodward',
-    genre: 'Chemistry',
-    year: '2021',
-    format: 'Reference',
-    availabilityStatus: 'Available',
-    availableCopies: 2,
-    location: 'Floor 3, Shelf CHEM-01',
-    description: 'Synthesis protocols and spectroscopic technique guides.',
-  },
-];
+import apiClient from '../../../api/client';
 
 const GENRES = ['All', 'Computer Science', 'Architecture', 'Economics', 'Biology', 'Literature', 'Chemistry', 'Environmental Science'];
 const AVAILABILITY_OPTIONS = ['All', 'Available', 'On Hold', 'Checked Out'];
@@ -145,20 +48,54 @@ const GeneralSearch = () => {
   const [showFiltersSheet, setShowFiltersSheet] = useState(false);
   const [genreSearch, setGenreSearch] = useState('');
   const [loading, setLoading] = useState(false);
+  const [catalogBooks, setCatalogBooks] = useState([]);
   const [selectedLocationBook, setSelectedLocationBook] = useState(null);
+
+  // Fetch catalog books from backend
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCatalog = async () => {
+      try {
+        setLoading(true);
+        const { data } = await apiClient.get('/books');
+        if (isMounted && data && Array.isArray(data.data)) {
+          const mapped = data.data.map((b) => ({
+            id: b._id,
+            title: b.title,
+            author: b.author,
+            genre: b.genre || 'General',
+            year: b.publicationYear ? String(b.publicationYear) : '2024',
+            format: b.format || 'Paperback',
+            availabilityStatus: b.copiesAvailable > 0 ? 'Available' : 'Checked Out',
+            availableCopies: b.copiesAvailable !== undefined ? b.copiesAvailable : 0,
+            location: b.shelfLocation || 'Main Stacks',
+            description: b.description || 'Catalog resource.',
+          }));
+          setCatalogBooks(mapped);
+        }
+      } catch {
+        if (isMounted) setCatalogBooks([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchCatalog();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Debounce search query changes (~300ms)
   useEffect(() => {
-    setLoading(true);
     const timer = setTimeout(() => {
       setDebouncedQuery(rawQuery);
-      setLoading(false);
     }, 300);
     return () => clearTimeout(timer);
   }, [rawQuery]);
 
   const filteredBooks = useMemo(() => {
-    return CATALOG_BOOKS.filter((book) => {
+    return catalogBooks.filter((book) => {
       const q = debouncedQuery.toLowerCase().trim();
       const matchesQuery =
         !q ||
@@ -177,7 +114,7 @@ const GeneralSearch = () => {
       if (sortBy === 'available') return b.availableCopies - a.availableCopies;
       return 0;
     });
-  }, [debouncedQuery, selectedGenre, selectedAvailability, selectedFormat, sortBy]);
+  }, [catalogBooks, debouncedQuery, selectedGenre, selectedAvailability, selectedFormat, sortBy]);
 
   // Compute stat summary metrics
   const stats = useMemo(() => {

@@ -1,0 +1,34 @@
+[
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bb4",
+    "collegeId": "6a6245621bbf1d2a9cbf4baa",
+    "userId": "6a6245631bbf1d2a9cbf4bab",
+    "bookId": "6a6245631bbf1d2a9cbf4baf",
+    "issueDate": "2026-07-18T16:46:27.525Z",
+    "dueDate": "2026-08-01T16:46:27.525Z",
+    "returnDate": null,
+    "renewalCount": 0,
+    "maxRenewals": 3,
+    "status": "active",
+    "issuedBy": "6a6245631bbf1d2a9cbf4bac",
+    "createdAt": "2026-07-23T16:46:27.526Z",
+    "updatedAt": "2026-07-23T16:46:27.526Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bb5",
+    "collegeId": "6a6245621bbf1d2a9cbf4baa",
+    "userId": "6a6245631bbf1d2a9cbf4bab",
+    "bookId": "6a6245631bbf1d2a9cbf4bb3",
+    "issueDate": "2026-06-23T16:46:27.570Z",
+    "dueDate": "2026-07-08T16:46:27.570Z",
+    "returnDate": "2026-07-08T16:46:27.570Z",
+    "renewalCount": 0,
+    "maxRenewals": 3,
+    "status": "returned",
+    "issuedBy": "6a6245631bbf1d2a9cbf4bac",
+    "createdAt": "2026-07-23T16:46:27.570Z",
+    "updatedAt": "2026-07-23T16:46:27.570Z",
+    "__v": 0
+  }
+]

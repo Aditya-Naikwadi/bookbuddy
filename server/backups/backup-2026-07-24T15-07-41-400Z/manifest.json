@@ -1,0 +1,272 @@
+{
+  "timestamp": "2026-07-24T15:07:41.405Z",
+  "databaseName": "test",
+  "collections": [
+    {
+      "name": "booksuggestions",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "booksuggestions.json"
+    },
+    {
+      "name": "colleges",
+      "count": 3,
+      "sizeBytes": 859,
+      "checksumSha256": "9e0e91a49de4dbfe69446f8279dbc460315a566df289805dfb4c25b1d4d142d4",
+      "file": "colleges.json"
+    },
+    {
+      "name": "feedbacks",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "feedbacks.json"
+    },
+    {
+      "name": "readingprogresses",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "readingprogresses.json"
+    },
+    {
+      "name": "loans",
+      "count": 2,
+      "sizeBytes": 1036,
+      "checksumSha256": "9d52c23f6edeaa9e1d9e7520400c0858943ae40359b8b6d4be5c26ee0183df43",
+      "file": "loans.json"
+    },
+    {
+      "name": "notificationlogs",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "notificationlogs.json"
+    },
+    {
+      "name": "labseats",
+      "count": 10,
+      "sizeBytes": 3492,
+      "checksumSha256": "5250479487b0613a43591e115cb95b2a64c1c549dbb2051715f0c02f237c426d",
+      "file": "labseats.json"
+    },
+    {
+      "name": "platformmetricsnapshots",
+      "count": 82,
+      "sizeBytes": 39106,
+      "checksumSha256": "ec51424a310e92530bb2743e202b9d91537944ec759ea5f9e8066d39fd1ff516",
+      "file": "platformmetricsnapshots.json"
+    },
+    {
+      "name": "refreshtokens",
+      "count": 7,
+      "sizeBytes": 2950,
+      "checksumSha256": "24dc1cf1f957f85e1f5aa67419e394da59bca16be3be51845bb318f1aadb5cdb",
+      "file": "refreshtokens.json"
+    },
+    {
+      "name": "bookmarks",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "bookmarks.json"
+    },
+    {
+      "name": "fines",
+      "count": 1,
+      "sizeBytes": 366,
+      "checksumSha256": "3467f9b01b61258c99573d1114500cbade2a4f9e8e21a8c5d90b59ba410edd53",
+      "file": "fines.json"
+    },
+    {
+      "name": "registrationrequests",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "registrationrequests.json"
+    },
+    {
+      "name": "reservations",
+      "count": 1,
+      "sizeBytes": 351,
+      "checksumSha256": "b3c85bcf2a467534deca5f57a4789fec8be830869ec0c991ee2e2e5f92752e46",
+      "file": "reservations.json"
+    },
+    {
+      "name": "cronrunlogs",
+      "count": 23,
+      "sizeBytes": 7745,
+      "checksumSha256": "b3ebc2f128fbf6dcdecbbf55776bc96568e2ef9ff64e253f3ecfd7475beb7f5f",
+      "file": "cronrunlogs.json"
+    },
+    {
+      "name": "annotations",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "annotations.json"
+    },
+    {
+      "name": "savedsearches",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "savedsearches.json"
+    },
+    {
+      "name": "librarysettings",
+      "count": 1,
+      "sizeBytes": 366,
+      "checksumSha256": "1385328a0c7b65407b9a9ef1a1dcdca0dff9a48c90c8a00c5f536bf685c16425",
+      "file": "librarysettings.json"
+    },
+    {
+      "name": "labbookings",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "labbookings.json"
+    },
+    {
+      "name": "streaks",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "streaks.json"
+    },
+    {
+      "name": "users",
+      "count": 23,
+      "sizeBytes": 15631,
+      "checksumSha256": "25d326dc9f36fdc72e9a6486d8d36b055eea5f6e7785ed8e36bd2c70c427e2d7",
+      "file": "users.json"
+    },
+    {
+      "name": "notificationpreferences",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "notificationpreferences.json"
+    },
+    {
+      "name": "checkinlogs",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "checkinlogs.json"
+    },
+    {
+      "name": "eresources",
+      "count": 2,
+      "sizeBytes": 1384,
+      "checksumSha256": "61f091632a9efd67f751a5baa16bf5da3db8542000905c8e68b9b4998dd4b91d",
+      "file": "eresources.json"
+    },
+    {
+      "name": "userstickers",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "userstickers.json"
+    },
+    {
+      "name": "devicetokens",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "devicetokens.json"
+    },
+    {
+      "name": "stickers",
+      "count": 6,
+      "sizeBytes": 1656,
+      "checksumSha256": "55f1a62bfde099dac62b6abeaacf78e7c1488d42f7445346b3318910c7e398c9",
+      "file": "stickers.json"
+    },
+    {
+      "name": "payments",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "payments.json"
+    },
+    {
+      "name": "announcements",
+      "count": 3,
+      "sizeBytes": 1404,
+      "checksumSha256": "a178c1bf467edf21661c601dcca56f37f7a69e578d0b2c2bb0648d5e3ec85d92",
+      "file": "announcements.json"
+    },
+    {
+      "name": "books",
+      "count": 4,
+      "sizeBytes": 1825,
+      "checksumSha256": "a3a280ea6822486029d7b1a7ea10b4411012aa42e6bec370f0593685a16664be",
+      "file": "books.json"
+    },
+    {
+      "name": "services",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "services.json"
+    },
+    {
+      "name": "auditlogs",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "auditlogs.json"
+    },
+    {
+      "name": "notifications",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "notifications.json"
+    },
+    {
+      "name": "complaints",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "complaints.json"
+    },
+    {
+      "name": "readingpositions",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "readingpositions.json"
+    },
+    {
+      "name": "readinglists",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "readinglists.json"
+    },
+    {
+      "name": "streakrewards",
+      "count": 5,
+      "sizeBytes": 1192,
+      "checksumSha256": "a7cb291a7061eac08c7d879560628dcf0094b6c227305985c990424bfd0594b4",
+      "file": "streakrewards.json"
+    },
+    {
+      "name": "paymentattempts",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "paymentattempts.json"
+    },
+    {
+      "name": "uploadjobs",
+      "count": 0,
+      "sizeBytes": 2,
+      "checksumSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "file": "uploadjobs.json"
+    }
+  ]
+}

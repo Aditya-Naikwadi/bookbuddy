@@ -1,0 +1,15 @@
+[
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bb7",
+    "collegeId": "6a6245621bbf1d2a9cbf4baa",
+    "userId": "6a6245631bbf1d2a9cbf4bab",
+    "loanId": "6a6245631bbf1d2a9cbf4bb5",
+    "overdueDays": 9,
+    "amount": 45,
+    "status": "unpaid",
+    "paidAt": null,
+    "createdAt": "2026-07-23T16:46:27.669Z",
+    "updatedAt": "2026-07-23T16:46:27.669Z",
+    "__v": 0
+  }
+]

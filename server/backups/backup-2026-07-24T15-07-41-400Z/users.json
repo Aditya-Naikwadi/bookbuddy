@@ -1,0 +1,508 @@
+[
+  {
+    "_id": "6a624c12a933e93e25f162c1",
+    "studentId": "SA_001",
+    "name": "Super Admin",
+    "email": "superadmin@bookbuddy.com",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTO/NGUjqIpxUKxbP8E8ko6UqIXTdUkpae",
+    "avatar": "",
+    "isActive": true,
+    "role": "super-admin",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "savedBookmarks": [],
+    "searchHistory": [],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.877Z",
+    "updatedAt": "2026-07-23T17:14:58.877Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162c2",
+    "studentId": "COL_ADM_101",
+    "name": "Dr. Marcus Sterling",
+    "email": "marcus.sterling@techuniv.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "isActive": true,
+    "role": "college-admin",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "savedBookmarks": [],
+    "searchHistory": [],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.878Z",
+    "updatedAt": "2026-07-23T17:14:58.878Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162c3",
+    "studentId": "COL_ADM_102",
+    "name": "Dr. Helen Vance",
+    "email": "helen.vance@techuniv.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "isActive": true,
+    "role": "college-admin",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "savedBookmarks": [],
+    "searchHistory": [],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.878Z",
+    "updatedAt": "2026-07-23T17:14:58.878Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162c4",
+    "studentId": "COL_ADM_201",
+    "name": "Prof. Robert Langdon",
+    "email": "robert.langdon@liberalarts.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b4",
+    "isActive": true,
+    "role": "college-admin",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "savedBookmarks": [],
+    "searchHistory": [],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.878Z",
+    "updatedAt": "2026-07-23T17:14:58.878Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162c5",
+    "studentId": "COL_ADM_301",
+    "name": "Dr. Sarah Jenkins",
+    "email": "sarah.jenkins@metrostate.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b5",
+    "isActive": true,
+    "role": "college-admin",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "savedBookmarks": [],
+    "searchHistory": [],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.878Z",
+    "updatedAt": "2026-07-23T17:14:58.878Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162c6",
+    "studentId": "STU_101",
+    "name": "Alice Johnson",
+    "email": "alice.johnson@techuniv.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "isActive": true,
+    "role": "student",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "major": "Computer Science",
+    "savedBookmarks": [
+      "6a624c12a933e93e25f162b9",
+      "6a624c12a933e93e25f162ba"
+    ],
+    "searchHistory": [
+      {
+        "query": "Algorithms and Data Structures",
+        "timestamp": "2026-07-21T17:14:58.863Z",
+        "_id": "6a624c12a933e93e25f162c7"
+      },
+      {
+        "query": "Machine Learning Fundamentals",
+        "timestamp": "2026-07-23T13:14:58.863Z",
+        "_id": "6a624c12a933e93e25f162c8"
+      }
+    ],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.878Z",
+    "updatedAt": "2026-07-23T17:14:58.878Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162c9",
+    "studentId": "STU_102",
+    "name": "Bob Smith",
+    "email": "bob.smith@techuniv.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "isActive": true,
+    "role": "student",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "major": "Artificial Intelligence",
+    "savedBookmarks": [
+      "6a624c12a933e93e25f162ba"
+    ],
+    "searchHistory": [
+      {
+        "query": "Neural Networks",
+        "timestamp": "2026-07-18T17:14:58.863Z",
+        "_id": "6a624c12a933e93e25f162ca"
+      }
+    ],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.879Z",
+    "updatedAt": "2026-07-23T17:14:58.879Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162cb",
+    "studentId": "STU_103",
+    "name": "Charlie Davis",
+    "email": "charlie.davis@techuniv.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "isActive": true,
+    "role": "student",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "major": "Cybersecurity",
+    "savedBookmarks": [
+      "6a624c12a933e93e25f162b9"
+    ],
+    "searchHistory": [
+      {
+        "query": "Cryptography basics",
+        "timestamp": "2026-07-22T17:14:58.863Z",
+        "_id": "6a624c12a933e93e25f162cc"
+      }
+    ],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.879Z",
+    "updatedAt": "2026-07-23T17:14:58.879Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162cd",
+    "studentId": "STU_104",
+    "name": "Diana Prince",
+    "email": "diana.prince@techuniv.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "isActive": true,
+    "role": "student",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "major": "Software Engineering",
+    "savedBookmarks": [],
+    "searchHistory": [
+      {
+        "query": "Clean Architecture",
+        "timestamp": "2026-07-23T17:14:58.863Z",
+        "_id": "6a624c12a933e93e25f162ce"
+      }
+    ],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.879Z",
+    "updatedAt": "2026-07-23T17:14:58.879Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162cf",
+    "studentId": "STU_201",
+    "name": "Edward Nygma",
+    "email": "edward.nygma@liberalarts.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b4",
+    "isActive": true,
+    "role": "student",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "major": "English Literature",
+    "savedBookmarks": [
+      "6a624c12a933e93e25f162bb"
+    ],
+    "searchHistory": [
+      {
+        "query": "Modern American Poetry",
+        "timestamp": "2026-07-20T17:14:58.863Z",
+        "_id": "6a624c12a933e93e25f162d0"
+      }
+    ],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.879Z",
+    "updatedAt": "2026-07-23T17:14:58.879Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162d1",
+    "studentId": "STU_202",
+    "name": "Fiona Gallagher",
+    "email": "fiona.g@liberalarts.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b4",
+    "isActive": true,
+    "role": "student",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "major": "Philosophy",
+    "savedBookmarks": [
+      "6a624c12a933e93e25f162bb"
+    ],
+    "searchHistory": [
+      {
+        "query": "Ethics and Moral Philosophy",
+        "timestamp": "2026-07-23T05:14:58.863Z",
+        "_id": "6a624c12a933e93e25f162d2"
+      }
+    ],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.879Z",
+    "updatedAt": "2026-07-23T17:14:58.879Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162d3",
+    "studentId": "STU_203",
+    "name": "George Wright",
+    "email": "george.w@liberalarts.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b4",
+    "isActive": true,
+    "role": "student",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "major": "History",
+    "savedBookmarks": [],
+    "searchHistory": [
+      {
+        "query": "20th Century World History",
+        "timestamp": "2026-07-16T17:14:58.863Z",
+        "_id": "6a624c12a933e93e25f162d4"
+      }
+    ],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.879Z",
+    "updatedAt": "2026-07-23T17:14:58.879Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162d5",
+    "studentId": "STU_301",
+    "name": "Hannah Abbott",
+    "email": "hannah.a@metrostate.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b5",
+    "isActive": true,
+    "role": "student",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "major": "Biomedical Science",
+    "savedBookmarks": [
+      "6a624c12a933e93e25f162bc"
+    ],
+    "searchHistory": [
+      {
+        "query": "Neuroscience and Physiology",
+        "timestamp": "2026-07-21T17:14:58.863Z",
+        "_id": "6a624c12a933e93e25f162d6"
+      }
+    ],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.879Z",
+    "updatedAt": "2026-07-23T17:14:58.879Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162d7",
+    "studentId": "STU_302",
+    "name": "Ian Malcolm",
+    "email": "ian.malcolm@metrostate.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b5",
+    "isActive": true,
+    "role": "student",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "major": "Mathematics",
+    "savedBookmarks": [],
+    "searchHistory": [
+      {
+        "query": "Chaos Theory and Nonlinear Dynamics",
+        "timestamp": "2026-07-23T17:14:58.863Z",
+        "_id": "6a624c12a933e93e25f162d8"
+      }
+    ],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.879Z",
+    "updatedAt": "2026-07-23T17:14:58.879Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162d9",
+    "studentId": "STU_303",
+    "name": "Julia Roberts",
+    "email": "julia.r@metrostate.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b5",
+    "isActive": true,
+    "role": "student",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "major": "Data Analytics",
+    "savedBookmarks": [
+      "6a624c12a933e93e25f162bc"
+    ],
+    "searchHistory": [
+      {
+        "query": "Statistical Inference",
+        "timestamp": "2026-07-23T05:14:58.863Z",
+        "_id": "6a624c12a933e93e25f162da"
+      }
+    ],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.879Z",
+    "updatedAt": "2026-07-23T17:14:58.879Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162db",
+    "studentId": "GEN_101",
+    "name": "Kevin Bacon",
+    "email": "kevin.bacon@techuniv.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "isActive": true,
+    "role": "general",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "savedBookmarks": [],
+    "searchHistory": [],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.879Z",
+    "updatedAt": "2026-07-23T17:14:58.879Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162dc",
+    "studentId": "GEN_102",
+    "name": "Laura Palmer",
+    "email": "laura.palmer@techuniv.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "isActive": true,
+    "role": "general",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "savedBookmarks": [],
+    "searchHistory": [],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.879Z",
+    "updatedAt": "2026-07-23T17:14:58.879Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162dd",
+    "studentId": "GEN_201",
+    "name": "Michael Scott",
+    "email": "michael.scott@liberalarts.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b4",
+    "isActive": true,
+    "role": "general",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "savedBookmarks": [],
+    "searchHistory": [],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.879Z",
+    "updatedAt": "2026-07-23T17:14:58.879Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162de",
+    "studentId": "GEN_202",
+    "name": "Nancy Wheeler",
+    "email": "nancy.w@liberalarts.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b4",
+    "isActive": true,
+    "role": "general",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "savedBookmarks": [],
+    "searchHistory": [],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.879Z",
+    "updatedAt": "2026-07-23T17:14:58.879Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162df",
+    "studentId": "GEN_301",
+    "name": "Oscar Martinez",
+    "email": "oscar.m@metrostate.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b5",
+    "isActive": true,
+    "role": "general",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "savedBookmarks": [],
+    "searchHistory": [],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.879Z",
+    "updatedAt": "2026-07-23T17:14:58.879Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162e0",
+    "studentId": "GEN_302",
+    "name": "Pam Beesly",
+    "email": "pam.b@metrostate.edu",
+    "password": "$2b$10$S.BUO64Maq0TtF4aaqJOTOR/bEzDDNWmBgn9a78JbHNn2LyT/Eu86",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b5",
+    "isActive": true,
+    "role": "general",
+    "membershipStatus": "active",
+    "validTill": "2030-07-23T17:14:58.863Z",
+    "savedBookmarks": [],
+    "searchHistory": [],
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.879Z",
+    "updatedAt": "2026-07-23T17:14:58.879Z"
+  },
+  {
+    "_id": "6a624f3de3f6e414f209c122",
+    "studentId": "5616189",
+    "name": "Aditya Sanjay Naikwadi",
+    "email": "adityasanjaynaikwadi@gmail.com",
+    "password": "$2b$12$BIl9aW7dJ.S8hUiMC0Nd7.5ro9hrPUCN.40c6RGn5X9MdrElTC8sm",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "isActive": true,
+    "role": "general",
+    "membershipStatus": "active",
+    "savedBookmarks": [],
+    "validTill": "2030-07-23T17:28:29.659Z",
+    "searchHistory": [],
+    "createdAt": "2026-07-23T17:28:29.665Z",
+    "updatedAt": "2026-07-23T17:28:29.665Z",
+    "cardSecret": "8be35646e3368a40d7a0e79ace405de198e3e42239bfd60971b5cba9d8b6ae65",
+    "__v": 0
+  },
+  {
+    "_id": "6a636c384ea01b7e55c5ddf1",
+    "studentId": "123456",
+    "name": "Sanjay Naikwadi",
+    "email": "sanjaynaikwadi@gmail.com",
+    "password": "$2b$12$kBXpXWnBB9IyO4ai1gG.mOp9Pb67Jij.qNw.E4v4Wml2Pto/qsf/S",
+    "avatar": "",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "isActive": true,
+    "isEmailVerified": false,
+    "role": "general",
+    "membershipStatus": "active",
+    "savedBookmarks": [],
+    "validTill": "2030-07-24T13:44:24.379Z",
+    "searchHistory": [],
+    "createdAt": "2026-07-24T13:44:24.398Z",
+    "updatedAt": "2026-07-24T13:44:24.398Z",
+    "cardSecret": "ca9973c712f7981d7cdf72787fb20503e77ff7a75186b073f783fe85d711aa28",
+    "__v": 0
+  }
+]

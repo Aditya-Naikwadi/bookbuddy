@@ -176,7 +176,7 @@ const registerDeviceToken = async (userId, fcmToken, platform = 'web') => {
   const device = await DeviceToken.findOneAndUpdate(
     { fcmToken },
     { userId, fcmToken, platform, lastSeenAt: new Date() },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: 'after' }
   );
 
   return device;

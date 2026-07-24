@@ -1,0 +1,47 @@
+[
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bcd",
+    "milestoneThreshold": 30,
+    "rewardType": "badge",
+    "rewardValue": "month_master",
+    "createdAt": "2026-07-23T16:46:27.954Z",
+    "updatedAt": "2026-07-23T16:46:27.954Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bcc",
+    "milestoneThreshold": 14,
+    "rewardType": "theme",
+    "rewardValue": "gold_card",
+    "createdAt": "2026-07-23T16:46:27.954Z",
+    "updatedAt": "2026-07-23T16:46:27.954Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bca",
+    "milestoneThreshold": 3,
+    "rewardType": "theme",
+    "rewardValue": "silver_flame",
+    "createdAt": "2026-07-23T16:46:27.954Z",
+    "updatedAt": "2026-07-23T16:46:27.954Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bce",
+    "milestoneThreshold": 60,
+    "rewardType": "freeze",
+    "rewardValue": "2",
+    "createdAt": "2026-07-23T16:46:27.954Z",
+    "updatedAt": "2026-07-23T16:46:27.954Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bcb",
+    "milestoneThreshold": 7,
+    "rewardType": "freeze",
+    "rewardValue": "1",
+    "createdAt": "2026-07-23T16:46:27.954Z",
+    "updatedAt": "2026-07-23T16:46:27.954Z",
+    "__v": 0
+  }
+]

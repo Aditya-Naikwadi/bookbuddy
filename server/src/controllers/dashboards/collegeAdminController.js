@@ -108,7 +108,7 @@ const updateBook = async (req, res, next) => {
       { _id: req.params.id, ...req.tenantFilter },
       req.body,
       {
-        new: true,
+        returnDocument: 'after',
       }
     );
     if (!book) {
@@ -565,7 +565,7 @@ const updateLabSeat = async (req, res, next) => {
     const seat = await LabSeat.findOneAndUpdate(
       { _id: req.params.id, ...req.tenantFilter },
       req.body,
-      { new: true }
+      { returnDocument: 'after' }
     );
     if (!seat) {
       return next(new AppError('Lab seat not found or unauthorized access.', 404));

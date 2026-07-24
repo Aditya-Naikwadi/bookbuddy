@@ -17,58 +17,7 @@ import StatSummaryStrip from '../../../components/general/StatSummaryStrip';
 import VirtualizedCardGrid from '../../../components/general/VirtualizedCardGrid';
 import ActiveFilterChips from '../../../components/general/ActiveFilterChips';
 
-const PUBLIC_ERESOURCE_DATA = [
-  {
-    id: 'er-1',
-    title: 'History of Local Architecture & Campus Planning',
-    category: 'E-Books',
-    format: 'PDF',
-    accessRequirement: 'Open Access',
-    description: 'Historical archive documenting the evolution of regional building techniques and campus blueprints.',
-    source: 'Gutenberg Archive',
-    downloads: '1.2k',
-  },
-  {
-    id: 'er-2',
-    title: 'Journal of Sustainable Energy & Environmental Engineering',
-    category: 'Journals',
-    format: 'Web Article',
-    accessRequirement: 'Open Access',
-    description: 'Peer-reviewed open access papers covering solar photovoltaic efficiency and microgrid dynamics.',
-    source: 'DOAJ Open Index',
-    downloads: '3.4k',
-  },
-  {
-    id: 'er-3',
-    title: 'Computer Science Past Examination Papers (2018 - 2024)',
-    category: 'Past Papers',
-    format: 'PDF',
-    accessRequirement: 'Login Required',
-    description: 'Curated collection of previous semester examination problems, mark schemes, and solution guides.',
-    source: 'Academic Repository',
-    downloads: '850',
-  },
-  {
-    id: 'er-4',
-    title: 'Global Economic Data & Financial Indicator Database',
-    category: 'Databases',
-    format: 'Interactive Data',
-    accessRequirement: 'Open Access',
-    description: 'Open public dataset tracking inflation indicators, exchange rate statistics, and trade metrics.',
-    source: 'World Open Data',
-    downloads: '5.1k',
-  },
-  {
-    id: 'er-5',
-    title: 'Classical Literature & World Philosophy Reader',
-    category: 'E-Books',
-    format: 'EPUB',
-    accessRequirement: 'Open Access',
-    description: 'Public domain collection featuring translated works of ancient Greek and Asian philosophical treatises.',
-    source: 'Project Gutenberg',
-    downloads: '2.8k',
-  },
-];
+import apiClient from '../../../api/client';
 
 const CATEGORIES = ['All', 'E-Books', 'Journals', 'Databases', 'Past Papers'];
 
@@ -94,7 +43,37 @@ const GeneralEResources = () => {
   const [sortBy, setSortBy] = useState('relevance');
   const [viewMode, setViewMode] = useState('grid');
   const [loading, setLoading] = useState(false);
+  const [dbResources, setDbResources] = useState([]);
   const [apiEbooks, setApiEbooks] = useState([]);
+
+  // Fetch e-resources from MongoDB API
+  useEffect(() => {
+    let isMounted = true;
+    const fetchDbResources = async () => {
+      try {
+        const { data } = await apiClient.get('/eresources');
+        if (isMounted && data && Array.isArray(data.data)) {
+          const mapped = data.data.map((r) => ({
+            id: r._id,
+            title: r.title,
+            category: r.category || 'E-Books',
+            format: r.fileFormat || 'PDF',
+            accessRequirement: r.accessRequirement || 'Open Access',
+            description: r.description || 'Digital academic resource.',
+            source: r.source || 'Institution Library',
+          }));
+          setDbResources(mapped);
+        }
+      } catch {
+        if (isMounted) setDbResources([]);
+      }
+    };
+
+    fetchDbResources();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Debounce search query changes (~300ms)
   useEffect(() => {
@@ -106,7 +85,7 @@ const GeneralEResources = () => {
     return () => clearTimeout(timer);
   }, [rawSearch]);
 
-  // Fetch Gutenberg public ebooks if API is available
+  // Fetch Gutenberg public ebooks if backend DB has no resources
   useEffect(() => {
     let isMounted = true;
     const fetchApiResources = async () => {
@@ -126,7 +105,7 @@ const GeneralEResources = () => {
           setApiEbooks(mapped);
         }
       } catch {
-        // Silently fallback to mock dataset if API is offline
+        // Silently handle offline Gutenberg API
       }
     };
 
@@ -136,7 +115,7 @@ const GeneralEResources = () => {
     };
   }, [searchQuery]);
 
-  const allList = useMemo(() => [...PUBLIC_ERESOURCE_DATA, ...apiEbooks], [apiEbooks]);
+  const allList = useMemo(() => [...dbResources, ...apiEbooks], [dbResources, apiEbooks]);
 
   const combinedResources = useMemo(() => {
     return allList

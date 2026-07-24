@@ -237,7 +237,7 @@ const recalculateStreakFromLog = async (userId) => {
     const streak = await Streak.findOneAndUpdate(
       { userId },
       { currentStreak: 0, maxStreak: 0 },
-      { new: true }
+      { returnDocument: 'after' }
     );
     if (streak) emitStreakUpdate(userId, streak);
     return { currentStreak: 0, maxStreak: 0 };
@@ -265,7 +265,7 @@ const recalculateStreakFromLog = async (userId) => {
   const streak = await Streak.findOneAndUpdate(
     { userId },
     { currentStreak, maxStreak },
-    { new: true }
+    { returnDocument: 'after' }
   );
   if (streak) emitStreakUpdate(userId, streak);
 

@@ -26,6 +26,12 @@ module.exports = [
     },
   },
   {
+    files: ['src/scripts/**/*.js', 'src/seed.js'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
     ignores: ['node_modules/', 'coverage/', 'dist/'],
   },
 ];

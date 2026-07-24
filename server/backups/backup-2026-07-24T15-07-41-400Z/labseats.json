@@ -1,0 +1,112 @@
+[
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bba",
+    "collegeId": "6a6245621bbf1d2a9cbf4baa",
+    "labName": "Central Computing Lab",
+    "seatNumber": "PC-03",
+    "specs": "i7 12700K, 32GB RAM, RTX 3060",
+    "maintenanceStatus": "operational",
+    "createdAt": "2026-07-23T16:46:27.752Z",
+    "updatedAt": "2026-07-23T16:46:27.752Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bbb",
+    "collegeId": "6a6245621bbf1d2a9cbf4baa",
+    "labName": "Central Computing Lab",
+    "seatNumber": "PC-04",
+    "specs": "i7 12700K, 32GB RAM, RTX 3060",
+    "maintenanceStatus": "operational",
+    "createdAt": "2026-07-23T16:46:27.752Z",
+    "updatedAt": "2026-07-23T16:46:27.752Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bbc",
+    "collegeId": "6a6245621bbf1d2a9cbf4baa",
+    "labName": "Central Computing Lab",
+    "seatNumber": "PC-05",
+    "specs": "i7 12700K, 32GB RAM, RTX 3060",
+    "maintenanceStatus": "maintenance",
+    "createdAt": "2026-07-23T16:46:27.752Z",
+    "updatedAt": "2026-07-23T16:46:27.752Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bbf",
+    "collegeId": "6a6245621bbf1d2a9cbf4baa",
+    "labName": "Central Computing Lab",
+    "seatNumber": "PC-08",
+    "specs": "i7 12700K, 32GB RAM, RTX 3060",
+    "maintenanceStatus": "operational",
+    "createdAt": "2026-07-23T16:46:27.752Z",
+    "updatedAt": "2026-07-23T16:46:27.752Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bc1",
+    "collegeId": "6a6245621bbf1d2a9cbf4baa",
+    "labName": "Central Computing Lab",
+    "seatNumber": "PC-10",
+    "specs": "i7 12700K, 32GB RAM, RTX 3060",
+    "maintenanceStatus": "maintenance",
+    "createdAt": "2026-07-23T16:46:27.752Z",
+    "updatedAt": "2026-07-23T16:46:27.752Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bc0",
+    "collegeId": "6a6245621bbf1d2a9cbf4baa",
+    "labName": "Central Computing Lab",
+    "seatNumber": "PC-09",
+    "specs": "i7 12700K, 32GB RAM, RTX 3060",
+    "maintenanceStatus": "operational",
+    "createdAt": "2026-07-23T16:46:27.752Z",
+    "updatedAt": "2026-07-23T16:46:27.752Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bbd",
+    "collegeId": "6a6245621bbf1d2a9cbf4baa",
+    "labName": "Central Computing Lab",
+    "seatNumber": "PC-06",
+    "specs": "i7 12700K, 32GB RAM, RTX 3060",
+    "maintenanceStatus": "operational",
+    "createdAt": "2026-07-23T16:46:27.752Z",
+    "updatedAt": "2026-07-23T16:46:27.752Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bb9",
+    "collegeId": "6a6245621bbf1d2a9cbf4baa",
+    "labName": "Central Computing Lab",
+    "seatNumber": "PC-02",
+    "specs": "i7 12700K, 32GB RAM, RTX 3060",
+    "maintenanceStatus": "operational",
+    "createdAt": "2026-07-23T16:46:27.752Z",
+    "updatedAt": "2026-07-23T16:46:27.752Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bbe",
+    "collegeId": "6a6245621bbf1d2a9cbf4baa",
+    "labName": "Central Computing Lab",
+    "seatNumber": "PC-07",
+    "specs": "i7 12700K, 32GB RAM, RTX 3060",
+    "maintenanceStatus": "operational",
+    "createdAt": "2026-07-23T16:46:27.752Z",
+    "updatedAt": "2026-07-23T16:46:27.752Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bb8",
+    "collegeId": "6a6245621bbf1d2a9cbf4baa",
+    "labName": "Central Computing Lab",
+    "seatNumber": "PC-01",
+    "specs": "i7 12700K, 32GB RAM, RTX 3060",
+    "maintenanceStatus": "operational",
+    "createdAt": "2026-07-23T16:46:27.752Z",
+    "updatedAt": "2026-07-23T16:46:27.752Z",
+    "__v": 0
+  }
+]

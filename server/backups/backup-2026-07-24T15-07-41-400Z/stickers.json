@@ -1,0 +1,62 @@
+[
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bc8",
+    "name": "Genre Explorer",
+    "rarity": "rare",
+    "iconUrl": "🗺️",
+    "criteria": "Borrow books from 5 different genres.",
+    "createdAt": "2026-07-23T16:46:27.912Z",
+    "updatedAt": "2026-07-23T16:46:27.912Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bc4",
+    "name": "3-Day Reader",
+    "rarity": "common",
+    "iconUrl": "🔥",
+    "criteria": "Read for 3 consecutive days.",
+    "createdAt": "2026-07-23T16:46:27.912Z",
+    "updatedAt": "2026-07-23T16:46:27.912Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bc9",
+    "name": "Lab Regular",
+    "rarity": "common",
+    "iconUrl": "💻",
+    "criteria": "Complete 5 lab bookings.",
+    "createdAt": "2026-07-23T16:46:27.912Z",
+    "updatedAt": "2026-07-23T16:46:27.912Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bc5",
+    "name": "Week Warrior",
+    "rarity": "common",
+    "iconUrl": "📅",
+    "criteria": "Read for 7 consecutive days.",
+    "createdAt": "2026-07-23T16:46:27.912Z",
+    "updatedAt": "2026-07-23T16:46:27.912Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bc6",
+    "name": "Fortnight Finisher",
+    "rarity": "rare",
+    "iconUrl": "⏳",
+    "criteria": "Read for 14 consecutive days.",
+    "createdAt": "2026-07-23T16:46:27.912Z",
+    "updatedAt": "2026-07-23T16:46:27.912Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a6245631bbf1d2a9cbf4bc7",
+    "name": "Month Master",
+    "rarity": "epic",
+    "iconUrl": "🏆",
+    "criteria": "Read for 30 consecutive days.",
+    "createdAt": "2026-07-23T16:46:27.912Z",
+    "updatedAt": "2026-07-23T16:46:27.912Z",
+    "__v": 0
+  }
+]

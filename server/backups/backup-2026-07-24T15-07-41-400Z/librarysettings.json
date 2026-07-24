@@ -1,0 +1,15 @@
+[
+  {
+    "_id": "6a637fa130423ded08cd2a8c",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "__v": 0,
+    "closingHour": "10:00 PM",
+    "createdAt": "2026-07-24T15:07:12.195Z",
+    "isClosedToday": false,
+    "monthlyGrowthGoal": 140,
+    "openingHour": "08:00 AM",
+    "specialNotice": "",
+    "timezone": "UTC",
+    "updatedAt": "2026-07-24T15:07:12.195Z"
+  }
+]

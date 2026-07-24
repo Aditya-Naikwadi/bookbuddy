@@ -1,0 +1,62 @@
+[
+  {
+    "_id": "6a624c12a933e93e25f162b9",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "isbn": "978-0262510875",
+    "title": "Structure and Interpretation of Computer Programs",
+    "author": "Harold Abelson, Gerald Jay Sussman",
+    "category": "Computer Science",
+    "format": "physical",
+    "copiesTotal": 5,
+    "copiesAvailable": 5,
+    "shelfLocation": "Rack CS-101",
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.820Z",
+    "updatedAt": "2026-07-23T17:14:58.820Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162ba",
+    "collegeId": "6a624c12a933e93e25f162b3",
+    "isbn": "978-0262035613",
+    "title": "Deep Learning",
+    "author": "Ian Goodfellow, Yoshua Bengio",
+    "category": "Artificial Intelligence",
+    "format": "physical",
+    "copiesTotal": 4,
+    "copiesAvailable": 3,
+    "shelfLocation": "Rack AI-202",
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.820Z",
+    "updatedAt": "2026-07-23T17:14:58.820Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162bb",
+    "collegeId": "6a624c12a933e93e25f162b4",
+    "isbn": "978-0743273565",
+    "title": "The Great Gatsby",
+    "author": "F. Scott Fitzgerald",
+    "category": "Literature",
+    "format": "physical",
+    "copiesTotal": 10,
+    "copiesAvailable": 8,
+    "shelfLocation": "Rack LIT-05",
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.820Z",
+    "updatedAt": "2026-07-23T17:14:58.820Z"
+  },
+  {
+    "_id": "6a624c12a933e93e25f162bc",
+    "collegeId": "6a624c12a933e93e25f162b5",
+    "isbn": "978-0071390118",
+    "title": "Principles of Neural Science",
+    "author": "Eric Kandel",
+    "category": "Biomedical",
+    "format": "physical",
+    "copiesTotal": 3,
+    "copiesAvailable": 2,
+    "shelfLocation": "Rack MED-12",
+    "__v": 0,
+    "createdAt": "2026-07-23T17:14:58.820Z",
+    "updatedAt": "2026-07-23T17:14:58.820Z"
+  }
+]

@@ -1,76 +1,120 @@
-const asyncHandler = require('express-async-handler');
+const Announcement = require('../../models/Announcement');
+const LibrarySettings = require('../../models/LibrarySettings');
 const Book = require('../../models/Book');
-const EResource = require('../../models/EResource');
 
-// @desc    Advanced Search across physical books
-// @route   GET /api/dashboards/general/search
-// @access  Public
-const searchPublicCatalog = asyncHandler(async (req, res) => {
-  const { keyword, category, author } = req.query;
+// @desc    Get aggregated General Dashboard data directly from MongoDB
+// @route   GET /api/dashboards/general/home-data
+// @access  Public / General
+const getGeneralDashboardData = async (req, res, next) => {
+  try {
+    const collegeId = req.query.collegeId || req.user?.collegeId;
+    const tenantFilter = collegeId ? { $or: [{ collegeId }, { collegeId: null }] } : {};
 
-  const query = {};
+    // 1. Fetch Active Announcements from MongoDB
+    const announcements = await Announcement.find({
+      ...tenantFilter,
+      isActive: true,
+    })
+      .sort({ startDate: -1 })
+      .limit(10)
+      .lean();
 
-  if (keyword) {
-    query.$or = [
-      { title: { $regex: keyword, $options: 'i' } },
-      { description: { $regex: keyword, $options: 'i' } },
-    ];
+    // 2. Fetch Library Operating Hours Settings from MongoDB
+    let librarySettings = null;
+    if (collegeId) {
+      librarySettings = await LibrarySettings.findOne({ collegeId }).lean();
+    }
+    if (!librarySettings) {
+      librarySettings = await LibrarySettings.findOne({}).lean();
+    }
+    if (!librarySettings) {
+      librarySettings = {
+        openingHour: '08:00 AM',
+        closingHour: '10:00 PM',
+        timezone: 'UTC',
+        isClosedToday: false,
+        monthlyGrowthGoal: 0,
+      };
+    }
+
+    // 3. Catalog Total Count & 30-Day Growth Metric from MongoDB
+    const bookFilter = collegeId ? { collegeId } : {};
+    const totalCatalogBooks = await Book.countDocuments(bookFilter);
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const addedThisMonth = await Book.countDocuments({
+      ...bookFilter,
+      createdAt: { $gte: thirtyDaysAgo },
+    });
+
+    // 4. Dynamic MongoDB Category Distribution Aggregation
+    const categoryAggregation = await Book.aggregate([
+      { $match: bookFilter },
+      { $group: { _id: '$genre', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 6 },
+    ]);
+
+    const colors = ['#4F46E5', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#3B82F6'];
+    const totalGrouped = categoryAggregation.reduce((acc, c) => acc + c.count, 0) || 1;
+    const categoryBreakdown = categoryAggregation.map((cat, idx) => ({
+      label: cat._id || 'Uncategorized',
+      value: Math.round((cat.count / totalGrouped) * 100),
+      count: cat.count,
+      color: colors[idx % colors.length],
+    }));
+
+    // 5. Popular Books from MongoDB
+    const popularBooks = await Book.find(bookFilter)
+      .sort({ copiesAvailable: 1, title: 1 })
+      .limit(8)
+      .lean();
+
+    const formattedPopularBooks = popularBooks.map((b) => ({
+      id: b._id,
+      title: b.title,
+      author: b.author,
+      genre: b.genre || 'General',
+      year: b.publicationYear || '2024',
+      availableCopies: b.copiesAvailable !== undefined ? b.copiesAvailable : 0,
+      totalCopies: b.totalCopies !== undefined ? b.totalCopies : 0,
+      location: b.shelfLocation || 'Main Stacks',
+      description: b.description || 'Catalog item.',
+      coverColor: 'from-indigo-900 to-slate-900',
+    }));
+
+    // 6. New Arrivals from MongoDB
+    const newArrivals = await Book.find(bookFilter)
+      .sort({ createdAt: -1 })
+      .limit(3)
+      .lean();
+
+    const formattedNewArrivals = newArrivals.map((b, i) => ({
+      id: b._id,
+      title: b.title,
+      color: ['bg-indigo-600', 'bg-emerald-600', 'bg-purple-600'][i % 3],
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        announcements,
+        librarySettings,
+        stats: {
+          totalCatalogBooks,
+          addedThisMonth,
+        },
+        categoryBreakdown,
+        popularBooks: formattedPopularBooks,
+        newArrivals: formattedNewArrivals,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
-
-  if (category) {
-    query.category = { $regex: category, $options: 'i' };
-  }
-
-  if (author) {
-    query.author = { $regex: author, $options: 'i' };
-  }
-
-  const books = await Book.find(query).limit(50);
-
-  res.json({
-    success: true,
-    data: books,
-    count: books.length,
-  });
-});
-
-// @desc    Get public access E-Resources
-// @route   GET /api/dashboards/general/eresources
-// @access  Public
-const getPublicEResources = asyncHandler(async (req, res) => {
-  // Only return resources meant for public viewing
-  const resources = await EResource.find({ accessLevel: 'public', status: 'approved' }).limit(50);
-
-  res.json({
-    success: true,
-    data: resources,
-    count: resources.length,
-  });
-});
-
-// @desc    Get General Dashboard summary data
-// @route   GET /api/dashboards/general/summary
-// @access  Public
-const getGeneralDashboardSummary = asyncHandler(async (req, res) => {
-  const totalCatalogBooks = await Book.countDocuments();
-  const publicResources = await EResource.countDocuments({
-    accessLevel: 'public',
-    status: 'approved',
-  });
-
-  res.json({
-    success: true,
-    data: {
-      totalCatalogBooks,
-      publicResources,
-      libraryHours: '8:00 AM - 10:00 PM',
-      announcements: 'Welcome to BookBuddy Open Catalog.',
-    },
-  });
-});
+};
 
 module.exports = {
-  searchPublicCatalog,
-  getPublicEResources,
-  getGeneralDashboardSummary,
+  getGeneralDashboardData,
 };
