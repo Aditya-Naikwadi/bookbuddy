@@ -51,5 +51,6 @@ const notificationLogSchema = new mongoose.Schema(
 notificationLogSchema.index({ userId: 1, createdAt: -1 });
 notificationLogSchema.index({ userId: 1, read: 1, createdAt: -1 });
 notificationLogSchema.index({ status: 1, createdAt: -1 });
+notificationLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 7776000 });
 
 module.exports = mongoose.model('NotificationLog', notificationLogSchema);

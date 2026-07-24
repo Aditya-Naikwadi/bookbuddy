@@ -62,4 +62,7 @@ const auditLogSchema = new mongoose.Schema(
   }
 );
 
+// Institutional Compliance Retention: 365 days TTL
+auditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 31536000 });
+
 module.exports = mongoose.model('AuditLog', auditLogSchema);

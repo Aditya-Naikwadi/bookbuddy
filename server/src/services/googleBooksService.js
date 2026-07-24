@@ -6,7 +6,7 @@ const Book = require('../models/Book');
 const cache = new NodeCache({ stdTTL: 3600 });
 
 const BASE_URL = 'https://www.googleapis.com/books/v1/volumes';
-const API_KEY = process.env.GOOGLE_BOOKS_API_KEY || 'AIzaSyDxsK-OfnmmbjgEXvu87T-h8cTQC7Pk2qU';
+const API_KEY = process.env.GOOGLE_BOOKS_API_KEY;
 const TIMEOUT_MS = 10000;
 
 /**
@@ -16,8 +16,7 @@ const normalizeGoogleBook = (item) => {
   const info = item.volumeInfo || {};
   const imageLinks = info.imageLinks || {};
 
-  // Extract primary ISBN or industry identifier
-  let isbn = 'N/A';
+  let isbn;
   if (Array.isArray(info.industryIdentifiers) && info.industryIdentifiers.length > 0) {
     const primaryIsbn = info.industryIdentifiers.find(
       (id) => id.type === 'ISBN_13' || id.type === 'ISBN_10'
@@ -33,9 +32,15 @@ const normalizeGoogleBook = (item) => {
     coverImage = coverImage.replace('http:', 'https:');
   }
 
-  const authors = Array.isArray(info.authors) ? info.authors.join(', ') : info.authors || 'Unknown Author';
-  const categories = Array.isArray(info.categories) ? info.categories[0] : info.categories || 'General';
-  const publishedYear = info.publishedDate ? parseInt(info.publishedDate.substring(0, 4), 10) || null : null;
+  const authors = Array.isArray(info.authors)
+    ? info.authors.join(', ')
+    : info.authors || 'Unknown Author';
+  const categories = Array.isArray(info.categories)
+    ? info.categories[0]
+    : info.categories || 'General';
+  const publishedYear = info.publishedDate
+    ? parseInt(info.publishedDate.substring(0, 4), 10) || null
+    : null;
 
   return {
     googleVolumeId: item.id,
@@ -124,7 +129,17 @@ const getBookById = async (volumeId) => {
 /**
  * Seed Google Books into the local database for a given collegeId
  */
-const seedBooksToDatabase = async (topics = ['Computer Science', 'Artificial Intelligence', 'Physics', 'Mathematics', 'Biology', 'Data Science'], collegeId) => {
+const seedBooksToDatabase = async (
+  topics = [
+    'Computer Science',
+    'Artificial Intelligence',
+    'Physics',
+    'Mathematics',
+    'Biology',
+    'Data Science',
+  ],
+  collegeId
+) => {
   let seededCount = 0;
   let skippedCount = 0;
 

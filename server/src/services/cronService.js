@@ -14,6 +14,8 @@ const logger = require('../utils/logger');
 const { emitStreakUpdate } = require('../sockets');
 const { runInTransaction } = require('../utils/transactionHelper');
 
+const { captureException } = require('../utils/sentry');
+
 /**
  * Single job runner wrapper for observability and failure isolation.
  */
@@ -31,6 +33,7 @@ const runJob = async (jobName, jobFn) => {
     });
   } catch (err) {
     logger.error(`Cron job ${jobName} failed: ${err.message}`, err);
+    captureException(err, { context: 'cronJob', jobName });
     await CronRunLog.create({
       jobName,
       startedAt,

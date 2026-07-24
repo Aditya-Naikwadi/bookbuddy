@@ -90,26 +90,60 @@ app.use(
   })
 );
 
-// Health Check Route
-app.get('/health', (req, res) => {
+const { redisClient } = require('./middlewares/rateLimiters');
+
+// Health Check Route (Database + Redis)
+app.get('/health', async (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-  const isHealthy = dbStatus === 'connected';
+
+  let redisStatus = 'disabled';
+  if (redisClient) {
+    try {
+      const pingRes = await redisClient.ping();
+      redisStatus = pingRes === 'PONG' ? 'connected' : 'degraded';
+    } catch {
+      redisStatus = 'disconnected';
+    }
+  }
+
+  const isProd = config.nodeEnv === 'production';
+  const isHealthy =
+    dbStatus === 'connected' &&
+    (!isProd || redisStatus === 'connected' || redisStatus === 'disabled');
 
   res.status(isHealthy ? 200 : 503).json({
     status: isHealthy ? 'ok' : 'error',
     dbConnection: dbStatus,
+    redisConnection: redisStatus,
     uptime: `${process.uptime().toFixed(2)}s`,
     timestamp: new Date().toISOString(),
   });
 });
 
 // Backward compatible health check
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-  const isHealthy = dbStatus === 'connected';
+
+  let redisStatus = 'disabled';
+  if (redisClient) {
+    try {
+      const pingRes = await redisClient.ping();
+      redisStatus = pingRes === 'PONG' ? 'connected' : 'degraded';
+    } catch {
+      redisStatus = 'disconnected';
+    }
+  }
+
+  const isProd = config.nodeEnv === 'production';
+  const isHealthy =
+    dbStatus === 'connected' &&
+    (!isProd || redisStatus === 'connected' || redisStatus === 'disabled');
+
   res.status(isHealthy ? 200 : 503).json({
     success: isHealthy,
-    message: isHealthy ? 'Server is running' : 'Database connection error',
+    dbStatus,
+    redisStatus,
+    message: isHealthy ? 'Server is running' : 'Service dependency error',
   });
 });
 

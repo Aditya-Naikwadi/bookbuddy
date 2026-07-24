@@ -25,6 +25,19 @@ if (missingEnv.length > 0) {
 }
 
 if (process.env.NODE_ENV === 'production') {
+  const prodRequired = [
+    'GOOGLE_BOOKS_API_KEY',
+    'RAZORPAY_KEY_ID',
+    'RAZORPAY_WEBHOOK_SECRET',
+    'REDIS_URL',
+  ];
+  const missingProdEnv = prodRequired.filter((key) => !process.env[key]);
+  if (missingProdEnv.length > 0) {
+    throw new Error(
+      `❌ Fatal Startup Error: Missing required production environment variables: [${missingProdEnv.join(', ')}].`
+    );
+  }
+
   const weakSecrets = [
     'supersecret123',
     'supersecretrefresh123',

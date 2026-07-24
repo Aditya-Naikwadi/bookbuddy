@@ -8,8 +8,11 @@ const { initSockets } = require('./sockets');
 const { initCronJobs } = require('./services/cronService');
 const mongoose = require('mongoose');
 
+const { initSentry, captureException } = require('./utils/sentry');
+
 // Handle uncaught exceptions immediately at boot
 process.on('uncaughtException', (err) => {
+  captureException(err, { context: 'uncaughtException' });
   // eslint-disable-next-line no-console
   console.error(`UNCAUGHT EXCEPTION: ${err.message}\n`, err.stack);
   process.exit(1);
@@ -41,6 +44,9 @@ const shutdownGracefully = (signal) => {
 };
 
 const startServer = async () => {
+  // Initialize Sentry SDK
+  initSentry();
+
   // Connect to DB with retries
   await connectDB();
 

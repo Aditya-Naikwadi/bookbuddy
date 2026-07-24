@@ -26,4 +26,4 @@ EXPOSE 5000
 
 ENV NODE_ENV=production
 
-CMD ["node", "src/server.js"]
+CMD ["sh", "-c", "npx migrate-mongo up && node src/server.js"]
