@@ -23,8 +23,8 @@ function extractCoverUrl(doc) {
   const isbns = Array.isArray(doc.isbn_13)
     ? doc.isbn_13
     : Array.isArray(doc.isbn_10)
-    ? doc.isbn_10
-    : [];
+      ? doc.isbn_10
+      : [];
   if (isbns.length > 0) {
     return `https://covers.openlibrary.org/b/isbn/${isbns[0]}-L.jpg`;
   }
@@ -43,8 +43,8 @@ function transformDumpRecord(doc) {
   const authorNames = Array.isArray(doc.by_statement)
     ? [doc.by_statement]
     : typeof doc.by_statement === 'string'
-    ? [doc.by_statement]
-    : [];
+      ? [doc.by_statement]
+      : [];
 
   let firstPublishYear = null;
   if (doc.publish_date) {

@@ -56,6 +56,8 @@ router.route('/moderation/:id/publish').post(validate(paramIdSchema), publishERe
 // Tenant onboarding review routes
 router.route('/onboardings/pending').get(getPendingOnboardings);
 router.route('/onboardings/:requestId/approve').post(approveTenantOnboarding);
-router.route('/onboardings/:requestId/reject').post(validate(rejectOnboardingSchema), rejectTenantOnboarding);
+router
+  .route('/onboardings/:requestId/reject')
+  .post(validate(rejectOnboardingSchema), rejectTenantOnboarding);
 
 module.exports = router;

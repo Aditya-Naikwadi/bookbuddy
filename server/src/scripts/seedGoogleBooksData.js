@@ -27,7 +27,9 @@ async function seedGoogleBooksData() {
 
   let college = await College.findOne({});
   if (!college) {
-    console.log('[Google Books Seeder] No existing college found. Creating default college context...');
+    console.log(
+      '[Google Books Seeder] No existing college found. Creating default college context...'
+    );
     college = await College.create({
       name: 'Default Engineering College',
       code: 'DEC01',

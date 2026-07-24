@@ -34,7 +34,13 @@ const fileFilter = (req, file, cb) => {
   if (ext === '.csv' || allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new AppError('Invalid file format. Only CSV files (.csv) are supported for bulk student upload.', 400), false);
+    cb(
+      new AppError(
+        'Invalid file format. Only CSV files (.csv) are supported for bulk student upload.',
+        400
+      ),
+      false
+    );
   }
 };
 
@@ -65,11 +71,15 @@ const submitBulkUpload = async (req, res, next) => {
         if (req.file && fs.existsSync(req.file.path)) {
           fs.unlinkSync(req.file.path);
         }
-        return next(new AppError('Unauthorized upload request for another institution tenant.', 403));
+        return next(
+          new AppError('Unauthorized upload request for another institution tenant.', 403)
+        );
       }
 
       if (!req.file) {
-        return next(new AppError('No CSV file uploaded. Please attach a file using key "file".', 400));
+        return next(
+          new AppError('No CSV file uploaded. Please attach a file using key "file".', 400)
+        );
       }
 
       const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
@@ -117,7 +127,7 @@ const getBulkUploadStatus = async (req, res, next) => {
       req.user.role !== 'super_admin' &&
       req.user.collegeId?.toString() !== collegeId
     ) {
-      return next(new AppError('Unauthorized access to another tenant\'s upload job.', 403));
+      return next(new AppError("Unauthorized access to another tenant's upload job.", 403));
     }
 
     const job = await UploadJob.findOne({ jobId, collegeId }).lean();
@@ -159,7 +169,7 @@ const downloadUploadErrorReport = async (req, res, next) => {
       req.user.role !== 'super_admin' &&
       req.user.collegeId?.toString() !== collegeId
     ) {
-      return next(new AppError('Unauthorized access to another tenant\'s error report.', 403));
+      return next(new AppError("Unauthorized access to another tenant's error report.", 403));
     }
 
     const job = await UploadJob.findOne({ jobId, collegeId });

@@ -45,7 +45,9 @@ const restoreDatabase = async () => {
     }
 
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-    console.log(`[Restore] Manifest Date: ${manifest.timestamp} | Database: ${manifest.databaseName}`);
+    console.log(
+      `[Restore] Manifest Date: ${manifest.timestamp} | Database: ${manifest.databaseName}`
+    );
 
     // Verify Checksums
     for (const col of manifest.collections) {
@@ -66,11 +68,14 @@ const restoreDatabase = async () => {
       manifest.collections.forEach((c) => {
         console.log(`  - ${c.name}: ${c.count} records (${(c.sizeBytes / 1024).toFixed(1)} KB)`);
       });
-      console.log('\n[Dry-Run Complete] Run without --dry-run to perform actual database restoration.');
+      console.log(
+        '\n[Dry-Run Complete] Run without --dry-run to perform actual database restoration.'
+      );
       process.exit(0);
     }
 
-    const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bookbuddy';
+    const mongoUri =
+      process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bookbuddy';
     console.log(`[Restore] Connecting to MongoDB: ${mongoUri}`);
     await mongoose.connect(mongoUri);
     const db = mongoose.connection.db;

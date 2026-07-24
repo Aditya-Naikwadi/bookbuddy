@@ -11,7 +11,8 @@ const College = require('../models/College');
 
 const seedGeneralDashboard = async () => {
   try {
-    const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bookbuddy';
+    const mongoUri =
+      process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bookbuddy';
     console.log(`Connecting to MongoDB at: ${mongoUri}`);
     await mongoose.connect(mongoUri);
 
@@ -51,7 +52,8 @@ const seedGeneralDashboard = async () => {
         {
           collegeId: college._id,
           title: 'Midterm Extended Library Hours',
-          content: 'The main reading hall will remain open until 11:30 PM throughout examination week.',
+          content:
+            'The main reading hall will remain open until 11:30 PM throughout examination week.',
           priority: 'Notice',
           category: 'Operational',
           isActive: true,
@@ -59,7 +61,8 @@ const seedGeneralDashboard = async () => {
         {
           collegeId: college._id,
           title: 'Scheduled Network Maintenance',
-          content: 'Wi-Fi services in Section B will undergo scheduled maintenance on Friday 2-4 PM.',
+          content:
+            'Wi-Fi services in Section B will undergo scheduled maintenance on Friday 2-4 PM.',
           priority: 'Warning',
           category: 'Maintenance',
           isActive: true,
@@ -67,7 +70,8 @@ const seedGeneralDashboard = async () => {
         {
           collegeId: college._id,
           title: 'Urgent: Reserve Desk Relocation',
-          content: 'All course reserve pick-ups have temporarily moved to Desk 2 near North Entrance.',
+          content:
+            'All course reserve pick-ups have temporarily moved to Desk 2 near North Entrance.',
           priority: 'Urgent',
           category: 'Operational',
           isActive: true,

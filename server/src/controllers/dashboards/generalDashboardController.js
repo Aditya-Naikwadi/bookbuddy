@@ -85,10 +85,7 @@ const getGeneralDashboardData = async (req, res, next) => {
     }));
 
     // 6. New Arrivals from MongoDB
-    const newArrivals = await Book.find(bookFilter)
-      .sort({ createdAt: -1 })
-      .limit(3)
-      .lean();
+    const newArrivals = await Book.find(bookFilter).sort({ createdAt: -1 }).limit(3).lean();
 
     const formattedNewArrivals = newArrivals.map((b, i) => ({
       id: b._id,

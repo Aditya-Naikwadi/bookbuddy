@@ -43,7 +43,9 @@ async function upsertBookBatch(books) {
  * Ingestion task loop over educational topics.
  */
 async function runScheduledIngestion(topics = DEFAULT_TOPICS) {
-  console.log(`[Cron Ingestion] Starting educational book ingestion at ${new Date().toISOString()}...`);
+  console.log(
+    `[Cron Ingestion] Starting educational book ingestion at ${new Date().toISOString()}...`
+  );
   let totalProcessed = 0;
   let totalUpserted = 0;
   let totalModified = 0;
@@ -65,7 +67,10 @@ async function runScheduledIngestion(topics = DEFAULT_TOPICS) {
           `[Cron Ingestion] Topic "${topic}" (Page ${page}): Processed ${books.length} / Total ${numFound}. (New: ${upsertedCount}, Updated: ${modifiedCount})`
         );
       } catch (error) {
-        console.error(`[Cron Ingestion] Failed to ingest topic "${topic}" page ${page}:`, error.message);
+        console.error(
+          `[Cron Ingestion] Failed to ingest topic "${topic}" page ${page}:`,
+          error.message
+        );
         // Continue to next page/topic resiliently
       }
     }
@@ -81,7 +86,9 @@ async function runScheduledIngestion(topics = DEFAULT_TOPICS) {
  * Schedule format: '0 2 * * *' (Every day at 2:00 AM)
  */
 function initScheduler(cronExpression = '0 2 * * *') {
-  console.log(`[Cron Ingestion] Registering Open Library Ingestion Cron Schedule (${cronExpression})...`);
+  console.log(
+    `[Cron Ingestion] Registering Open Library Ingestion Cron Schedule (${cronExpression})...`
+  );
   cron.schedule(cronExpression, async () => {
     try {
       await runScheduledIngestion();

@@ -126,7 +126,9 @@ const processBulkUploadJob = async (jobId, filePath) => {
     const seenEmails = new Set();
 
     // Query existing DB records for this college
-    const existingUsers = await User.find({ collegeId: job.collegeId }).select('studentId email').lean();
+    const existingUsers = await User.find({ collegeId: job.collegeId })
+      .select('studentId email')
+      .lean();
     const dbStudentIds = new Set(existingUsers.map((u) => u.studentId));
     const dbEmails = new Set(existingUsers.map((u) => u.email));
 

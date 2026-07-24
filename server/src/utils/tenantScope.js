@@ -18,7 +18,10 @@ const tenantScope = (model, req) => {
     findById: (id) => model.findOne({ _id: id, ...tenantFilter }),
     countDocuments: (filter = {}) => model.countDocuments({ ...filter, ...tenantFilter }),
     findOneAndUpdate: (filter = {}, update = {}, options = {}) =>
-      model.findOneAndUpdate({ ...filter, ...tenantFilter }, update, { returnDocument: 'after', ...options }),
+      model.findOneAndUpdate({ ...filter, ...tenantFilter }, update, {
+        returnDocument: 'after',
+        ...options,
+      }),
     updateOne: (filter = {}, update = {}) =>
       model.updateOne({ ...filter, ...tenantFilter }, update),
   };

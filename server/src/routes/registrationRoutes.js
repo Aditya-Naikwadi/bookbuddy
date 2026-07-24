@@ -57,19 +57,9 @@ const { authLimiter } = require('../middlewares/rateLimiters');
 router.get('/colleges', getActiveColleges);
 
 // Flow A: Student Self-Registration & OTP Verification
-router.post(
-  '/student',
-  authLimiter,
-  validate(studentRegisterSchema),
-  registerStudent
-);
+router.post('/student', authLimiter, validate(studentRegisterSchema), registerStudent);
 
-router.post(
-  '/verify-email',
-  authLimiter,
-  validate(verifyEmailSchema),
-  verifyStudentEmail
-);
+router.post('/verify-email', authLimiter, validate(verifyEmailSchema), verifyStudentEmail);
 
 // Flow B: Tenant Onboarding Submission
 router.post(

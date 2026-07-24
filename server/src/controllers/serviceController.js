@@ -30,7 +30,7 @@ const getCollegeFeaturesHandler = async (req, res, next) => {
       req.user.role !== 'super_admin' &&
       req.user.collegeId?.toString() !== collegeId
     ) {
-      return next(new AppError('Unauthorized access to another tenant\'s features.', 403));
+      return next(new AppError("Unauthorized access to another tenant's features.", 403));
     }
 
     const data = await getCollegeFeatures(collegeId);
@@ -57,7 +57,7 @@ const updateCollegeFeaturesHandler = async (req, res, next) => {
       req.user.role !== 'super_admin' &&
       req.user.collegeId?.toString() !== collegeId
     ) {
-      return next(new AppError('Unauthorized modification of another tenant\'s features.', 403));
+      return next(new AppError("Unauthorized modification of another tenant's features.", 403));
     }
 
     if (!Array.isArray(selectedServices)) {

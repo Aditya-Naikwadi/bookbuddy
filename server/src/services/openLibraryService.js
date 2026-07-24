@@ -54,8 +54,7 @@ class OpenLibraryService {
       return response.data;
     } catch (error) {
       const status = error.response?.status;
-      const isRetryable =
-        !status || status === 429 || (status >= 500 && status <= 599);
+      const isRetryable = !status || status === 429 || (status >= 500 && status <= 599);
 
       if (isRetryable && retryCount < this.maxRetries) {
         const backoffDelay = Math.pow(2, retryCount) * 1000 + Math.random() * 200;
@@ -96,8 +95,8 @@ class OpenLibraryService {
     const authorNames = Array.isArray(rawDoc.author_name)
       ? rawDoc.author_name
       : rawDoc.author_name
-      ? [rawDoc.author_name]
-      : [];
+        ? [rawDoc.author_name]
+        : [];
     const firstPublishYear = rawDoc.first_publish_year || null;
     const isbn = Array.isArray(rawDoc.isbn) ? rawDoc.isbn : rawDoc.isbn ? [rawDoc.isbn] : [];
     const coverImageUrl = this.getCoverImageUrl(rawDoc.cover_i, isbn);

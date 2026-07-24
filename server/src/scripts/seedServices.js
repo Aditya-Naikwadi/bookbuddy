@@ -58,10 +58,8 @@ const seedServices = async () => {
       });
     }
 
-    // eslint-disable-next-line no-console
     console.log('✅ Service Catalog seeded successfully.');
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('❌ Failed to seed Service Catalog:', error);
   }
 };

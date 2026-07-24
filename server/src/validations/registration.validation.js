@@ -11,9 +11,7 @@ const studentRegisterSchema = z.object({
       email: z.string().email('Invalid email address').trim().toLowerCase(),
       password: z.string().regex(passwordRegex, passwordMessage),
       confirmPassword: z.string(),
-      collegeId: z
-        .string()
-        .regex(/^[0-9a-fA-F]{24}$/, 'Please select a valid active college'),
+      collegeId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Please select a valid active college'),
       studentId: z.string().min(2, 'Student / Enrollment ID is required').trim(),
       department: z.string().optional(),
       phone: z.string().optional(),
@@ -84,7 +82,10 @@ const tenantOnboardingSchema = z.object({
 
 const rejectOnboardingSchema = z.object({
   body: z.object({
-    reason: z.string().min(5, 'A valid rejection reason of at least 5 characters is required').trim(),
+    reason: z
+      .string()
+      .min(5, 'A valid rejection reason of at least 5 characters is required')
+      .trim(),
   }),
 });
 

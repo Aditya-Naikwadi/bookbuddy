@@ -48,7 +48,10 @@ const registerStudent = async (req, res, next) => {
       const emailDomain = normalizedEmail.split('@')[1];
       const collegeDomain = college.domain.toLowerCase().trim();
 
-      if (!emailDomain || (emailDomain !== collegeDomain && !emailDomain.endsWith(`.${collegeDomain}`))) {
+      if (
+        !emailDomain ||
+        (emailDomain !== collegeDomain && !emailDomain.endsWith(`.${collegeDomain}`))
+      ) {
         return next(
           new AppError(
             `Email address must belong to your institution domain (@${college.domain}).`,
@@ -243,12 +246,12 @@ const submitTenantOnboarding = async (req, res, next) => {
 
     // 1. Validate domain match between admin email & institution domain
     const emailDomain = normalizedAdminEmail.split('@')[1];
-    if (!emailDomain || (emailDomain !== normalizedDomain && !emailDomain.endsWith(`.${normalizedDomain}`))) {
+    if (
+      !emailDomain ||
+      (emailDomain !== normalizedDomain && !emailDomain.endsWith(`.${normalizedDomain}`))
+    ) {
       return next(
-        new AppError(
-          `Admin email must use your institution domain (@${normalizedDomain}).`,
-          400
-        )
+        new AppError(`Admin email must use your institution domain (@${normalizedDomain}).`, 400)
       );
     }
 
@@ -281,7 +284,10 @@ const submitTenantOnboarding = async (req, res, next) => {
     });
     if (existingRequest) {
       return next(
-        new AppError('A tenant onboarding request for this institution is already pending review.', 400)
+        new AppError(
+          'A tenant onboarding request for this institution is already pending review.',
+          400
+        )
       );
     }
 
