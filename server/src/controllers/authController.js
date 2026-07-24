@@ -4,26 +4,24 @@ const College = require('../models/College');
 const RefreshToken = require('../models/RefreshToken');
 const AppError = require('../utils/AppError');
 const { generateTokenPair, hashToken } = require('../utils/token');
-const config = require('../config');
+const { getAuthCookieOptions } = require('../utils/cookieOptions');
 
 // Helper to set httpOnly refresh token cookie
-const setRefreshTokenCookie = (res, token) => {
-  res.cookie('refreshToken', token, {
+const setRefreshTokenCookie = (res, token, req = null) => {
+  const opts = getAuthCookieOptions(req, {
     httpOnly: true,
-    secure: config.nodeEnv === 'production',
-    sameSite: 'strict',
-    path: '/api/auth',
+    path: '/',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
+  res.cookie('refreshToken', token, opts);
 };
 
-const clearRefreshTokenCookie = (res) => {
-  res.clearCookie('refreshToken', {
+const clearRefreshTokenCookie = (res, req = null) => {
+  const opts = getAuthCookieOptions(req, {
     httpOnly: true,
-    secure: config.nodeEnv === 'production',
-    sameSite: 'strict',
-    path: '/api/auth',
+    path: '/',
   });
+  res.clearCookie('refreshToken', opts);
 };
 
 // @desc    Register a new user (public student/admin signup)

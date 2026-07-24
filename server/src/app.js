@@ -33,7 +33,7 @@ app.use(
   })
 );
 
-// CORS Configuration supporting multi-origin dev setups
+// CORS Configuration supporting multi-origin dev setups & Vercel preview deployment URLs
 const allowedOrigins = [
   config.clientOrigin,
   'http://localhost:5173',
@@ -45,7 +45,11 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        (origin.endsWith('.vercel.app') && origin.startsWith('https://'))
+      ) {
         return callback(null, true);
       }
       return callback(new Error('Not allowed by CORS'), false);
@@ -92,9 +96,10 @@ app.use(
 
 const { redisClient } = require('./middlewares/rateLimiters');
 
-// Health Check Route (Database + Redis)
-app.get('/health', async (req, res) => {
-  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+// Unified Health Check Handler
+const getHealthStatus = async () => {
+  const readyState = mongoose.connection.readyState;
+  const dbStatus = readyState === 1 ? 'connected' : 'disconnected';
 
   let redisStatus = 'disabled';
   if (redisClient) {
@@ -106,46 +111,33 @@ app.get('/health', async (req, res) => {
     }
   }
 
-  const isProd = config.nodeEnv === 'production';
-  const isHealthy =
-    dbStatus === 'connected' &&
-    (!isProd || redisStatus === 'connected' || redisStatus === 'disabled');
+  const isHealthy = readyState === 1;
 
-  res.status(isHealthy ? 200 : 503).json({
-    status: isHealthy ? 'ok' : 'error',
-    dbConnection: dbStatus,
-    redisConnection: redisStatus,
-    uptime: `${process.uptime().toFixed(2)}s`,
-    timestamp: new Date().toISOString(),
-  });
-});
+  return {
+    isHealthy,
+    statusCode: isHealthy ? 200 : 503,
+    payload: {
+      status: isHealthy ? 'healthy' : 'degraded',
+      success: isHealthy,
+      dbState: dbStatus,
+      dbReadyState: readyState,
+      redisConnection: redisStatus,
+      environment: config.nodeEnv,
+      uptime: `${process.uptime().toFixed(2)}s`,
+      timestamp: new Date().toISOString(),
+    },
+  };
+};
 
-// Backward compatible health check
-app.get('/api/health', async (req, res) => {
-  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+const healthCheckController = async (req, res) => {
+  const health = await getHealthStatus();
+  res.status(health.statusCode).json(health.payload);
+};
 
-  let redisStatus = 'disabled';
-  if (redisClient) {
-    try {
-      const pingRes = await redisClient.ping();
-      redisStatus = pingRes === 'PONG' ? 'connected' : 'degraded';
-    } catch {
-      redisStatus = 'disconnected';
-    }
-  }
-
-  const isProd = config.nodeEnv === 'production';
-  const isHealthy =
-    dbStatus === 'connected' &&
-    (!isProd || redisStatus === 'connected' || redisStatus === 'disabled');
-
-  res.status(isHealthy ? 200 : 503).json({
-    success: isHealthy,
-    dbStatus,
-    redisStatus,
-    message: isHealthy ? 'Server is running' : 'Service dependency error',
-  });
-});
+// Health Check Routes
+app.get('/health', healthCheckController);
+app.get('/api/health', healthCheckController);
+app.get('/api/v1/health', healthCheckController);
 
 // Apply custom global rate limiter to all routes except health checks
 const { globalLimiter } = require('./middlewares/rateLimiters');
@@ -244,6 +236,8 @@ app.use('/api/eresources', deprecationWarning, require('./routes/eresourceRoutes
 app.use('/api/reader', deprecationWarning, require('./routes/readerRoutes'));
 app.use('/api/notifications', deprecationWarning, require('./routes/notificationRoutes'));
 app.use('/api/payments', deprecationWarning, require('./routes/paymentRoutes'));
+app.use('/api/v1/uploads', require('./routes/uploadRoutes'));
+app.use('/api/uploads', deprecationWarning, require('./routes/uploadRoutes'));
 app.use('/api/annotations', deprecationWarning, require('./routes/annotationRoutes'));
 
 // Gamification spec aliases

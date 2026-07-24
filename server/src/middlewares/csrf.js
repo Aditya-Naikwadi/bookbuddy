@@ -3,6 +3,8 @@ const AppError = require('../utils/AppError');
 const config = require('../config');
 const logger = require('../utils/logger');
 
+const { getAuthCookieOptions } = require('../utils/cookieOptions');
+
 const generateCsrfToken = () => {
   return crypto.randomBytes(32).toString('hex');
 };
@@ -11,13 +13,11 @@ const getCsrfTokenController = (req, res) => {
   try {
     const csrfToken = generateCsrfToken();
     try {
-      res.cookie('_csrf', csrfToken, {
+      const opts = getAuthCookieOptions(req, {
         httpOnly: false, // Read by frontend script to set x-csrf-token header
-        secure: config.nodeEnv === 'production',
-        sameSite: 'lax',
-        path: '/',
         maxAge: 24 * 60 * 60 * 1000,
       });
+      res.cookie('_csrf', csrfToken, opts);
     } catch (cookieErr) {
       logger.warn('Failed to set _csrf cookie:', cookieErr.message);
     }
