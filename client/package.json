@@ -13,13 +13,13 @@
     "@fontsource-variable/plus-jakarta-sans": "^5.2.8",
     "@fontsource/dm-serif-display": "^5.2.8",
     "@hookform/resolvers": "^5.4.0",
-    "@studio-freight/lenis": "^1.0.42",
     "@tanstack/react-query": "^5.101.0",
     "axios": "^1.18.0",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "epubjs": "^0.3.93",
     "framer-motion": "^12.40.0",
+    "lenis": "^1.1.20",
     "lucide-react": "^1.21.0",
     "pdfjs-dist": "^6.1.200",
     "qrcode.react": "^4.2.0",
@@ -48,5 +48,8 @@
     "puppeteer": "^25.1.0",
     "tailwindcss": "^4.3.1",
     "vite": "^8.0.12"
+  },
+  "overrides": {
+    "@xmldom/xmldom": "^0.9.7"
   }
 }
