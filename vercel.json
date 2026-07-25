@@ -2,9 +2,12 @@
   "installCommand": "npm install --legacy-peer-deps && npm install --prefix server --legacy-peer-deps && npm install --prefix client --legacy-peer-deps",
   "buildCommand": "npm run build --prefix client",
   "outputDirectory": "client/dist",
+  "framework": null,
+  "regions": ["bom1"],
   "functions": {
     "api/index.js": {
-      "includeFiles": "server/src/**"
+      "includeFiles": "server/src/**",
+      "maxDuration": 30
     }
   },
   "rewrites": [

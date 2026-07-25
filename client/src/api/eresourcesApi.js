@@ -22,7 +22,7 @@ export const openEbook = async (gutenbergId) => {
 };
 
 export const getContentUrl = (resourceId, format) => {
-  return `${import.meta.env.VITE_API_URL}/eresources/external/${resourceId}/content?format=${format}`;
+  return `${import.meta.env.VITE_API_URL || '/api'}/eresources/external/${resourceId}/content?format=${format}`;
 };
 
 export const saveProgress = async (resourceId, { lastPosition, percentComplete }) => {

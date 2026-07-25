@@ -1,3 +1,6 @@
+// Schema representing payment transactions.
+// Rule: Define each field's indexing EITHER inline via schema options OR via explicit schema.index() calls, never both for the same field/combination.
+// providerEventId index is intentionally defined here AND in migration 20260724000003 — both MUST specify { unique: true, sparse: true }.
 const mongoose = require('mongoose');
 
 const paymentSchema = new mongoose.Schema(
@@ -26,6 +29,7 @@ const paymentSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      sparse: true,
       index: true,
     },
     amount: {

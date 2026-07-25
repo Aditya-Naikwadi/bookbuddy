@@ -51,3 +51,8 @@ coverage/
 # Server uploads and backups
 server/uploads/
 server/backups/
+server/cookies.txt
+uploads/
+
+# Package tarballs
+*.tgz
