@@ -37,12 +37,12 @@ const DashboardLayout = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
       {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col hidden md:flex">
-        <div className="p-6 border-b border-slate-100 flex items-center gap-2">
+      <aside className="w-full md:w-64 bg-white border-r border-slate-200 flex-shrink-0 flex-col hidden md:flex md:h-screen md:sticky md:top-0 z-30">
+        <div className="p-6 border-b border-slate-100 flex items-center gap-2 flex-shrink-0">
           <Book className="text-indigo-600 w-8 h-8" />
           <span className="text-2xl font-serif font-bold text-slate-900">BookBuddy</span>
         </div>
-        <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
+        <nav className="p-4 space-y-1 flex-1 overflow-y-auto scrollbar-thin">
           {isAdminPortal && (
             <NavItem to="/admin-portal" icon={<LayoutDashboard size={20} />} label="Admin Portal" />
           )}
@@ -124,13 +124,13 @@ const DashboardLayout = () => {
             </>
           )}
         </nav>
-        <div className="p-4 border-t border-slate-200">
+        <div className="p-4 border-t border-slate-200 flex-shrink-0 bg-white">
           <button
             onClick={() => logout()}
-            className="flex items-center gap-3 w-full p-2 text-slate-600 hover:text-indigo-600 transition-colors"
+            className="flex items-center gap-3 w-full p-2 text-slate-600 hover:text-indigo-600 transition-colors font-medium rounded-xl hover:bg-indigo-50/60"
           >
             <LogOut size={20} />
-            <span className="font-medium">Logout</span>
+            <span>Logout</span>
           </button>
         </div>
       </aside>

@@ -129,7 +129,7 @@ const GeneralSaved = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col overflow-hidden max-w-7xl mx-auto p-3 sm:p-4 gap-3 font-sans">
+    <div className="flex flex-col min-h-full max-w-7xl mx-auto p-3 sm:p-4 gap-4 font-sans pb-10">
       <StickyControlBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}

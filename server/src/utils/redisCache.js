@@ -25,7 +25,7 @@ if (config.redisUrl || process.env.NODE_ENV !== 'test') {
     redisClient.connect().catch(() => {
       isConnected = false;
     });
-  } catch (_err) {
+  } catch {
     isConnected = false;
   }
 }
@@ -35,7 +35,7 @@ const getCache = async (key) => {
   try {
     const data = await redisClient.get(key);
     return data ? JSON.parse(data) : null;
-  } catch (_err) {
+  } catch {
     return null;
   }
 };
@@ -45,7 +45,7 @@ const setCache = async (key, value, ttlSeconds = 300) => {
   try {
     await redisClient.set(key, JSON.stringify(value), 'EX', ttlSeconds);
     return true;
-  } catch (_err) {
+  } catch {
     return false;
   }
 };
@@ -58,7 +58,7 @@ const deleteCache = async (keyPattern) => {
       await redisClient.del(keys);
     }
     return true;
-  } catch (_err) {
+  } catch {
     return false;
   }
 };

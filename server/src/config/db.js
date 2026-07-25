@@ -9,7 +9,12 @@ mongoose.set('strictQuery', true);
 const connectDB = async () => {
   const options = {
     maxPoolSize: 10,
-    serverSelectionTimeoutMS: 5000,
+    serverSelectionTimeoutMS: 10000,
+    serverApi: {
+      version: '1',
+      strict: true,
+      deprecationErrors: true,
+    },
   };
 
   let retries = 5;

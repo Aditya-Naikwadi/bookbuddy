@@ -3,7 +3,7 @@
  * Validates file magic-byte signatures and inspects uploaded files for malware.
  */
 const fs = require('fs');
-const AppError = require('../utils/appError');
+const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
 
 /**
@@ -13,7 +13,8 @@ const detectMimeFromBuffer = (buffer) => {
   if (!buffer || buffer.length < 4) return null;
 
   // MZ Windows Executable (.exe, .dll)
-  if (buffer[0] === 0x4d && buffer[1] === 0x5a) return { mime: 'application/x-msdownload', ext: 'exe' };
+  if (buffer[0] === 0x4d && buffer[1] === 0x5a)
+    return { mime: 'application/x-msdownload', ext: 'exe' };
 
   // PDF (%PDF)
   if (buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46) {
@@ -71,7 +72,9 @@ const validateMagicBytes = (allowedMimes = []) => {
         ) {
           if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
           logger.warn(`[Malware Alert] Blocked suspicious file upload: ${file.originalname}`);
-          return next(new AppError('Malware or executable signature detected in uploaded file.', 400));
+          return next(
+            new AppError('Malware or executable signature detected in uploaded file.', 400)
+          );
         }
 
         // Magic byte detection
@@ -79,7 +82,8 @@ const validateMagicBytes = (allowedMimes = []) => {
 
         // For CSV / plain text files, file-type returns undefined because they are plain text
         if (!detected) {
-          const isCsvAllowed = allowedMimes.includes('text/csv') || allowedMimes.includes('text/plain');
+          const isCsvAllowed =
+            allowedMimes.includes('text/csv') || allowedMimes.includes('text/plain');
           const ext = (file.originalname || '').split('.').pop()?.toLowerCase();
           const isCsvExt = ext === 'csv' || ext === 'txt';
 
@@ -88,18 +92,28 @@ const validateMagicBytes = (allowedMimes = []) => {
             continue;
           } else {
             if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-            return next(new AppError('Uploaded file signature does not match allowed format.', 400));
+            return next(
+              new AppError('Uploaded file signature does not match allowed format.', 400)
+            );
           }
         }
 
         // Verify detected MIME matches allowed list
         if (allowedMimes.length > 0 && !allowedMimes.includes(detected.mime)) {
           // Special exception for EPUB zip containers
-          if (detected.mime === 'application/zip' && allowedMimes.includes('application/epub+zip')) {
+          if (
+            detected.mime === 'application/zip' &&
+            allowedMimes.includes('application/epub+zip')
+          ) {
             continue;
           }
           if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-          return next(new AppError(`File type mismatch: expected ${allowedMimes.join(', ')}, detected ${detected.mime}`, 400));
+          return next(
+            new AppError(
+              `File type mismatch: expected ${allowedMimes.join(', ')}, detected ${detected.mime}`,
+              400
+            )
+          );
         }
       }
 

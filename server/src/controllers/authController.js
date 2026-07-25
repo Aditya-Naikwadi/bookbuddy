@@ -41,10 +41,19 @@ const registerUser = async (req, res, next) => {
         return next(new AppError('The specified college is inactive or does not exist.', 400));
       }
     } else {
-      const defaultCollege = await College.findOne({ isActive: true });
-      if (defaultCollege) {
-        collegeId = defaultCollege._id;
+      let defaultCollege = await College.findOne({ status: 'active', isActive: true });
+      if (!defaultCollege) {
+        defaultCollege = await College.findOne({ isActive: true });
       }
+      if (!defaultCollege) {
+        defaultCollege = await College.create({
+          name: 'Demo College',
+          code: 'COLLEGE_A',
+          status: 'active',
+          isActive: true,
+        });
+      }
+      collegeId = defaultCollege._id;
     }
 
     const userExists = await User.findOne({ $or: [{ email }, { studentId }] });

@@ -58,11 +58,10 @@ describe('Master Prompt 2/3: Input Validation & Injection Prevention Hardening',
   });
 
   describe('1. NoSQL / MongoDB Operator Injection Prevention', () => {
-
     it('1.2 Strips $ and . prefixed keys from query parameters cleanly', async () => {
       const res = await request(app)
         .get('/api/v1/dashboards/general/home-data')
-        .query({ collegeId: testCollege._id.toString(), '$where': 'this.collegeId != null' });
+        .query({ collegeId: testCollege._id.toString(), $where: 'this.collegeId != null' });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -97,7 +96,8 @@ describe('Master Prompt 2/3: Input Validation & Injection Prevention Hardening',
         collegeId: testCollege._id,
         submittedBy: studentUser._id,
         category: 'general',
-        message: 'The library AC is broken <script>alert("XSS")</script> <img src="x" onerror="alert(1)" /> Please fix!',
+        message:
+          'The library AC is broken <script>alert("XSS")</script> <img src="x" onerror="alert(1)" /> Please fix!',
       });
 
       expect(feedback.message).toBeDefined();
@@ -126,7 +126,10 @@ describe('Master Prompt 2/3: Input Validation & Injection Prevention Hardening',
 
     it('4.2 Rejects malware test signature (EICAR string) in file uploads', async () => {
       const eicarPath = path.join(__dirname, 'eicar_test.txt');
-      fs.writeFileSync(eicarPath, 'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*');
+      fs.writeFileSync(
+        eicarPath,
+        'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'
+      );
 
       const res = await request(app)
         .post(`/api/v1/college/${testCollege._id}/students/bulk-upload`)

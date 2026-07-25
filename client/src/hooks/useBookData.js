@@ -55,7 +55,8 @@ export const useBookStats = (collegeIdParam) => {
       return data?.data || { totalCatalogBooks: 0, addedThisMonth: 0, categoryBreakdown: [] };
     },
     enabled: Boolean(collegeId),
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    refetchInterval: 60 * 1000,
   });
 };
 
@@ -75,7 +76,8 @@ export const useNewArrivals = (collegeIdParam, limit = 8) => {
       return data?.data || [];
     },
     enabled: Boolean(collegeId),
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 60 * 1000,
   });
 };
 

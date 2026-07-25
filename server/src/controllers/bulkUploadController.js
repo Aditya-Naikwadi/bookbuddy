@@ -67,55 +67,55 @@ const submitBulkUpload = async (req, res, next) => {
       try {
         const { id: collegeId } = req.params;
 
-      // Tenant isolation check
-      if (
-        req.user.role !== 'super-admin' &&
-        req.user.role !== 'super_admin' &&
-        req.user.collegeId?.toString() !== collegeId
-      ) {
+        // Tenant isolation check
+        if (
+          req.user.role !== 'super-admin' &&
+          req.user.role !== 'super_admin' &&
+          req.user.collegeId?.toString() !== collegeId
+        ) {
+          if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+          }
+          return next(
+            new AppError('Unauthorized upload request for another institution tenant.', 403)
+          );
+        }
+
+        if (!req.file) {
+          return next(
+            new AppError('No CSV file uploaded. Please attach a file using key "file".', 400)
+          );
+        }
+
+        const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+
+        const uploadJob = await UploadJob.create({
+          jobId,
+          collegeId,
+          createdBy: req.user._id || req.user.id,
+          status: 'queued',
+        });
+
+        // Trigger worker asynchronously without blocking HTTP response
+        setImmediate(() => {
+          processBulkUploadJob(jobId, req.file.path);
+        });
+
+        res.status(202).json({
+          success: true,
+          message: 'Bulk student upload job queued successfully for background processing.',
+          data: {
+            jobId: uploadJob.jobId,
+            status: uploadJob.status,
+            createdAt: uploadJob.createdAt,
+          },
+        });
+      } catch (error) {
         if (req.file && fs.existsSync(req.file.path)) {
           fs.unlinkSync(req.file.path);
         }
-        return next(
-          new AppError('Unauthorized upload request for another institution tenant.', 403)
-        );
+        next(error);
       }
-
-      if (!req.file) {
-        return next(
-          new AppError('No CSV file uploaded. Please attach a file using key "file".', 400)
-        );
-      }
-
-      const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-
-      const uploadJob = await UploadJob.create({
-        jobId,
-        collegeId,
-        createdBy: req.user._id || req.user.id,
-        status: 'queued',
-      });
-
-      // Trigger worker asynchronously without blocking HTTP response
-      setImmediate(() => {
-        processBulkUploadJob(jobId, req.file.path);
-      });
-
-      res.status(202).json({
-        success: true,
-        message: 'Bulk student upload job queued successfully for background processing.',
-        data: {
-          jobId: uploadJob.jobId,
-          status: uploadJob.status,
-          createdAt: uploadJob.createdAt,
-        },
-      });
-    } catch (error) {
-      if (req.file && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
-      next(error);
-    }
     });
   });
 };

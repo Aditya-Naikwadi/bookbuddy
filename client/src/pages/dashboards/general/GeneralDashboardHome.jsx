@@ -74,16 +74,6 @@ const GeneralDashboardHome = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Periodic polling fallback for resilience (30-second refetch window)
-  useEffect(() => {
-    const timer = setInterval(() => {
-      refetchStats();
-      refetchArrivals();
-      refetchPopular();
-    }, 30000);
-    return () => clearInterval(timer);
-  }, [refetchStats, refetchArrivals, refetchPopular]);
-
   const isLoading = statsLoading || arrivalsLoading || popularLoading;
 
   const handleRefresh = () => {
@@ -124,10 +114,10 @@ const GeneralDashboardHome = () => {
   const isOpen = currentHour >= startHour && currentHour < endHour;
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col overflow-hidden max-w-7xl mx-auto p-3 sm:p-4 gap-3 font-sans">
+    <div className="flex flex-col min-h-full max-w-7xl mx-auto p-3 sm:p-4 gap-4 font-sans pb-10">
       {/* Header Row & Scoped Search Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-3.5 px-5 rounded-2xl border border-slate-200/80 shadow-sm flex-shrink-0">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-start gap-4 md:gap-5 bg-white p-3.5 px-5 rounded-2xl border border-slate-200/80 shadow-sm flex-shrink-0">
+        <div className="flex items-center gap-3 flex-shrink-0">
           <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl flex-shrink-0">
             <BookOpen className="w-5 h-5" />
           </div>
@@ -142,7 +132,7 @@ const GeneralDashboardHome = () => {
         </div>
 
         {/* Scoped Autocomplete Top Search Bar */}
-        <div className="relative flex-1 max-w-md mx-0 md:mx-4">
+        <div className="relative flex-1 max-w-md">
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -200,7 +190,7 @@ const GeneralDashboardHome = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-3 flex-shrink-0 self-end md:self-auto">
+        <div className="flex items-center gap-3 flex-shrink-0 self-end md:self-auto ml-auto">
           <button
             onClick={handleRefresh}
             disabled={isLoading}
