@@ -59,8 +59,13 @@ const submitBulkUpload = async (req, res, next) => {
       return next(err instanceof AppError ? err : new AppError(err.message, 400));
     }
 
-    try {
-      const { id: collegeId } = req.params;
+    // Validate magic bytes and scan for malware
+    const { validateMagicBytes } = require('../middlewares/fileUploadValidation');
+    return validateMagicBytes(['text/csv', 'text/plain'])(req, res, async (vErr) => {
+      if (vErr) return next(vErr);
+
+      try {
+        const { id: collegeId } = req.params;
 
       // Tenant isolation check
       if (
@@ -111,6 +116,7 @@ const submitBulkUpload = async (req, res, next) => {
       }
       next(error);
     }
+    });
   });
 };
 

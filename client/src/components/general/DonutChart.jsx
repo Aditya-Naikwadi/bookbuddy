@@ -14,32 +14,32 @@ const DonutChart = ({
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
-  let cumulativeAngle = 0;
+  let runningAngle = 0;
+  const segments = data.map((item) => {
+    const strokeDasharray = `${(item.value / total) * circumference} ${circumference}`;
+    const strokeDashoffset = -runningAngle * circumference;
+    runningAngle += item.value / total;
+    return { ...item, strokeDasharray, strokeDashoffset };
+  });
 
   return (
     <div className="flex items-center gap-4">
       <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-          {data.map((item, index) => {
-            const strokeDasharray = `${(item.value / total) * circumference} ${circumference}`;
-            const strokeDashoffset = -cumulativeAngle * circumference;
-            cumulativeAngle += item.value / total;
-
-            return (
-              <circle
-                key={index}
-                cx={size / 2}
-                cy={size / 2}
-                r={radius}
-                fill="none"
-                stroke={item.color}
-                strokeWidth={strokeWidth}
-                strokeDasharray={strokeDasharray}
-                strokeDashoffset={strokeDashoffset}
-                className="transition-all duration-300 hover:opacity-80"
-              />
-            );
-          })}
+          {segments.map((item, index) => (
+            <circle
+              key={index}
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="none"
+              stroke={item.color}
+              strokeWidth={strokeWidth}
+              strokeDasharray={item.strokeDasharray}
+              strokeDashoffset={item.strokeDashoffset}
+              className="transition-all duration-500 ease-out"
+            />
+          ))}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
           <span className="text-xs font-bold text-slate-800 tracking-tight">{total}%</span>

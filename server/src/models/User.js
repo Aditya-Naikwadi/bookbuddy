@@ -111,6 +111,20 @@ const userSchema = new mongoose.Schema(
         timestamp: { type: Date, default: Date.now },
       },
     ],
+    mfaSecret: {
+      type: String,
+      select: false,
+    },
+    isMfaEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    mfaRecoveryCodes: [
+      {
+        type: String,
+        select: false,
+      },
+    ],
   },
   {
     timestamps: true,
@@ -128,14 +142,44 @@ userSchema.pre('save', async function () {
     this.cardSecret = crypto.randomBytes(32).toString('hex');
   }
   if (!this.isModified('password')) return;
-  if (typeof this.password === 'string' && /^\$2[aby]\$\d{2}\$/.test(this.password)) return;
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+
+  // Don't re-hash if already hashed with Argon2id or Bcrypt
+  if (
+    typeof this.password === 'string' &&
+    (this.password.startsWith('$argon2') || /^\$2[aby]\$\d{2}\$/.test(this.password))
+  ) {
+    return;
+  }
+
+  const argon2 = require('argon2');
+  this.password = await argon2.hash(this.password, { type: argon2.argon2id });
 });
 
-// Compare password
+// Compare password supporting Argon2id and transparent bcrypt upgrade
 userSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+  if (!this.password) return false;
+
+  if (this.password.startsWith('$argon2')) {
+    const argon2 = require('argon2');
+    return await argon2.verify(this.password, candidatePassword);
+  }
+
+  if (/^\$2[aby]\$\d{2}\$/.test(this.password)) {
+    const isBcryptMatch = await bcrypt.compare(candidatePassword, this.password);
+    if (isBcryptMatch) {
+      // Seamlessly upgrade legacy bcrypt hash to Argon2id
+      try {
+        const argon2 = require('argon2');
+        this.password = await argon2.hash(candidatePassword, { type: argon2.argon2id });
+        await this.save();
+      } catch (_err) {
+        // Fallback gracefully if auto-upgrade fails
+      }
+    }
+    return isBcryptMatch;
+  }
+
+  return false;
 };
 
 module.exports = mongoose.model('User', userSchema);

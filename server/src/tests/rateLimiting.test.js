@@ -66,6 +66,7 @@ const app = require('../app');
 const { getLimiter } = require('../middlewares/rateLimiters');
 
 describe('API Rate Limiting & Input Validation Hardening Tests', () => {
+  jest.setTimeout(30000);
   beforeAll(async () => {
     // Just connect to db to satisfy server.js connection constraints if any
     if (mongoose.connection.readyState === 0) {

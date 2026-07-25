@@ -177,7 +177,7 @@ const verifyStudentEmail = async (req, res, next) => {
     }
 
     // Provision the active User account
-    const { name, passwordHash, collegeId, studentId, department, phone } = regRequest.studentData;
+    const { name, passwordHash, collegeId, studentId, department } = regRequest.studentData;
 
     const newUser = new User({
       name,

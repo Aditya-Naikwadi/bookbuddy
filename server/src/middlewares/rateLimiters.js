@@ -114,6 +114,7 @@ const limiters = {
     config.rateLimits.expensiveMax,
     Math.ceil(config.rateLimits.expensiveWindowMs / 1000)
   ),
+  generalDashboard: getLimiter('generalDashboard', 100, 900),
 };
 
 // Helper to extract clean client IP
@@ -223,6 +224,20 @@ const expensiveRouteLimiter = async (req, res, next) => {
   }
 };
 
+const generalDashboardLimiter = async (req, res, next) => {
+  if (req.path === '/health' || req.path === '/api/health') {
+    return next();
+  }
+
+  const key = getClientIp(req);
+  try {
+    await limiters.generalDashboard(key);
+    next();
+  } catch (rej) {
+    handleRejection(key, 'generalDashboard', req, res, next, rej);
+  }
+};
+
 const handleRejection = (key, tierName, req, res, next, rej, userId = null) => {
   const retryAfterSeconds = rej.msBeforeNext ? Math.ceil(rej.msBeforeNext / 1000) : 60;
   res.setHeader('Retry-After', String(retryAfterSeconds));
@@ -273,6 +288,7 @@ const resetAllLimiters = () => {
     config.rateLimits.expensiveMax,
     Math.ceil(config.rateLimits.expensiveWindowMs / 1000)
   );
+  limiters.generalDashboard = getLimiter('generalDashboard', 100, 900);
 };
 
 module.exports = {
@@ -280,6 +296,7 @@ module.exports = {
   authLimiter,
   userLimiter,
   expensiveRouteLimiter,
+  generalDashboardLimiter,
   getLimiter,
   redisClient,
   resetAllLimiters,

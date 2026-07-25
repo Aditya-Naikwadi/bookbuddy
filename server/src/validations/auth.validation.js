@@ -23,6 +23,7 @@ const loginSchema = z.object({
       email: z.string().email('Invalid email address').trim().optional(),
       studentId: z.string().trim().optional(),
       password: z.string().min(1, 'Password is required'),
+      totpCode: z.string().optional(),
     })
     .refine((data) => data.email || data.studentId, {
       message: 'Either email or studentId must be provided',

@@ -121,6 +121,9 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
 
   // Assertion 1: Full lifecycle: checkout -> due date correctly set -> renew (count increments, dueDate extends) -> return (copiesAvailable increments back)
   it('1. should complete the full checkout -> renew -> return lifecycle successfully', async () => {
+    expect(bookB.title).toBe('College B Book');
+    expect(tokenAdminB).toBeDefined();
+
     // 1. Checkout
     const checkoutRes = await request(app)
       .post('/api/dashboards/college-admin/circulation/checkout')

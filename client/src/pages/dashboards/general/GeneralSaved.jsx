@@ -16,6 +16,10 @@ import StickyControlBar from '../../../components/general/StickyControlBar';
 import StatSummaryStrip from '../../../components/general/StatSummaryStrip';
 import VirtualizedCardGrid from '../../../components/general/VirtualizedCardGrid';
 import ActiveFilterChips from '../../../components/general/ActiveFilterChips';
+import useAuthStore from '../../../store/authStore';
+import { useBatchBookDetails } from '../../../hooks/useBookData';
+import BookDataState from '../../../components/common/BookDataState';
+import BookCoverImage from '../../../components/common/BookCoverImage';
 
 const SORT_OPTIONS = [
   { value: 'recent', label: 'Sort: Recently Saved' },
@@ -26,24 +30,64 @@ const SORT_OPTIONS = [
 const GeneralSaved = () => {
   const navigate = useNavigate();
   const { bookmarks, removeBookmark, clearBookmarks } = useLocalBookmarks();
+  const { user } = useAuthStore();
+  const collegeId = user?.collegeId || null;
 
   const [activeTab, setActiveTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('recent');
   const [viewMode, setViewMode] = useState('grid');
 
+  // Extract all book IDs to fetch live, real-time availability status
+  const bookIds = useMemo(() => {
+    return bookmarks
+      .filter((b) => !b.type || b.type === 'Book' || b.availableCopies !== undefined)
+      .map((b) => b._id || b.id)
+      .filter(Boolean);
+  }, [bookmarks]);
+
+  // Unified batch book detail fetch for live resolution
+  const { data: liveBooks = [], isLoading } = useBatchBookDetails(collegeId, bookIds);
+
+  // Map live resolved availability status into local bookmarks
+  const resolvedBookmarks = useMemo(() => {
+    const liveMap = new Map(liveBooks.map((b) => [b._id || b.id, b]));
+
+    return bookmarks.map((b) => {
+      const bookId = b._id || b.id;
+      const live = liveMap.get(bookId);
+      if (live) {
+        return {
+          ...b,
+          availableCopies: live.availableCopies,
+          totalCopies: live.totalCopies,
+          availabilityStatus: live.availabilityStatus,
+          shelfLocation: live.shelfLocation,
+          coverUrl: live.coverUrl || b.coverUrl,
+        };
+      }
+      return b;
+    });
+  }, [bookmarks, liveBooks]);
+
   const filteredBookmarks = useMemo(() => {
-    let list = bookmarks;
+    let list = resolvedBookmarks;
 
     if (activeTab === 'Books') {
-      list = bookmarks.filter((b) => !b.type || b.type === 'Book' || b.availableCopies !== undefined);
+      list = resolvedBookmarks.filter((b) => !b.type || b.type === 'Book' || b.availableCopies !== undefined);
     } else if (activeTab === 'E-Resources') {
-      list = bookmarks.filter((b) => b.type === 'EResource' || b.gutenbergId || b.accessRequirement);
+      list = resolvedBookmarks.filter((b) => b.type === 'EResource' || b.gutenbergId || b.accessRequirement);
     }
 
     const q = searchQuery.toLowerCase().trim();
     if (q) {
-      list = list.filter((b) => b.title?.toLowerCase().includes(q) || b.author?.toLowerCase().includes(q) || b.genre?.toLowerCase().includes(q));
+      list = list.filter(
+        (b) =>
+          b.title?.toLowerCase().includes(q) ||
+          b.author?.toLowerCase().includes(q) ||
+          b.genre?.toLowerCase().includes(q) ||
+          b.category?.toLowerCase().includes(q)
+      );
     }
 
     return list.sort((a, b) => {
@@ -55,15 +99,17 @@ const GeneralSaved = () => {
       }
       return 0;
     });
-  }, [bookmarks, activeTab, searchQuery, sortBy]);
+  }, [resolvedBookmarks, activeTab, searchQuery, sortBy]);
 
   const counts = useMemo(() => {
     const booksCount = bookmarks.filter((b) => !b.type || b.type === 'Book' || b.availableCopies !== undefined).length;
     const eresourcesCount = bookmarks.filter((b) => b.type === 'EResource' || b.gutenbergId || b.accessRequirement).length;
-    const availableNowCount = bookmarks.filter((b) => b.availableCopies > 0 || b.accessRequirement === 'Open Access' || b.gutenbergId).length;
+    const availableNowCount = resolvedBookmarks.filter(
+      (b) => b.availableCopies > 0 || b.accessRequirement === 'Open Access' || b.gutenbergId
+    ).length;
 
     return { all: bookmarks.length, books: booksCount, eresources: eresourcesCount, availableNow: availableNowCount };
-  }, [bookmarks]);
+  }, [bookmarks, resolvedBookmarks]);
 
   const stats = useMemo(() => {
     return [
@@ -84,7 +130,6 @@ const GeneralSaved = () => {
 
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col overflow-hidden max-w-7xl mx-auto p-3 sm:p-4 gap-3 font-sans">
-      {/* Sticky Control Bar */}
       <StickyControlBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -98,7 +143,6 @@ const GeneralSaved = () => {
         resultCount={filteredBookmarks.length}
         filterSlot={
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            {/* Segmented Toggle Bar */}
             <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/60">
               <button
                 onClick={() => setActiveTab('All')}
@@ -148,16 +192,13 @@ const GeneralSaved = () => {
         }
       />
 
-      {/* Active Filter Chips */}
       <ActiveFilterChips chips={activeChips} onRemoveChip={handleRemoveChip} onResetAll={() => { setSearchQuery(''); setActiveTab('All'); }} />
 
-      {/* Virtualized Cards Grid Container */}
-      <VirtualizedCardGrid
-        items={filteredBookmarks}
-        viewMode={viewMode}
-        columns="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+      <BookDataState
+        isLoading={isLoading}
+        isEmpty={filteredBookmarks.length === 0}
         emptyState={
-          <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200/80 shadow-sm text-center space-y-4 max-w-md my-auto">
+          <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200/80 shadow-sm text-center space-y-4 max-w-md mx-auto my-auto">
             <div className="p-4 bg-indigo-50 text-indigo-600 rounded-3xl w-14 h-14 mx-auto flex items-center justify-center">
               <Sparkles className="w-7 h-7" />
             </div>
@@ -179,87 +220,86 @@ const GeneralSaved = () => {
                 <Search className="w-3.5 h-3.5" />
                 <span>Search Catalog</span>
               </button>
-
-              <button
-                onClick={() => navigate('/general-dashboard/e-resources')}
-                className="px-4 py-2 bg-slate-100 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center gap-1.5"
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Public E-Resources</span>
-              </button>
             </div>
           </div>
         }
-        renderItem={(item) => {
-          const isEResource = item.gutenbergId || item.accessRequirement || item.type === 'EResource';
-          const isAvailable = item.availableCopies > 0 || item.accessRequirement === 'Open Access' || item.gutenbergId;
+      >
+        <VirtualizedCardGrid
+          items={filteredBookmarks}
+          viewMode={viewMode}
+          columns="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          renderItem={(item) => {
+            const isEResource = item.gutenbergId || item.accessRequirement || item.type === 'EResource';
+            const isAvailable = item.availableCopies > 0 || item.accessRequirement === 'Open Access' || item.gutenbergId;
 
-          return (
-            <div
-              key={item.id || item._id}
-              className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group relative"
-            >
-              <div>
-                <div className="flex items-start justify-between mb-2">
-                  <span
-                    className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg border ${
-                      isAvailable ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'
-                    }`}
-                  >
-                    {isAvailable ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                    {isAvailable ? (isEResource ? 'Open Access' : `${item.availableCopies} Available`) : 'Checked Out'}
+            return (
+              <div
+                key={item.id || item._id}
+                className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group relative"
+              >
+                <div>
+                  <div className="flex items-start justify-between mb-2">
+                    <span
+                      className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg border ${
+                        isAvailable ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'
+                      }`}
+                    >
+                      {isAvailable ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                      {isAvailable ? (isEResource ? 'Open Access' : `${item.availableCopies} Available`) : 'Checked Out'}
+                    </span>
+
+                    <button
+                      onClick={() => removeBookmark(item.id || item._id)}
+                      title="Remove bookmark"
+                      className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-12 h-16 flex-shrink-0">
+                      <BookCoverImage
+                        src={item.coverUrl}
+                        fallbackTitle={item.title}
+                        fallbackCategory={item.category || item.genre}
+                        aspectRatio="h-16"
+                      />
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-sm leading-snug line-clamp-2 group-hover:text-indigo-600 transition-colors">
+                        {item.title}
+                      </h3>
+                      {item.author && <p className="text-xs text-slate-500">By {item.author}</p>}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-auto">
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    {item.shelfLocation ? `Shelf: ${item.shelfLocation}` : item.location ? `Shelf: ${item.location}` : 'Catalog Item'}
                   </span>
 
                   <button
-                    onClick={() => removeBookmark(item.id || item._id)}
-                    title="Remove bookmark"
-                    className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                    onClick={() => {
+                      if (item.gutenbergId) {
+                        window.open(`https://www.gutenberg.org/ebooks/${item.gutenbergId}`, '_blank');
+                      } else {
+                        navigate(`/general-dashboard/search?q=${encodeURIComponent(item.title)}`);
+                      }
+                    }}
+                    className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1 flex-shrink-0"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{isEResource ? 'Access Resource' : 'View in Catalog'}</span>
+                    <ExternalLink className="w-3 h-3" />
                   </button>
                 </div>
-
-                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 mb-1">
-                  <span>{isEResource ? 'Digital Resource' : 'Physical Volume'}</span>
-                  {item.genre && (
-                    <>
-                      <span>•</span>
-                      <span className="text-indigo-600 font-bold">{item.genre}</span>
-                    </>
-                  )}
-                </div>
-
-                <h3 className="font-bold text-slate-900 text-sm leading-snug line-clamp-2 group-hover:text-indigo-600 transition-colors mb-1">
-                  {item.title}
-                </h3>
-
-                {item.author && <p className="text-xs text-slate-500 mb-2">By {item.author}</p>}
-                {item.description && <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-3">{item.description}</p>}
               </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-auto">
-                <span className="text-[10px] text-slate-400 font-medium">
-                  {item.location ? `Shelf: ${item.location}` : item.source ? `Source: ${item.source}` : 'Catalog Item'}
-                </span>
-
-                <button
-                  onClick={() => {
-                    if (item.gutenbergId) {
-                      window.open(`https://www.gutenberg.org/ebooks/${item.gutenbergId}`, '_blank');
-                    } else {
-                      navigate(`/general-dashboard/search?q=${encodeURIComponent(item.title)}`);
-                    }
-                  }}
-                  className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1 flex-shrink-0"
-                >
-                  <span>{isEResource ? 'Access Resource' : 'View in Catalog'}</span>
-                  <ExternalLink className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          );
-        }}
-      />
+            );
+          }}
+        />
+      </BookDataState>
     </div>
   );
 };

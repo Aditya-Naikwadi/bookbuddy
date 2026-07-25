@@ -29,9 +29,39 @@ app.use(
       includeSubDomains: true,
       preload: true,
     },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    frameguard: { action: 'deny' },
     crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+        imgSrc: [
+          "'self'",
+          'data:',
+          'blob:',
+          'https://res.cloudinary.com',
+          'https://books.google.com',
+          'https://coverartarchive.org',
+          'https://images.unsplash.com',
+        ],
+        connectSrc: ["'self'", 'ws:', 'wss:', 'http:', 'https:'],
+        frameAncestors: ["'none'"],
+      },
+    },
   })
 );
+
+// Explicit Permissions-Policy middleware
+app.use((req, res, next) => {
+  res.setHeader(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), payment=(), usb=()'
+  );
+  next();
+});
 
 // CORS Configuration supporting multi-origin dev setups & Vercel preview deployment URLs
 const allowedOrigins = [
@@ -66,9 +96,14 @@ app.use(
   })
 );
 
+const hpp = require('hpp');
+
 // Body Parser
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// HTTP Parameter Pollution Protection
+app.use(hpp());
 
 // Custom Cookie Parser Middleware
 app.use((req, res, next) => {
@@ -182,6 +217,7 @@ app.all(
 const deprecationWarning = require('./middlewares/deprecationWarning');
 
 // Canonical API Version 1 Routes
+app.use('/api/v1/college/:id/books', require('./routes/collegeBookRoutes'));
 app.use('/api/v1/catalog', require('./routes/catalogRoutes'));
 app.use('/api/v1/services', require('./routes/serviceRoutes'));
 app.use('/api/v1/college/:id', require('./routes/bulkUploadRoutes'));
@@ -209,6 +245,7 @@ app.use('/api/v1/dashboards/admin-portal', require('./routes/dashboards/adminPor
 app.use('/api/v1/dashboards/college-admin', require('./routes/dashboards/collegeAdminRoutes'));
 app.use('/api/v1/dashboards/student', require('./routes/dashboards/studentDashboardRoutes'));
 app.use('/api/v1/dashboards/general', require('./routes/dashboards/generalDashboardRoutes'));
+app.use('/api/v1/college', require('./routes/dashboards/generalDashboardRoutes'));
 app.use('/api/v1/lab', require('./routes/labRoutes'));
 app.use('/api/v1/feedback', require('./routes/feedbackRoutes'));
 app.use('/api/v1/complaints', require('./routes/complaintRoutes'));
@@ -219,6 +256,7 @@ app.use('/api/v1/streak', require('./routes/streakRoutes'));
 app.use('/api/v1/stickers', require('./routes/stickerRoutes'));
 
 // Deprecated Legacy Unversioned Routes (Supported with 90-day deprecation headers)
+app.use('/api/college/:id/books', deprecationWarning, require('./routes/collegeBookRoutes'));
 app.use('/api/catalog', deprecationWarning, require('./routes/catalogRoutes'));
 app.use('/api/services', deprecationWarning, require('./routes/serviceRoutes'));
 app.use('/api/college/:id', deprecationWarning, require('./routes/bulkUploadRoutes'));

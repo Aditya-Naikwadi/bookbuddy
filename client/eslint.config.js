@@ -17,5 +17,8 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      'react/no-danger': 'error',
+    },
   },
 ])

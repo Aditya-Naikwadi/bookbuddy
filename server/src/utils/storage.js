@@ -1,6 +1,5 @@
 const path = require('path');
 const crypto = require('crypto');
-const config = require('../config');
 
 /**
  * Storage Abstraction Layer for Vercel & Production Deployments.

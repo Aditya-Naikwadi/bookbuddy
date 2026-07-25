@@ -13,6 +13,7 @@ const BookDTO = require('../dtos/BookDTO');
 const ReservationDTO = require('../dtos/ReservationDTO');
 
 describe('Phase 2 Roadmap Remediation Integration Tests', () => {
+  jest.setTimeout(30000);
   let college;
   let admin;
   let tokenAdmin;

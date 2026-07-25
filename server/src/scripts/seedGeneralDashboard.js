@@ -6,7 +6,6 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const Announcement = require('../models/Announcement');
 const LibrarySettings = require('../models/LibrarySettings');
-const Book = require('../models/Book');
 const College = require('../models/College');
 
 const seedGeneralDashboard = async () => {

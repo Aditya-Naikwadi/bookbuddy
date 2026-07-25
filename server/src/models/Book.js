@@ -7,7 +7,6 @@ const bookSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'College',
       required: true,
-      index: true,
     },
     isbn: {
       type: String,
@@ -24,7 +23,6 @@ const bookSchema = new mongoose.Schema(
     category: {
       type: String,
       required: true,
-      index: true,
     },
     format: {
       type: String,
@@ -52,8 +50,10 @@ const bookSchema = new mongoose.Schema(
   }
 );
 
-// Compound index
+// Compound indexes for dashboard and catalog queries
 bookSchema.index({ collegeId: 1, category: 1 });
+bookSchema.index({ collegeId: 1, copiesAvailable: -1, title: 1 });
+bookSchema.index({ collegeId: 1, createdAt: -1 });
 
 // Text index for search
 bookSchema.index({ title: 'text', author: 'text' });

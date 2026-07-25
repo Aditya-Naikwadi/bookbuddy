@@ -1,15 +1,14 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  Search,
-  SlidersHorizontal,
-  X,
   BookOpen,
-  MapPin,
   CheckCircle2,
   Clock,
   BookX,
   SearchCode,
+  MapPin,
+  X,
+  SlidersHorizontal,
 } from 'lucide-react';
 import ResultCard from '../../../components/general/ResultCard';
 import useLocalBookmarks from '../../../hooks/useLocalBookmarks';
@@ -18,12 +17,22 @@ import ActiveFilterChips from '../../../components/general/ActiveFilterChips';
 import StatSummaryStrip from '../../../components/general/StatSummaryStrip';
 import VirtualizedCardGrid from '../../../components/general/VirtualizedCardGrid';
 import MobileFilterSheet from '../../../components/general/MobileFilterSheet';
+import useAuthStore from '../../../store/authStore';
+import { useBookSearch } from '../../../hooks/useBookData';
+import BookDataState from '../../../components/common/BookDataState';
 
-import apiClient from '../../../api/client';
-
-const GENRES = ['All', 'Computer Science', 'Architecture', 'Economics', 'Biology', 'Literature', 'Chemistry', 'Environmental Science'];
-const AVAILABILITY_OPTIONS = ['All', 'Available', 'On Hold', 'Checked Out'];
-const FORMAT_OPTIONS = ['All', 'Hardcover', 'Paperback', 'Reference'];
+const GENRES = [
+  'All',
+  'Computer Science',
+  'Architecture',
+  'Economics',
+  'Biology',
+  'Literature',
+  'Chemistry',
+  'Environmental Science',
+  'Physics',
+];
+export const FORMAT_OPTIONS = ['All', 'physical', 'digital', 'Hardcover', 'Paperback'];
 
 const SORT_OPTIONS = [
   { value: 'relevance', label: 'Sort: Relevance' },
@@ -35,6 +44,8 @@ const SORT_OPTIONS = [
 const GeneralSearch = () => {
   const [searchParams] = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
+  const { user } = useAuthStore();
+  const collegeId = user?.collegeId || null;
 
   const { toggleBookmark, isBookmarked } = useLocalBookmarks();
 
@@ -47,44 +58,7 @@ const GeneralSearch = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [showFiltersSheet, setShowFiltersSheet] = useState(false);
   const [genreSearch, setGenreSearch] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [catalogBooks, setCatalogBooks] = useState([]);
   const [selectedLocationBook, setSelectedLocationBook] = useState(null);
-
-  // Fetch catalog books from backend
-  useEffect(() => {
-    let isMounted = true;
-    const fetchCatalog = async () => {
-      try {
-        setLoading(true);
-        const { data } = await apiClient.get('/books');
-        if (isMounted && data && Array.isArray(data.data)) {
-          const mapped = data.data.map((b) => ({
-            id: b._id,
-            title: b.title,
-            author: b.author,
-            genre: b.genre || 'General',
-            year: b.publicationYear ? String(b.publicationYear) : '2024',
-            format: b.format || 'Paperback',
-            availabilityStatus: b.copiesAvailable > 0 ? 'Available' : 'Checked Out',
-            availableCopies: b.copiesAvailable !== undefined ? b.copiesAvailable : 0,
-            location: b.shelfLocation || 'Main Stacks',
-            description: b.description || 'Catalog resource.',
-          }));
-          setCatalogBooks(mapped);
-        }
-      } catch {
-        if (isMounted) setCatalogBooks([]);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    fetchCatalog();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   // Debounce search query changes (~300ms)
   useEffect(() => {
@@ -94,41 +68,37 @@ const GeneralSearch = () => {
     return () => clearTimeout(timer);
   }, [rawQuery]);
 
-  const filteredBooks = useMemo(() => {
-    return catalogBooks.filter((book) => {
-      const q = debouncedQuery.toLowerCase().trim();
-      const matchesQuery =
-        !q ||
-        book.title.toLowerCase().includes(q) ||
-        book.author.toLowerCase().includes(q) ||
-        book.genre.toLowerCase().includes(q);
+  // Unified React Query Shared Data Layer Hook
+  const {
+    data: searchData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useBookSearch(collegeId, {
+    q: debouncedQuery,
+    category: selectedGenre,
+    format: selectedFormat,
+    available: selectedAvailability,
+    sortBy,
+    limit: 50,
+  });
 
-      const matchesGenre = selectedGenre === 'All' || book.genre === selectedGenre;
-      const matchesAvailability = selectedAvailability === 'All' || book.availabilityStatus === selectedAvailability;
-      const matchesFormat = selectedFormat === 'All' || book.format === selectedFormat;
-
-      return matchesQuery && matchesGenre && matchesAvailability && matchesFormat;
-    }).sort((a, b) => {
-      if (sortBy === 'title') return a.title.localeCompare(b.title);
-      if (sortBy === 'newest') return parseInt(b.year, 10) - parseInt(a.year, 10);
-      if (sortBy === 'available') return b.availableCopies - a.availableCopies;
-      return 0;
-    });
-  }, [catalogBooks, debouncedQuery, selectedGenre, selectedAvailability, selectedFormat, sortBy]);
+  const catalogBooks = searchData?.books || [];
 
   // Compute stat summary metrics
   const stats = useMemo(() => {
-    const available = filteredBooks.filter((b) => b.availabilityStatus === 'Available').length;
-    const onHold = filteredBooks.filter((b) => b.availabilityStatus === 'On Hold').length;
-    const checkedOut = filteredBooks.filter((b) => b.availabilityStatus === 'Checked Out').length;
+    const available = catalogBooks.filter((b) => b.availabilityStatus === 'available' || b.availableCopies > 0).length;
+    const onHold = catalogBooks.filter((b) => b.availabilityStatus === 'on_hold').length;
+    const checkedOut = catalogBooks.filter((b) => b.availabilityStatus === 'checked_out' || b.availableCopies === 0).length;
 
     return [
-      { label: 'Total Matches', value: filteredBooks.length, icon: BookOpen, colorClass: 'text-indigo-600', bgBadgeClass: 'bg-indigo-50 text-indigo-700' },
+      { label: 'Total Matches', value: catalogBooks.length, icon: BookOpen, colorClass: 'text-indigo-600', bgBadgeClass: 'bg-indigo-50 text-indigo-700' },
       { label: 'Available', value: available, icon: CheckCircle2, colorClass: 'text-emerald-600', bgBadgeClass: 'bg-emerald-50 text-emerald-700' },
       { label: 'On Hold', value: onHold, icon: Clock, colorClass: 'text-amber-600', bgBadgeClass: 'bg-amber-50 text-amber-700' },
       { label: 'Checked Out', value: checkedOut, icon: BookX, colorClass: 'text-rose-600', bgBadgeClass: 'bg-rose-50 text-rose-700' },
     ];
-  }, [filteredBooks]);
+  }, [catalogBooks]);
 
   const activeChips = [
     { key: 'query', label: 'Keyword', value: debouncedQuery },
@@ -157,7 +127,6 @@ const GeneralSearch = () => {
 
   const filterContent = (
     <div className="space-y-5">
-      {/* Genre Filter with Search within Facet */}
       <div>
         <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
           Genre / Subject
@@ -188,7 +157,6 @@ const GeneralSearch = () => {
         </div>
       </div>
 
-      {/* Availability Filter */}
       <div className="border-t border-slate-100 pt-4">
         <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
           Status & Availability
@@ -208,33 +176,11 @@ const GeneralSearch = () => {
           ))}
         </div>
       </div>
-
-      {/* Format Filter */}
-      <div className="border-t border-slate-100 pt-4">
-        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-          Binding / Format
-        </label>
-        <div className="space-y-1">
-          {FORMAT_OPTIONS.map((format) => (
-            <button
-              key={format}
-              onClick={() => setSelectedFormat(format)}
-              className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between ${
-                selectedFormat === format ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <span>{format}</span>
-              {selectedFormat === format && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col overflow-hidden max-w-7xl mx-auto p-3 sm:p-4 gap-3 font-sans">
-      {/* Sticky Control Bar */}
       <StickyControlBar
         searchQuery={rawQuery}
         onSearchChange={setRawQuery}
@@ -246,7 +192,7 @@ const GeneralSearch = () => {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onOpenMobileFilters={() => setShowFiltersSheet(true)}
-        resultCount={filteredBooks.length}
+        resultCount={catalogBooks.length}
         filterSlot={
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <StatSummaryStrip items={stats} />
@@ -261,17 +207,16 @@ const GeneralSearch = () => {
         }
       />
 
-      {/* Active Filter Chips */}
       <ActiveFilterChips chips={activeChips} onRemoveChip={handleRemoveChip} onResetAll={handleResetAll} />
 
-      {/* Virtualized Cards Grid Container */}
-      <VirtualizedCardGrid
-        items={filteredBooks}
-        loading={loading}
-        viewMode={viewMode}
-        columns="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+      <BookDataState
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={refetch}
+        isEmpty={catalogBooks.length === 0}
         emptyState={
-          <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200/80 shadow-sm text-center space-y-4 max-w-md my-auto">
+          <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200/80 shadow-sm text-center space-y-4 max-w-md mx-auto my-auto">
             <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl w-12 h-12 mx-auto flex items-center justify-center">
               <BookOpen className="w-6 h-6" />
             </div>
@@ -281,24 +226,36 @@ const GeneralSearch = () => {
             </p>
             <button
               onClick={handleResetAll}
-              className="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+              className="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition-colors shadow-xs"
             >
               Clear All Filters
             </button>
           </div>
         }
-        renderItem={(book) => (
-          <ResultCard
-            key={book.id}
-            book={book}
-            isBookmarked={isBookmarked(book.id)}
-            onToggleBookmark={toggleBookmark}
-            onViewLocation={(b) => setSelectedLocationBook(b)}
-          />
-        )}
-      />
+      >
+        <VirtualizedCardGrid
+          items={catalogBooks}
+          loading={isLoading}
+          viewMode={viewMode}
+          columns="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          renderItem={(book) => (
+            <ResultCard
+              key={book._id || book.id}
+              book={{
+                ...book,
+                id: book._id || book.id,
+                genre: book.category || book.genre,
+                availableCopies: book.availableCopies,
+                location: book.shelfLocation || 'Main Stacks',
+              }}
+              isBookmarked={isBookmarked(book._id || book.id)}
+              onToggleBookmark={toggleBookmark}
+              onViewLocation={(b) => setSelectedLocationBook(b)}
+            />
+          )}
+        />
+      </BookDataState>
 
-      {/* Mobile/Desktop Faceted Filters Sheet */}
       <MobileFilterSheet
         isOpen={showFiltersSheet}
         onClose={() => setShowFiltersSheet(false)}
@@ -308,9 +265,8 @@ const GeneralSearch = () => {
         {filterContent}
       </MobileFilterSheet>
 
-      {/* Shelf Location Modal */}
       {selectedLocationBook && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-slate-100 relative animate-in fade-in zoom-in-95 duration-200 space-y-4">
             <button
               onClick={() => setSelectedLocationBook(null)}
@@ -332,15 +288,11 @@ const GeneralSearch = () => {
             <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2.5 text-xs">
               <div className="flex justify-between py-1 border-b border-slate-200/60">
                 <span className="text-slate-500 font-medium">Shelf Code</span>
-                <span className="font-bold text-indigo-900">{selectedLocationBook.location}</span>
+                <span className="font-bold text-indigo-900">{selectedLocationBook.shelfLocation || selectedLocationBook.location || 'Main Stacks'}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-200/60">
                 <span className="text-slate-500 font-medium">Copies Available</span>
                 <span className="font-bold text-slate-900">{selectedLocationBook.availableCopies} Copies</span>
-              </div>
-              <div className="flex justify-between py-1">
-                <span className="text-slate-500 font-medium">Category</span>
-                <span className="font-bold text-slate-900">{selectedLocationBook.genre}</span>
               </div>
             </div>
 

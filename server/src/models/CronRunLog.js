@@ -33,4 +33,7 @@ const cronRunLogSchema = new mongoose.Schema(
   }
 );
 
+// 30-day TTL index for log retention
+cronRunLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 2592000 });
+
 module.exports = mongoose.model('CronRunLog', cronRunLogSchema);

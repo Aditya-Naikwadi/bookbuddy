@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { X, RotateCcw, SlidersHorizontal, Search } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { X, RotateCcw, SlidersHorizontal } from 'lucide-react';
 
 const MobileFilterSheet = ({
   isOpen,

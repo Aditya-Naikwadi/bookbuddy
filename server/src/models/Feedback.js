@@ -35,4 +35,12 @@ const feedbackSchema = new mongoose.Schema(
   }
 );
 
+const { sanitizeHtmlString } = require('../utils/sanitize');
+
+feedbackSchema.pre('save', function () {
+  if (this.message) {
+    this.message = sanitizeHtmlString(this.message);
+  }
+});
+
 module.exports = mongoose.model('Feedback', feedbackSchema);

@@ -101,6 +101,9 @@ describe('Newly Unlocked Streak Milestone Computation Unit Tests', () => {
       rewardType: 'badge',
       rewardValue: 'Streak Legend',
     });
+    expect(sticker1.name).toBe('Streak Starter');
+    expect(sticker3.name).toBe('Streak Master');
+    expect(sticker7.name).toBe('Streak Legend');
   });
 
   test('1. Single Milestone Unlock: Check-in on day 1 unlocks milestone 1 badge', async () => {
@@ -115,6 +118,7 @@ describe('Newly Unlocked Streak Milestone Computation Unit Tests', () => {
   test('2. No Milestone Crossed: Check-in on day 2 returns newlyUnlocked as empty array', async () => {
     // Yesterday check-in
     const yesterdayStr = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    expect(yesterdayStr).toBeDefined();
     await Streak.create({
       userId: studentUser._id,
       collegeId: college._id,

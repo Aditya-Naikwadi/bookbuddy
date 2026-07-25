@@ -101,10 +101,7 @@
     "membershipStatus": "active",
     "validTill": "2030-07-23T17:14:58.863Z",
     "major": "Computer Science",
-    "savedBookmarks": [
-      "6a624c12a933e93e25f162b9",
-      "6a624c12a933e93e25f162ba"
-    ],
+    "savedBookmarks": ["6a624c12a933e93e25f162b9", "6a624c12a933e93e25f162ba"],
     "searchHistory": [
       {
         "query": "Algorithms and Data Structures",
@@ -134,9 +131,7 @@
     "membershipStatus": "active",
     "validTill": "2030-07-23T17:14:58.863Z",
     "major": "Artificial Intelligence",
-    "savedBookmarks": [
-      "6a624c12a933e93e25f162ba"
-    ],
+    "savedBookmarks": ["6a624c12a933e93e25f162ba"],
     "searchHistory": [
       {
         "query": "Neural Networks",
@@ -161,9 +156,7 @@
     "membershipStatus": "active",
     "validTill": "2030-07-23T17:14:58.863Z",
     "major": "Cybersecurity",
-    "savedBookmarks": [
-      "6a624c12a933e93e25f162b9"
-    ],
+    "savedBookmarks": ["6a624c12a933e93e25f162b9"],
     "searchHistory": [
       {
         "query": "Cryptography basics",
@@ -213,9 +206,7 @@
     "membershipStatus": "active",
     "validTill": "2030-07-23T17:14:58.863Z",
     "major": "English Literature",
-    "savedBookmarks": [
-      "6a624c12a933e93e25f162bb"
-    ],
+    "savedBookmarks": ["6a624c12a933e93e25f162bb"],
     "searchHistory": [
       {
         "query": "Modern American Poetry",
@@ -240,9 +231,7 @@
     "membershipStatus": "active",
     "validTill": "2030-07-23T17:14:58.863Z",
     "major": "Philosophy",
-    "savedBookmarks": [
-      "6a624c12a933e93e25f162bb"
-    ],
+    "savedBookmarks": ["6a624c12a933e93e25f162bb"],
     "searchHistory": [
       {
         "query": "Ethics and Moral Philosophy",
@@ -292,9 +281,7 @@
     "membershipStatus": "active",
     "validTill": "2030-07-23T17:14:58.863Z",
     "major": "Biomedical Science",
-    "savedBookmarks": [
-      "6a624c12a933e93e25f162bc"
-    ],
+    "savedBookmarks": ["6a624c12a933e93e25f162bc"],
     "searchHistory": [
       {
         "query": "Neuroscience and Physiology",
@@ -344,9 +331,7 @@
     "membershipStatus": "active",
     "validTill": "2030-07-23T17:14:58.863Z",
     "major": "Data Analytics",
-    "savedBookmarks": [
-      "6a624c12a933e93e25f162bc"
-    ],
+    "savedBookmarks": ["6a624c12a933e93e25f162bc"],
     "searchHistory": [
       {
         "query": "Statistical Inference",

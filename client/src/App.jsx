@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 // Lazy loaded public pages
 const Landing = lazy(() => import('./pages/public/Landing'));
 const RegistrationPage = lazy(() => import('./pages/public/RegistrationPage'));
+const Unauthorized = lazy(() => import('./pages/Unauthorized'));
 
 // Lazy loaded layout components
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
@@ -125,6 +126,7 @@ function App() {
               {/* Public Landing Page & Dual Registration */}
               <Route path="/" element={<Landing />} />
               <Route path="/register" element={<RegistrationPage />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
 
               {/* Auth Routes */}
               <Route path="/auth" element={<AuthRedirect><AuthLayout /></AuthRedirect>}>

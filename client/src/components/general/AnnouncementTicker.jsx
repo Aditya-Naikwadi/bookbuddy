@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Megaphone, ChevronLeft, ChevronRight, X, AlertCircle, Info, Bell } from 'lucide-react';
+import { AlertCircle, Info, Bell } from 'lucide-react';
 
 const priorityConfig = {
   Urgent: { bg: 'bg-rose-50 border-rose-200 text-rose-800', badge: 'bg-rose-600 text-white', icon: AlertCircle },

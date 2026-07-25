@@ -80,6 +80,7 @@ describe('Feature 5: Gamification & Engagement Integration Tests', () => {
       criteria: 'Check in for the first time',
       iconUrl: 'http://test.com/badge1.png',
     });
+    expect(stickerA.name).toBe('First Check-in Badge');
   });
 
   afterAll(async () => {

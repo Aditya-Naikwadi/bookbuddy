@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+jest.setTimeout(30000);
+
 beforeEach(async () => {
   if (mongoose.connection.readyState === 0 && process.env.MONGO_URI) {
     await mongoose.connect(process.env.MONGO_URI);

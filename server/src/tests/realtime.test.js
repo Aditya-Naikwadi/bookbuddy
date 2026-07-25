@@ -65,7 +65,11 @@ describe('Phase 5 — Real-Time, Gamification & Notifications Integration Tests'
 
     // Seed Colleges
     collegeA = await College.create({ name: 'Realtime College A', code: 'RCA' });
-    collegeB = await College.create({ name: 'Realtime College B', code: 'RCB' });
+    collegeB = await College.create({
+      name: 'Realtime College B',
+      code: 'RTCB',
+    });
+    expect(collegeB.code).toBe('RTCB');
 
     // Seed Admin
     adminA = await User.create({
@@ -195,6 +199,7 @@ describe('Phase 5 — Real-Time, Gamification & Notifications Integration Tests'
         rewardType: 'badge',
         rewardValue: sticker._id.toString(),
       });
+      expect(reward.milestoneThreshold).toBe(7);
 
       const studentAStreak = await Streak.findOne({ userId: studentA._id });
       // Artificially modify streak to 6 days

@@ -95,8 +95,31 @@ const requireRole = (...allowedRoles) => {
   };
 };
 
+const optionalAuth = async (req, res, next) => {
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    try {
+      const token = req.headers.authorization.split(' ')[1];
+      const decoded = verifyAccessToken(token);
+      const user = await User.findById(decoded.sub).select('isActive role collegeId');
+      if (user && user.isActive) {
+        req.user = {
+          id: user._id.toString(),
+          _id: user._id,
+          role: user.role,
+          collegeId: user.collegeId ? user.collegeId.toString() : null,
+        };
+      }
+    } catch {
+      // Ignore token verification errors for optional auth
+    }
+  }
+  next();
+};
+
 module.exports = {
   protect,
+  requireAuth: protect,
   requireRole,
+  optionalAuth,
   restrictTo: requireRole, // Alias for backward compatibility
 };

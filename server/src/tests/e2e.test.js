@@ -60,6 +60,8 @@ describe('Phase 8 — End-to-End User Journeys Integration Test', () => {
       collegeId: college._id,
     });
 
+    expect(adminUser.role).toBe('college-admin');
+
     // Login Admin to get token
     const adminLoginRes = await request(app)
       .post('/api/auth/login')
@@ -88,6 +90,7 @@ describe('Phase 8 — End-to-End User Journeys Integration Test', () => {
       password: 'password123',
       collegeId: college._id.toString(),
     });
+    expect(studentRegRes.status).toBe(201);
 
     // Login Student
     const studentLoginRes = await request(app)

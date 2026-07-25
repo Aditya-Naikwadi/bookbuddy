@@ -1,17 +1,17 @@
-// Controller handling authentication lifecycles (register, login, token refresh, and logout).
 const User = require('../models/User');
 const College = require('../models/College');
-const RefreshToken = require('../models/RefreshToken');
 const AppError = require('../utils/AppError');
-const { generateTokenPair, hashToken } = require('../utils/token');
 const { getAuthCookieOptions } = require('../utils/cookieOptions');
+const sessionService = require('../services/sessionService');
 
-// Helper to set httpOnly refresh token cookie
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+// Helper to set httpOnly 30-day refresh token cookie
 const setRefreshTokenCookie = (res, token, req = null) => {
   const opts = getAuthCookieOptions(req, {
     httpOnly: true,
     path: '/',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: THIRTY_DAYS_MS,
   });
   res.cookie('refreshToken', token, opts);
 };
@@ -61,15 +61,10 @@ const registerUser = async (req, res, next) => {
       collegeId: role === 'super-admin' ? undefined : collegeId,
     });
 
-    const { accessToken, refreshToken, hash } = generateTokenPair(user);
+    const deviceInfo = req.headers['user-agent'] || 'Web Browser';
+    const { accessToken, refreshToken } = await sessionService.createSession({ user, deviceInfo });
 
-    await RefreshToken.create({
-      userId: user._id,
-      tokenHash: hash,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
-
-    setRefreshTokenCookie(res, refreshToken);
+    setRefreshTokenCookie(res, refreshToken, req);
 
     res.status(201).json({
       success: true,
@@ -93,7 +88,8 @@ const registerUser = async (req, res, next) => {
 // @access  Public
 const loginUser = async (req, res, next) => {
   try {
-    const { email, studentId, password } = req.body;
+    const { consumeFailedLogin, resetFailedLogins } = require('../middlewares/loginRateLimiter');
+    const { email, studentId, password, totpCode } = req.body;
     const credential = email || studentId;
     const normalizedEmail = email
       ? email.trim().toLowerCase()
@@ -103,30 +99,54 @@ const loginUser = async (req, res, next) => {
 
     const user = await User.findOne({
       $or: [{ email: normalizedEmail }, { email: credential }, { studentId: credential }],
-    }).select('+password');
+    }).select('+password +mfaSecret');
 
     if (!user) {
+      await consumeFailedLogin(req);
       return next(new AppError('Invalid credentials.', 401));
     }
 
     if (!user.isActive) {
+      await consumeFailedLogin(req);
       return next(new AppError('Your account has been deactivated.', 401));
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      await consumeFailedLogin(req);
       return next(new AppError('Invalid credentials.', 401));
     }
 
-    const { accessToken, refreshToken, hash } = generateTokenPair(user);
+    // TOTP MFA verification for enabled users or college-admin accounts
+    if (user.isMfaEnabled && user.mfaSecret) {
+      if (!totpCode) {
+        return res.status(401).json({
+          success: false,
+          mfaRequired: true,
+          message: 'Multi-factor authentication code required.',
+        });
+      }
 
-    await RefreshToken.create({
-      userId: user._id,
-      tokenHash: hash,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
+      const speakeasy = require('speakeasy');
+      const isValidTotp = speakeasy.totp.verify({
+        secret: user.mfaSecret,
+        encoding: 'base32',
+        token: totpCode,
+        window: 2,
+      });
 
-    setRefreshTokenCookie(res, refreshToken);
+      if (!isValidTotp) {
+        await consumeFailedLogin(req);
+        return next(new AppError('Invalid MFA verification code.', 401));
+      }
+    }
+
+    await resetFailedLogins(req);
+
+    const deviceInfo = req.headers['user-agent'] || 'Web Browser';
+    const { accessToken, refreshToken } = await sessionService.createSession({ user, deviceInfo });
+
+    setRefreshTokenCookie(res, refreshToken, req);
 
     res.json({
       success: true,
@@ -137,6 +157,7 @@ const loginUser = async (req, res, next) => {
         email: user.email,
         role: user.role,
         collegeId: user.collegeId,
+        isMfaEnabled: !!user.isMfaEnabled,
       },
       accessToken,
     });
@@ -156,62 +177,22 @@ const refreshToken = async (req, res, next) => {
       return next(new AppError('No refresh token provided.', 401));
     }
 
-    const clientHash = hashToken(clientToken);
+    const deviceInfo = req.headers['user-agent'] || 'Web Browser';
 
-    const existingTokenDoc = await RefreshToken.findOne({ tokenHash: clientHash }).select(
-      '+tokenHash'
-    );
+    try {
+      const result = await sessionService.rotateSession(clientToken, deviceInfo);
 
-    if (!existingTokenDoc) {
-      clearRefreshTokenCookie(res);
-      return next(new AppError('Invalid or expired refresh token.', 401));
+      setRefreshTokenCookie(res, result.refreshToken, req);
+
+      res.json({
+        success: true,
+        accessToken: result.accessToken,
+        user: result.user,
+      });
+    } catch (sessionErr) {
+      clearRefreshTokenCookie(res, req);
+      throw sessionErr;
     }
-
-    // THEFT DETECTION: If token doc was already revoked (reused revoked token)
-    if (existingTokenDoc.revokedAt) {
-      // Revoke ALL sessions for this user!
-      await RefreshToken.updateMany({ userId: existingTokenDoc.userId }, { revokedAt: new Date() });
-
-      clearRefreshTokenCookie(res);
-      return next(
-        new AppError('Security Warning: Session reuse detected. All sessions revoked.', 401)
-      );
-    }
-
-    // Expiration check
-    if (existingTokenDoc.expiresAt < new Date()) {
-      existingTokenDoc.revokedAt = new Date();
-      await existingTokenDoc.save();
-
-      clearRefreshTokenCookie(res);
-      return next(new AppError('Refresh token expired.', 401));
-    }
-
-    const user = await User.findById(existingTokenDoc.userId).select('+isActive');
-    if (!user || !user.isActive) {
-      clearRefreshTokenCookie(res);
-      return next(new AppError('User is deactivated or does not exist.', 401));
-    }
-
-    // ROTATION: Revoke current token and record replacement
-    const { accessToken, refreshToken: newRefreshToken, hash: newHash } = generateTokenPair(user);
-
-    existingTokenDoc.revokedAt = new Date();
-    existingTokenDoc.replacedBy = newHash;
-    await existingTokenDoc.save();
-
-    await RefreshToken.create({
-      userId: user._id,
-      tokenHash: newHash,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
-
-    setRefreshTokenCookie(res, newRefreshToken);
-
-    res.json({
-      success: true,
-      accessToken,
-    });
   } catch (error) {
     next(error);
   }
@@ -227,16 +208,15 @@ const logoutUser = async (req, res, next) => {
 
     if (allDevices && (req.user?._id || req.user?.id)) {
       const userId = req.user._id || req.user.id;
-      await RefreshToken.updateMany({ userId, revokedAt: null }, { revokedAt: new Date() });
+      await sessionService.revokeAllSessionsForUser(userId);
     } else if (clientToken) {
-      const clientHash = hashToken(clientToken);
-      await RefreshToken.updateOne({ tokenHash: clientHash }, { revokedAt: new Date() });
+      await sessionService.revokeSession(clientToken);
     } else if (req.user?._id || req.user?.id) {
       const userId = req.user._id || req.user.id;
-      await RefreshToken.updateMany({ userId, revokedAt: null }, { revokedAt: new Date() });
+      await sessionService.revokeAllSessionsForUser(userId);
     }
 
-    clearRefreshTokenCookie(res);
+    clearRefreshTokenCookie(res, req);
 
     res.json({
       success: true,
@@ -265,10 +245,86 @@ const getUserProfile = async (req, res, next) => {
   }
 };
 
+// @desc    Setup TOTP MFA for user
+// @route   POST /api/auth/mfa/setup
+// @access  Private
+const setupMfa = async (req, res, next) => {
+  try {
+    const speakeasy = require('speakeasy');
+    const QRCode = require('qrcode');
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return next(new AppError('User not found.', 404));
+    }
+
+    const secret = speakeasy.generateSecret({
+      length: 20,
+      name: `BookBuddy (${user.email})`,
+      issuer: 'BookBuddy',
+    });
+
+    const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url);
+
+    user.mfaSecret = secret.base32;
+    await user.save();
+
+    res.json({
+      success: true,
+      secret: secret.base32,
+      qrCodeUrl,
+      message: 'Scan the QR code with an authenticator app (Google Authenticator, Authy, etc.).',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Verify TOTP MFA and enable it on user account
+// @route   POST /api/auth/mfa/verify
+// @access  Private
+const verifyMfa = async (req, res, next) => {
+  try {
+    const { totpCode } = req.body;
+    if (!totpCode) {
+      return next(new AppError('TOTP verification code is required.', 400));
+    }
+
+    const user = await User.findById(req.user.id).select('+mfaSecret');
+    if (!user || !user.mfaSecret) {
+      return next(new AppError('MFA setup missing. Please setup MFA first.', 400));
+    }
+
+    const speakeasy = require('speakeasy');
+    const isValid = speakeasy.totp.verify({
+      secret: user.mfaSecret,
+      encoding: 'base32',
+      token: totpCode,
+      window: 2,
+    });
+
+    if (!isValid) {
+      return next(new AppError('Invalid verification code.', 400));
+    }
+
+    user.isMfaEnabled = true;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'MFA enabled successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   refreshToken,
   logoutUser,
   getUserProfile,
+  setupMfa,
+  verifyMfa,
 };

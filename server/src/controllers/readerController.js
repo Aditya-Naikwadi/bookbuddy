@@ -126,6 +126,9 @@ const uploadEbook = async (req, res, next) => {
  */
 const streamEbookContent = async (req, res, next) => {
   try {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
+
     const { resourceId } = req.params;
     const { format = 'epub' } = req.query;
 
@@ -156,6 +159,11 @@ const streamEbookContent = async (req, res, next) => {
       if (req.headers.range) {
         headers.range = req.headers.range;
       }
+
+      // Strictly backend-controlled headers to block scripting attacks
+      res.setHeader('Content-Type', format === 'epub' ? 'application/epub+zip' : 'text/plain');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
 
       let currentUrl = targetUrl;
       let response;
@@ -197,11 +205,6 @@ const streamEbookContent = async (req, res, next) => {
       if (response.headers['content-length']) {
         res.setHeader('Content-Length', response.headers['content-length']);
       }
-
-      // Strictly backend-controlled headers to block scripting attacks
-      res.setHeader('Content-Type', format === 'epub' ? 'application/epub+zip' : 'text/plain');
-      res.setHeader('X-Content-Type-Options', 'nosniff');
-      res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
 
       response.data.pipe(res);
     } else {

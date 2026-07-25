@@ -47,3 +47,7 @@ coverage/
 
 # Vite specific
 .vite/
+
+# Server uploads and backups
+server/uploads/
+server/backups/
