@@ -16,6 +16,7 @@ import StickyControlBar from '../../../components/general/StickyControlBar';
 import StatSummaryStrip from '../../../components/general/StatSummaryStrip';
 import VirtualizedCardGrid from '../../../components/general/VirtualizedCardGrid';
 import ActiveFilterChips from '../../../components/general/ActiveFilterChips';
+import DigitalReaderModal from '../../../components/general/DigitalReaderModal';
 
 import apiClient from '../../../api/client';
 
@@ -45,6 +46,7 @@ const GeneralEResources = () => {
   const [loading, setLoading] = useState(false);
   const [dbResources, setDbResources] = useState([]);
   const [apiEbooks, setApiEbooks] = useState([]);
+  const [activeDigitalResource, setActiveDigitalResource] = useState(null);
 
   // Fetch e-resources from MongoDB API
   useEffect(() => {
@@ -293,21 +295,44 @@ const GeneralEResources = () => {
 
                 <button
                   onClick={() => {
-                    if (item.gutenbergId) {
+                    const url =
+                      item.fileUrl ||
+                      (item.gutenbergId
+                        ? `https://www.gutenberg.org/files/${item.gutenbergId}/${item.gutenbergId}-h/${item.gutenbergId}-h.htm`
+                        : null);
+                    if (url) {
+                      setActiveDigitalResource({
+                        title: item.title,
+                        fileUrl: url,
+                        fileType: item.format || 'pdf',
+                      });
+                    } else if (item.gutenbergId) {
                       window.open(`https://www.gutenberg.org/ebooks/${item.gutenbergId}`, '_blank');
                     } else {
-                      alert(`Opening public access document: ${item.title}`);
+                      setActiveDigitalResource({
+                        title: item.title,
+                        fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+                        fileType: 'pdf',
+                      });
                     }
                   }}
-                  className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1 flex-shrink-0"
+                  className="px-3 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 font-bold text-xs rounded-xl transition-all flex items-center gap-1 flex-shrink-0 shadow-xs"
                 >
-                  <span>Read Publicly</span>
-                  <ExternalLink className="w-3 h-3" />
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Preview In-App</span>
                 </button>
               </div>
             </div>
           );
         }}
+      />
+
+      <DigitalReaderModal
+        isOpen={Boolean(activeDigitalResource)}
+        onClose={() => setActiveDigitalResource(null)}
+        fileUrl={activeDigitalResource?.fileUrl}
+        fileType={activeDigitalResource?.fileType || 'pdf'}
+        title={activeDigitalResource?.title}
       />
     </div>
   );

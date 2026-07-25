@@ -17,6 +17,7 @@ import ActiveFilterChips from '../../../components/general/ActiveFilterChips';
 import StatSummaryStrip from '../../../components/general/StatSummaryStrip';
 import VirtualizedCardGrid from '../../../components/general/VirtualizedCardGrid';
 import MobileFilterSheet from '../../../components/general/MobileFilterSheet';
+import DigitalReaderModal from '../../../components/general/DigitalReaderModal';
 import useAuthStore from '../../../store/authStore';
 import { useBookSearch } from '../../../hooks/useBookData';
 import BookDataState from '../../../components/common/BookDataState';
@@ -60,6 +61,7 @@ const GeneralSearch = () => {
   const [showFiltersSheet, setShowFiltersSheet] = useState(false);
   const [genreSearch, setGenreSearch] = useState('');
   const [selectedLocationBook, setSelectedLocationBook] = useState(null);
+  const [activeDigitalBook, setActiveDigitalBook] = useState(null);
 
   // Debounce search query changes (~300ms)
   useEffect(() => {
@@ -252,6 +254,7 @@ const GeneralSearch = () => {
               isBookmarked={isBookmarked(book._id || book.id)}
               onToggleBookmark={toggleBookmark}
               onViewLocation={(b) => setSelectedLocationBook(b)}
+              onReadOnline={(b) => setActiveDigitalBook(b)}
             />
           )}
         />
@@ -265,6 +268,14 @@ const GeneralSearch = () => {
       >
         {filterContent}
       </MobileFilterSheet>
+
+      <DigitalReaderModal
+        isOpen={Boolean(activeDigitalBook)}
+        onClose={() => setActiveDigitalBook(null)}
+        fileUrl={activeDigitalBook?.fileUrl}
+        fileType={activeDigitalBook?.fileType || activeDigitalBook?.format || 'pdf'}
+        title={activeDigitalBook?.title}
+      />
 
       {selectedLocationBook && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">

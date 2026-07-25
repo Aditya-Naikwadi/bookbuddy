@@ -22,7 +22,7 @@ import useAuthStore from '../../../store/authStore';
 import SparklineChart from '../../../components/general/SparklineChart';
 import DonutChart from '../../../components/general/DonutChart';
 import AnnouncementTicker from '../../../components/general/AnnouncementTicker';
-import { useBookStats, useNewArrivals, useBookSearch } from '../../../hooks/useBookData';
+import { useGeneralDashboard } from '../../../hooks/useBookData';
 import BookDataState from '../../../components/common/BookDataState';
 import BookCoverImage from '../../../components/common/BookCoverImage';
 import DashboardErrorBoundary from '../../../components/common/DashboardErrorBoundary';
@@ -44,43 +44,29 @@ const GeneralDashboardHome = () => {
     initWebVitalsTelemetry('GeneralDashboard');
   }, []);
 
-  // Shared Data Layer React Query Hooks
+  // Consolidated Data Layer Hook (Single 1 Network Round-Trip)
   const {
-    data: stats,
-    isLoading: statsLoading,
-    isError: statsError,
-    refetch: refetchStats,
-  } = useBookStats(collegeId);
+    data: dashboardPayload,
+    isLoading,
+    isError,
+    error,
+    refetch: handleRefresh,
+  } = useGeneralDashboard(collegeId);
 
-  const {
-    data: newArrivals = [],
-    isLoading: arrivalsLoading,
-    isError: arrivalsError,
-    refetch: refetchArrivals,
-  } = useNewArrivals(collegeId, 6);
+  const stats = dashboardPayload?.stats || null;
+  const newArrivals = dashboardPayload?.newArrivals || [];
+  const popularBooks = dashboardPayload?.popularBooks || [];
+  const announcements = dashboardPayload?.announcements || [];
+  const libraryHours = dashboardPayload?.librarySettings || {
+    openingHour: '08:00 AM',
+    closingHour: '10:00 PM',
+    isClosedToday: false,
+  };
 
-  const {
-    data: popularSearchData,
-    isLoading: popularLoading,
-    isError: popularError,
-    refetch: refetchPopular,
-  } = useBookSearch(collegeId, { limit: 8, sortBy: 'available' });
-
-  const popularBooks = popularSearchData?.books || [];
-
-  const [announcements] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
-
-  const isLoading = statsLoading || arrivalsLoading || popularLoading;
-
-  const handleRefresh = () => {
-    refetchStats();
-    refetchArrivals();
-    refetchPopular();
-  };
 
   const scrollCarousel = (direction) => {
     if (carouselRef.current) {
@@ -104,8 +90,7 @@ const GeneralDashboardHome = () => {
         .slice(0, 5)
     : [];
 
-  // Library hours calculation
-  const libraryHours = { openingHour: '08:00 AM', closingHour: '10:00 PM', isClosedToday: false };
+  // Library hours progress calculation
   const now = new Date();
   const currentHour = now.getHours() + now.getMinutes() / 60;
   const startHour = 8;
@@ -298,9 +283,9 @@ const GeneralDashboardHome = () => {
             {/* Total Books Stat + Sparkline */}
             <DashboardErrorBoundary widgetName="Catalog Metrics">
               <BookDataState
-                isLoading={statsLoading}
-                isError={statsError}
-                onRetry={refetchStats}
+                isLoading={isLoading}
+                isError={isError}
+                onRetry={handleRefresh}
               >
                 <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
                   <div>
@@ -320,9 +305,9 @@ const GeneralDashboardHome = () => {
             {/* New Arrivals Row Card */}
             <DashboardErrorBoundary widgetName="New Arrivals">
               <BookDataState
-                isLoading={arrivalsLoading}
-                isError={arrivalsError}
-                onRetry={refetchArrivals}
+                isLoading={isLoading}
+                isError={isError}
+                onRetry={handleRefresh}
               >
                 <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
@@ -363,7 +348,7 @@ const GeneralDashboardHome = () => {
 
             {/* Category Breakdown Donut Chart */}
             <DashboardErrorBoundary widgetName="Category Breakdown">
-              <BookDataState isLoading={statsLoading} isError={statsError}>
+              <BookDataState isLoading={isLoading} isError={isError} onRetry={handleRefresh}>
                 <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm flex-1 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-slate-900">{t('categoryDistribution')}</span>
@@ -457,9 +442,9 @@ const GeneralDashboardHome = () => {
 
               {/* Carousel Scroll Container */}
               <BookDataState
-                isLoading={popularLoading}
-                isError={popularError}
-                onRetry={refetchPopular}
+                isLoading={isLoading}
+                isError={isError}
+                onRetry={handleRefresh}
                 isEmpty={popularBooks.length === 0}
               >
                 <div

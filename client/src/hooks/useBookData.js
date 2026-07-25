@@ -42,6 +42,29 @@ export const useBookRealtimeSync = (collegeIdParam) => {
 };
 
 /**
+ * Single aggregated General Dashboard hook (1 network round-trip)
+ */
+export const useGeneralDashboard = (collegeIdParam) => {
+  const collegeId = getEffectiveCollegeId(collegeIdParam);
+  useBookRealtimeSync(collegeId);
+
+  return useQuery({
+    queryKey: ['generalDashboard', collegeId],
+    queryFn: async () => {
+      const endpoint =
+        collegeId && collegeId !== 'default'
+          ? `/dashboards/general/${collegeId}/dashboard`
+          : `/dashboards/general/home-data`;
+      const { data } = await apiClient.get(endpoint);
+      return data?.data || null;
+    },
+    enabled: Boolean(collegeId),
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 60 * 1000,
+  });
+};
+
+/**
  * 1. Hook for fetching cached catalog statistics for a college
  */
 export const useBookStats = (collegeIdParam) => {

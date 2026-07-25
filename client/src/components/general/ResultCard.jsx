@@ -23,6 +23,7 @@ const ResultCard = ({
   onToggleBookmark,
   isBookmarked = false,
   onViewLocation,
+  onReadOnline,
   loading = false,
 }) => {
   if (loading) {
@@ -43,6 +44,7 @@ const ResultCard = ({
   const statusKey = book.availabilityStatus || (book.availableCopies > 0 ? 'Available' : 'Checked Out');
   const status = availabilityConfig[statusKey] || availabilityConfig.Available;
   const StatusIcon = status.icon;
+  const digitalFileUrl = book.fileUrl || book.downloadUrl || book.pdfUrl || book.epubUrl;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col group relative">
@@ -103,20 +105,23 @@ const ResultCard = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-auto">
-          {book.location && (
-            <span className="text-[11px] text-slate-500 font-medium flex items-center gap-1 line-clamp-1">
-              <MapPin className="w-3 h-3 text-slate-400 flex-shrink-0" />
-              {book.location}
-            </span>
+        <div className="pt-3 border-t border-slate-100 flex items-center gap-2 mt-auto">
+          {digitalFileUrl && (
+            <button
+              onClick={() => onReadOnline && onReadOnline({ ...book, fileUrl: digitalFileUrl })}
+              className="flex-1 text-xs font-bold py-2 px-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-all flex items-center justify-center gap-1 shadow-xs"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Read Online</span>
+            </button>
           )}
 
           <button
             onClick={() => onViewLocation && onViewLocation(book)}
-            className="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-200/80 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-all flex items-center justify-center gap-1.5"
+            className={`${digitalFileUrl ? 'w-auto' : 'w-full'} text-xs font-semibold py-2 px-3 rounded-xl border border-slate-200/80 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-all flex items-center justify-center gap-1.5`}
           >
             <MapPin className="w-3.5 h-3.5" />
-            <span>Locate Shelf</span>
+            <span>{digitalFileUrl ? 'Locate' : 'Locate Shelf'}</span>
           </button>
         </div>
       </div>
