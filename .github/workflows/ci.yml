@@ -28,7 +28,7 @@ jobs:
       - name: Install Server Dependencies
         run: |
           cd server
-          npm install --legacy-peer-deps
+          npm ci --legacy-peer-deps
 
       - name: Run Linter
         run: |
@@ -69,7 +69,7 @@ jobs:
       - name: Install Client & Build Check
         run: |
           cd client
-          npm install --legacy-peer-deps
+          npm ci --legacy-peer-deps
           npm run build
 
   deploy:
