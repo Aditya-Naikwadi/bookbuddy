@@ -733,7 +733,20 @@ const approveTenantOnboarding = async (req, res, next) => {
 
       const createdAdmin = newAdminDocs[0];
 
-      // 3. Mark RegistrationRequest as approved
+      // 3. Initialize CollegeFeatureConfig with selected registration services
+      const CollegeFeatureConfig = require('../../models/CollegeFeatureConfig');
+      await CollegeFeatureConfig.create(
+        [
+          {
+            collegeId: createdCollege._id,
+            enabledFeatures: activeServices,
+            pendingRequests: [],
+          },
+        ],
+        { session }
+      );
+
+      // 4. Mark RegistrationRequest as approved
       regRequest.status = 'approved';
       regRequest.reviewedAt = new Date();
       regRequest.reviewedBy = req.user.id;

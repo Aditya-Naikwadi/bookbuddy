@@ -20,7 +20,9 @@ import {
   CheckCircle2,
   Layers,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import useAuthStore from "../../../store/authStore";
+import featureApi from "../../../api/featureApi";
 import {
   FEATURE_REGISTRY,
   getEnabledFeaturesList,
@@ -31,25 +33,41 @@ export default function CollegeAdminDashboardHome() {
   const { user, updateUser } = useAuthStore();
   const navigate = useNavigate();
 
-  // College Profile & Features state
-  const collegeProfile = user?.collegeProfile || {
-    name: user?.collegeName || "Stanford University",
-    shortName: "Stanford",
-    slug: "stanford-univ",
-    enabledFeatures: [
+  // Fetch College Feature Config (Selected features from registration/onboarding)
+  const { data: configData } = useQuery({
+    queryKey: ["myCollegeConfig", user?.collegeId],
+    queryFn: () => featureApi.getCollegeFeatures(),
+    enabled: !!user,
+  });
+
+  const rawFeatures =
+    configData?.enabledFeatures ||
+    user?.collegeProfile?.enabledFeatures ||
+    user?.enabledFeatures || [
       "catalog",
       "patrons",
       "loans",
       "fines",
       "e-resources",
       "reading-lists",
-    ],
+    ];
+
+  const collegeProfile = {
+    name:
+      configData?.college?.name ||
+      user?.collegeProfile?.name ||
+      user?.collegeName ||
+      "Institution Admin Console",
+    shortName:
+      configData?.college?.shortName ||
+      user?.collegeProfile?.shortName ||
+      "Institution",
+    slug: configData?.college?.slug || user?.collegeProfile?.slug || "college",
+    enabledFeatures: rawFeatures,
     isOnboarded: true,
   };
 
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(
-    !collegeProfile.isOnboarded,
-  );
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const enabledIds = getEnabledFeaturesList(collegeProfile.enabledFeatures);
 
   const [activeModuleTab, setActiveModuleTab] = useState(

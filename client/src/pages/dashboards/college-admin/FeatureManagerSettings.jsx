@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Sliders,
@@ -12,7 +12,9 @@ import {
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import useAuthStore from "../../../store/authStore";
+import featureApi from "../../../api/featureApi";
 import {
   FEATURE_REGISTRY,
   FEATURE_CATEGORIES,
@@ -23,21 +25,43 @@ export default function FeatureManagerSettings() {
   const { user, updateUser } = useAuthStore();
   const navigate = useNavigate();
 
-  const collegeProfile = user?.collegeProfile || {
-    name: user?.collegeName || "Stanford University",
-    enabledFeatures: [
+  const { data: configData, refetch } = useQuery({
+    queryKey: ["myCollegeConfig", user?.collegeId],
+    queryFn: () => featureApi.getCollegeFeatures(),
+    enabled: !!user,
+  });
+
+  const rawFeatures =
+    configData?.enabledFeatures ||
+    user?.collegeProfile?.enabledFeatures || [
       "catalog",
       "patrons",
       "loans",
       "fines",
       "e-resources",
       "reading-lists",
-    ],
+    ];
+
+  const collegeProfile = {
+    name:
+      configData?.college?.name ||
+      user?.collegeProfile?.name ||
+      user?.collegeName ||
+      "Institution Admin",
+    enabledFeatures: rawFeatures,
   };
 
   const [enabledFeatures, setEnabledFeatures] = useState(
     () => new Set(getEnabledFeaturesList(collegeProfile.enabledFeatures)),
   );
+
+  useEffect(() => {
+    if (configData?.enabledFeatures) {
+      setEnabledFeatures(
+        new Set(getEnabledFeaturesList(configData.enabledFeatures)),
+      );
+    }
+  }, [configData]);
 
   const [pendingApprovalSet, setPendingApprovalSet] = useState(
     new Set(["leaderboards"]),
@@ -77,8 +101,11 @@ export default function FeatureManagerSettings() {
     setPendingApprovalSet(nextPending);
   };
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
     const updatedFeaturesArray = Array.from(enabledFeatures);
+    await featureApi.updateCollegeFeatures(updatedFeaturesArray);
+    refetch();
+
     const updatedProfile = {
       ...collegeProfile,
       enabledFeatures: updatedFeaturesArray,

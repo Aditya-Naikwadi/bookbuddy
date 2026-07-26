@@ -29,17 +29,24 @@ const getMyCollegeConfig = catchAsync(async (req, res, next) => {
   const collegeId = req.tenantId || req.user.collegeId;
 
   const college = await College.findById(collegeId)
-    .select('name slug domainWhitelist logoUrl status')
+    .select('name shortName slug domain domainWhitelist logoUrl status enabledFeatures selectedServices')
     .lean();
   if (!college) {
     return next(new AppError('College institution record not found', 404));
   }
 
+  const initialFeatures =
+    Array.isArray(college.enabledFeatures) && college.enabledFeatures.length > 0
+      ? college.enabledFeatures
+      : Array.isArray(college.selectedServices) && college.selectedServices.length > 0
+      ? college.selectedServices
+      : DEFAULT_STUDENT_FEATURES;
+
   let config = await CollegeFeatureConfig.findOne({ collegeId }).lean();
   if (!config) {
     config = await CollegeFeatureConfig.create({
       collegeId,
-      enabledFeatures: DEFAULT_STUDENT_FEATURES,
+      enabledFeatures: initialFeatures,
       pendingRequests: [],
     });
     config = config.toObject();
@@ -49,7 +56,7 @@ const getMyCollegeConfig = catchAsync(async (req, res, next) => {
     success: true,
     data: {
       college,
-      enabledFeatures: config.enabledFeatures || DEFAULT_STUDENT_FEATURES,
+      enabledFeatures: config.enabledFeatures || initialFeatures,
       pendingRequests: config.pendingRequests || [],
       customSettings: config.customSettings || {},
     },
@@ -63,24 +70,45 @@ const getMyCollegeConfig = catchAsync(async (req, res, next) => {
  */
 const enableOrRequestFeature = catchAsync(async (req, res, next) => {
   const collegeId = req.tenantId || req.user.collegeId;
-  const { featureId, reason } = req.body;
+  const { featureId, enabledFeatures: bulkFeatures, reason } = req.body;
+
+  let config = await CollegeFeatureConfig.findOne({ collegeId });
+  if (!config) {
+    const college = await College.findById(collegeId).select('enabledFeatures selectedServices').lean();
+    const initial = (college && college.enabledFeatures && college.enabledFeatures.length > 0)
+      ? college.enabledFeatures
+      : (college && college.selectedServices && college.selectedServices.length > 0)
+      ? college.selectedServices
+      : DEFAULT_STUDENT_FEATURES;
+
+    config = new CollegeFeatureConfig({
+      collegeId,
+      enabledFeatures: initial,
+      pendingRequests: [],
+    });
+  }
+
+  // Handle bulk feature set update if enabledFeatures array is provided
+  if (Array.isArray(bulkFeatures)) {
+    config.enabledFeatures = bulkFeatures;
+    await config.save();
+    await College.findByIdAndUpdate(collegeId, { enabledFeatures: bulkFeatures, selectedServices: bulkFeatures }).catch(() => {});
+
+    return res.json({
+      success: true,
+      status: 'updated',
+      message: 'Feature configuration updated successfully.',
+      data: config,
+    });
+  }
 
   if (!featureId) {
-    return next(new AppError('Feature ID is required', 400));
+    return next(new AppError('Feature ID or enabledFeatures array is required', 400));
   }
 
   // Check FeatureCatalog if defined, default to self-serve if absent
   const catalogItem = await FeatureCatalog.findOne({ featureId: featureId.toLowerCase() }).lean();
   const requiresApproval = catalogItem ? catalogItem.requiresApproval : false;
-
-  let config = await CollegeFeatureConfig.findOne({ collegeId });
-  if (!config) {
-    config = new CollegeFeatureConfig({
-      collegeId,
-      enabledFeatures: DEFAULT_STUDENT_FEATURES,
-      pendingRequests: [],
-    });
-  }
 
   if (config.enabledFeatures.includes(featureId)) {
     return res.json({
@@ -110,13 +138,7 @@ const enableOrRequestFeature = catchAsync(async (req, res, next) => {
     // Self-serve activation
     config.enabledFeatures.push(featureId);
     await config.save();
-
-    // Invalidate Redis Cache
-    try {
-      await redisClient.del(`college:features:${collegeId}`);
-    } catch (err) {
-      // Ignore cache clear error
-    }
+    await College.findByIdAndUpdate(collegeId, { $addToSet: { enabledFeatures: featureId } }).catch(() => {});
 
     return res.json({
       success: true,

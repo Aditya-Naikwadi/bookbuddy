@@ -110,17 +110,15 @@ export const featureApi = {
     }
   },
 
-  // GET /api/college/:id/features or /api/colleges/my-features
-  getCollegeFeatures: async (collegeId = "current") => {
+  // GET /api/colleges/my-config
+  getCollegeFeatures: async () => {
     try {
-      const { data } = await apiClient.get(`/college/${collegeId}/features`);
+      const { data } = await apiClient.get("/colleges/my-config");
       return data.data || data;
     } catch (err) {
-      console.warn(
-        "Backend unavailable, using default college enabled features:",
-        err,
-      );
+      console.warn("Backend /colleges/my-config unavailable:", err);
       return {
+        college: { name: "Campus Library" },
         enabledFeatures: [
           "catalog",
           "loans",
@@ -128,18 +126,21 @@ export const featureApi = {
           "patron-card",
           "e-resources",
           "reading-lists",
-          "recommendations",
-          "gamification",
-          "saved",
-          "facilities",
-          "support",
-          "analytics",
         ],
-        limits: {
-          maxStudents: 5000,
-          storageGb: 50,
-        },
       };
+    }
+  },
+
+  // POST /api/colleges/features/enable
+  updateCollegeFeatures: async (enabledFeatures) => {
+    try {
+      const { data } = await apiClient.post("/colleges/features/enable", {
+        enabledFeatures,
+      });
+      return data.data || data;
+    } catch (err) {
+      console.warn("Backend update feature config call failed:", err);
+      return { enabledFeatures };
     }
   },
 
