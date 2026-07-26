@@ -1,402 +1,381 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
-  CheckCircle,
+  FileText,
+  CheckCircle2,
   XCircle,
-  RefreshCw,
-  Send,
+  Clock,
   Eye,
-  AlertTriangle,
+  ExternalLink,
+  Filter,
+  RefreshCw,
+  MessageSquare,
+  ShieldCheck,
+  Building2,
+  FileCheck,
+  ChevronRight,
 } from "lucide-react";
+import eresourcesApi from "../../../api/eresourcesApi";
 import adminApi from "../../../api/adminApi";
+import OpsHeader from "../../../components/ops/OpsHeader";
+import OpsSeverityBadge from "../../../components/ops/OpsSeverityBadge";
+import DigitalReaderModal from "../../../components/general/DigitalReaderModal";
 
-const GlobalContentModeration = () => {
-  const [activeTab, setActiveTab] = useState("pending"); // 'pending' or 'approved'
+export default function GlobalContentModeration() {
   const [resources, setResources] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Rejection dialog state
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [targetResourceId, setTargetResourceId] = useState(null);
-  const [rejectionNote, setRejectionNote] = useState("");
-
-  // Announcement states
-  const [announcementTitle, setAnnouncementTitle] = useState("");
-  const [announcementBody, setAnnouncementBody] = useState("");
-  const [announcementSeverity, setAnnouncementSeverity] = useState("info");
-
+  const [activeTab, setActiveTab] = useState("pending"); // 'pending' | 'history'
+  const [selectedResource, setSelectedResource] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [autoAdvance, setAutoAdvance] = useState(true);
   const [message, setMessage] = useState({ type: "", text: "" });
 
-  const fetchQueue = useCallback(async () => {
+  // Digital Reader Modal State
+  const [readerModalItem, setReaderModalItem] = useState(null);
+
+  const fetchModerationQueue = useCallback(async () => {
     try {
-      const response = await adminApi.getPendingModeration(1, 100, activeTab);
-      setResources(response.data || []);
+      setIsLoading(true);
+      const data = await eresourcesApi.getAllResources();
+      setResources(data || []);
     } catch (err) {
       console.error(err);
-      setMessage({ type: "error", text: "Failed to fetch moderation queue." });
+      setMessage({
+        type: "error",
+        text: "Failed to load e-resource moderation queue.",
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab]);
-
-  const handleRefresh = () => {
-    setIsLoading(true);
-    setMessage({ type: "", text: "" });
-    fetchQueue();
-  };
+  }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    Promise.resolve().then(() => {
-      if (isMounted) {
-        fetchQueue();
+    fetchModerationQueue();
+  }, [fetchModerationQueue]);
+
+  const pendingItems = resources.filter(
+    (r) => r.moderationStatus === "pending" || r.status === "pending_review" || !r.moderationStatus
+  );
+  const historyItems = resources.filter(
+    (r) => r.moderationStatus === "approved" || r.moderationStatus === "rejected"
+  );
+
+  const displayedItems = activeTab === "pending" ? pendingItems : historyItems;
+
+  const handleApprove = async (resourceId) => {
+    setIsSubmitting(true);
+    setMessage({ type: "", text: "" });
+    try {
+      if (adminApi.moderateEResource) {
+        await adminApi.moderateEResource(resourceId, {
+          status: "approved",
+          reason: "Content verified and approved for platform-wide library access.",
+        });
+      } else {
+        await eresourcesApi.updateResource(resourceId, {
+          moderationStatus: "approved",
+          isApproved: true,
+        });
       }
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, [fetchQueue]);
 
-  const handleApprove = async (id) => {
-    if (!window.confirm("Are you sure you want to approve this e-resource?"))
-      return;
-    try {
-      await adminApi.moderateResource(
-        id,
-        "approved",
-        "Approved by Super Admin",
-      );
-      setMessage({ type: "success", text: "Resource approved successfully." });
-      fetchQueue();
-    } catch (err) {
-      setMessage({
-        type: "error",
-        text: err.response?.data?.message || "Failed to approve resource.",
-      });
-    }
-  };
-
-  const handlePublish = async (id) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to publish this e-resource? It will become visible to all students immediately.",
-      )
-    )
-      return;
-    try {
-      await adminApi.publishResource(id);
-      setMessage({ type: "success", text: "Resource published successfully." });
-      fetchQueue();
-    } catch (err) {
-      setMessage({
-        type: "error",
-        text: err.response?.data?.message || "Failed to publish resource.",
-      });
-    }
-  };
-
-  const openRejectModal = (id) => {
-    setTargetResourceId(id);
-    setRejectionNote("");
-    setShowRejectModal(true);
-  };
-
-  const handleRejectSubmit = async (e) => {
-    e.preventDefault();
-    if (!rejectionNote.trim()) {
-      alert("Rejection note is required.");
-      return;
-    }
-    try {
-      await adminApi.moderateResource(
-        targetResourceId,
-        "rejected",
-        rejectionNote,
-      );
-      setMessage({ type: "success", text: "Resource rejected with feedback." });
-      setShowRejectModal(false);
-      fetchQueue();
-    } catch (err) {
-      setMessage({
-        type: "error",
-        text: err.response?.data?.message || "Failed to reject resource.",
-      });
-    }
-  };
-
-  const handlePublishAnnouncement = async (e) => {
-    e.preventDefault();
-    if (!announcementTitle.trim() || !announcementBody.trim()) {
-      alert("Announcement title and body are required.");
-      return;
-    }
-    // Simulate pushing announcement since it's a cross-cutting event logged in AuditLogs
-    try {
-      // Create a dummy request to trigger audit log (mocked announcement.create log)
-      // Since we don't have a direct database collection for announcements, we log this event in the system audit logs.
-      alert(
-        `Announcement published: "${announcementTitle}"\nThis action will be logged in the system Audit Trail.`,
-      );
-
-      setAnnouncementTitle("");
-      setAnnouncementBody("");
       setMessage({
         type: "success",
-        text: "Global announcement banner published successfully.",
+        text: "E-Resource approved successfully for platform distribution.",
       });
+
+      // Update local state
+      setResources((prev) =>
+        prev.map((r) => (r._id === resourceId ? { ...r, moderationStatus: "approved" } : r))
+      );
+
+      // Auto Advance to next pending item if enabled
+      if (autoAdvance) {
+        const remaining = pendingItems.filter((r) => r._id !== resourceId);
+        setSelectedResource(remaining[0] || null);
+      } else {
+        setSelectedResource(null);
+      }
     } catch (err) {
       setMessage({
         type: "error",
-        text: err.response?.data?.message || "Failed to publish announcement.",
+        text: err.response?.data?.message || "Failed to approve e-resource.",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const getMediaUrl = (url) => {
-    if (url.startsWith("/")) {
-      return `${import.meta.env.VITE_API_URL || "http://localhost:5000"}${url}`;
+  const handleReject = async (resourceId) => {
+    if (!rejectionReason.trim()) {
+      alert("Please provide a mandatory rejection reason.");
+      return;
     }
-    return url;
+
+    setIsSubmitting(true);
+    setMessage({ type: "", text: "" });
+    try {
+      if (adminApi.moderateEResource) {
+        await adminApi.moderateEResource(resourceId, {
+          status: "rejected",
+          reason: rejectionReason.trim(),
+        });
+      } else {
+        await eresourcesApi.updateResource(resourceId, {
+          moderationStatus: "rejected",
+          isApproved: false,
+          rejectionReason: rejectionReason.trim(),
+        });
+      }
+
+      setMessage({
+        type: "success",
+        text: "E-Resource rejected with reason logged.",
+      });
+
+      setResources((prev) =>
+        prev.map((r) =>
+          r._id === resourceId
+            ? { ...r, moderationStatus: "rejected", rejectionReason: rejectionReason.trim() }
+            : r
+        )
+      );
+
+      setRejectionReason("");
+
+      if (autoAdvance) {
+        const remaining = pendingItems.filter((r) => r._id !== resourceId);
+        setSelectedResource(remaining[0] || null);
+      } else {
+        setSelectedResource(null);
+      }
+    } catch (err) {
+      setMessage({
+        type: "error",
+        text: err.response?.data?.message || "Failed to reject e-resource.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-serif font-bold text-slate-900">
-            Global Content & Moderation
-          </h1>
-          <p className="text-slate-600">
-            Review E-Resources uploaded by colleges and verify content before
-            publishing.
-          </p>
-        </div>
-        <button
-          onClick={handleRefresh}
-          className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg border border-indigo-200 transition-colors flex items-center gap-2 font-medium text-sm"
-        >
-          <RefreshCw size={16} /> Refresh
-        </button>
-      </div>
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
+      <OpsHeader
+        title="MODULE 03 // E-RESOURCE CONTENT MODERATION QUEUE"
+        subtitle="Review, audit, and approve public e-resources before platform-wide publication"
+        onRefresh={fetchModerationQueue}
+        isRefreshing={isLoading}
+      />
 
-      {message.text && (
-        <div
-          className={`p-4 rounded-lg text-sm border flex items-center gap-2 ${
-            message.type === "error"
-              ? "bg-rose-50 border-rose-200 text-rose-800"
-              : "bg-emerald-50 border-emerald-200 text-emerald-800"
-          }`}
-        >
-          {message.type === "error" ? (
-            <XCircle size={18} />
-          ) : (
-            <CheckCircle size={18} />
-          )}
-          <span>{message.text}</span>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="flex border-b border-slate-200 gap-6">
-        <button
-          onClick={() => setActiveTab("pending")}
-          className={`pb-3 text-sm font-bold border-b-2 transition-colors ${
-            activeTab === "pending"
-              ? "border-indigo-600 text-indigo-600"
-              : "border-transparent text-slate-500 hover:text-slate-800"
-          }`}
-        >
-          Pending Review
-        </button>
-        <button
-          onClick={() => setActiveTab("approved")}
-          className={`pb-3 text-sm font-bold border-b-2 transition-colors ${
-            activeTab === "approved"
-              ? "border-indigo-600 text-indigo-600"
-              : "border-transparent text-slate-500 hover:text-slate-800"
-          }`}
-        >
-          Approved & Ready to Publish
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Resource List */}
-        <div className="lg:col-span-2 space-y-4">
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          ) : resources.length === 0 ? (
-            <div className="bg-white p-8 text-center rounded-xl border border-slate-200 text-slate-500">
-              No items in this queue.
-            </div>
-          ) : (
-            resources.map((resource) => (
-              <div
-                key={resource._id}
-                className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:shadow-xs transition-shadow"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-slate-900 text-md">
-                      {resource.title}
-                    </h3>
-                    <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase">
-                      {resource.type}
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-600">
-                    Author: {resource.author} | Category: {resource.category}
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    Uploaded by {resource.uploadedBy?.name || "Unknown"}{" "}
-                    (College: {resource.collegeId?.name || "Unknown"})
-                  </p>
-                </div>
-
-                <div className="flex gap-2 w-full md:w-auto">
-                  <a
-                    href={getMediaUrl(resource.fileUrl)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-50"
-                  >
-                    <Eye size={14} /> Preview
-                  </a>
-
-                  {activeTab === "pending" && (
-                    <>
-                      <button
-                        onClick={() => handleApprove(resource._id)}
-                        className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-emerald-700"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => openRejectModal(resource._id)}
-                        className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 bg-rose-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-rose-700"
-                      >
-                        Reject
-                      </button>
-                    </>
-                  )}
-
-                  {activeTab === "approved" && (
-                    <button
-                      onClick={() => handlePublish(resource._id)}
-                      className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-indigo-700"
-                    >
-                      Publish to Readers
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Global Announcements */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 h-fit space-y-4">
-          <div className="flex items-center gap-2 border-b pb-3">
-            <Send className="text-indigo-600" />
-            <h2 className="text-lg font-bold text-slate-900">
-              Push Global Notification
-            </h2>
-          </div>
-          <form onSubmit={handlePublishAnnouncement} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Announcement Title
-              </label>
-              <input
-                type="text"
-                value={announcementTitle}
-                onChange={(e) => setAnnouncementTitle(e.target.value)}
-                placeholder="e.g. Scheduled Maintenance"
-                className="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-indigo-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Message Body
-              </label>
-              <textarea
-                rows={3}
-                value={announcementBody}
-                onChange={(e) => setAnnouncementBody(e.target.value)}
-                placeholder="The system will be offline for 2 hours..."
-                className="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-indigo-500"
-                required
-              ></textarea>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Severity
-              </label>
-              <select
-                value={announcementSeverity}
-                onChange={(e) => setAnnouncementSeverity(e.target.value)}
-                className="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white outline-none focus:ring-1 focus:ring-indigo-500"
-              >
-                <option value="info">Information (Blue)</option>
-                <option value="warning">Warning (Yellow)</option>
-                <option value="critical">Critical Alert (Red)</option>
-              </select>
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-slate-900 text-white text-sm font-semibold py-2 rounded-lg hover:bg-slate-800 transition-colors"
-            >
-              Publish Banner
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6 font-mono">
+        {/* Status Alert Banner */}
+        {message.text && (
+          <div
+            className={`p-3 rounded-lg text-xs font-bold flex items-center justify-between border ${
+              message.type === "success"
+                ? "bg-emerald-950/60 border-emerald-700/60 text-emerald-300"
+                : "bg-rose-950/60 border-rose-700/60 text-rose-300"
+            }`}
+          >
+            <span>{message.text}</span>
+            <button onClick={() => setMessage({ type: "", text: "" })} className="hover:underline">
+              DISMISS
             </button>
-          </form>
-        </div>
-      </div>
+          </div>
+        )}
 
-      {/* Reject Modal */}
-      {showRejectModal && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-lg border max-w-md w-full p-6 space-y-4">
-            <div className="flex items-center gap-2 border-b pb-3 text-rose-600">
-              <AlertTriangle />
-              <h3 className="font-bold text-lg">Provide Rejection Reason</h3>
+        {/* Top Control Bar & Ergonomics Toggle */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab("pending")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 border ${
+                activeTab === "pending"
+                  ? "bg-indigo-950 border-indigo-600 text-indigo-200"
+                  : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <span>PENDING QUEUE</span>
+              <OpsSeverityBadge status="warning" label={String(pendingItems.length)} size="sm" />
+            </button>
+
+            <button
+              onClick={() => setActiveTab("history")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 border ${
+                activeTab === "history"
+                  ? "bg-indigo-950 border-indigo-600 text-indigo-200"
+                  : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <span>MODERATION HISTORY</span>
+              <span className="text-[10px] text-slate-500 font-bold">({historyItems.length})</span>
+            </button>
+          </div>
+
+          <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={autoAdvance}
+              onChange={(e) => setAutoAdvance(e.target.checked)}
+              className="rounded accent-indigo-600"
+            />
+            <span>Auto-advance to next item upon decision</span>
+          </label>
+        </div>
+
+        {/* Split-Pane Queue Interface */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Item Queue List */}
+          <div className="lg:col-span-5 space-y-3">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              {activeTab === "pending" ? "Pending Items Review Queue" : "Historical Moderation Decisions"}
+            </h3>
+
+            <div className="space-y-2 max-h-[640px] overflow-y-auto pr-1">
+              {displayedItems.length === 0 ? (
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 text-center text-slate-500 text-xs font-mono">
+                  Zero items match current moderation scope.
+                </div>
+              ) : (
+                displayedItems.map((item) => {
+                  const isSelected = selectedResource?._id === item._id;
+                  const status = item.moderationStatus || "pending";
+
+                  return (
+                    <div
+                      key={item._id}
+                      onClick={() => setSelectedResource(item)}
+                      className={`p-3.5 rounded-xl border cursor-pointer transition-all space-y-2 ${
+                        isSelected
+                          ? "bg-slate-900 border-indigo-500/80 shadow-lg shadow-indigo-950/50"
+                          : "bg-slate-900/60 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="font-bold text-xs text-white line-clamp-1">
+                          {item.title || "Untitled E-Resource"}
+                        </h4>
+                        <OpsSeverityBadge status={status} size="sm" />
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] text-slate-400">
+                        <span className="flex items-center gap-1 text-indigo-300">
+                          <Building2 className="w-3 h-3" />
+                          <span>{item.collegeName || "Institution Asset"}</span>
+                        </span>
+                        <span>FORMAT: {item.format || "PDF"}</span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
-            <p className="text-xs text-slate-500">
-              Please enter an explanation of why this resource is being
-              rejected. This feedback will be sent to the proposing college
-              administrator.
-            </p>
-            <form onSubmit={handleRejectSubmit} className="space-y-4">
-              <textarea
-                value={rejectionNote}
-                onChange={(e) => setRejectionNote(e.target.value)}
-                rows={4}
-                className="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-indigo-500"
-                placeholder="Content contains scanning defects or violates platform terms..."
-                required
-              ></textarea>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowRejectModal(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold"
-                >
-                  Confirm Reject
-                </button>
+          </div>
+
+          {/* Item Inspector & Decision Panel */}
+          <div className="lg:col-span-7">
+            {selectedResource ? (
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-5 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div>
+                    <span className="text-[10px] font-mono text-indigo-400 uppercase font-bold bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                      Content Inspection Panel
+                    </span>
+                    <h3 className="text-base font-bold text-white mt-1">
+                      {selectedResource.title}
+                    </h3>
+                  </div>
+                  <OpsSeverityBadge status={selectedResource.moderationStatus || "pending"} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="bg-slate-950 p-3 rounded border border-slate-800 space-y-1">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold">Category</span>
+                    <div className="text-slate-200">{selectedResource.category || "General Library"}</div>
+                  </div>
+                  <div className="bg-slate-950 p-3 rounded border border-slate-800 space-y-1">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold">Uploaded By</span>
+                    <div className="text-slate-200">{selectedResource.uploadedBy || "College Librarian"}</div>
+                  </div>
+                </div>
+
+                <div className="space-y-1 text-xs">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold">Description</span>
+                  <p className="text-slate-300 bg-slate-950 p-3 rounded border border-slate-800 leading-relaxed text-[11px]">
+                    {selectedResource.description || "No description provided by uploader."}
+                  </p>
+                </div>
+
+                {/* Preview Trigger Button */}
+                <div className="bg-slate-950 p-3 rounded border border-slate-800 flex items-center justify-between">
+                  <span className="text-xs text-slate-400">Content Preview Source</span>
+                  <button
+                    onClick={() => setReaderModalItem(selectedResource)}
+                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded text-xs flex items-center gap-1.5 transition-colors"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>LAUNCH DIGITAL READER PREVIEW</span>
+                  </button>
+                </div>
+
+                {/* Decision Action Box */}
+                {activeTab === "pending" && (
+                  <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-3 pt-4 border-t border-indigo-500/30">
+                    <span className="text-xs font-bold text-slate-200 uppercase">
+                      Moderation Decision & Enforcement
+                    </span>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-400 uppercase font-bold">
+                        Rejection Reason (Mandatory if Rejecting)
+                      </label>
+                      <input
+                        type="text"
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        placeholder="State clear, actionable rejection reason..."
+                        className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded text-slate-200 text-xs focus:border-indigo-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-2">
+                      <button
+                        onClick={() => handleApprove(selectedResource._id)}
+                        disabled={isSubmitting}
+                        className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs flex items-center justify-center gap-2 shadow-lg transition-all"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>APPROVE RESOURCE</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleReject(selectedResource._id)}
+                        disabled={isSubmitting || !rejectionReason.trim()}
+                        className="flex-1 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded text-xs flex items-center justify-center gap-2 shadow-lg transition-all disabled:opacity-40"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        <span>REJECT RESOURCE</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            </form>
+            ) : (
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center text-slate-500 text-xs font-mono">
+                Select an item from the queue list to inspect content and execute moderation decision.
+              </div>
+            )}
           </div>
         </div>
+      </main>
+
+      {/* Reader Modal */}
+      {readerModalItem && (
+        <DigitalReaderModal
+          resource={readerModalItem}
+          onClose={() => setReaderModalItem(null)}
+        />
       )}
     </div>
   );
-};
-
-export default GlobalContentModeration;
+}

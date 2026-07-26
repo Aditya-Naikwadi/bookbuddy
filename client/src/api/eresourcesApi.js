@@ -29,13 +29,28 @@ export const getContentUrl = (resourceId, format) => {
   return `${import.meta.env.VITE_API_URL || "/api"}/eresources/external/${resourceId}/content?format=${format}`;
 };
 
-export const saveProgress = async (
-  resourceId,
-  { lastPosition, percentComplete },
-) => {
-  const { data } = await apiClient.post(`/eresources/${resourceId}/progress`, {
-    lastPosition,
-    percentComplete,
-  });
-  return data;
+export const getAllResources = async () => {
+  try {
+    const { data } = await apiClient.get("/eresources");
+    return data.data || data;
+  } catch {
+    return [];
+  }
 };
+
+export const updateResource = async (resourceId, payload) => {
+  const { data } = await apiClient.put(`/eresources/${resourceId}`, payload);
+  return data.data || data;
+};
+
+const eresourcesApi = {
+  searchEbooks,
+  getEbookDetail,
+  openEbook,
+  getContentUrl,
+  saveProgress,
+  getAllResources,
+  updateResource,
+};
+
+export default eresourcesApi;
