@@ -26,7 +26,10 @@ const bindTenantContext = async (req, res, next) => {
     const college = await College.findById(sessionCollegeId).lean();
     if (!college || college.status !== 'active' || college.isActive === false) {
       return next(
-        new AppError('Your college institution account is inactive or pending review by Super Admin.', 403)
+        new AppError(
+          'Your college institution account is inactive or pending review by Super Admin.',
+          403
+        )
       );
     }
 

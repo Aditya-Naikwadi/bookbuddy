@@ -18,7 +18,9 @@ const logAuditEvent = async ({
 }) => {
   try {
     const ipAddress = req
-      ? req.ip || (req.headers && req.headers['x-forwarded-for']) || (req.socket && req.socket.remoteAddress)
+      ? req.ip ||
+        (req.headers && req.headers['x-forwarded-for']) ||
+        (req.socket && req.socket.remoteAddress)
       : undefined;
 
     await AuditLog.create({

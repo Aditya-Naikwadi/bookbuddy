@@ -103,6 +103,8 @@ const collegeSchema = new mongoose.Schema(
   {
     timestamps: true,
   }
+);
+
 // Compound index for listing active/pending tenant list (status + newest first)
 collegeSchema.index({ status: 1, createdAt: -1 });
 

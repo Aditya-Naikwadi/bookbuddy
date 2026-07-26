@@ -29,7 +29,9 @@ const getMyCollegeConfig = catchAsync(async (req, res, next) => {
   const collegeId = req.tenantId || req.user.collegeId;
 
   const college = await College.findById(collegeId)
-    .select('name shortName slug domain domainWhitelist logoUrl status enabledFeatures selectedServices')
+    .select(
+      'name shortName slug domain domainWhitelist logoUrl status enabledFeatures selectedServices'
+    )
     .lean();
   if (!college) {
     return next(new AppError('College institution record not found', 404));
@@ -39,8 +41,8 @@ const getMyCollegeConfig = catchAsync(async (req, res, next) => {
     Array.isArray(college.enabledFeatures) && college.enabledFeatures.length > 0
       ? college.enabledFeatures
       : Array.isArray(college.selectedServices) && college.selectedServices.length > 0
-      ? college.selectedServices
-      : DEFAULT_STUDENT_FEATURES;
+        ? college.selectedServices
+        : DEFAULT_STUDENT_FEATURES;
 
   let config = await CollegeFeatureConfig.findOne({ collegeId }).lean();
   if (!config) {
@@ -74,12 +76,15 @@ const enableOrRequestFeature = catchAsync(async (req, res, next) => {
 
   let config = await CollegeFeatureConfig.findOne({ collegeId });
   if (!config) {
-    const college = await College.findById(collegeId).select('enabledFeatures selectedServices').lean();
-    const initial = (college && college.enabledFeatures && college.enabledFeatures.length > 0)
-      ? college.enabledFeatures
-      : (college && college.selectedServices && college.selectedServices.length > 0)
-      ? college.selectedServices
-      : DEFAULT_STUDENT_FEATURES;
+    const college = await College.findById(collegeId)
+      .select('enabledFeatures selectedServices')
+      .lean();
+    const initial =
+      college && college.enabledFeatures && college.enabledFeatures.length > 0
+        ? college.enabledFeatures
+        : college && college.selectedServices && college.selectedServices.length > 0
+          ? college.selectedServices
+          : DEFAULT_STUDENT_FEATURES;
 
     config = new CollegeFeatureConfig({
       collegeId,
@@ -92,7 +97,10 @@ const enableOrRequestFeature = catchAsync(async (req, res, next) => {
   if (Array.isArray(bulkFeatures)) {
     config.enabledFeatures = bulkFeatures;
     await config.save();
-    await College.findByIdAndUpdate(collegeId, { enabledFeatures: bulkFeatures, selectedServices: bulkFeatures }).catch(() => {});
+    await College.findByIdAndUpdate(collegeId, {
+      enabledFeatures: bulkFeatures,
+      selectedServices: bulkFeatures,
+    }).catch(() => {});
 
     return res.json({
       success: true,
@@ -138,7 +146,9 @@ const enableOrRequestFeature = catchAsync(async (req, res, next) => {
     // Self-serve activation
     config.enabledFeatures.push(featureId);
     await config.save();
-    await College.findByIdAndUpdate(collegeId, { $addToSet: { enabledFeatures: featureId } }).catch(() => {});
+    await College.findByIdAndUpdate(collegeId, { $addToSet: { enabledFeatures: featureId } }).catch(
+      () => {}
+    );
 
     return res.json({
       success: true,
