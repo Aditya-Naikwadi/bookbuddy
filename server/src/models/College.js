@@ -48,7 +48,18 @@ const collegeSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ['pending', 'pending_review', 'active', 'suspended', 'archived', 'rejected'],
-      default: 'pending',
+      default: 'active',
+      index: true,
+    },
+    creationPath: {
+      type: String,
+      enum: ['self_service', 'operator_direct'],
+      default: 'operator_direct',
+    },
+    approvalStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'approved',
       index: true,
     },
     contactEmail: {

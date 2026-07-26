@@ -53,6 +53,12 @@ const auditLogSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
+    severity: {
+      type: String,
+      enum: ['info', 'warning', 'critical'],
+      default: 'info',
+      index: true,
+    },
     ipAddress: {
       type: String,
     },
@@ -61,6 +67,14 @@ const auditLogSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Prevent document mutations (Immutable Log Ledger)
+auditLogSchema.pre('save', function (next) {
+  if (!this.isNew) {
+    return next(new Error('Audit log entries are immutable and cannot be updated.'));
+  }
+  next();
+});
 
 // Institutional Compliance Retention: 365 days TTL
 auditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 31536000 });
