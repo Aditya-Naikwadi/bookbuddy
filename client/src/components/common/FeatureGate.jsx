@@ -1,7 +1,12 @@
-import { useFeatureFlags } from '../../hooks/useFeatureFlags';
-import FeatureUnavailablePage from '../../pages/public/FeatureUnavailablePage';
+import { useFeatureFlags } from "../../hooks/useFeatureFlags";
+import FeatureUnavailablePage from "../../pages/public/FeatureUnavailablePage";
 
-export function FeatureGate({ feature, fallback = null, isPageGate = false, children }) {
+export function FeatureGate({
+  feature,
+  fallback = null,
+  isPageGate = false,
+  children,
+}) {
   const { isFeatureEnabled } = useFeatureFlags();
 
   if (!feature) {
@@ -20,7 +25,7 @@ export function FeatureGate({ feature, fallback = null, isPageGate = false, chil
   }
 
   if (isPageGate) {
-    return <FeatureUnavailablePage featureKey={featuresToCheck.join(', ')} />;
+    return <FeatureUnavailablePage featureKey={featuresToCheck.join(", ")} />;
   }
 
   return null;

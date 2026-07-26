@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '../../../api/client';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useSocket } from '../../../hooks/useSocket';
+import { useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import apiClient from "../../../api/client";
+import { motion, AnimatePresence } from "framer-motion";
+import { useSocket } from "../../../hooks/useSocket";
 import {
   Bell,
   X,
@@ -13,10 +13,10 @@ import {
   Sparkles,
   Info,
   Clock,
-} from 'lucide-react';
+} from "lucide-react";
 
 const fetchNotifications = async () => {
-  const { data } = await apiClient.get('/notifications/me?limit=20');
+  const { data } = await apiClient.get("/notifications/me?limit=20");
   return data.data || [];
 };
 
@@ -25,7 +25,7 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
   const socket = useSocket();
 
   const { data: notifications = [], isLoading } = useQuery({
-    queryKey: ['notifications'],
+    queryKey: ["notifications"],
     queryFn: fetchNotifications,
     staleTime: 15000,
     enabled: isOpen,
@@ -36,14 +36,17 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
     if (!socket) return;
 
     const handleNewNotification = (newNotification) => {
-      queryClient.setQueryData(['notifications'], (old = []) => [newNotification, ...old]);
-      queryClient.invalidateQueries({ queryKey: ['student-overview'] });
+      queryClient.setQueryData(["notifications"], (old = []) => [
+        newNotification,
+        ...old,
+      ]);
+      queryClient.invalidateQueries({ queryKey: ["student-overview"] });
     };
 
-    socket.on('notification:new', handleNewNotification);
+    socket.on("notification:new", handleNewNotification);
 
     return () => {
-      socket.off('notification:new', handleNewNotification);
+      socket.off("notification:new", handleNewNotification);
     };
   }, [socket, queryClient]);
 
@@ -54,56 +57,58 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
       return data;
     },
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['notifications'] });
-      await queryClient.cancelQueries({ queryKey: ['student-overview'] });
+      await queryClient.cancelQueries({ queryKey: ["notifications"] });
+      await queryClient.cancelQueries({ queryKey: ["student-overview"] });
 
-      const prevNotifications = queryClient.getQueryData(['notifications']);
+      const prevNotifications = queryClient.getQueryData(["notifications"]);
       if (prevNotifications) {
         queryClient.setQueryData(
-          ['notifications'],
-          prevNotifications.map((n) => (n._id === id ? { ...n, read: true } : n))
+          ["notifications"],
+          prevNotifications.map((n) =>
+            n._id === id ? { ...n, read: true } : n,
+          ),
         );
       }
       return { prevNotifications };
     },
     onError: (err, id, context) => {
       if (context?.prevNotifications) {
-        queryClient.setQueryData(['notifications'], context.prevNotifications);
+        queryClient.setQueryData(["notifications"], context.prevNotifications);
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['student-overview'] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["student-overview"] });
     },
   });
 
   // Mark all read mutation with Optimistic UI update
   const markAllReadMutation = useMutation({
     mutationFn: async () => {
-      const { data } = await apiClient.patch('/notifications/read-all');
+      const { data } = await apiClient.patch("/notifications/read-all");
       return data;
     },
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['notifications'] });
-      await queryClient.cancelQueries({ queryKey: ['student-overview'] });
+      await queryClient.cancelQueries({ queryKey: ["notifications"] });
+      await queryClient.cancelQueries({ queryKey: ["student-overview"] });
 
-      const prevNotifications = queryClient.getQueryData(['notifications']);
+      const prevNotifications = queryClient.getQueryData(["notifications"]);
       if (prevNotifications) {
         queryClient.setQueryData(
-          ['notifications'],
-          prevNotifications.map((n) => ({ ...n, read: true }))
+          ["notifications"],
+          prevNotifications.map((n) => ({ ...n, read: true })),
         );
       }
       return { prevNotifications };
     },
     onError: (err, vars, context) => {
       if (context?.prevNotifications) {
-        queryClient.setQueryData(['notifications'], context.prevNotifications);
+        queryClient.setQueryData(["notifications"], context.prevNotifications);
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['student-overview'] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["student-overview"] });
     },
   });
 
@@ -111,12 +116,12 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
 
   const getTypeIcon = (type) => {
     switch (type) {
-      case 'streak_milestone':
+      case "streak_milestone":
         return <Flame className="text-orange-500" size={16} />;
-      case 'loan_due':
-      case 'loan_overdue':
+      case "loan_due":
+      case "loan_overdue":
         return <AlertCircle className="text-red-500" size={16} />;
-      case 'reservation_ready':
+      case "reservation_ready":
         return <BookOpen className="text-purple-500" size={16} />;
       default:
         return <Sparkles className="text-indigo-500" size={16} />;
@@ -124,10 +129,10 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
   };
 
   const formatTimeAgo = (dateStr) => {
-    if (!dateStr) return '';
+    if (!dateStr) return "";
     const diffMs = new Date() - new Date(dateStr);
     const mins = Math.floor(diffMs / (1000 * 60));
-    if (mins < 1) return 'Just now';
+    if (mins < 1) return "Just now";
     if (mins < 60) return `${mins}m ago`;
     const hours = Math.floor(mins / 60);
     if (hours < 24) return `${hours}h ago`;
@@ -150,10 +155,10 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
 
           {/* Drawer Slide-Over Panel */}
           <motion.div
-            initial={{ x: '100%' }}
+            initial={{ x: "100%" }}
             animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 250 }}
             className="relative w-full max-w-md bg-white dark:bg-slate-900 h-full shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col z-10 overflow-hidden"
           >
             {/* Drawer Header */}
@@ -171,7 +176,9 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
                       </span>
                     )}
                   </h3>
-                  <p className="text-xs text-slate-500">Live library updates & notifications</p>
+                  <p className="text-xs text-slate-500">
+                    Live library updates & notifications
+                  </p>
                 </div>
               </div>
 
@@ -205,8 +212,13 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="py-16 text-center text-slate-400 text-xs space-y-2">
-                  <Info size={36} className="mx-auto text-slate-300 dark:text-slate-700" />
-                  <p className="font-bold text-slate-700 dark:text-slate-300">No Notifications</p>
+                  <Info
+                    size={36}
+                    className="mx-auto text-slate-300 dark:text-slate-700"
+                  />
+                  <p className="font-bold text-slate-700 dark:text-slate-300">
+                    No Notifications
+                  </p>
                   <p className="text-slate-500">You are all caught up!</p>
                 </div>
               ) : (
@@ -216,11 +228,13 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
                     layout
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    onClick={() => !item.read && markReadMutation.mutate(item._id)}
+                    onClick={() =>
+                      !item.read && markReadMutation.mutate(item._id)
+                    }
                     className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 relative ${
                       item.read
-                        ? 'bg-slate-50/50 dark:bg-slate-800/30 border-slate-100 dark:border-slate-800/60 opacity-80'
-                        : 'bg-white dark:bg-slate-800 border-indigo-100 dark:border-indigo-900/50 shadow-sm'
+                        ? "bg-slate-50/50 dark:bg-slate-800/30 border-slate-100 dark:border-slate-800/60 opacity-80"
+                        : "bg-white dark:bg-slate-800 border-indigo-100 dark:border-indigo-900/50 shadow-sm"
                     }`}
                   >
                     <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-700/50 flex-shrink-0 mt-0.5">

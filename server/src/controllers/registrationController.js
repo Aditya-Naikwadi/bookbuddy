@@ -254,7 +254,8 @@ const submitTenantOnboarding = async (req, res, next) => {
     }
 
     const effectiveCollegeEmail = (collegeEmail || effectiveAdminEmail).toLowerCase().trim();
-    const emailDomain = effectiveAdminEmail.split('@')[1] || effectiveCollegeEmail.split('@')[1] || '';
+    const emailDomain =
+      effectiveAdminEmail.split('@')[1] || effectiveCollegeEmail.split('@')[1] || '';
 
     const normalizedDomain = (domain || emailDomain).toLowerCase().trim();
     const normalizedAdminEmail = effectiveAdminEmail;
@@ -336,7 +337,10 @@ const submitTenantOnboarding = async (req, res, next) => {
         try {
           parsedServices = JSON.parse(selectedServices);
         } catch {
-          parsedServices = selectedServices.split(',').map((s) => s.trim()).filter(Boolean);
+          parsedServices = selectedServices
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
         }
       } else if (Array.isArray(selectedServices)) {
         parsedServices = selectedServices;

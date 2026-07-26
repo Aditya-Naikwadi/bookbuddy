@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
-import RowValidationBadge from './RowValidationBadge';
-import { Edit2, Check } from 'lucide-react';
-import { useFeatureFlags } from '../../hooks/useFeatureFlags';
+import { useState, useMemo } from "react";
+import RowValidationBadge from "./RowValidationBadge";
+import { Edit2, Check } from "lucide-react";
+import { useFeatureFlags } from "../../hooks/useFeatureFlags";
 
 export default function UploadPreviewTable({
   rows = [],
@@ -10,13 +10,13 @@ export default function UploadPreviewTable({
 }) {
   const { isFeatureEnabled } = useFeatureFlags();
   const [editingCell, setEditingCell] = useState(null);
-  const [editValue, setEditValue] = useState('');
+  const [editValue, setEditValue] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
   const filteredRows = useMemo(() => {
     if (!showErrorsOnly) return rows;
-    return rows.filter((r) => r.status === 'error' || r.status === 'warning');
+    return rows.filter((r) => r.status === "error" || r.status === "warning");
   }, [rows, showErrorsOnly]);
 
   const totalPages = Math.ceil(filteredRows.length / pageSize) || 1;
@@ -27,7 +27,7 @@ export default function UploadPreviewTable({
 
   const handleStartEdit = (rowId, field, currentValue) => {
     setEditingCell({ rowId, field });
-    setEditValue(currentValue || '');
+    setEditValue(currentValue || "");
   };
 
   const handleSaveEdit = (row) => {
@@ -39,18 +39,19 @@ export default function UploadPreviewTable({
     const errors = [];
     const warnings = [];
 
-    if (!updatedRow.studentId) errors.push('Missing Student ID');
-    if (!updatedRow.name) errors.push('Missing Full Name');
+    if (!updatedRow.studentId) errors.push("Missing Student ID");
+    if (!updatedRow.name) errors.push("Missing Full Name");
     if (!updatedRow.email) {
-      errors.push('Missing Email Address');
+      errors.push("Missing Email Address");
     } else if (!emailRegex.test(updatedRow.email)) {
       errors.push(`Invalid email format (${updatedRow.email})`);
     }
-    if (!updatedRow.department) warnings.push('Department not specified');
+    if (!updatedRow.department) warnings.push("Department not specified");
 
     updatedRow.errors = errors;
     updatedRow.warnings = warnings;
-    updatedRow.status = errors.length > 0 ? 'error' : warnings.length > 0 ? 'warning' : 'valid';
+    updatedRow.status =
+      errors.length > 0 ? "error" : warnings.length > 0 ? "warning" : "valid";
 
     onRowUpdate(updatedRow);
     setEditingCell(null);
@@ -68,8 +69,12 @@ export default function UploadPreviewTable({
               <th className="py-3 px-4">Full Name</th>
               <th className="py-3 px-4">Email</th>
               <th className="py-3 px-4">Department</th>
-              {isFeatureEnabled('facilities') && <th className="py-3 px-4">Preferred Lab</th>}
-              {isFeatureEnabled('gamification') && <th className="py-3 px-4">House</th>}
+              {isFeatureEnabled("facilities") && (
+                <th className="py-3 px-4">Preferred Lab</th>
+              )}
+              {isFeatureEnabled("gamification") && (
+                <th className="py-3 px-4">House</th>
+              )}
               <th className="py-3 px-4">Validation Notes</th>
             </tr>
           </thead>
@@ -78,57 +83,75 @@ export default function UploadPreviewTable({
               <tr
                 key={row.rowId}
                 className={`hover:bg-slate-50/80 transition-colors ${
-                  row.status === 'error' ? 'bg-rose-50/30' : row.status === 'warning' ? 'bg-amber-50/20' : ''
+                  row.status === "error"
+                    ? "bg-rose-50/30"
+                    : row.status === "warning"
+                      ? "bg-amber-50/20"
+                      : ""
                 }`}
               >
-                <td className="py-3 px-4 font-mono text-slate-400 font-medium">#{row.rowId}</td>
+                <td className="py-3 px-4 font-mono text-slate-400 font-medium">
+                  #{row.rowId}
+                </td>
                 <td className="py-3 px-4">
-                  <RowValidationBadge status={row.status} errorCount={row.errors.length} />
+                  <RowValidationBadge
+                    status={row.status}
+                    errorCount={row.errors.length}
+                  />
                 </td>
 
                 <td className="py-3 px-4 font-mono font-semibold text-slate-900">
-                  {renderEditableCell(row, 'studentId', row.studentId)}
+                  {renderEditableCell(row, "studentId", row.studentId)}
                 </td>
 
                 <td className="py-3 px-4 font-medium text-slate-900">
-                  {renderEditableCell(row, 'name', row.name)}
+                  {renderEditableCell(row, "name", row.name)}
                 </td>
 
                 <td className="py-3 px-4">
-                  {renderEditableCell(row, 'email', row.email)}
+                  {renderEditableCell(row, "email", row.email)}
                 </td>
 
                 <td className="py-3 px-4">
-                  {renderEditableCell(row, 'department', row.department)}
+                  {renderEditableCell(row, "department", row.department)}
                 </td>
 
-                {isFeatureEnabled('facilities') && (
-                  <td className="py-3 px-4">{renderEditableCell(row, 'preferredLab', row.preferredLab)}</td>
+                {isFeatureEnabled("facilities") && (
+                  <td className="py-3 px-4">
+                    {renderEditableCell(row, "preferredLab", row.preferredLab)}
+                  </td>
                 )}
 
-                {isFeatureEnabled('gamification') && (
-                  <td className="py-3 px-4">{renderEditableCell(row, 'house', row.house)}</td>
+                {isFeatureEnabled("gamification") && (
+                  <td className="py-3 px-4">
+                    {renderEditableCell(row, "house", row.house)}
+                  </td>
                 )}
 
                 <td className="py-3 px-4 max-w-xs">
                   {row.errors.length > 0 && (
                     <span className="text-rose-600 font-semibold block line-clamp-1">
-                      {row.errors.join(' • ')}
+                      {row.errors.join(" • ")}
                     </span>
                   )}
                   {row.warnings.length > 0 && row.errors.length === 0 && (
                     <span className="text-amber-600 block line-clamp-1">
-                      {row.warnings.join(' • ')}
+                      {row.warnings.join(" • ")}
                     </span>
                   )}
-                  {row.status === 'valid' && <span className="text-emerald-600 font-medium">Ready</span>}
+                  {row.status === "valid" && (
+                    <span className="text-emerald-600 font-medium">Ready</span>
+                  )}
                 </td>
               </tr>
             ))}
 
             {filteredRows.length === 0 && (
               <tr>
-                <td colSpan={9} className="py-12 text-center text-slate-400 text-sm">
+                <td
+                  colSpan={9}
+                  className="py-12 text-center text-slate-400 text-sm"
+                >
                   No records match the current filter.
                 </td>
               </tr>
@@ -140,7 +163,8 @@ export default function UploadPreviewTable({
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-2 text-xs text-slate-500">
           <span>
-            Showing {(page - 1) * pageSize + 1} to Math.min({page * pageSize}, {filteredRows.length}) of {filteredRows.length} rows
+            Showing {(page - 1) * pageSize + 1} to Math.min({page * pageSize},{" "}
+            {filteredRows.length}) of {filteredRows.length} rows
           </span>
 
           <div className="flex items-center gap-2">
@@ -168,7 +192,8 @@ export default function UploadPreviewTable({
   );
 
   function renderEditableCell(row, field, value) {
-    const isEditing = editingCell?.rowId === row.rowId && editingCell?.field === field;
+    const isEditing =
+      editingCell?.rowId === row.rowId && editingCell?.field === field;
 
     if (isEditing) {
       return (
@@ -177,7 +202,7 @@ export default function UploadPreviewTable({
             type="text"
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit(row)}
+            onKeyDown={(e) => e.key === "Enter" && handleSaveEdit(row)}
             className="px-2 py-1 border border-indigo-500 rounded bg-indigo-50/50 text-xs w-full outline-none"
             autoFocus
           />
@@ -198,8 +223,13 @@ export default function UploadPreviewTable({
         className="group flex items-center justify-between cursor-pointer py-0.5 px-1 hover:bg-indigo-50/50 rounded transition-colors"
         title="Click to edit inline"
       >
-        <span className={!value ? 'text-slate-300 italic' : ''}>{value || 'Empty'}</span>
-        <Edit2 size={10} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
+        <span className={!value ? "text-slate-300 italic" : ""}>
+          {value || "Empty"}
+        </span>
+        <Edit2
+          size={10}
+          className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+        />
       </div>
     );
   }

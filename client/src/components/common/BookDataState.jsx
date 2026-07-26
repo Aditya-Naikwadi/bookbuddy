@@ -1,5 +1,5 @@
-import React from 'react';
-import { AlertCircle, RefreshCw, BookOpen } from 'lucide-react';
+import React from "react";
+import { AlertCircle, RefreshCw, BookOpen } from "lucide-react";
 
 /**
  * Shared container component for handling Book Data states:
@@ -42,9 +42,12 @@ export const BookDataState = ({
             <AlertCircle className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-rose-900">Unable to load book catalog data</h4>
+            <h4 className="text-xs font-bold text-rose-900">
+              Unable to load book catalog data
+            </h4>
             <p className="text-[11px] text-rose-700 mt-0.5">
-              {error?.message || 'A network error occurred while fetching books. Please try again.'}
+              {error?.message ||
+                "A network error occurred while fetching books. Please try again."}
             </p>
           </div>
         </div>

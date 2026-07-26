@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
-import { Flame, Sparkles, X, Gift } from 'lucide-react';
+import { useEffect, useState, useRef } from "react";
+import { Flame, Sparkles, X, Gift } from "lucide-react";
 
 export const MilestoneCelebrationModal = () => {
   const [open, setOpen] = useState(false);
@@ -9,7 +9,10 @@ export const MilestoneCelebrationModal = () => {
   useEffect(() => {
     const handleStreakUpdate = (e) => {
       const data = e.detail || e; // Support custom events or direct socket payloads
-      if (data && (data.newStickers?.length > 0 || data.newRewards?.length > 0)) {
+      if (
+        data &&
+        (data.newStickers?.length > 0 || data.newRewards?.length > 0)
+      ) {
         setPayload(data);
         setOpen(true);
 
@@ -20,18 +23,19 @@ export const MilestoneCelebrationModal = () => {
       }
     };
 
-    window.addEventListener('streak:updated', handleStreakUpdate);
-    return () => window.removeEventListener('streak:updated', handleStreakUpdate);
+    window.addEventListener("streak:updated", handleStreakUpdate);
+    return () =>
+      window.removeEventListener("streak:updated", handleStreakUpdate);
   }, []);
 
   // Keyboard Escape closer
   useEffect(() => {
     if (!open) return;
     const handleEscape = (e) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === "Escape") setOpen(false);
     };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
   }, [open]);
 
   if (!open || !payload) return null;
@@ -60,7 +64,10 @@ export const MilestoneCelebrationModal = () => {
         </div>
 
         {/* Title */}
-        <h3 id="milestone-title" className="text-2xl font-serif font-black text-slate-900 flex items-center gap-1.5 justify-center">
+        <h3
+          id="milestone-title"
+          className="text-2xl font-serif font-black text-slate-900 flex items-center gap-1.5 justify-center"
+        >
           <Sparkles className="text-yellow-500" size={20} />
           Milestone Reached!
           <Sparkles className="text-yellow-500" size={20} />
@@ -68,9 +75,11 @@ export const MilestoneCelebrationModal = () => {
 
         {/* Subtitle */}
         <p className="text-slate-600 font-medium text-sm mt-2">
-          Awesome work! You've reached a{' '}
-          <span className="text-orange-500 font-black">{payload.streak?.currentStreak || 0} Day</span> reading
-          streak!
+          Awesome work! You've reached a{" "}
+          <span className="text-orange-500 font-black">
+            {payload.streak?.currentStreak || 0} Day
+          </span>{" "}
+          reading streak!
         </p>
 
         {/* New Badges Section */}
@@ -85,7 +94,9 @@ export const MilestoneCelebrationModal = () => {
                   key={sticker.code || sticker._id}
                   className="flex flex-col items-center p-3.5 bg-slate-50 border border-slate-100 rounded-2xl w-24 shrink-0 shadow-sm"
                 >
-                  <span className="text-4xl drop-shadow-sm mb-1.5">{sticker.iconUrl || sticker.icon || '🏅'}</span>
+                  <span className="text-4xl drop-shadow-sm mb-1.5">
+                    {sticker.iconUrl || sticker.icon || "🏅"}
+                  </span>
                   <span className="text-[10px] font-extrabold text-slate-800 leading-tight truncate w-full text-center">
                     {sticker.name}
                   </span>
@@ -103,14 +114,17 @@ export const MilestoneCelebrationModal = () => {
             </h4>
             <ul className="text-left space-y-2 bg-orange-50 p-4 rounded-2xl w-full">
               {payload.newRewards.map((reward, i) => (
-                <li key={i} className="flex items-start gap-2.5 text-xs text-orange-800 font-medium">
+                <li
+                  key={i}
+                  className="flex items-start gap-2.5 text-xs text-orange-800 font-medium"
+                >
                   <Gift size={16} className="text-orange-500 shrink-0" />
                   <span>
-                    Unlocked{' '}
+                    Unlocked{" "}
                     <span className="font-extrabold capitalize">
-                      {reward.rewardType.replace('_', ' ')}
-                    </span>{' '}
-                    reward: {reward.rewardValue || 'Claimed'}
+                      {reward.rewardType.replace("_", " ")}
+                    </span>{" "}
+                    reward: {reward.rewardValue || "Claimed"}
                   </span>
                 </li>
               ))}

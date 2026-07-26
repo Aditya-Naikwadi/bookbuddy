@@ -1,26 +1,36 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Loader2, AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, Highlighter, Bookmark, Check } from 'lucide-react';
-import apiClient from '../../../api/client';
-import useAuthStore from '../../../store/authStore';
-import { getContentUrl } from '../../../api/eresourcesApi';
-import { useEpubLoader } from '../../../hooks/useEpubLoader';
-import { useReaderPosition } from '../../../hooks/useReaderPosition';
-import { ReaderToolbar } from '../../../components/student/ebook-reader/ReaderToolbar';
-import { TableOfContents } from '../../../components/student/ebook-reader/TableOfContents';
-import { ReaderThemeControls } from '../../../components/student/ebook-reader/ReaderThemeControls';
-import * as pdfjsLib from 'pdfjs-dist';
+import { useEffect, useRef, useState, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Loader2,
+  AlertTriangle,
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Highlighter,
+  Bookmark,
+  Check,
+} from "lucide-react";
+import apiClient from "../../../api/client";
+import useAuthStore from "../../../store/authStore";
+import { getContentUrl } from "../../../api/eresourcesApi";
+import { useEpubLoader } from "../../../hooks/useEpubLoader";
+import { useReaderPosition } from "../../../hooks/useReaderPosition";
+import { ReaderToolbar } from "../../../components/student/ebook-reader/ReaderToolbar";
+import { TableOfContents } from "../../../components/student/ebook-reader/TableOfContents";
+import { ReaderThemeControls } from "../../../components/student/ebook-reader/ReaderThemeControls";
+import * as pdfjsLib from "pdfjs-dist";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = typeof window !== 'undefined'
-  ? `${window.location.origin}/pdf.worker.min.mjs`
-  : '/pdf.worker.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  typeof window !== "undefined"
+    ? `${window.location.origin}/pdf.worker.min.mjs`
+    : "/pdf.worker.min.mjs";
 
 const EbookReader = () => {
   const { resourceId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const userId = user?.id || user?._id || 'guest';
+  const userId = user?.id || user?._id || "guest";
 
   const viewerRef = useRef(null);
   const readerContainerRef = useRef(null);
@@ -39,11 +49,11 @@ const EbookReader = () => {
   const [pdfError, setPdfError] = useState(null);
 
   // Text selection & Annotation State
-  const [selectedText, setSelectedText] = useState('');
+  const [selectedText, setSelectedText] = useState("");
   const [annotationModalOpen, setAnnotationModalOpen] = useState(false);
-  const [highlightColor, setHighlightColor] = useState('yellow'); // yellow | green | blue | pink
-  const [noteText, setNoteText] = useState('');
-  const [annotationTag, setAnnotationTag] = useState('exam-prep');
+  const [highlightColor, setHighlightColor] = useState("yellow"); // yellow | green | blue | pink
+  const [noteText, setNoteText] = useState("");
+  const [annotationTag, setAnnotationTag] = useState("exam-prep");
   const [isSavingAnnotation, setIsSavingAnnotation] = useState(false);
   const [annotationSuccess, setAnnotationSuccess] = useState(false);
 
@@ -54,39 +64,59 @@ const EbookReader = () => {
   });
   const [activeTheme, setActiveTheme] = useState(() => {
     const saved = localStorage.getItem(`bookbuddy_reader_theme_${userId}`);
-    return saved || 'light';
+    return saved || "light";
   });
 
   // 1. Fetch metadata details of EResource
-  const { data: resource, isLoading: loadingMeta, isError: errorMeta } = useQuery({
-    queryKey: ['e-resource-detail', resourceId],
+  const {
+    data: resource,
+    isLoading: loadingMeta,
+    isError: errorMeta,
+  } = useQuery({
+    queryKey: ["e-resource-detail", resourceId],
     queryFn: async () => {
-      const { data } = await apiClient.get(`/dashboards/student/eresources/${resourceId}`);
+      const { data } = await apiClient.get(
+        `/dashboards/student/eresources/${resourceId}`,
+      );
       return data.data;
     },
     retry: 1,
   });
 
   // Determine file type and URL
-  const isGutenberg = resource?.source === 'gutenberg';
-  const isPdf = resource?.fileType === 'pdf' || resource?.type === 'pdf' || resource?.fileUrl?.toLowerCase().endsWith('.pdf');
-  const fileUrl = isGutenberg ? getContentUrl(resourceId, 'epub') : resource?.fileUrl;
+  const isGutenberg = resource?.source === "gutenberg";
+  const isPdf =
+    resource?.fileType === "pdf" ||
+    resource?.type === "pdf" ||
+    resource?.fileUrl?.toLowerCase().endsWith(".pdf");
+  const fileUrl = isGutenberg
+    ? getContentUrl(resourceId, "epub")
+    : resource?.fileUrl;
 
   // 2. Load EPUB (only if not PDF)
-  const { rendition, toc, isLoading: loadingEpub, error: loaderError } = useEpubLoader(
-    isPdf ? null : fileUrl,
-    viewerRef
-  );
+  const {
+    rendition,
+    toc,
+    isLoading: loadingEpub,
+    error: loaderError,
+  } = useEpubLoader(isPdf ? null : fileUrl, viewerRef);
 
   // 3. Reader position tracking (handles both EPUB CFI & PDF Page)
   const pdfState = isPdf ? { page: pdfPage, totalPages: pdfTotalPages } : null;
-  const { percentComplete, initialPosition } = useReaderPosition(resourceId, userId, rendition, pdfState);
+  const { percentComplete, initialPosition } = useReaderPosition(
+    resourceId,
+    userId,
+    rendition,
+    pdfState,
+  );
 
   // Set initial PDF page when position restores or from offline cache
   useEffect(() => {
     const offlinePosKey = `bookbuddy_offline_pos_${userId}_${resourceId}`;
     if (isPdf) {
-      const restored = initialPosition?.page || parseInt(localStorage.getItem(offlinePosKey), 10);
+      const restored =
+        initialPosition?.page ||
+        parseInt(localStorage.getItem(offlinePosKey), 10);
       if (restored && restored > 0) {
         queueMicrotask(() => {
           setPdfPage((prev) => (prev !== restored ? restored : prev));
@@ -98,7 +128,10 @@ const EbookReader = () => {
   // Persist current page locally for offline backup
   useEffect(() => {
     if (isPdf && pdfPage > 0) {
-      localStorage.setItem(`bookbuddy_offline_pos_${userId}_${resourceId}`, pdfPage.toString());
+      localStorage.setItem(
+        `bookbuddy_offline_pos_${userId}_${resourceId}`,
+        pdfPage.toString(),
+      );
     }
   }, [isPdf, pdfPage, resourceId, userId]);
 
@@ -125,7 +158,10 @@ const EbookReader = () => {
               let pageNum = 1;
               if (item.dest) {
                 try {
-                  const destRef = typeof item.dest === 'string' ? await doc.getDestination(item.dest) : item.dest;
+                  const destRef =
+                    typeof item.dest === "string"
+                      ? await doc.getDestination(item.dest)
+                      : item.dest;
                   if (destRef && destRef[0]) {
                     const pageIdx = await doc.getPageIndex(destRef[0]);
                     pageNum = pageIdx + 1;
@@ -139,12 +175,12 @@ const EbookReader = () => {
             setPdfOutline(parsedOutline);
           }
         } catch (err) {
-          console.warn('PDF outline parsing skipped:', err);
+          console.warn("PDF outline parsing skipped:", err);
         }
       })
       .catch((err) => {
         if (isCancelled) return;
-        setPdfError(err.message || 'Failed to load PDF document.');
+        setPdfError(err.message || "Failed to load PDF document.");
         setPdfLoading(false);
       });
 
@@ -160,7 +196,7 @@ const EbookReader = () => {
     try {
       const page = await pdfDoc.getPage(pdfPage);
       const canvas = pdfCanvasRef.current;
-      const context = canvas.getContext('2d');
+      const context = canvas.getContext("2d");
       const viewport = page.getViewport({ scale: (fontSize / 100) * 1.2 });
 
       canvas.height = viewport.height;
@@ -172,7 +208,7 @@ const EbookReader = () => {
       };
       await page.render(renderContext).promise;
     } catch (err) {
-      console.error('PDF page render error:', err);
+      console.error("PDF page render error:", err);
     }
   }, [pdfDoc, pdfPage, fontSize]);
 
@@ -194,9 +230,9 @@ const EbookReader = () => {
       }
     };
 
-    rendition.on('selected', handleSelected);
+    rendition.on("selected", handleSelected);
     return () => {
-      rendition.off('selected', handleSelected);
+      rendition.off("selected", handleSelected);
     };
   }, [rendition]);
 
@@ -214,9 +250,9 @@ const EbookReader = () => {
     if (!selectedText) return;
     setIsSavingAnnotation(true);
     try {
-      await apiClient.post('/dashboards/student/bookmarks', {
+      await apiClient.post("/dashboards/student/bookmarks", {
         resourceId,
-        bookTitle: resource?.title || 'E-Resource',
+        bookTitle: resource?.title || "E-Resource",
         page: isPdf ? pdfPage : 1,
         highlightText: selectedText,
         noteText,
@@ -227,11 +263,11 @@ const EbookReader = () => {
       setTimeout(() => {
         setAnnotationSuccess(false);
         setAnnotationModalOpen(false);
-        setSelectedText('');
-        setNoteText('');
+        setSelectedText("");
+        setNoteText("");
       }, 1200);
     } catch (err) {
-      console.error('Failed to persist annotation:', err);
+      console.error("Failed to persist annotation:", err);
     } finally {
       setIsSavingAnnotation(false);
     }
@@ -244,26 +280,26 @@ const EbookReader = () => {
     const themes = {
       light: {
         body: {
-          background: '#fdfcf8 !important',
-          color: '#0f172a !important',
-          'font-family': 'Georgia, serif !important',
-          'line-height': '1.65 !important',
+          background: "#fdfcf8 !important",
+          color: "#0f172a !important",
+          "font-family": "Georgia, serif !important",
+          "line-height": "1.65 !important",
         },
       },
       sepia: {
         body: {
-          background: '#f4ecd8 !important',
-          color: '#433422 !important',
-          'font-family': 'Georgia, serif !important',
-          'line-height': '1.65 !important',
+          background: "#f4ecd8 !important",
+          color: "#433422 !important",
+          "font-family": "Georgia, serif !important",
+          "line-height": "1.65 !important",
         },
       },
       dark: {
         body: {
-          background: '#0f172a !important',
-          color: '#f8fafc !important',
-          'font-family': 'Georgia, serif !important',
-          'line-height': '1.65 !important',
+          background: "#0f172a !important",
+          color: "#f8fafc !important",
+          "font-family": "Georgia, serif !important",
+          "line-height": "1.65 !important",
         },
       },
     };
@@ -311,12 +347,12 @@ const EbookReader = () => {
 
   const getThemeBgClass = () => {
     switch (activeTheme) {
-      case 'sepia':
-        return 'bg-[#f4ecd8] text-[#433422]';
-      case 'dark':
-        return 'bg-[#0f172a] text-slate-100';
+      case "sepia":
+        return "bg-[#f4ecd8] text-[#433422]";
+      case "dark":
+        return "bg-[#0f172a] text-slate-100";
       default:
-        return 'bg-[#fdfcf8] text-slate-900';
+        return "bg-[#fdfcf8] text-slate-900";
     }
   };
 
@@ -327,16 +363,18 @@ const EbookReader = () => {
       className={`fixed inset-0 z-50 flex flex-col h-screen w-screen overflow-hidden select-none outline-none ${getThemeBgClass()}`}
       role="dialog"
       aria-modal="true"
-      aria-label={`Ebook Reader: ${resource?.title || 'Loading book'}`}
+      aria-label={`Ebook Reader: ${resource?.title || "Loading book"}`}
     >
       {isLoading && (
         <div className="absolute inset-0 flex flex-col justify-center items-center z-50 bg-inherit transition-all duration-300">
           <Loader2 className="animate-spin text-indigo-600 mb-4" size={44} />
           <h2 className="font-serif font-bold text-lg sm:text-xl text-center">
-            {resource?.title ? `Opening "${resource.title}"...` : 'Opening document...'}
+            {resource?.title
+              ? `Opening "${resource.title}"...`
+              : "Opening document..."}
           </h2>
           <p className="text-xs text-slate-400 mt-2 tracking-wide">
-            {isPdf ? 'Rendering PDF document...' : 'Parsing EPUB content...'}
+            {isPdf ? "Rendering PDF document..." : "Parsing EPUB content..."}
           </p>
         </div>
       )}
@@ -346,9 +384,11 @@ const EbookReader = () => {
           <div className="p-3 bg-red-500/10 rounded-full text-red-500 mb-4">
             <AlertTriangle size={40} />
           </div>
-          <h2 className="text-xl font-bold font-serif">Failed to load document</h2>
+          <h2 className="text-xl font-bold font-serif">
+            Failed to load document
+          </h2>
           <p className="text-sm text-slate-400 max-w-sm mt-2 leading-relaxed">
-            {isError || 'The e-resource document could not be rendered.'}
+            {isError || "The e-resource document could not be rendered."}
           </p>
           <button
             onClick={handleExit}
@@ -418,14 +458,17 @@ const EbookReader = () => {
 
           {isPdf ? (
             <div className="flex flex-col items-center justify-center h-full p-4 overflow-auto">
-              <canvas ref={pdfCanvasRef} className="shadow-2xl rounded-lg max-h-[85vh] object-contain" />
+              <canvas
+                ref={pdfCanvasRef}
+                className="shadow-2xl rounded-lg max-h-[85vh] object-contain"
+              />
               <div className="mt-2 text-xs font-mono font-bold text-slate-500 bg-white/80 dark:bg-slate-800/80 px-3 py-1 rounded-full shadow-sm">
                 Page {pdfPage} of {pdfTotalPages}
               </div>
             </div>
           ) : (
-            <div 
-              ref={viewerRef} 
+            <div
+              ref={viewerRef}
               className="w-full max-w-3xl h-full p-4 sm:p-12 overflow-hidden shadow-inner bg-transparent"
             />
           )}
@@ -449,7 +492,10 @@ const EbookReader = () => {
                 <Highlighter size={18} className="text-amber-500" />
                 Add Highlight & Personal Note
               </h3>
-              <button onClick={() => setAnnotationModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button
+                onClick={() => setAnnotationModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 ✕
               </button>
             </div>
@@ -460,17 +506,27 @@ const EbookReader = () => {
 
             {/* Color Selector */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Highlight Color</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Highlight Color
+              </label>
               <div className="flex gap-3">
-                {['yellow', 'green', 'blue', 'pink'].map((c) => (
+                {["yellow", "green", "blue", "pink"].map((c) => (
                   <button
                     key={c}
                     onClick={() => setHighlightColor(c)}
                     className={`w-7 h-7 rounded-full flex items-center justify-center transition-transform ${
-                      c === 'yellow' ? 'bg-yellow-300' : c === 'green' ? 'bg-emerald-300' : c === 'blue' ? 'bg-sky-300' : 'bg-pink-300'
-                    } ${highlightColor === c ? 'scale-125 ring-2 ring-indigo-600' : 'opacity-70'}`}
+                      c === "yellow"
+                        ? "bg-yellow-300"
+                        : c === "green"
+                          ? "bg-emerald-300"
+                          : c === "blue"
+                            ? "bg-sky-300"
+                            : "bg-pink-300"
+                    } ${highlightColor === c ? "scale-125 ring-2 ring-indigo-600" : "opacity-70"}`}
                   >
-                    {highlightColor === c && <Check size={14} className="text-slate-800" />}
+                    {highlightColor === c && (
+                      <Check size={14} className="text-slate-800" />
+                    )}
                   </button>
                 ))}
               </div>
@@ -478,7 +534,9 @@ const EbookReader = () => {
 
             {/* Note text input */}
             <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Study Note</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Study Note
+              </label>
               <textarea
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
@@ -490,7 +548,9 @@ const EbookReader = () => {
 
             {/* Tag selector */}
             <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Tag Classification</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Tag Classification
+              </label>
               <select
                 value={annotationTag}
                 onChange={(e) => setAnnotationTag(e.target.value)}

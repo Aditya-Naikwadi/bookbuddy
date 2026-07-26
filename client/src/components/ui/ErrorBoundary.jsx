@@ -1,6 +1,6 @@
-import React from 'react';
-import { Button } from './Button';
-import { AlertCircle } from 'lucide-react';
+import React from "react";
+import { Button } from "./Button";
+import { AlertCircle } from "lucide-react";
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -26,13 +26,13 @@ export class ErrorBoundary extends React.Component {
           <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
             <AlertCircle className="w-8 h-8 text-red-500" />
           </div>
-          <h2 className="text-xl font-semibold text-ink mb-2">Something went wrong</h2>
+          <h2 className="text-xl font-semibold text-ink mb-2">
+            Something went wrong
+          </h2>
           <p className="text-muted mb-6 max-w-md">
             An unexpected error occurred in this section of the application.
           </p>
-          <Button onClick={() => window.location.reload()}>
-            Reload Page
-          </Button>
+          <Button onClick={() => window.location.reload()}>Reload Page</Button>
         </div>
       );
     }

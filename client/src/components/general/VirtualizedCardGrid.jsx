@@ -1,17 +1,19 @@
-import React from 'react';
+import React from "react";
 
 const VirtualizedCardGrid = ({
   items = [],
   renderItem,
   loading = false,
   emptyState,
-  viewMode = 'grid',
-  columns = 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+  viewMode = "grid",
+  columns = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
 }) => {
   if (loading) {
     return (
       <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-        <div className={`grid ${viewMode === 'list' ? 'grid-cols-1' : columns} gap-4`}>
+        <div
+          className={`grid ${viewMode === "list" ? "grid-cols-1" : columns} gap-4`}
+        >
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
@@ -40,7 +42,9 @@ const VirtualizedCardGrid = ({
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto pr-1.5 scrollbar-thin">
-      <div className={`grid ${viewMode === 'list' ? 'grid-cols-1' : columns} gap-4 pb-4`}>
+      <div
+        className={`grid ${viewMode === "list" ? "grid-cols-1" : columns} gap-4 pb-4`}
+      >
         {items.map((item, index) => renderItem(item, index))}
       </div>
     </div>

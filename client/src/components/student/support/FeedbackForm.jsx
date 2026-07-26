@@ -1,5 +1,5 @@
-import { MessageSquare, Loader2, Star } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { MessageSquare, Loader2, Star } from "lucide-react";
+import { Button } from "../../ui/Button";
 
 export const FeedbackForm = ({
   values = {},
@@ -16,7 +16,8 @@ export const FeedbackForm = ({
           Send General Feedback
         </h2>
         <p className="text-xs text-slate-500 mt-1">
-          Share your suggestions or compliments to help us build a better library experience.
+          Share your suggestions or compliments to help us build a better
+          library experience.
         </p>
       </div>
 
@@ -37,7 +38,11 @@ export const FeedbackForm = ({
           <span className="block text-xs font-bold text-slate-700">
             Rate your experience
           </span>
-          <div className="flex gap-2" role="group" aria-label="Rating out of 5 stars">
+          <div
+            className="flex gap-2"
+            role="group"
+            aria-label="Rating out of 5 stars"
+          >
             {[1, 2, 3, 4, 5].map((star) => {
               const rating = values.rating || 0;
               const isSelected = star <= rating;
@@ -46,15 +51,17 @@ export const FeedbackForm = ({
                 <button
                   key={star}
                   type="button"
-                  onClick={() => onFieldChange('rating', star)}
+                  onClick={() => onFieldChange("rating", star)}
                   disabled={isPending}
                   className={`p-1 rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-amber-400/50 ${
-                    isSelected ? 'text-amber-400' : 'text-slate-200 hover:text-amber-200'
+                    isSelected
+                      ? "text-amber-400"
+                      : "text-slate-200 hover:text-amber-200"
                   }`}
-                  aria-label={`Rate ${star} Star${star > 1 ? 's' : ''}`}
+                  aria-label={`Rate ${star} Star${star > 1 ? "s" : ""}`}
                   aria-pressed={rating === star}
                 >
-                  <Star size={24} fill={isSelected ? 'currentColor' : 'none'} />
+                  <Star size={24} fill={isSelected ? "currentColor" : "none"} />
                 </button>
               );
             })}
@@ -71,14 +78,16 @@ export const FeedbackForm = ({
           </label>
           <select
             id="feedback-category"
-            value={values.category || ''}
-            onChange={(e) => onFieldChange('category', e.target.value)}
+            value={values.category || ""}
+            onChange={(e) => onFieldChange("category", e.target.value)}
             disabled={isPending}
             className={`w-full p-2.5 text-xs border rounded-xl focus:ring-2 focus:ring-slate-400 focus:outline-none bg-white text-slate-700 ${
-              errors.category ? 'border-red-500 bg-red-50/10' : 'border-slate-200'
+              errors.category
+                ? "border-red-500 bg-red-50/10"
+                : "border-slate-200"
             }`}
             aria-required="true"
-            aria-describedby={errors.category ? 'error-category' : undefined}
+            aria-describedby={errors.category ? "error-category" : undefined}
           >
             <option value="">Select Category</option>
             <option value="general">General Library</option>
@@ -108,15 +117,17 @@ export const FeedbackForm = ({
           <textarea
             id="feedback-message"
             rows="3"
-            value={values.message || ''}
-            onChange={(e) => onFieldChange('message', e.target.value)}
+            value={values.message || ""}
+            onChange={(e) => onFieldChange("message", e.target.value)}
             disabled={isPending}
             className={`w-full p-2.5 text-xs border rounded-xl focus:ring-2 focus:ring-slate-400 focus:outline-none resize-none ${
-              errors.message ? 'border-red-500 bg-red-50/10' : 'border-slate-200'
+              errors.message
+                ? "border-red-500 bg-red-50/10"
+                : "border-slate-200"
             }`}
             placeholder="Tell us what you love or what could be better..."
             aria-required="true"
-            aria-describedby={errors.message ? 'error-message' : undefined}
+            aria-describedby={errors.message ? "error-message" : undefined}
           />
           {errors.message && (
             <p

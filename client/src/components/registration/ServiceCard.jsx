@@ -1,4 +1,4 @@
-import * as Icons from 'lucide-react';
+import * as Icons from "lucide-react";
 
 export default function ServiceCard({
   service,
@@ -13,17 +13,17 @@ export default function ServiceCard({
       onClick={() => !isDisabled && onToggle(service.key)}
       className={`group relative p-4 rounded-xl border transition-all cursor-pointer select-none flex flex-col justify-between ${
         isSelected
-          ? 'bg-indigo-50/70 border-indigo-500 shadow-sm shadow-indigo-100'
-          : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'
-      } ${isDisabled ? 'opacity-60 cursor-not-allowed' : ''}`}
+          ? "bg-indigo-50/70 border-indigo-500 shadow-sm shadow-indigo-100"
+          : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+      } ${isDisabled ? "opacity-60 cursor-not-allowed" : ""}`}
     >
       <div>
         <div className="flex items-center justify-between mb-3">
           <div
             className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
               isSelected
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
+                ? "bg-indigo-600 text-white"
+                : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
             }`}
           >
             <IconComponent size={20} />
@@ -61,7 +61,7 @@ export default function ServiceCard({
       {service.dependencies && service.dependencies.length > 0 && (
         <div className="mt-3 pt-2 border-t border-slate-200/60 text-[11px] text-slate-400 flex items-center gap-1">
           <Icons.Info size={12} className="text-slate-400" />
-          <span>Requires: {service.dependencies.join(', ')}</span>
+          <span>Requires: {service.dependencies.join(", ")}</span>
         </div>
       )}
     </div>

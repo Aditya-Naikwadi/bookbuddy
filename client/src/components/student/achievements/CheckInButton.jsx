@@ -1,5 +1,5 @@
-import { Flame, CheckCircle, Loader2 } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { Flame, CheckCircle, Loader2 } from "lucide-react";
+import { Button } from "../../ui/Button";
 
 export const CheckInButton = ({
   todayComplete,
@@ -10,10 +10,10 @@ export const CheckInButton = ({
   return (
     <div className="flex flex-col items-center space-y-3 w-full max-w-sm">
       {/* Screen Reader Announcements */}
-      <div 
-        className="sr-only" 
-        role="status" 
-        aria-live="polite" 
+      <div
+        className="sr-only"
+        role="status"
+        aria-live="polite"
         aria-atomic="true"
       >
         {announcement}
@@ -28,8 +28,8 @@ export const CheckInButton = ({
         disabled={todayComplete || isPending}
         className={`w-full h-14 rounded-2xl font-bold flex items-center justify-center gap-2.5 transition-all text-sm focus:ring-2 focus:ring-orange-500/50 ${
           todayComplete
-            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/10 cursor-default opacity-100'
-            : 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg hover:shadow-orange-500/25 active:scale-[0.98]'
+            ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/10 cursor-default opacity-100"
+            : "bg-orange-500 hover:bg-orange-600 text-white shadow-lg hover:shadow-orange-500/25 active:scale-[0.98]"
         }`}
         aria-pressed={todayComplete}
         aria-label={

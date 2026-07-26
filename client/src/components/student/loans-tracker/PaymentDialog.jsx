@@ -1,6 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
-import { X, CheckCircle, CreditCard, Loader2, Receipt, AlertCircle, ShieldCheck } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { useEffect, useRef, useState } from "react";
+import {
+  X,
+  CheckCircle,
+  CreditCard,
+  Loader2,
+  Receipt,
+  AlertCircle,
+  ShieldCheck,
+} from "lucide-react";
+import { Button } from "../../ui/Button";
 
 // Helper script loader for Razorpay Checkout SDK (PCI compliant)
 const loadRazorpayScript = () => {
@@ -9,8 +17,8 @@ const loadRazorpayScript = () => {
       resolve(true);
       return;
     }
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.onload = () => resolve(true);
     script.onerror = () => resolve(false);
     document.body.appendChild(script);
@@ -26,16 +34,16 @@ export const PaymentDialog = ({
   onConfirm,
 }) => {
   const dialogRef = useRef(null);
-  const [step, setStep] = useState('confirm'); // 'confirm' | 'paying' | 'verifying_webhook' | 'success' | 'failed'
-  const [paymentRef, setPaymentRef] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [step, setStep] = useState("confirm"); // 'confirm' | 'paying' | 'verifying_webhook' | 'success' | 'failed'
+  const [paymentRef, setPaymentRef] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
   if (isOpen !== prevIsOpen) {
     setPrevIsOpen(isOpen);
     if (isOpen) {
-      setStep('confirm');
-      setErrorMessage('');
+      setStep("confirm");
+      setErrorMessage("");
     }
   }
 
@@ -43,8 +51,8 @@ export const PaymentDialog = ({
     if (!dialogRef.current) return [];
     return Array.from(
       dialogRef.current.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      )
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      ),
     );
   };
 
@@ -60,14 +68,18 @@ export const PaymentDialog = ({
     }
 
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && step !== 'paying' && step !== 'verifying_webhook') {
+      if (
+        e.key === "Escape" &&
+        step !== "paying" &&
+        step !== "verifying_webhook"
+      ) {
         onClose();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
       if (triggerEl) {
         triggerEl.focus();
       }
@@ -76,13 +88,15 @@ export const PaymentDialog = ({
 
   // Launch Razorpay PCI-compliant checkout popup
   const handleRazorpayPayment = async () => {
-    setStep('paying');
-    setErrorMessage('');
+    setStep("paying");
+    setErrorMessage("");
 
     const isLoaded = await loadRazorpayScript();
     if (!isLoaded) {
-      setErrorMessage('Failed to load Razorpay payment SDK. Please check your internet connection.');
-      setStep('failed');
+      setErrorMessage(
+        "Failed to load Razorpay payment SDK. Please check your internet connection.",
+      );
+      setStep("failed");
       return;
     }
 
@@ -91,15 +105,17 @@ export const PaymentDialog = ({
       const amountInPaise = Math.round(totalAmount * 100);
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_bookbuddy_demo',
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_bookbuddy_demo",
         amount: amountInPaise,
-        currency: 'INR',
-        name: 'BookBuddy Academic Library',
-        description: fineItem ? `Fine payment for overdue item` : `Bulk library fine settlement`,
-        image: 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
+        currency: "INR",
+        name: "BookBuddy Academic Library",
+        description: fineItem
+          ? `Fine payment for overdue item`
+          : `Bulk library fine settlement`,
+        image: "https://cdn-icons-png.flaticon.com/512/3145/3145765.png",
         handler: async function (response) {
           // Received Client Payment ID - Now enter Webhook Verification state
-          setStep('verifying_webhook');
+          setStep("verifying_webhook");
           setPaymentRef(response.razorpay_payment_id || `PAY-${Date.now()}`);
 
           try {
@@ -110,38 +126,44 @@ export const PaymentDialog = ({
               razorpay_signature: response.razorpay_signature,
               fineId: fineItem?._id,
             });
-            setStep('success');
+            setStep("success");
           } catch (verifyErr) {
-            console.error('Payment verification failed:', verifyErr);
-            setErrorMessage(verifyErr?.response?.data?.message || 'Payment received, but webhook verification failed.');
-            setStep('failed');
+            console.error("Payment verification failed:", verifyErr);
+            setErrorMessage(
+              verifyErr?.response?.data?.message ||
+                "Payment received, but webhook verification failed.",
+            );
+            setStep("failed");
           }
         },
         prefill: {
-          name: 'Student Patron',
-          email: 'student@bookbuddy.edu',
+          name: "Student Patron",
+          email: "student@bookbuddy.edu",
         },
         theme: {
-          color: '#4f46e5',
+          color: "#4f46e5",
         },
         modal: {
           ondismiss: function () {
-            if (step === 'paying') {
-              setStep('confirm');
+            if (step === "paying") {
+              setStep("confirm");
             }
           },
         },
       };
 
       const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (response) {
-        setErrorMessage(response.error?.description || 'Transaction was declined by payment gateway.');
-        setStep('failed');
+      rzp.on("payment.failed", function (response) {
+        setErrorMessage(
+          response.error?.description ||
+            "Transaction was declined by payment gateway.",
+        );
+        setStep("failed");
       });
       rzp.open();
     } catch (err) {
-      setErrorMessage(err.message || 'Payment processing error.');
-      setStep('failed');
+      setErrorMessage(err.message || "Payment processing error.");
+      setStep("failed");
     }
   };
 
@@ -160,11 +182,14 @@ export const PaymentDialog = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
-          <h3 id="dialog-title" className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3
+            id="dialog-title"
+            className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2"
+          >
             <Receipt className="text-indigo-600" size={20} />
-            {step === 'success' ? 'Payment Receipt' : 'Fine Payment Gateway'}
+            {step === "success" ? "Payment Receipt" : "Fine Payment Gateway"}
           </h3>
-          {step !== 'paying' && step !== 'verifying_webhook' && (
+          {step !== "paying" && step !== "verifying_webhook" && (
             <button
               onClick={onClose}
               className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
@@ -177,15 +202,19 @@ export const PaymentDialog = ({
 
         {/* Content */}
         <div className="p-6">
-          {step === 'confirm' && (
+          {step === "confirm" && (
             <div className="space-y-4">
               <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-2.5 text-xs text-emerald-700 dark:text-emerald-300 font-medium">
                 <ShieldCheck size={16} className="shrink-0 text-emerald-600" />
-                <span>PCI-DSS Compliant Hosted Gateway — Card details never touch our servers.</span>
+                <span>
+                  PCI-DSS Compliant Hosted Gateway — Card details never touch
+                  our servers.
+                </span>
               </div>
 
               <p className="text-xs text-slate-500 leading-relaxed">
-                Review your fine settlement summary below. Payments are processed via encrypted Razorpay checkout.
+                Review your fine settlement summary below. Payments are
+                processed via encrypted Razorpay checkout.
               </p>
 
               {/* Cost breakdown */}
@@ -193,31 +222,41 @@ export const PaymentDialog = ({
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>Type of Fee</span>
                   <span className="font-bold text-slate-900 dark:text-white">
-                    {fineItem ? 'Overdue Fine (Late Return)' : 'Bulk Fine Settlement'}
+                    {fineItem
+                      ? "Overdue Fine (Late Return)"
+                      : "Bulk Fine Settlement"}
                   </span>
                 </div>
                 {fineItem && (
                   <div className="flex justify-between text-xs text-slate-500">
                     <span>Book Title</span>
                     <span className="font-bold text-slate-900 dark:text-white truncate max-w-[200px] text-right">
-                      {fineItem.loanId?.bookId?.title || 'Library Item'}
+                      {fineItem.loanId?.bookId?.title || "Library Item"}
                     </span>
                   </div>
                 )}
                 {fineItem && (
                   <div className="flex justify-between text-xs text-slate-500">
                     <span>Overdue Days</span>
-                    <span className="text-slate-900 dark:text-white font-mono">{fineItem.overdueDays || 1} days</span>
+                    <span className="text-slate-900 dark:text-white font-mono">
+                      {fineItem.overdueDays || 1} days
+                    </span>
                   </div>
                 )}
                 <div className="border-t border-slate-200 dark:border-slate-700 my-2 pt-2 flex justify-between text-sm font-bold text-slate-900 dark:text-white">
                   <span>Total Due</span>
-                  <span className="text-indigo-600 dark:text-indigo-400 font-mono">₹{totalAmount.toFixed(2)}</span>
+                  <span className="text-indigo-600 dark:text-indigo-400 font-mono">
+                    ₹{totalAmount.toFixed(2)}
+                  </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 pt-3">
-                <Button variant="ghost" className="flex-1 text-xs" onClick={onClose}>
+                <Button
+                  variant="ghost"
+                  className="flex-1 text-xs"
+                  onClick={onClose}
+                >
                   Cancel
                 </Button>
                 <Button
@@ -232,66 +271,99 @@ export const PaymentDialog = ({
             </div>
           )}
 
-          {step === 'paying' && (
+          {step === "paying" && (
             <div className="flex flex-col items-center justify-center py-10 space-y-4 text-center">
               <Loader2 className="animate-spin text-indigo-600" size={40} />
-              <p className="text-sm font-bold text-slate-900 dark:text-white">Opening Secure Razorpay Gateway...</p>
-              <p className="text-xs text-slate-500">Please complete payment in the popup window.</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                Opening Secure Razorpay Gateway...
+              </p>
+              <p className="text-xs text-slate-500">
+                Please complete payment in the popup window.
+              </p>
             </div>
           )}
 
-          {step === 'verifying_webhook' && (
+          {step === "verifying_webhook" && (
             <div className="flex flex-col items-center justify-center py-10 space-y-4 text-center">
               <Loader2 className="animate-spin text-indigo-600" size={40} />
-              <p className="text-sm font-bold text-slate-900 dark:text-white">Verifying Webhook Confirmation...</p>
-              <p className="text-xs text-slate-500">Reconciling transaction signature with backend servers...</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                Verifying Webhook Confirmation...
+              </p>
+              <p className="text-xs text-slate-500">
+                Reconciling transaction signature with backend servers...
+              </p>
             </div>
           )}
 
-          {step === 'failed' && (
+          {step === "failed" && (
             <div className="space-y-4 text-center">
               <div className="p-3 bg-red-500/10 rounded-full w-12 h-12 flex items-center justify-center mx-auto text-red-500">
                 <AlertCircle size={28} />
               </div>
-              <h4 className="text-base font-bold text-slate-900 dark:text-white">Payment Unsuccessful</h4>
+              <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                Payment Unsuccessful
+              </h4>
               <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 p-3 rounded-xl">
-                {errorMessage || 'Transaction was canceled or failed.'}
+                {errorMessage || "Transaction was canceled or failed."}
               </p>
-              <Button variant="ghost" className="w-full text-xs font-bold" onClick={() => setStep('confirm')}>
+              <Button
+                variant="ghost"
+                className="w-full text-xs font-bold"
+                onClick={() => setStep("confirm")}
+              >
                 Try Again
               </Button>
             </div>
           )}
 
-          {step === 'success' && (
+          {step === "success" && (
             <div className="space-y-6">
               <div className="flex flex-col items-center text-center space-y-2">
-                <CheckCircle className="text-emerald-500 animate-bounce" size={48} />
-                <h4 className="text-lg font-bold text-slate-900 dark:text-white">Transaction Verified & Settled!</h4>
-                <p className="text-xs text-slate-500">Your library fine balance has been cleared.</p>
+                <CheckCircle
+                  className="text-emerald-500 animate-bounce"
+                  size={48}
+                />
+                <h4 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Transaction Verified & Settled!
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Your library fine balance has been cleared.
+                </p>
               </div>
 
               {/* Receipt */}
               <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-xs space-y-2 font-mono">
                 <div className="flex justify-between">
                   <span className="text-slate-400">Razorpay Ref:</span>
-                  <span className="font-bold text-slate-900 dark:text-white">{paymentRef}</span>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {paymentRef}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Timestamp:</span>
-                  <span className="text-slate-700 dark:text-slate-300">{new Date().toLocaleString()}</span>
+                  <span className="text-slate-700 dark:text-slate-300">
+                    {new Date().toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Amount Paid:</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">₹{totalAmount.toFixed(2)}</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                    ₹{totalAmount.toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Status:</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400 uppercase">VERIFIED_PAID</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 uppercase">
+                    VERIFIED_PAID
+                  </span>
                 </div>
               </div>
 
-              <Button variant="ghost" className="w-full text-xs font-bold" onClick={onClose}>
+              <Button
+                variant="ghost"
+                className="w-full text-xs font-bold"
+                onClick={onClose}
+              >
                 Close Receipt
               </Button>
             </div>

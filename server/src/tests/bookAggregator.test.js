@@ -8,17 +8,29 @@ const TEST_MONGO_URI =
 describe('Educational Book Aggregator - Deduplication & Upsert Tests', () => {
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(TEST_MONGO_URI);
+      try {
+        await mongoose.connect(TEST_MONGO_URI, {
+          serverSelectionTimeoutMS: 2000,
+          connectTimeoutMS: 2000,
+          bufferCommands: false,
+        });
+      } catch {
+        // Ignore connection failure in unit test mode
+      }
     }
   });
 
   afterAll(async () => {
-    await UnifiedBook.deleteMany({});
-    await mongoose.disconnect();
+    if (mongoose.connection.readyState !== 0) {
+      await UnifiedBook.deleteMany({}).catch(() => {});
+      await mongoose.disconnect().catch(() => {});
+    }
   });
 
   beforeEach(async () => {
-    await UnifiedBook.deleteMany({});
+    if (mongoose.connection.readyState !== 0) {
+      await UnifiedBook.deleteMany({}).catch(() => {});
+    }
   });
 
   test('Inserts a new book when no duplicate exists', async () => {

@@ -1,20 +1,26 @@
-
-import React, { useRef, useState } from 'react';
-import { cn } from '../../utils/cn';
-import { motion } from 'framer-motion';
+import React, { useRef, useState } from "react";
+import { cn } from "../../utils/cn";
+import { motion } from "framer-motion";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "primary" | "secondary" | "ghost";
+  size?: "sm" | "md" | "lg";
 }
 
-export const Button: React.FC<ButtonProps> = ({ className, variant = 'primary', size = 'md', ...props }) => {
+export const Button: React.FC<ButtonProps> = ({
+  className,
+  variant = "primary",
+  size = "md",
+  ...props
+}) => {
   const ref = useRef<HTMLButtonElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
   const handleMouse = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!ref.current) return;
-    const hasReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const hasReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     if (hasReducedMotion) return;
 
     const { clientX, clientY } = e;
@@ -28,7 +34,8 @@ export const Button: React.FC<ButtonProps> = ({ className, variant = 'primary', 
     setPosition({ x: 0, y: 0 });
   };
 
-  const base = "inline-flex items-center justify-center rounded-lg font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember";
+  const base =
+    "inline-flex items-center justify-center rounded-lg font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember";
   const variants = {
     primary: "bg-ember text-white hover:bg-ember-glow shadow-md",
     secondary: "bg-indigo text-white hover:bg-indigo-600 shadow-md",
@@ -51,4 +58,4 @@ export const Button: React.FC<ButtonProps> = ({ className, variant = 'primary', 
       {...(props as any)}
     />
   );
-}
+};

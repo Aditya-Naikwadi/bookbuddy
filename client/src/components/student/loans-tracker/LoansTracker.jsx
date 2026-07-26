@@ -1,15 +1,23 @@
-import { useState, useMemo, useRef } from 'react';
-import { useLoansTracker } from '../../../hooks/useLoansTracker';
-import { LoansList } from './LoansList';
-import { FinesSummary } from './FinesSummary';
-import { FineBreakdownItem } from './FineBreakdownItem';
-import { QueueHoldsList } from './QueueHoldsList';
-import { HistoryList } from './HistoryList';
-import { PaymentDialog } from './PaymentDialog';
-import { Loader2, Search, Filter, BookOpen, AlertTriangle, Sparkles, CheckCircle } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { useState, useMemo, useRef } from "react";
+import { useLoansTracker } from "../../../hooks/useLoansTracker";
+import { LoansList } from "./LoansList";
+import { FinesSummary } from "./FinesSummary";
+import { FineBreakdownItem } from "./FineBreakdownItem";
+import { QueueHoldsList } from "./QueueHoldsList";
+import { HistoryList } from "./HistoryList";
+import { PaymentDialog } from "./PaymentDialog";
+import {
+  Loader2,
+  Search,
+  Filter,
+  BookOpen,
+  AlertTriangle,
+  Sparkles,
+  CheckCircle,
+} from "lucide-react";
+import { Button } from "../../ui/Button";
 
-export const LoansTracker = ({ defaultTab = 'loans' }) => {
+export const LoansTracker = ({ defaultTab = "loans" }) => {
   const {
     loans,
     queue,
@@ -32,11 +40,11 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
   const [activeTab, setActiveTab] = useState(defaultTab);
 
   // Live Region announcement
-  const [liveAnnouncement, setLiveAnnouncement] = useState('');
+  const [liveAnnouncement, setLiveAnnouncement] = useState("");
 
   // Search & Filter State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   // Payment Dialog State
   const [isPayOpen, setIsPayOpen] = useState(false);
@@ -47,13 +55,13 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
   // 1. Filtered Loans
   const filteredActiveLoans = useMemo(() => {
     return loans.active.filter((loan) => {
-      const title = loan.bookId?.title || '';
-      const author = loan.bookId?.author || '';
+      const title = loan.bookId?.title || "";
+      const author = loan.bookId?.author || "";
       const matchesSearch =
         title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         author.toLowerCase().includes(searchQuery.toLowerCase());
 
-      if (statusFilter === 'all') return matchesSearch;
+      if (statusFilter === "all") return matchesSearch;
 
       const due = new Date(loan.dueDate);
       const now = new Date();
@@ -62,9 +70,10 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       const isDueSoon = !isOverdue && diffDays <= 2;
 
-      if (statusFilter === 'overdue') return matchesSearch && isOverdue;
-      if (statusFilter === 'due_soon') return matchesSearch && isDueSoon;
-      if (statusFilter === 'on_time') return matchesSearch && !isOverdue && !isDueSoon;
+      if (statusFilter === "overdue") return matchesSearch && isOverdue;
+      if (statusFilter === "due_soon") return matchesSearch && isDueSoon;
+      if (statusFilter === "on_time")
+        return matchesSearch && !isOverdue && !isDueSoon;
 
       return matchesSearch;
     });
@@ -72,7 +81,7 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
 
   // Unpaid fines list
   const unpaidFinesList = useMemo(() => {
-    return fines.filter((f) => f.status === 'unpaid');
+    return fines.filter((f) => f.status === "unpaid");
   }, [fines]);
 
   // Total balance and counts
@@ -87,21 +96,23 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
       const res = await renewLoan(loan._id);
       const newDueDate = res?.data?.dueDate
         ? new Date(res.data.dueDate).toLocaleDateString()
-        : 'extended date';
-      setLiveAnnouncement(`"${loan.bookId?.title}" renewed successfully. New due date is ${newDueDate}.`);
+        : "extended date";
+      setLiveAnnouncement(
+        `"${loan.bookId?.title}" renewed successfully. New due date is ${newDueDate}.`,
+      );
     } catch (err) {
-      const errorMsg = err.response?.data?.message || 'Failed to renew book';
+      const errorMsg = err.response?.data?.message || "Failed to renew book";
       setLiveAnnouncement(`Renewal failed: ${errorMsg}.`);
     }
   };
 
   const handleCancelHold = async (holdId) => {
-    setLiveAnnouncement('Cancelling reservation hold...');
+    setLiveAnnouncement("Cancelling reservation hold...");
     try {
       await cancelHold(holdId);
-      setLiveAnnouncement('Reservation hold cancelled successfully.');
+      setLiveAnnouncement("Reservation hold cancelled successfully.");
     } catch {
-      setLiveAnnouncement('Failed to cancel reservation hold.');
+      setLiveAnnouncement("Failed to cancel reservation hold.");
     }
   };
 
@@ -129,13 +140,18 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
   const handleConfirmPayment = async () => {
     if (selectedFine) {
       setLiveAnnouncement(
-        useWaiverForSelected ? 'Applying waiver coupon...' : 'Processing wallet payment...'
+        useWaiverForSelected
+          ? "Applying waiver coupon..."
+          : "Processing wallet payment...",
       );
-      await payFine({ fineId: selectedFine._id, useWaiver: useWaiverForSelected });
+      await payFine({
+        fineId: selectedFine._id,
+        useWaiver: useWaiverForSelected,
+      });
       setLiveAnnouncement(
         useWaiverForSelected
-          ? 'Fine waived successfully.'
-          : `Fine of ₹${selectedFine.amount.toFixed(2)} paid successfully.`
+          ? "Fine waived successfully."
+          : `Fine of ₹${selectedFine.amount.toFixed(2)} paid successfully.`,
       );
     } else {
       setLiveAnnouncement(`Paying all ${unpaidCount} outstanding fines...`);
@@ -143,15 +159,23 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
       for (const fine of unpaidFinesList) {
         await payFine({ fineId: fine._id, useWaiver: false });
       }
-      setLiveAnnouncement(`All fines totaling ₹${totalUnpaidAmount.toFixed(2)} paid successfully.`);
+      setLiveAnnouncement(
+        `All fines totaling ₹${totalUnpaidAmount.toFixed(2)} paid successfully.`,
+      );
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 space-y-4" aria-busy="true" aria-live="polite">
+      <div
+        className="flex flex-col items-center justify-center py-24 space-y-4"
+        aria-busy="true"
+        aria-live="polite"
+      >
         <Loader2 className="animate-spin text-ember" size={36} />
-        <p className="text-sm text-muted">Retrieving your borrowing details...</p>
+        <p className="text-sm text-muted">
+          Retrieving your borrowing details...
+        </p>
       </div>
     );
   }
@@ -162,7 +186,8 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
         <AlertTriangle className="text-danger mb-3 animate-bounce" size={40} />
         <h3 className="text-lg font-bold text-ink">Unable to load loans</h3>
         <p className="text-xs text-muted mt-1 leading-relaxed">
-          There was an error communicating with the BookBuddy servers. Please check your connection and reload.
+          There was an error communicating with the BookBuddy servers. Please
+          check your connection and reload.
         </p>
       </div>
     );
@@ -187,23 +212,39 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
               BookBuddy Student Member
             </span>
             <h2 className="text-2xl sm:text-3xl font-serif font-black text-ink mt-1">
-              Welcome back, {profile?.name || 'Student'}
+              Welcome back, {profile?.name || "Student"}
             </h2>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-muted font-medium">
-              <span>Card ID: <strong className="text-ink">{profile?.studentId || 'N/A'}</strong></span>
+              <span>
+                Card ID:{" "}
+                <strong className="text-ink">
+                  {profile?.studentId || "N/A"}
+                </strong>
+              </span>
               <span>•</span>
-              <span>Major: <strong className="text-ink">{profile?.major || 'N/A'}</strong></span>
+              <span>
+                Major:{" "}
+                <strong className="text-ink">{profile?.major || "N/A"}</strong>
+              </span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 shrink-0 sm:min-w-[280px]">
             <div className="p-3 border border-edge/20 rounded-xl bg-deep/30">
-              <span className="block text-[10px] text-muted font-bold uppercase tracking-wider">Active Borrowed</span>
-              <span className="text-xl font-serif font-black text-ink">{loans.active.length} item(s)</span>
+              <span className="block text-[10px] text-muted font-bold uppercase tracking-wider">
+                Active Borrowed
+              </span>
+              <span className="text-xl font-serif font-black text-ink">
+                {loans.active.length} item(s)
+              </span>
             </div>
             <div className="p-3 border border-edge/20 rounded-xl bg-deep/30">
-              <span className="block text-[10px] text-muted font-bold uppercase tracking-wider">Outstanding Dues</span>
-              <span className={`text-xl font-serif font-black ${totalUnpaidAmount > 0 ? 'text-danger' : 'text-success'}`}>
+              <span className="block text-[10px] text-muted font-bold uppercase tracking-wider">
+                Outstanding Dues
+              </span>
+              <span
+                className={`text-xl font-serif font-black ${totalUnpaidAmount > 0 ? "text-danger" : "text-success"}`}
+              >
                 ₹{totalUnpaidAmount.toFixed(2)}
               </span>
             </div>
@@ -212,18 +253,22 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
       </div>
 
       {/* Outstanding fine Callout Alert banner */}
-      {totalUnpaidAmount > 0 && activeTab !== 'fines' && (
+      {totalUnpaidAmount > 0 && activeTab !== "fines" && (
         <div className="flex items-center justify-between p-4 border border-danger/20 bg-danger/5 rounded-xl animate-pulse-slow">
           <div className="flex items-center gap-3">
             <AlertTriangle className="text-danger shrink-0" size={18} />
             <p className="text-xs font-semibold text-ink">
-              You have <strong className="text-danger">₹{totalUnpaidAmount.toFixed(2)}</strong> in outstanding library fines.
+              You have{" "}
+              <strong className="text-danger">
+                ₹{totalUnpaidAmount.toFixed(2)}
+              </strong>{" "}
+              in outstanding library fines.
             </p>
           </div>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setActiveTab('fines')}
+            onClick={() => setActiveTab("fines")}
             className="text-[10px] px-3 h-8 font-bold border-danger/25 text-danger hover:bg-danger/10"
           >
             Pay Balance
@@ -234,25 +279,25 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
       {/* Tab Navigation */}
       <div className="flex border-b border-edge/20">
         <button
-          onClick={() => setActiveTab('loans')}
+          onClick={() => setActiveTab("loans")}
           className={`px-5 py-3 text-sm font-bold border-b-2 transition-colors focus:outline-none ${
-            activeTab === 'loans'
-              ? 'border-ember text-ember'
-              : 'border-transparent text-muted hover:text-ink'
+            activeTab === "loans"
+              ? "border-ember text-ember"
+              : "border-transparent text-muted hover:text-ink"
           }`}
-          aria-selected={activeTab === 'loans'}
+          aria-selected={activeTab === "loans"}
           role="tab"
         >
           Active Borrowing ({loans.active.length})
         </button>
         <button
-          onClick={() => setActiveTab('fines')}
+          onClick={() => setActiveTab("fines")}
           className={`px-5 py-3 text-sm font-bold border-b-2 transition-colors focus:outline-none ${
-            activeTab === 'fines'
-              ? 'border-ember text-ember'
-              : 'border-transparent text-muted hover:text-ink'
+            activeTab === "fines"
+              ? "border-ember text-ember"
+              : "border-transparent text-muted hover:text-ink"
           }`}
-          aria-selected={activeTab === 'fines'}
+          aria-selected={activeTab === "fines"}
           role="tab"
         >
           Fines & Balances (₹{totalUnpaidAmount.toFixed(2)})
@@ -261,12 +306,14 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
 
       {/* Tab Content Panels */}
       <div className="space-y-6">
-        {activeTab === 'loans' ? (
+        {activeTab === "loans" ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             {/* Active Borrowed Books Column */}
             <div className="lg:col-span-2 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-edge/10">
-                <h3 className="text-base font-bold text-ink">Currently Borrowed</h3>
+                <h3 className="text-base font-bold text-ink">
+                  Currently Borrowed
+                </h3>
 
                 {/* Filter and Search controls */}
                 {loans.active.length > 0 && (
@@ -290,10 +337,27 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
                         onChange={(e) => setStatusFilter(e.target.value)}
                         className="bg-transparent border-none text-[10px] font-bold text-ink focus:outline-none focus:ring-0 cursor-pointer"
                       >
-                        <option value="all" className="bg-surface">All Status</option>
-                        <option value="overdue" className="bg-surface text-danger">Overdue</option>
-                        <option value="due_soon" className="bg-surface text-amber-500">Due Soon</option>
-                        <option value="on_time" className="bg-surface text-success">On Time</option>
+                        <option value="all" className="bg-surface">
+                          All Status
+                        </option>
+                        <option
+                          value="overdue"
+                          className="bg-surface text-danger"
+                        >
+                          Overdue
+                        </option>
+                        <option
+                          value="due_soon"
+                          className="bg-surface text-amber-500"
+                        >
+                          Due Soon
+                        </option>
+                        <option
+                          value="on_time"
+                          className="bg-surface text-success"
+                        >
+                          On Time
+                        </option>
                       </select>
                     </div>
                   </div>
@@ -313,7 +377,9 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
               {/* Queue Holds */}
               <div className="glass-panel border border-edge/30 rounded-2xl overflow-hidden shadow-sm">
                 <div className="p-4 border-b border-edge/20 bg-surface/10">
-                  <h3 className="font-bold text-sm text-ink">My Reservation Queue Holds</h3>
+                  <h3 className="font-bold text-sm text-ink">
+                    My Reservation Queue Holds
+                  </h3>
                 </div>
                 <div className="p-4">
                   <QueueHoldsList
@@ -328,7 +394,9 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
               {/* History */}
               <div className="glass-panel border border-edge/30 rounded-2xl overflow-hidden shadow-sm">
                 <div className="p-4 border-b border-edge/20 bg-surface/10">
-                  <h3 className="font-bold text-sm text-ink">Borrowing History</h3>
+                  <h3 className="font-bold text-sm text-ink">
+                    Borrowing History
+                  </h3>
                 </div>
                 <div className="p-4">
                   <HistoryList history={loans.history} />
@@ -355,7 +423,9 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
                   <div className="text-center py-10 flex flex-col items-center">
                     <CheckCircle className="text-success/50 mb-2" size={32} />
                     <p className="text-sm font-bold text-ink">All Paid Up!</p>
-                    <p className="text-xs text-muted mt-1">You have no pending unpaid library fines.</p>
+                    <p className="text-xs text-muted mt-1">
+                      You have no pending unpaid library fines.
+                    </p>
                   </div>
                 ) : (
                   unpaidFinesList.map((fine) => (
@@ -382,7 +452,13 @@ export const LoansTracker = ({ defaultTab = 'loans' }) => {
         triggerRef={triggerButtonRef}
         fineItem={selectedFine}
         allFines={unpaidFinesList}
-        totalAmount={useWaiverForSelected ? 0 : selectedFine ? selectedFine.amount : totalUnpaidAmount}
+        totalAmount={
+          useWaiverForSelected
+            ? 0
+            : selectedFine
+              ? selectedFine.amount
+              : totalUnpaidAmount
+        }
         onConfirm={handleConfirmPayment}
         isProcessing={isPaying}
       />

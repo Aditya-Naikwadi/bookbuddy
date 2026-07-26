@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Menu, Settings, X, ArrowRight, ChevronLeft } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Menu, Settings, X, ArrowRight, ChevronLeft } from "lucide-react";
 
 export const ReaderToolbar = ({
   title,
@@ -46,23 +46,27 @@ export const ReaderToolbar = ({
       }
     };
 
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('keydown', handleActivity);
-    window.addEventListener('touchstart', handleActivity);
-    document.addEventListener('focusin', handleFocusIn);
+    window.addEventListener("mousemove", handleActivity);
+    window.addEventListener("keydown", handleActivity);
+    window.addEventListener("touchstart", handleActivity);
+    document.addEventListener("focusin", handleFocusIn);
 
     // Schedule auto-hide timer after mount
-    if (!settingsOpen && !tocOpen && !containerRef.current?.contains(document.activeElement)) {
+    if (
+      !settingsOpen &&
+      !tocOpen &&
+      !containerRef.current?.contains(document.activeElement)
+    ) {
       hideTimeoutRef.current = setTimeout(() => {
         setIsVisible(false);
       }, 3000);
     }
 
     return () => {
-      window.removeEventListener('mousemove', handleActivity);
-      window.removeEventListener('keydown', handleActivity);
-      window.removeEventListener('touchstart', handleActivity);
-      document.removeEventListener('focusin', handleFocusIn);
+      window.removeEventListener("mousemove", handleActivity);
+      window.removeEventListener("keydown", handleActivity);
+      window.removeEventListener("touchstart", handleActivity);
+      document.removeEventListener("focusin", handleFocusIn);
       if (hideTimeoutRef.current) {
         clearTimeout(hideTimeoutRef.current);
       }
@@ -73,7 +77,9 @@ export const ReaderToolbar = ({
     <div
       ref={containerRef}
       className={`absolute inset-x-0 top-0 z-40 bg-white/95 border-b border-slate-200 shadow-md backdrop-blur-md transition-all duration-300 transform flex flex-col sm:flex-row items-center justify-between px-6 py-3.5 gap-3 sm:gap-6 ${
-        isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
+        isVisible
+          ? "translate-y-0 opacity-100"
+          : "-translate-y-full opacity-0 pointer-events-none"
       }`}
       onMouseEnter={() => {
         setIsVisible(true);
@@ -94,10 +100,10 @@ export const ReaderToolbar = ({
 
         <div className="min-w-0">
           <h1 className="text-sm sm:text-base font-serif font-bold text-slate-900 truncate max-w-[200px] sm:max-w-xs leading-tight">
-            {title || 'Loading Ebook...'}
+            {title || "Loading Ebook..."}
           </h1>
           <p className="text-[10px] sm:text-xs text-slate-500 truncate max-w-[150px] sm:max-w-[200px]">
-            {author || 'Unknown Author'}
+            {author || "Unknown Author"}
           </p>
         </div>
       </div>
@@ -119,7 +125,9 @@ export const ReaderToolbar = ({
           aria-atomic="true"
         >
           <span>Progress:</span>
-          <span className="text-indigo-600 font-extrabold">{percentComplete}%</span>
+          <span className="text-indigo-600 font-extrabold">
+            {percentComplete}%
+          </span>
         </div>
 
         <button
@@ -138,8 +146,8 @@ export const ReaderToolbar = ({
           onClick={onToggleToc}
           className={`p-2.5 rounded-xl border flex items-center justify-center gap-1.5 text-xs font-bold transition-all focus:ring-2 focus:ring-indigo-600 focus:outline-none ${
             tocOpen
-              ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-              : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+              ? "bg-indigo-50 border-indigo-200 text-indigo-700"
+              : "border-slate-200 hover:bg-slate-50 text-slate-600"
           }`}
           aria-label="Toggle Table of Contents sidebar"
           aria-expanded={tocOpen}
@@ -153,8 +161,8 @@ export const ReaderToolbar = ({
           onClick={onToggleSettings}
           className={`p-2.5 rounded-xl border flex items-center justify-center gap-1.5 text-xs font-bold transition-all focus:ring-2 focus:ring-indigo-600 focus:outline-none ${
             settingsOpen
-              ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-              : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+              ? "bg-indigo-50 border-indigo-200 text-indigo-700"
+              : "border-slate-200 hover:bg-slate-50 text-slate-600"
           }`}
           aria-label="Toggle text typography and contrast settings"
           aria-expanded={settingsOpen}

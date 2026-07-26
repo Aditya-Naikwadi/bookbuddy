@@ -1,10 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '../api/client';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import apiClient from "../api/client";
 
 // Fetch functions with robust fallback error handling
 const fetchLoans = async () => {
   try {
-    const { data } = await apiClient.get('/dashboards/student/loans');
+    const { data } = await apiClient.get("/dashboards/student/loans");
     return data.data || { active: [], history: [] };
   } catch {
     return { active: [], history: [] };
@@ -13,7 +13,7 @@ const fetchLoans = async () => {
 
 const fetchQueue = async () => {
   try {
-    const { data } = await apiClient.get('/reservations/me');
+    const { data } = await apiClient.get("/reservations/me");
     return data.data || [];
   } catch {
     return [];
@@ -22,7 +22,7 @@ const fetchQueue = async () => {
 
 const fetchFines = async () => {
   try {
-    const { data } = await apiClient.get('/fines/me');
+    const { data } = await apiClient.get("/fines/me");
     return data.data || [];
   } catch {
     return [];
@@ -31,7 +31,7 @@ const fetchFines = async () => {
 
 const fetchFinesSummary = async () => {
   try {
-    const { data } = await apiClient.get('/fines/me/summary');
+    const { data } = await apiClient.get("/fines/me/summary");
     return data.data || { totalUnpaid: 0, unpaidCount: 0 };
   } catch {
     return { totalUnpaid: 0, unpaidCount: 0 };
@@ -40,7 +40,7 @@ const fetchFinesSummary = async () => {
 
 const fetchProfile = async () => {
   try {
-    const { data } = await apiClient.get('/auth/profile');
+    const { data } = await apiClient.get("/auth/profile");
     return data.data || null;
   } catch {
     return null;
@@ -53,27 +53,27 @@ export const useLoansTracker = () => {
 
   // 1. Queries
   const loansQuery = useQuery({
-    queryKey: ['my-loans'],
+    queryKey: ["my-loans"],
     queryFn: fetchLoans,
   });
 
   const queueQuery = useQuery({
-    queryKey: ['my-queue'],
+    queryKey: ["my-queue"],
     queryFn: fetchQueue,
   });
 
   const finesQuery = useQuery({
-    queryKey: ['my-fines'],
+    queryKey: ["my-fines"],
     queryFn: fetchFines,
   });
 
   const finesSummaryQuery = useQuery({
-    queryKey: ['my-fines-summary'],
+    queryKey: ["my-fines-summary"],
     queryFn: fetchFinesSummary,
   });
 
   const profileQuery = useQuery({
-    queryKey: ['user-profile'],
+    queryKey: ["user-profile"],
     queryFn: fetchProfile,
   });
 
@@ -82,16 +82,18 @@ export const useLoansTracker = () => {
   // Renewal mutation with Optimistic UI updates
   const renewMutation = useMutation({
     mutationFn: async (loanId) => {
-      const { data } = await apiClient.post(`/dashboards/student/loans/${loanId}/renew`);
+      const { data } = await apiClient.post(
+        `/dashboards/student/loans/${loanId}/renew`,
+      );
       return data;
     },
     onMutate: async (loanId) => {
-      await queryClient.cancelQueries({ queryKey: ['my-loans'] });
+      await queryClient.cancelQueries({ queryKey: ["my-loans"] });
 
-      const previousLoans = queryClient.getQueryData(['my-loans']);
+      const previousLoans = queryClient.getQueryData(["my-loans"]);
 
       // Optimistically modify the target loan in cache
-      queryClient.setQueryData(['my-loans'], (old) => {
+      queryClient.setQueryData(["my-loans"], (old) => {
         if (!old) return old;
         const updatedActive = old.active.map((loan) => {
           if (loan._id === loanId) {
@@ -112,24 +114,26 @@ export const useLoansTracker = () => {
     },
     onError: (err, loanId, context) => {
       if (context?.previousLoans) {
-        queryClient.setQueryData(['my-loans'], context.previousLoans);
+        queryClient.setQueryData(["my-loans"], context.previousLoans);
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-loans'] });
+      queryClient.invalidateQueries({ queryKey: ["my-loans"] });
     },
   });
 
   // Pay Fine mutation
   const payFineMutation = useMutation({
     mutationFn: async ({ fineId, useWaiver = false }) => {
-      const { data } = await apiClient.post(`/fines/${fineId}/pay`, { useWaiver });
+      const { data } = await apiClient.post(`/fines/${fineId}/pay`, {
+        useWaiver,
+      });
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-fines'] });
-      queryClient.invalidateQueries({ queryKey: ['my-fines-summary'] });
-      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      queryClient.invalidateQueries({ queryKey: ["my-fines"] });
+      queryClient.invalidateQueries({ queryKey: ["my-fines-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
     },
   });
 
@@ -140,9 +144,9 @@ export const useLoansTracker = () => {
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-queue'] });
+      queryClient.invalidateQueries({ queryKey: ["my-queue"] });
       // Invalidate loans query as well, in case renewal availability shifts
-      queryClient.invalidateQueries({ queryKey: ['my-loans'] });
+      queryClient.invalidateQueries({ queryKey: ["my-loans"] });
     },
   });
 
@@ -153,14 +157,14 @@ export const useLoansTracker = () => {
     fines: finesQuery.data || [],
     finesSummary: finesSummaryQuery.data || { totalUnpaid: 0, unpaidCount: 0 },
     profile: profileQuery.data || null,
-    
+
     isLoading:
       loansQuery.isLoading ||
       queueQuery.isLoading ||
       finesQuery.isLoading ||
       finesSummaryQuery.isLoading ||
       profileQuery.isLoading,
-    
+
     isError:
       loansQuery.isError ||
       queueQuery.isError ||

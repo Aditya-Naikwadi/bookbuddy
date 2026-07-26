@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 // In-memory cache for book instances to prevent parsing the same book twice in the same session
 const bookCache = new Map();
@@ -17,7 +17,7 @@ export const useEpubLoader = (url, viewerRef) => {
 
     const initEpub = async () => {
       try {
-        const { default: ePub } = await import('epubjs');
+        const { default: ePub } = await import("epubjs");
 
         if (!active) return;
 
@@ -41,15 +41,15 @@ export const useEpubLoader = (url, viewerRef) => {
             }
           })
           .catch((err) => {
-            console.warn('Failed to parse navigation TOC:', err);
+            console.warn("Failed to parse navigation TOC:", err);
           });
 
         // Initialize Epub.js rendition
         const newRendition = loadedBook.renderTo(viewerRef.current, {
-          width: '100%',
-          height: '100%',
-          spread: 'none',
-          flow: 'paginated',
+          width: "100%",
+          height: "100%",
+          spread: "none",
+          flow: "paginated",
         });
 
         if (active) {
@@ -64,16 +64,20 @@ export const useEpubLoader = (url, viewerRef) => {
             }
           })
           .catch((err) => {
-            console.error('Failed to display rendition:', err);
+            console.error("Failed to display rendition:", err);
             if (active) {
-              setError('Failed to display EPUB layout. The document content might be invalid.');
+              setError(
+                "Failed to display EPUB layout. The document content might be invalid.",
+              );
               setIsLoading(false);
             }
           });
       } catch (err) {
-        console.error('Failed to load EPUB parsing engine:', err);
+        console.error("Failed to load EPUB parsing engine:", err);
         if (active) {
-          setError('Failed to initialize reader engine. The file might be corrupted or inaccessible.');
+          setError(
+            "Failed to initialize reader engine. The file might be corrupted or inaccessible.",
+          );
           setIsLoading(false);
         }
       }

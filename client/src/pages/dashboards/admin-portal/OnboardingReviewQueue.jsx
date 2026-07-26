@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 import {
   Building2,
   CheckCircle,
@@ -12,17 +12,17 @@ import {
   AlertTriangle,
   RefreshCw,
   Eye,
-} from 'lucide-react';
-import registrationApi from '../../../api/registrationApi';
+} from "lucide-react";
+import registrationApi from "../../../api/registrationApi";
 
 export default function OnboardingReviewQueue() {
   const [requests, setRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [message, setMessage] = useState({ type: '', text: '' });
+  const [message, setMessage] = useState({ type: "", text: "" });
 
   // Rejection Modal State
   const [rejectingRequest, setRejectingRequest] = useState(null);
-  const [rejectionReason, setRejectionReason] = useState('');
+  const [rejectionReason, setRejectionReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchPendingRequests = useCallback(async () => {
@@ -32,8 +32,10 @@ export default function OnboardingReviewQueue() {
     } catch (err) {
       console.error(err);
       setMessage({
-        type: 'error',
-        text: err.response?.data?.message || 'Failed to load pending onboarding applications.',
+        type: "error",
+        text:
+          err.response?.data?.message ||
+          "Failed to load pending onboarding applications.",
       });
     } finally {
       setIsLoading(false);
@@ -41,27 +43,54 @@ export default function OnboardingReviewQueue() {
   }, []);
 
   useEffect(() => {
-    fetchPendingRequests();
-  }, [fetchPendingRequests]);
+    let isMounted = true;
+    registrationApi
+      .getPendingOnboardings()
+      .then((res) => {
+        if (isMounted) setRequests(res.data || []);
+      })
+      .catch((err) => {
+        if (isMounted) {
+          setMessage({
+            type: "error",
+            text:
+              err.response?.data?.message ||
+              "Failed to load pending onboarding applications.",
+          });
+        }
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleApprove = async (reqId, legalName) => {
-    if (!window.confirm(`Are you sure you want to approve tenant onboarding for ${legalName}? This will atomically create the College tenant and primary College Admin account.`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to approve tenant onboarding for ${legalName}? This will atomically create the College tenant and primary College Admin account.`,
+      )
+    ) {
       return;
     }
 
     setIsSubmitting(true);
-    setMessage({ type: '', text: '' });
+    setMessage({ type: "", text: "" });
     try {
       await registrationApi.approveOnboarding(reqId);
       setMessage({
-        type: 'success',
+        type: "success",
         text: `Tenant ${legalName} approved and activated successfully!`,
       });
       fetchPendingRequests();
     } catch (err) {
       setMessage({
-        type: 'error',
-        text: err.response?.data?.message || 'Failed to approve tenant onboarding application.',
+        type: "error",
+        text:
+          err.response?.data?.message ||
+          "Failed to approve tenant onboarding application.",
       });
     } finally {
       setIsSubmitting(false);
@@ -73,20 +102,23 @@ export default function OnboardingReviewQueue() {
     if (!rejectingRequest || !rejectionReason.trim()) return;
 
     setIsSubmitting(true);
-    setMessage({ type: '', text: '' });
+    setMessage({ type: "", text: "" });
     try {
-      await registrationApi.rejectOnboarding(rejectingRequest._id, rejectionReason.trim());
+      await registrationApi.rejectOnboarding(
+        rejectingRequest._id,
+        rejectionReason.trim(),
+      );
       setMessage({
-        type: 'success',
+        type: "success",
         text: `Application for ${rejectingRequest.tenantData?.legalName} rejected.`,
       });
       setRejectingRequest(null);
-      setRejectionReason('');
+      setRejectionReason("");
       fetchPendingRequests();
     } catch (err) {
       setMessage({
-        type: 'error',
-        text: err.response?.data?.message || 'Failed to reject application.',
+        type: "error",
+        text: err.response?.data?.message || "Failed to reject application.",
       });
     } finally {
       setIsSubmitting(false);
@@ -103,7 +135,9 @@ export default function OnboardingReviewQueue() {
             Tenant Onboarding Review Queue
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Review and approve pending college onboarding applications. Approvals execute an atomic creation of tenant boundary and initial admin account.
+            Review and approve pending college onboarding applications.
+            Approvals execute an atomic creation of tenant boundary and initial
+            admin account.
           </p>
         </div>
 
@@ -112,7 +146,7 @@ export default function OnboardingReviewQueue() {
           disabled={isLoading}
           className="self-start sm:self-auto py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs flex items-center gap-2 hover:bg-slate-50 transition-colors"
         >
-          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
           Refresh Queue
         </button>
       </div>
@@ -121,12 +155,12 @@ export default function OnboardingReviewQueue() {
       {message.text && (
         <div
           className={`p-4 rounded-xl flex items-center gap-3 text-sm font-semibold ${
-            message.type === 'success'
-              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-              : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+            message.type === "success"
+              ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+              : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
           }`}
         >
-          {message.type === 'success' ? (
+          {message.type === "success" ? (
             <CheckCircle className="w-5 h-5 shrink-0" />
           ) : (
             <AlertTriangle className="w-5 h-5 shrink-0" />
@@ -163,15 +197,17 @@ export default function OnboardingReviewQueue() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-extrabold text-xs tracking-wider uppercase border border-indigo-200 dark:border-indigo-800">
-                        {tenant.institutionType || 'College'}
+                        {tenant.institutionType || "College"}
                       </span>
                       <span className="text-xs text-slate-400 flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
-                        Submitted: {new Date(req.createdAt).toLocaleDateString()}
+                        Submitted:{" "}
+                        {new Date(req.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                     <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-2">
-                      {tenant.legalName} {tenant.shortName ? `(${tenant.shortName})` : ''}
+                      {tenant.legalName}{" "}
+                      {tenant.shortName ? `(${tenant.shortName})` : ""}
                     </h2>
                   </div>
 
@@ -200,20 +236,36 @@ export default function OnboardingReviewQueue() {
                   {/* Column 1: Institution Info */}
                   <div className="space-y-2 bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
                     <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px] mb-2 flex items-center gap-1.5">
-                      <Building2 className="w-4 h-4 text-indigo-500" /> Institution Details
+                      <Building2 className="w-4 h-4 text-indigo-500" />{" "}
+                      Institution Details
                     </h4>
                     <p className="flex items-center gap-2">
                       <Globe className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span>Domain: <strong>{tenant.domain}</strong></span>
+                      <span>
+                        Domain: <strong>{tenant.domain}</strong>
+                      </span>
                     </p>
                     <p className="flex items-center gap-2">
                       <ShieldCheck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span>Slug: <strong className="font-mono text-indigo-600 dark:text-indigo-400">{tenant.desiredSlug}</strong></span>
+                      <span>
+                        Slug:{" "}
+                        <strong className="font-mono text-indigo-600 dark:text-indigo-400">
+                          {tenant.desiredSlug}
+                        </strong>
+                      </span>
                     </p>
                     <p>
-                      Domain Verified:{' '}
-                      <strong className={tenant.isDomainVerified ? 'text-emerald-600' : 'text-amber-600'}>
-                        {tenant.isDomainVerified ? 'Verified' : 'Pending Verification Link'}
+                      Domain Verified:{" "}
+                      <strong
+                        className={
+                          tenant.isDomainVerified
+                            ? "text-emerald-600"
+                            : "text-amber-600"
+                        }
+                      >
+                        {tenant.isDomainVerified
+                          ? "Verified"
+                          : "Pending Verification Link"}
                       </strong>
                     </p>
                   </div>
@@ -221,26 +273,34 @@ export default function OnboardingReviewQueue() {
                   {/* Column 2: Admin Info */}
                   <div className="space-y-2 bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
                     <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px] mb-2 flex items-center gap-1.5">
-                      <User className="w-4 h-4 text-indigo-500" /> Admin Applicant
+                      <User className="w-4 h-4 text-indigo-500" /> Admin
+                      Applicant
                     </h4>
-                    <p>Name: <strong>{tenant.adminName}</strong></p>
+                    <p>
+                      Name: <strong>{tenant.adminName}</strong>
+                    </p>
                     <p className="flex items-center gap-2">
                       <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span>Email: <strong>{tenant.adminEmail}</strong></span>
+                      <span>
+                        Email: <strong>{tenant.adminEmail}</strong>
+                      </span>
                     </p>
-                    <p>Role: <strong>{tenant.designation}</strong></p>
+                    <p>
+                      Role: <strong>{tenant.designation}</strong>
+                    </p>
                   </div>
 
                   {/* Column 3: Verification Document */}
                   <div className="space-y-2 bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
                     <div>
                       <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px] mb-2 flex items-center gap-1.5">
-                        <FileText className="w-4 h-4 text-indigo-500" /> Proof Document
+                        <FileText className="w-4 h-4 text-indigo-500" /> Proof
+                        Document
                       </h4>
                       <p className="text-slate-500">
                         {tenant.verificationDocumentUrl
-                          ? 'Uploaded accreditation certificate / business document.'
-                          : 'No document attached.'}
+                          ? "Uploaded accreditation certificate / business document."
+                          : "No document attached."}
                       </p>
                     </div>
 
@@ -271,7 +331,10 @@ export default function OnboardingReviewQueue() {
               Reject Tenant Onboarding
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              Rejecting <strong>{rejectingRequest.tenantData?.legalName}</strong>. Please provide a clear reason for rejection. The applicant will be notified by email and allowed to resubmit.
+              Rejecting{" "}
+              <strong>{rejectingRequest.tenantData?.legalName}</strong>. Please
+              provide a clear reason for rejection. The applicant will be
+              notified by email and allowed to resubmit.
             </p>
 
             <form onSubmit={handleRejectSubmit} className="space-y-4">
@@ -299,7 +362,7 @@ export default function OnboardingReviewQueue() {
                   disabled={isSubmitting || !rejectionReason.trim()}
                   className="py-2.5 px-5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Rejecting...' : 'Confirm Rejection'}
+                  {isSubmitting ? "Rejecting..." : "Confirm Rejection"}
                 </button>
               </div>
             </form>

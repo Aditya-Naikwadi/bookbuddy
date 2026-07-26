@@ -1,16 +1,16 @@
-import React from 'react';
-import { Search, X, LayoutGrid, List, SlidersHorizontal } from 'lucide-react';
+import React from "react";
+import { Search, X, LayoutGrid, List, SlidersHorizontal } from "lucide-react";
 
 const StickyControlBar = ({
-  searchQuery = '',
+  searchQuery = "",
   onSearchChange,
   onClearSearch,
-  placeholder = 'Search...',
+  placeholder = "Search...",
   filterSlot,
   sortBy,
   onSortChange,
   sortOptions = [],
-  viewMode = 'grid',
+  viewMode = "grid",
   onViewModeChange,
   onOpenMobileFilters,
   resultCount = 0,
@@ -72,18 +72,22 @@ const StickyControlBar = ({
           {onViewModeChange && (
             <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/60">
               <button
-                onClick={() => onViewModeChange('grid')}
+                onClick={() => onViewModeChange("grid")}
                 className={`p-1.5 rounded-lg transition-all ${
-                  viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-900'
+                  viewMode === "grid"
+                    ? "bg-white text-indigo-600 shadow-xs font-bold"
+                    : "text-slate-500 hover:text-slate-900"
                 }`}
                 title="Grid View"
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => onViewModeChange('list')}
+                onClick={() => onViewModeChange("list")}
                 className={`p-1.5 rounded-lg transition-all ${
-                  viewMode === 'list' ? 'bg-white text-indigo-600 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-900'
+                  viewMode === "list"
+                    ? "bg-white text-indigo-600 shadow-xs font-bold"
+                    : "text-slate-500 hover:text-slate-900"
                 }`}
                 title="List View"
               >

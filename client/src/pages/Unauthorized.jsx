@@ -1,18 +1,18 @@
-import React from 'react';
-import { ShieldAlert, ArrowLeft, Home } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import useAuthStore from '../store/authStore';
+import React from "react";
+import { ShieldAlert, ArrowLeft, Home } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import useAuthStore from "../store/authStore";
 
 const Unauthorized = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
   const getDashboardPath = () => {
-    if (!user) return '/auth/login';
-    if (user.role === 'super-admin') return '/admin-portal';
-    if (user.role === 'college-admin') return '/college-admin';
-    if (user.role === 'general') return '/general-dashboard';
-    return '/student-dashboard';
+    if (!user) return "/auth/login";
+    if (user.role === "super-admin") return "/admin-portal";
+    if (user.role === "college-admin") return "/college-admin";
+    if (user.role === "general") return "/general-dashboard";
+    return "/student-dashboard";
   };
 
   return (
@@ -27,9 +27,12 @@ const Unauthorized = () => {
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-white tracking-tight">403 — Access Denied</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            403 — Access Denied
+          </h1>
           <p className="text-sm text-slate-400 leading-relaxed">
-            You do not have the required permissions or role ({user?.role || 'Guest'}) to view this page.
+            You do not have the required permissions or role (
+            {user?.role || "Guest"}) to view this page.
           </p>
         </div>
 

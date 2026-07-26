@@ -217,6 +217,8 @@ app.all(
 const deprecationWarning = require('./middlewares/deprecationWarning');
 
 // Canonical API Version 1 Routes
+app.use('/api/colleges', require('./routes/collegeFeatureRoutes'));
+app.use('/api/v1/colleges', require('./routes/collegeFeatureRoutes'));
 app.use('/api/v1/college/:id/books', require('./routes/collegeBookRoutes'));
 app.use('/api/v1/catalog', require('./routes/catalogRoutes'));
 app.use('/api/v1/services', require('./routes/serviceRoutes'));

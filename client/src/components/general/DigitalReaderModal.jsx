@@ -1,18 +1,34 @@
-import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
-import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, AlertCircle, ExternalLink, Loader2, BookOpen } from 'lucide-react';
+import React, { useState, useEffect, useRef, lazy, Suspense, useCallback } from "react";
+import {
+  X,
+  ChevronLeft,
+  ChevronRight,
+  ZoomIn,
+  ZoomOut,
+  AlertCircle,
+  ExternalLink,
+  Loader2,
+  BookOpen,
+} from "lucide-react";
 
 /**
  * Dynamically import PDF viewer module to code-split pdfjs bundle
  */
 const PdfViewerEngine = lazy(async () => {
-  const pdfjsLib = await import('pdfjs-dist');
+  const pdfjsLib = await import("pdfjs-dist");
   pdfjsLib.GlobalWorkerOptions.workerSrc =
-    typeof window !== 'undefined'
+    typeof window !== "undefined"
       ? `${window.location.origin}/pdf.worker.min.mjs`
-      : '/pdf.worker.min.mjs';
+      : "/pdf.worker.min.mjs";
 
   return {
-    default: function PdfEngine({ fileUrl, page, scale, onTotalPages, onError }) {
+    default: function PdfEngine({
+      fileUrl,
+      page,
+      scale,
+      onTotalPages,
+      onError,
+    }) {
       const canvasRef = useRef(null);
 
       useEffect(() => {
@@ -29,14 +45,16 @@ const PdfViewerEngine = lazy(async () => {
               const viewport = pageObj.getViewport({ scale });
               const canvas = canvasRef.current;
               if (canvas) {
-                const context = canvas.getContext('2d');
+                const context = canvas.getContext("2d");
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
-                await pageObj.render({ canvasContext: context, viewport }).promise;
+                await pageObj.render({ canvasContext: context, viewport })
+                  .promise;
               }
             }
           } catch (err) {
-            if (isMounted) onError(err.message || 'Failed to load PDF document');
+            if (isMounted)
+              onError(err.message || "Failed to load PDF document");
           }
         };
 
@@ -49,7 +67,10 @@ const PdfViewerEngine = lazy(async () => {
 
       return (
         <div className="flex justify-center items-center overflow-auto p-4 max-h-full">
-          <canvas ref={canvasRef} className="shadow-2xl rounded-lg max-w-full" />
+          <canvas
+            ref={canvasRef}
+            className="shadow-2xl rounded-lg max-w-full"
+          />
         </div>
       );
     },
@@ -60,7 +81,7 @@ const PdfViewerEngine = lazy(async () => {
  * Dynamically import EPUB viewer engine
  */
 const EpubViewerEngine = lazy(async () => {
-  const ePub = (await import('epubjs')).default;
+  const ePub = (await import("epubjs")).default;
 
   return {
     default: function EpubEngine({ fileUrl, page, onLocationChange, onError }) {
@@ -74,23 +95,24 @@ const EpubViewerEngine = lazy(async () => {
         try {
           const book = ePub(fileUrl);
           const rendition = book.renderTo(containerRef.current, {
-            width: '100%',
-            height: '100%',
-            spread: 'always',
+            width: "100%",
+            height: "100%",
+            spread: "always",
           });
           renditionRef.current = rendition;
 
           rendition.display().catch((err) => {
-            if (isMounted) onError(err?.message || 'Error rendering EPUB file');
+            if (isMounted) onError(err?.message || "Error rendering EPUB file");
           });
 
-          rendition.on('relocated', (location) => {
+          rendition.on("relocated", (location) => {
             if (isMounted && location?.start?.percentage) {
               onLocationChange(Math.round(location.start.percentage * 100));
             }
           });
         } catch (err) {
-          if (isMounted) onError(err?.message || 'Failed to parse EPUB archive');
+          if (isMounted)
+            onError(err?.message || "Failed to parse EPUB archive");
         }
 
         return () => {
@@ -120,49 +142,57 @@ const EpubViewerEngine = lazy(async () => {
   };
 });
 
-const DigitalReaderModal = ({ isOpen, onClose, fileUrl, fileType = 'pdf', title = 'Digital E-Book' }) => {
+const DigitalReaderModal = ({
+  isOpen,
+  onClose,
+  fileUrl,
+  fileType = "pdf",
+  title = "Digital E-Book",
+}) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [scale, setScale] = useState(1.0);
   const [error, setError] = useState(null);
   const modalRef = useRef(null);
 
+  const normalizedType = fileType?.toLowerCase().includes("epub")
+    ? "epub"
+    : "pdf";
+
+  const handleNext = useCallback(() => {
+    if (currentPage < totalPages || normalizedType === "epub") {
+      setCurrentPage((prev) => prev + 1);
+    }
+  }, [currentPage, totalPages, normalizedType]);
+
+  const handlePrev = useCallback(() => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  }, [currentPage]);
+
   // Close on Escape key press & handle Focus Trap
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowRight') handleNext();
-      if (e.key === 'ArrowLeft') handlePrev();
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowRight") handleNext();
+      if (e.key === "ArrowLeft") handlePrev();
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, currentPage, totalPages]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, handleNext, handlePrev, onClose]);
 
   // Reset state on URL change
-  useEffect(() => {
+  const [prevFileUrl, setPrevFileUrl] = useState(fileUrl);
+  if (prevFileUrl !== fileUrl) {
+    setPrevFileUrl(fileUrl);
     setCurrentPage(1);
     setError(null);
     setScale(1.0);
-  }, [fileUrl]);
-
-  if (!isOpen || !fileUrl) return null;
-
-  const normalizedType = fileType?.toLowerCase().includes('epub') ? 'epub' : 'pdf';
-
-  const handleNext = () => {
-    if (currentPage < totalPages || normalizedType === 'epub') {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
+  }
 
   return (
     <div
@@ -181,7 +211,10 @@ const DigitalReaderModal = ({ isOpen, onClose, fileUrl, fileType = 'pdf', title 
             <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-xl flex-shrink-0">
               <BookOpen className="w-4 h-4" />
             </div>
-            <h2 id="digital-reader-title" className="text-xs sm:text-sm font-bold truncate">
+            <h2
+              id="digital-reader-title"
+              className="text-xs sm:text-sm font-bold truncate"
+            >
               {title}
             </h2>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-800 text-indigo-400 uppercase flex-shrink-0 hidden sm:inline-block">
@@ -201,18 +234,20 @@ const DigitalReaderModal = ({ isOpen, onClose, fileUrl, fileType = 'pdf', title 
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <span className="text-[11px] font-semibold text-slate-300 px-1">
-                {normalizedType === 'pdf' ? `${currentPage} / ${totalPages}` : `Page ${currentPage}`}
+                {normalizedType === "pdf"
+                  ? `${currentPage} / ${totalPages}`
+                  : `Page ${currentPage}`}
               </span>
               <button
                 onClick={handleNext}
-                disabled={normalizedType === 'pdf' && currentPage >= totalPages}
+                disabled={normalizedType === "pdf" && currentPage >= totalPages}
                 aria-label="Next Page"
                 className="p-1 text-slate-300 hover:text-white disabled:opacity-30 disabled:hover:text-slate-300"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
 
-              {normalizedType === 'pdf' && (
+              {normalizedType === "pdf" && (
                 <>
                   <div className="w-px h-3 bg-slate-800 mx-1" />
                   <button
@@ -222,7 +257,9 @@ const DigitalReaderModal = ({ isOpen, onClose, fileUrl, fileType = 'pdf', title 
                   >
                     <ZoomOut className="w-3.5 h-3.5" />
                   </button>
-                  <span className="text-[10px] text-slate-400 font-mono">{Math.round(scale * 100)}%</span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {Math.round(scale * 100)}%
+                  </span>
                   <button
                     onClick={() => setScale((s) => Math.min(2.0, s + 0.15))}
                     title="Zoom In"
@@ -252,9 +289,12 @@ const DigitalReaderModal = ({ isOpen, onClose, fileUrl, fileType = 'pdf', title 
               <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto">
                 <AlertCircle className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-bold text-white">Unable to Display In-App Digital Reader</h3>
+              <h3 className="text-sm font-bold text-white">
+                Unable to Display In-App Digital Reader
+              </h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                {error || 'The digital file URL could not be rendered inside the embedded reader canvas.'}
+                {error ||
+                  "The digital file URL could not be rendered inside the embedded reader canvas."}
               </p>
               <div className="flex items-center justify-center gap-3 pt-2">
                 <a
@@ -283,7 +323,7 @@ const DigitalReaderModal = ({ isOpen, onClose, fileUrl, fileType = 'pdf', title 
                 </div>
               }
             >
-              {normalizedType === 'pdf' ? (
+              {normalizedType === "pdf" ? (
                 <PdfViewerEngine
                   fileUrl={fileUrl}
                   page={currentPage}

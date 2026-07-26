@@ -1,4 +1,4 @@
-import { LoansTracker } from '../../../components/student/loans-tracker/LoansTracker';
+import { LoansTracker } from "../../../components/student/loans-tracker/LoansTracker";
 
 const MyLoans = () => {
   return <LoansTracker defaultTab="loans" />;

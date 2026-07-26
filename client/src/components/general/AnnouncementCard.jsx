@@ -1,22 +1,22 @@
-import { AlertTriangle, AlertOctagon, Info, X } from 'lucide-react';
+import { AlertTriangle, AlertOctagon, Info, X } from "lucide-react";
 
 const priorityConfig = {
   Urgent: {
-    badge: 'bg-rose-100 text-rose-800 border-rose-200',
-    cardBorder: 'border-l-4 border-l-rose-500 border-slate-200/80',
-    iconBg: 'bg-rose-50 text-rose-600',
+    badge: "bg-rose-100 text-rose-800 border-rose-200",
+    cardBorder: "border-l-4 border-l-rose-500 border-slate-200/80",
+    iconBg: "bg-rose-50 text-rose-600",
     icon: AlertOctagon,
   },
   Warning: {
-    badge: 'bg-amber-100 text-amber-800 border-amber-200',
-    cardBorder: 'border-l-4 border-l-amber-500 border-slate-200/80',
-    iconBg: 'bg-amber-50 text-amber-600',
+    badge: "bg-amber-100 text-amber-800 border-amber-200",
+    cardBorder: "border-l-4 border-l-amber-500 border-slate-200/80",
+    iconBg: "bg-amber-50 text-amber-600",
     icon: AlertTriangle,
   },
   Notice: {
-    badge: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-    cardBorder: 'border-l-4 border-l-indigo-500 border-slate-200/80',
-    iconBg: 'bg-indigo-50 text-indigo-600',
+    badge: "bg-indigo-100 text-indigo-800 border-indigo-200",
+    cardBorder: "border-l-4 border-l-indigo-500 border-slate-200/80",
+    iconBg: "bg-indigo-50 text-indigo-600",
     icon: Info,
   },
 };
@@ -37,7 +37,7 @@ const AnnouncementCard = ({ announcement, onDismiss, loading = false }) => {
 
   if (!announcement) return null;
 
-  const priority = announcement.priority || 'Notice';
+  const priority = announcement.priority || "Notice";
   const config = priorityConfig[priority] || priorityConfig.Notice;
   const PriorityIcon = config.icon;
 
@@ -51,16 +51,24 @@ const AnnouncementCard = ({ announcement, onDismiss, loading = false }) => {
 
       <div className="flex-1 min-w-0 pr-6">
         <div className="flex items-center gap-2 flex-wrap mb-1">
-          <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-bold uppercase rounded-md border ${config.badge}`}>
+          <span
+            className={`inline-flex items-center px-2 py-0.5 text-[11px] font-bold uppercase rounded-md border ${config.badge}`}
+          >
             {priority}
           </span>
           {announcement.timestamp && (
-            <span className="text-xs text-slate-400 font-medium">{announcement.timestamp}</span>
+            <span className="text-xs text-slate-400 font-medium">
+              {announcement.timestamp}
+            </span>
           )}
         </div>
 
-        <h4 className="text-sm font-bold text-slate-900 mb-1 leading-snug">{announcement.title}</h4>
-        <p className="text-xs text-slate-600 leading-relaxed">{announcement.content}</p>
+        <h4 className="text-sm font-bold text-slate-900 mb-1 leading-snug">
+          {announcement.title}
+        </h4>
+        <p className="text-xs text-slate-600 leading-relaxed">
+          {announcement.content}
+        </p>
       </div>
 
       {onDismiss && (

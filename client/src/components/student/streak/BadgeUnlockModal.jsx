@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Share2, Check, X, Sparkles, Trophy } from 'lucide-react';
+import { useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Share2, Check, X, Sparkles, Trophy } from "lucide-react";
 
 export const BadgeUnlockModal = ({ unlockedBadges = [], onClose }) => {
   const [copied, setCopied] = useState(false);
@@ -9,34 +9,37 @@ export const BadgeUnlockModal = ({ unlockedBadges = [], onClose }) => {
   if (!unlockedBadges || unlockedBadges.length === 0) return null;
 
   const currentBadge = unlockedBadges[0];
-  const badgeName = currentBadge.name || 'Milestone Achievement';
-  const rarity = (currentBadge.rarity || 'common').toLowerCase();
+  const badgeName = currentBadge.name || "Milestone Achievement";
+  const rarity = (currentBadge.rarity || "common").toLowerCase();
 
   const getRarityBadge = (r) => {
     switch (r) {
-      case 'legendary':
+      case "legendary":
         return {
-          label: 'LEGENDARY',
-          badgeClass: 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-lg',
-          glowClass: 'from-amber-500/30 to-yellow-500/20 border-amber-500/40',
+          label: "LEGENDARY",
+          badgeClass:
+            "bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-lg",
+          glowClass: "from-amber-500/30 to-yellow-500/20 border-amber-500/40",
         };
-      case 'epic':
+      case "epic":
         return {
-          label: 'EPIC',
-          badgeClass: 'bg-gradient-to-r from-purple-600 to-pink-500 text-white font-black shadow-lg',
-          glowClass: 'from-purple-500/30 to-pink-500/20 border-purple-500/40',
+          label: "EPIC",
+          badgeClass:
+            "bg-gradient-to-r from-purple-600 to-pink-500 text-white font-black shadow-lg",
+          glowClass: "from-purple-500/30 to-pink-500/20 border-purple-500/40",
         };
-      case 'rare':
+      case "rare":
         return {
-          label: 'RARE',
-          badgeClass: 'bg-gradient-to-r from-blue-600 to-indigo-500 text-white font-black shadow-lg',
-          glowClass: 'from-blue-500/30 to-indigo-500/20 border-indigo-500/40',
+          label: "RARE",
+          badgeClass:
+            "bg-gradient-to-r from-blue-600 to-indigo-500 text-white font-black shadow-lg",
+          glowClass: "from-blue-500/30 to-indigo-500/20 border-indigo-500/40",
         };
       default:
         return {
-          label: 'COMMON',
-          badgeClass: 'bg-slate-700 text-slate-200 font-bold',
-          glowClass: 'from-indigo-500/20 to-slate-500/20 border-slate-500/30',
+          label: "COMMON",
+          badgeClass: "bg-slate-700 text-slate-200 font-bold",
+          glowClass: "from-indigo-500/20 to-slate-500/20 border-slate-500/30",
         };
     }
   };
@@ -75,7 +78,7 @@ export const BadgeUnlockModal = ({ unlockedBadges = [], onClose }) => {
           initial={{ scale: 0.8, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.8, opacity: 0, y: 20 }}
-          transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+          transition={{ type: "spring", damping: 20, stiffness: 300 }}
           className={`relative w-full max-w-md bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-3xl p-6 sm:p-8 shadow-2xl border ${rarityInfo.glowClass} text-center overflow-hidden z-10`}
         >
           {/* Ambient Background Glow */}
@@ -91,7 +94,9 @@ export const BadgeUnlockModal = ({ unlockedBadges = [], onClose }) => {
 
           {/* Header Banner */}
           <div className="space-y-2 relative z-10">
-            <span className={`inline-block px-3 py-1 rounded-full text-[10px] uppercase tracking-widest ${rarityInfo.badgeClass}`}>
+            <span
+              className={`inline-block px-3 py-1 rounded-full text-[10px] uppercase tracking-widest ${rarityInfo.badgeClass}`}
+            >
               {rarityInfo.label} UNLOCK
             </span>
 
@@ -99,26 +104,37 @@ export const BadgeUnlockModal = ({ unlockedBadges = [], onClose }) => {
               <Sparkles className="text-amber-400" size={24} />
               Badge Unlocked!
             </h2>
-            <p className="text-xs text-slate-400">Congratulations! You earned a new sticker accomplishment.</p>
+            <p className="text-xs text-slate-400">
+              Congratulations! You earned a new sticker accomplishment.
+            </p>
           </div>
 
           {/* Badge Visual Icon / Illustration */}
           <div className="my-6 relative flex items-center justify-center">
-            <div className={`w-32 h-32 rounded-3xl bg-gradient-to-br ${rarityInfo.glowClass} p-1 shadow-2xl ring-4 ring-white/10 flex items-center justify-center relative group`}>
+            <div
+              className={`w-32 h-32 rounded-3xl bg-gradient-to-br ${rarityInfo.glowClass} p-1 shadow-2xl ring-4 ring-white/10 flex items-center justify-center relative group`}
+            >
               <div className="w-full h-full bg-slate-900/90 rounded-[22px] flex flex-col items-center justify-center p-3 text-center space-y-1">
                 {currentBadge.iconUrl ? (
-                  <img src={currentBadge.iconUrl} alt={badgeName} className="w-16 h-16 object-contain" />
+                  <img
+                    src={currentBadge.iconUrl}
+                    alt={badgeName}
+                    className="w-16 h-16 object-contain"
+                  />
                 ) : (
                   <Trophy className="text-amber-400 w-14 h-14 animate-bounce" />
                 )}
-                <span className="text-xs font-bold text-white truncate max-w-full">{badgeName}</span>
+                <span className="text-xs font-bold text-white truncate max-w-full">
+                  {badgeName}
+                </span>
               </div>
             </div>
           </div>
 
           {/* Description */}
           <p className="text-xs text-slate-300 leading-relaxed max-w-xs mx-auto mb-6">
-            {currentBadge.criteria || 'Unlocked for outstanding reading streak consistency and milestone completion!'}
+            {currentBadge.criteria ||
+              "Unlocked for outstanding reading streak consistency and milestone completion!"}
           </p>
 
           {/* Actions */}
@@ -127,8 +143,14 @@ export const BadgeUnlockModal = ({ unlockedBadges = [], onClose }) => {
               onClick={handleShare}
               className="flex-1 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-lg flex items-center justify-center gap-2"
             >
-              {copied ? <Check size={16} className="text-emerald-400" /> : <Share2 size={16} />}
-              <span>{copied ? 'Copied to Clipboard!' : 'Share Achievement'}</span>
+              {copied ? (
+                <Check size={16} className="text-emerald-400" />
+              ) : (
+                <Share2 size={16} />
+              )}
+              <span>
+                {copied ? "Copied to Clipboard!" : "Share Achievement"}
+              </span>
             </button>
             <button
               onClick={onClose}

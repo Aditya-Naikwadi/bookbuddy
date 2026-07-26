@@ -1,7 +1,7 @@
-import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 
 export default function RowValidationBadge({ status, errorCount = 0 }) {
-  if (status === 'valid') {
+  if (status === "valid") {
     return (
       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
         <CheckCircle2 size={12} className="text-emerald-600" />
@@ -10,7 +10,7 @@ export default function RowValidationBadge({ status, errorCount = 0 }) {
     );
   }
 
-  if (status === 'warning') {
+  if (status === "warning") {
     return (
       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
         <AlertTriangle size={12} className="text-amber-600" />

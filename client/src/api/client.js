@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 
 let inMemoryAccessToken = null;
 let inMemoryCsrfToken = null;
@@ -14,29 +14,29 @@ export const setCsrfToken = (csrf) => {
 };
 
 function getCookie(name) {
-  if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
   if (match) return decodeURIComponent(match[2]);
   return null;
 }
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: import.meta.env.VITE_API_URL || "/api",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   withCredentials: true,
 });
 
 export const fetchCsrfToken = async () => {
   try {
-    const { data } = await apiClient.get('/auth/csrf-token');
+    const { data } = await apiClient.get("/auth/csrf-token");
     if (data?.csrfToken) {
       setCsrfToken(data.csrfToken);
       return data.csrfToken;
     }
   } catch {
-    const cookieCsrf = getCookie('_csrf');
+    const cookieCsrf = getCookie("_csrf");
     if (cookieCsrf) {
       setCsrfToken(cookieCsrf);
       return cookieCsrf;
@@ -52,39 +52,39 @@ apiClient.interceptors.request.use(
     }
 
     // Attach CSRF header on state-changing requests
-    const stateChangingMethods = ['post', 'put', 'delete', 'patch'];
+    const stateChangingMethods = ["post", "put", "delete", "patch"];
     if (stateChangingMethods.includes(config.method?.toLowerCase())) {
-      const csrf = inMemoryCsrfToken || getCookie('_csrf');
+      const csrf = inMemoryCsrfToken || getCookie("_csrf");
       if (csrf) {
-        config.headers['x-csrf-token'] = csrf;
+        config.headers["x-csrf-token"] = csrf;
       }
     }
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 let isRefreshing = false;
 let failedQueue = [];
 
 const authChannel =
-  typeof window !== 'undefined' && 'BroadcastChannel' in window
-    ? new BroadcastChannel('bookbuddy_auth_channel')
+  typeof window !== "undefined" && "BroadcastChannel" in window
+    ? new BroadcastChannel("bookbuddy_auth_channel")
     : null;
 
 export const broadcastLogout = () => {
   if (authChannel) {
-    authChannel.postMessage({ type: 'LOGOUT' });
+    authChannel.postMessage({ type: "LOGOUT" });
   }
-  if (typeof window !== 'undefined' && window.localStorage) {
-    window.localStorage.setItem('bookbuddy_logout', Date.now().toString());
+  if (typeof window !== "undefined" && window.localStorage) {
+    window.localStorage.setItem("bookbuddy_logout", Date.now().toString());
   }
 };
 
 export const broadcastTokenRefreshed = (token) => {
   if (authChannel) {
-    authChannel.postMessage({ type: 'TOKEN_REFRESHED', token });
+    authChannel.postMessage({ type: "TOKEN_REFRESHED", token });
   }
 };
 
@@ -95,9 +95,9 @@ export const setOnUnauthorizedCallback = (cb) => {
 
 if (authChannel) {
   authChannel.onmessage = (event) => {
-    if (event.data?.type === 'TOKEN_REFRESHED' && event.data?.token) {
+    if (event.data?.type === "TOKEN_REFRESHED" && event.data?.token) {
       setInMemoryToken(event.data.token);
-    } else if (event.data?.type === 'LOGOUT') {
+    } else if (event.data?.type === "LOGOUT") {
       setInMemoryToken(null);
       if (onUnauthorizedCallback) {
         onUnauthorizedCallback();
@@ -106,9 +106,9 @@ if (authChannel) {
   };
 }
 
-if (typeof window !== 'undefined') {
-  window.addEventListener('storage', (event) => {
-    if (event.key === 'bookbuddy_logout') {
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key === "bookbuddy_logout") {
       setInMemoryToken(null);
       if (onUnauthorizedCallback) {
         onUnauthorizedCallback();
@@ -136,11 +136,11 @@ apiClient.interceptors.response.use(
 
     if (
       !originalRequest ||
-      originalRequest.url?.includes('/auth/refresh') ||
-      originalRequest.url?.includes('/auth/login') ||
-      originalRequest.url?.includes('/auth/register') ||
-      originalRequest.url?.includes('/registration') ||
-      originalRequest.url?.includes('/auth/csrf-token')
+      originalRequest.url?.includes("/auth/refresh") ||
+      originalRequest.url?.includes("/auth/login") ||
+      originalRequest.url?.includes("/auth/register") ||
+      originalRequest.url?.includes("/registration") ||
+      originalRequest.url?.includes("/auth/csrf-token")
     ) {
       return Promise.reject(error);
     }
@@ -161,7 +161,7 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const { data } = await apiClient.post('/auth/refresh');
+        const { data } = await apiClient.post("/auth/refresh");
         const newToken = data.accessToken;
         setInMemoryToken(newToken);
         broadcastTokenRefreshed(newToken);
@@ -186,7 +186,7 @@ apiClient.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiClient;

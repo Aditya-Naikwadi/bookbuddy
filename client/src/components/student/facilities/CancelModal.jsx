@@ -1,13 +1,8 @@
-import { useEffect, useRef } from 'react';
-import { ShieldAlert, X, Trash2 } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { useEffect, useRef } from "react";
+import { ShieldAlert, X, Trash2 } from "lucide-react";
+import { Button } from "../../ui/Button";
 
-export const CancelModal = ({
-  booking,
-  isPending,
-  onConfirm,
-  onClose,
-}) => {
+export const CancelModal = ({ booking, isPending, onConfirm, onClose }) => {
   const modalRef = useRef(null);
   const closeBtnRef = useRef(null);
 
@@ -20,15 +15,15 @@ export const CancelModal = ({
     }, 50);
 
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
         return;
       }
 
-      if (e.key === 'Tab') {
+      if (e.key === "Tab") {
         if (!modalRef.current) return;
         const focusableElements = modalRef.current.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
         );
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
@@ -47,8 +42,8 @@ export const CancelModal = ({
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [booking, onClose]);
 
   if (!booking) return null;
@@ -78,12 +73,18 @@ export const CancelModal = ({
           <ShieldAlert size={24} />
         </div>
 
-        <h3 id="cancel-booking-title" className="text-lg font-serif font-black text-slate-900">
+        <h3
+          id="cancel-booking-title"
+          className="text-lg font-serif font-black text-slate-900"
+        >
           Cancel Workstation Booking?
         </h3>
         <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-          Are you sure you want to cancel your reservation for workstation{' '}
-          <strong className="text-slate-800">{booking.seatId?.seatNumber || 'PC'}</strong>? This slot will immediately return to the available booking pool.
+          Are you sure you want to cancel your reservation for workstation{" "}
+          <strong className="text-slate-800">
+            {booking.seatId?.seatNumber || "PC"}
+          </strong>
+          ? This slot will immediately return to the available booking pool.
         </p>
 
         <div className="flex gap-3 mt-6">
@@ -100,7 +101,9 @@ export const CancelModal = ({
             disabled={isPending}
             className="flex-1 h-10 rounded-2xl bg-danger hover:bg-red-600 text-white font-bold shadow-md hover:shadow-red-500/25 flex items-center justify-center gap-1.5 focus:ring-2 focus:ring-red-500"
           >
-            {isPending ? 'Cancelling...' : (
+            {isPending ? (
+              "Cancelling..."
+            ) : (
               <>
                 <Trash2 size={15} />
                 <span>Yes, Cancel</span>

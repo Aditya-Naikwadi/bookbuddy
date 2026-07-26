@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -10,52 +10,52 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      "@": path.resolve(__dirname, "./src"),
     },
   },
   server: {
     port: 5173,
     proxy: {
-      '/api': {
-        target: 'http://127.0.0.1:5000',
+      "/api": {
+        target: "http://127.0.0.1:5000",
         changeOrigin: true,
         secure: false,
       },
     },
   },
   build: {
-    target: 'esnext',
+    target: "esnext",
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('pdfjs-dist')) {
-              return 'vendor-pdfjs';
+          if (id.includes("node_modules")) {
+            if (id.includes("pdfjs-dist")) {
+              return "vendor-pdfjs";
             }
-            if (id.includes('epubjs')) {
-              return 'vendor-epubjs';
+            if (id.includes("epubjs")) {
+              return "vendor-epubjs";
             }
-            if (id.includes('lucide-react')) {
-              return 'vendor-lucide';
+            if (id.includes("lucide-react")) {
+              return "vendor-lucide";
             }
-            if (id.includes('three') || id.includes('@react-three')) {
-              return 'vendor-three';
+            if (id.includes("three") || id.includes("@react-three")) {
+              return "vendor-three";
             }
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'vendor-react';
+            if (id.includes("react") || id.includes("react-dom")) {
+              return "vendor-react";
             }
-            if (id.includes('react-router')) {
-              return 'vendor-router';
+            if (id.includes("react-router")) {
+              return "vendor-router";
             }
-            if (id.includes('@tanstack')) {
-              return 'vendor-tanstack';
+            if (id.includes("@tanstack")) {
+              return "vendor-tanstack";
             }
-            if (id.includes('gsap')) {
-              return 'vendor-gsap';
+            if (id.includes("gsap")) {
+              return "vendor-gsap";
             }
-            if (id.includes('framer-motion')) {
-              return 'vendor-framer';
+            if (id.includes("framer-motion")) {
+              return "vendor-framer";
             }
           }
         },

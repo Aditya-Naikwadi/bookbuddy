@@ -1,4 +1,4 @@
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle } from "lucide-react";
 
 export default function ServiceDependencyNotice({ notices = [] }) {
   if (!notices || notices.length === 0) return null;

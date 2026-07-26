@@ -1,31 +1,46 @@
-import { useRef } from 'react';
-import { Calendar, Ticket, CreditCard, CheckCircle, HelpCircle } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { useRef } from "react";
+import {
+  Calendar,
+  Ticket,
+  CreditCard,
+  CheckCircle,
+  HelpCircle,
+} from "lucide-react";
+import { Button } from "../../ui/Button";
 
-export const FineBreakdownItem = ({ fine, userCoupons, onPayTrigger, onWaiverTrigger, isWaving }) => {
+export const FineBreakdownItem = ({
+  fine,
+  userCoupons,
+  onPayTrigger,
+  onWaiverTrigger,
+  isWaving,
+}) => {
   const payBtnRef = useRef(null);
   const waiveBtnRef = useRef(null);
 
   const formattedDate = new Date(fine.createdAt).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 
-  const title = fine.loanId?.bookId?.title || fine.reason || 'Library Checkout Fine';
-  const isUnpaid = fine.status === 'unpaid';
+  const title =
+    fine.loanId?.bookId?.title || fine.reason || "Library Checkout Fine";
+  const isUnpaid = fine.status === "unpaid";
 
   return (
     <div
       className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border rounded-xl shadow-sm transition-all focus-within:ring-2 focus-within:ring-ember ${
-        isUnpaid ? 'bg-danger/5 border-danger/25' : 'bg-surface/20 border-edge/30'
+        isUnpaid
+          ? "bg-danger/5 border-danger/25"
+          : "bg-surface/20 border-edge/30"
       }`}
     >
       {/* Details */}
       <div className="flex items-start gap-3">
         <div
           className={`p-3 rounded-lg shrink-0 ${
-            isUnpaid ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'
+            isUnpaid ? "bg-danger/10 text-danger" : "bg-success/10 text-success"
           }`}
         >
           {isUnpaid ? <HelpCircle size={20} /> : <CheckCircle size={20} />}
@@ -45,16 +60,18 @@ export const FineBreakdownItem = ({ fine, userCoupons, onPayTrigger, onWaiverTri
           <div className="flex items-center gap-2 mt-2">
             <span
               className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                fine.status === 'paid'
-                  ? 'bg-success/10 text-success border border-success/25'
-                  : fine.status === 'waived'
-                  ? 'bg-indigo/10 text-indigo border border-indigo/25'
-                  : 'bg-danger/10 text-danger border border-danger/25'
+                fine.status === "paid"
+                  ? "bg-success/10 text-success border border-success/25"
+                  : fine.status === "waived"
+                    ? "bg-indigo/10 text-indigo border border-indigo/25"
+                    : "bg-danger/10 text-danger border border-danger/25"
               }`}
             >
               {fine.status}
             </span>
-            <span className="text-sm font-extrabold text-ink">₹{fine.amount.toFixed(2)}</span>
+            <span className="text-sm font-extrabold text-ink">
+              ₹{fine.amount.toFixed(2)}
+            </span>
           </div>
         </div>
       </div>

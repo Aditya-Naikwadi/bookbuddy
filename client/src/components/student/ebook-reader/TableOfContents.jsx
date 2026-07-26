@@ -1,13 +1,23 @@
-import { BookOpen, SkipBack, ListTree } from 'lucide-react';
+import { BookOpen, SkipBack, ListTree } from "lucide-react";
 
-export const TableOfContents = ({ toc = [], pdfOutline = [], isPdf = false, onJumpToLocation, onJumpToPdfPage, onClose }) => {
+export const TableOfContents = ({
+  toc = [],
+  pdfOutline = [],
+  isPdf = false,
+  onJumpToLocation,
+  onJumpToPdfPage,
+  onClose,
+}) => {
   return (
     <div className="w-80 h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl animate-in slide-in-from-left duration-300">
       {/* TOC Header */}
       <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50 dark:bg-slate-800/50">
         <h4 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <ListTree size={18} className="text-indigo-600 dark:text-indigo-400" />
-          {isPdf ? 'PDF Document Outline' : 'Table of Contents'}
+          <ListTree
+            size={18}
+            className="text-indigo-600 dark:text-indigo-400"
+          />
+          {isPdf ? "PDF Document Outline" : "Table of Contents"}
         </h4>
         <button
           onClick={onClose}
@@ -62,41 +72,45 @@ export const TableOfContents = ({ toc = [], pdfOutline = [], isPdf = false, onJu
                       size={14}
                       className="shrink-0 mt-0.5 text-slate-400 group-hover:text-indigo-600 transition-colors"
                     />
-                    <span className="truncate flex-1">{item.title || `Section ${i + 1}`}</span>
+                    <span className="truncate flex-1">
+                      {item.title || `Section ${i + 1}`}
+                    </span>
                     {item.destPage && (
-                      <span className="text-[10px] font-mono text-slate-400">p. {item.destPage}</span>
+                      <span className="text-[10px] font-mono text-slate-400">
+                        p. {item.destPage}
+                      </span>
                     )}
                   </button>
                 </li>
               ))
             )
+          ) : toc.length === 0 ? (
+            <p className="p-4 text-xs text-slate-400 text-center font-medium">
+              No chapter markers found in this book.
+            </p>
           ) : (
-            toc.length === 0 ? (
-              <p className="p-4 text-xs text-slate-400 text-center font-medium">
-                No chapter markers found in this book.
-              </p>
-            ) : (
-              toc.map((chapter, i) => {
-                const label = chapter.label ? chapter.label.trim() : `Chapter ${i + 1}`;
-                return (
-                  <li key={chapter.id || i}>
-                    <button
-                      onClick={() => {
-                        onJumpToLocation(chapter.href);
-                        onClose();
-                      }}
-                      className="w-full text-left p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-indigo-600 flex items-start gap-2.5 transition-all group"
-                    >
-                      <BookOpen
-                        size={14}
-                        className="shrink-0 mt-0.5 text-slate-400 group-hover:text-indigo-600 transition-colors"
-                      />
-                      <span className="truncate">{label}</span>
-                    </button>
-                  </li>
-                );
-              })
-            )
+            toc.map((chapter, i) => {
+              const label = chapter.label
+                ? chapter.label.trim()
+                : `Chapter ${i + 1}`;
+              return (
+                <li key={chapter.id || i}>
+                  <button
+                    onClick={() => {
+                      onJumpToLocation(chapter.href);
+                      onClose();
+                    }}
+                    className="w-full text-left p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-indigo-600 flex items-start gap-2.5 transition-all group"
+                  >
+                    <BookOpen
+                      size={14}
+                      className="shrink-0 mt-0.5 text-slate-400 group-hover:text-indigo-600 transition-colors"
+                    />
+                    <span className="truncate">{label}</span>
+                  </button>
+                </li>
+              );
+            })
           )}
         </ul>
       </nav>

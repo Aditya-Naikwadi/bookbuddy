@@ -1,5 +1,5 @@
-import { ThumbsUp, Loader2 } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { ThumbsUp, Loader2 } from "lucide-react";
+import { Button } from "../../ui/Button";
 
 export const PurchaseSuggestionForm = ({
   values = {},
@@ -43,15 +43,15 @@ export const PurchaseSuggestionForm = ({
           <input
             id="suggestion-title"
             type="text"
-            value={values.title || ''}
-            onChange={(e) => onFieldChange('title', e.target.value)}
+            value={values.title || ""}
+            onChange={(e) => onFieldChange("title", e.target.value)}
             disabled={isPending}
             className={`w-full p-2.5 text-xs border rounded-xl focus:ring-2 focus:ring-indigo-600/50 focus:outline-none ${
-              errors.title ? 'border-red-500 bg-red-50/10' : 'border-slate-200'
+              errors.title ? "border-red-500 bg-red-50/10" : "border-slate-200"
             }`}
             placeholder="e.g. Introduction to Algorithms"
             aria-required="true"
-            aria-describedby={errors.title ? 'error-title' : undefined}
+            aria-describedby={errors.title ? "error-title" : undefined}
           />
           {errors.title && (
             <p
@@ -75,15 +75,15 @@ export const PurchaseSuggestionForm = ({
           <input
             id="suggestion-author"
             type="text"
-            value={values.author || ''}
-            onChange={(e) => onFieldChange('author', e.target.value)}
+            value={values.author || ""}
+            onChange={(e) => onFieldChange("author", e.target.value)}
             disabled={isPending}
             className={`w-full p-2.5 text-xs border rounded-xl focus:ring-2 focus:ring-indigo-600/50 focus:outline-none ${
-              errors.author ? 'border-red-500 bg-red-50/10' : 'border-slate-200'
+              errors.author ? "border-red-500 bg-red-50/10" : "border-slate-200"
             }`}
             placeholder="e.g. Thomas H. Cormen"
             aria-required="true"
-            aria-describedby={errors.author ? 'error-author' : undefined}
+            aria-describedby={errors.author ? "error-author" : undefined}
           />
           {errors.author && (
             <p
@@ -107,8 +107,8 @@ export const PurchaseSuggestionForm = ({
           <textarea
             id="suggestion-reason"
             rows="3"
-            value={values.reason || ''}
-            onChange={(e) => onFieldChange('reason', e.target.value)}
+            value={values.reason || ""}
+            onChange={(e) => onFieldChange("reason", e.target.value)}
             disabled={isPending}
             className="w-full p-2.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/50 focus:outline-none resize-none"
             placeholder="Explain why this book is useful for your studies..."

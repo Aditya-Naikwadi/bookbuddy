@@ -23,9 +23,7 @@ const connectDB = async () => {
 
   for (const uri of targetUris) {
     try {
-      const sanitizedUri = uri.includes('@')
-        ? uri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')
-        : uri;
+      const sanitizedUri = uri.includes('@') ? uri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@') : uri;
       logger.info(`Attempting MongoDB connection to ${sanitizedUri}...`);
       await mongoose.connect(uri, options);
       logger.info('MongoDB connected successfully.');
@@ -36,7 +34,9 @@ const connectDB = async () => {
     }
   }
 
-  logger.warn('MongoDB connection unavailable. Server running with fallback in-memory state for dev API requests.');
+  logger.warn(
+    'MongoDB connection unavailable. Server running with fallback in-memory state for dev API requests.'
+  );
 };
 
 // Monitor connection events

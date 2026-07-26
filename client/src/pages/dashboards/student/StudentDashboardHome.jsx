@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { useStudentOverview } from '../../../hooks/useStudentOverview';
-import useAuthStore from '../../../store/authStore';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import confetti from 'canvas-confetti';
-import { ReadingAnalyticsChart } from '../../../components/student/analytics/ReadingAnalyticsChart';
-import { NotificationDrawer } from '../../../components/student/notifications/NotificationDrawer';
-import { BadgeUnlockModal } from '../../../components/student/streak/BadgeUnlockModal';
+import { useState } from "react";
+import { useStudentOverview } from "../../../hooks/useStudentOverview";
+import useAuthStore from "../../../store/authStore";
+import { Link, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
+import { ReadingAnalyticsChart } from "../../../components/student/analytics/ReadingAnalyticsChart";
+import { NotificationDrawer } from "../../../components/student/notifications/NotificationDrawer";
+import { BadgeUnlockModal } from "../../../components/student/streak/BadgeUnlockModal";
 
 import {
   Flame,
@@ -31,7 +31,7 @@ import {
   Layers,
   CreditCard,
   Bell,
-} from 'lucide-react';
+} from "lucide-react";
 
 export const StudentDashboardHome = () => {
   const navigate = useNavigate();
@@ -53,30 +53,54 @@ export const StudentDashboardHome = () => {
 
   const [renewalMessage, setRenewalMessage] = useState(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [unlockedBadgesToCelebrated, setUnlockedBadgesToCelebrated] = useState([]);
+  const [unlockedBadgesToCelebrated, setUnlockedBadgesToCelebrated] = useState(
+    [],
+  );
 
   // Extract data from unified overview endpoint with robust fallbacks
   const studentUser = overview?.user || authUser || {};
-  const studentName = typeof studentUser?.name === 'string' ? studentUser.name : 'Student';
-  const firstName = (studentName.split(' ')[0]) || 'Student';
-  const activeLoans = Array.isArray(overview?.activeLoans) ? overview.activeLoans : [];
-  const finesSummary = overview?.finesSummary || { totalUnpaid: 0, unpaidCount: 0 };
-  const reservations = Array.isArray(overview?.reservations) ? overview.reservations : [];
-  const streak = overview?.streak || { currentStreak: 0, freezesAvailable: 0, todayComplete: false };
+  const studentName =
+    typeof studentUser?.name === "string" ? studentUser.name : "Student";
+  const firstName = studentName.split(" ")[0] || "Student";
+  const activeLoans = Array.isArray(overview?.activeLoans)
+    ? overview.activeLoans
+    : [];
+  const finesSummary = overview?.finesSummary || {
+    totalUnpaid: 0,
+    unpaidCount: 0,
+  };
+  const reservations = Array.isArray(overview?.reservations)
+    ? overview.reservations
+    : [];
+  const streak = overview?.streak || {
+    currentStreak: 0,
+    freezesAvailable: 0,
+    todayComplete: false,
+  };
   const recentProgress = overview?.recentReadingProgress;
-  const eresource = typeof recentProgress?.eresourceId === 'object' && recentProgress?.eresourceId !== null ? recentProgress.eresourceId : null;
-  const recommendations = Array.isArray(overview?.recommendations) ? overview.recommendations : [];
+  const eresource =
+    typeof recentProgress?.eresourceId === "object" &&
+    recentProgress?.eresourceId !== null
+      ? recentProgress.eresourceId
+      : null;
+  const recommendations = Array.isArray(overview?.recommendations)
+    ? overview.recommendations
+    : [];
   const unreadNotificationsCount = overview?.unreadNotificationsCount || 0;
 
   const totalFine = Number(finesSummary?.totalUnpaid || 0);
-  const { currentStreak = 0, freezesAvailable = 0, todayComplete = false } = streak;
+  const {
+    currentStreak = 0,
+    freezesAvailable = 0,
+    todayComplete = false,
+  } = streak;
 
   // Greeting based on time of day
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 18) return 'Good Afternoon';
-    return 'Good Evening';
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Evening";
   };
 
   // Check in handler with confetti celebration & Badge unlock modal trigger
@@ -105,10 +129,16 @@ export const StudentDashboardHome = () => {
     try {
       setRenewalMessage(null);
       const res = await renewLoan(loanId);
-      setRenewalMessage({ type: 'success', text: res?.message || 'Loan successfully renewed for 14 days!' });
+      setRenewalMessage({
+        type: "success",
+        text: res?.message || "Loan successfully renewed for 14 days!",
+      });
       setTimeout(() => setRenewalMessage(null), 5000);
     } catch (err) {
-      setRenewalMessage({ type: 'error', text: err?.response?.data?.message || 'Failed to renew loan.' });
+      setRenewalMessage({
+        type: "error",
+        text: err?.response?.data?.message || "Failed to renew loan.",
+      });
       setTimeout(() => setRenewalMessage(null), 5000);
     }
   };
@@ -118,7 +148,7 @@ export const StudentDashboardHome = () => {
     try {
       await cancelHold(reservationId);
     } catch (err) {
-      console.error('Failed to cancel hold:', err);
+      console.error("Failed to cancel hold:", err);
     }
   };
 
@@ -130,7 +160,9 @@ export const StudentDashboardHome = () => {
     return (
       <div className="p-8 max-w-4xl mx-auto text-center bg-red-500/10 border border-red-500/20 rounded-3xl my-12">
         <ShieldAlert className="w-12 h-12 text-red-500 mx-auto mb-3" />
-        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Unable to Load Student Dashboard</h3>
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+          Unable to Load Student Dashboard
+        </h3>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">
           Please check your backend connection or try refreshing the dashboard.
         </p>
@@ -168,16 +200,23 @@ export const StudentDashboardHome = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             className={`p-4 rounded-2xl flex items-center justify-between text-xs font-bold ${
-              renewalMessage.type === 'success'
-                ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300'
-                : 'bg-red-500/10 border border-red-500/20 text-red-700 dark:text-red-300'
+              renewalMessage.type === "success"
+                ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                : "bg-red-500/10 border border-red-500/20 text-red-700 dark:text-red-300"
             }`}
           >
             <div className="flex items-center gap-2">
-              {renewalMessage.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+              {renewalMessage.type === "success" ? (
+                <CheckCircle2 size={16} />
+              ) : (
+                <AlertCircle size={16} />
+              )}
               <span>{renewalMessage.text}</span>
             </div>
-            <button onClick={() => setRenewalMessage(null)} className="opacity-60 hover:opacity-100">
+            <button
+              onClick={() => setRenewalMessage(null)}
+              className="opacity-60 hover:opacity-100"
+            >
               <XCircle size={14} />
             </button>
           </motion.div>
@@ -217,9 +256,15 @@ export const StudentDashboardHome = () => {
               {getGreeting()}, {firstName}! 👋
             </h1>
             <p className="text-sm text-slate-300 leading-relaxed">
-              Your personalized reading hub is up to date. You have{' '}
-              <strong className="text-indigo-300 font-semibold">{activeLoans.length} active checkouts</strong> and{' '}
-              <strong className="text-orange-300 font-semibold">{currentStreak} day streak</strong> active today.
+              Your personalized reading hub is up to date. You have{" "}
+              <strong className="text-indigo-300 font-semibold">
+                {activeLoans.length} active checkouts
+              </strong>{" "}
+              and{" "}
+              <strong className="text-orange-300 font-semibold">
+                {currentStreak} day streak
+              </strong>{" "}
+              active today.
             </p>
 
             {/* Quick Action Badges */}
@@ -251,14 +296,20 @@ export const StudentDashboardHome = () => {
           {/* Student Pass Badge Widget */}
           <div className="bg-white/10 backdrop-blur-xl border border-white/15 rounded-2xl p-4 sm:p-5 flex items-center gap-4 min-w-[280px]">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg ring-2 ring-white/20">
-              {(firstName && firstName[0]) ? firstName[0].toUpperCase() : 'S'}
+              {firstName && firstName[0] ? firstName[0].toUpperCase() : "S"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">Pass ID #{studentUser?.studentId || 'STU-1001'}</p>
-              <p className="text-sm font-bold text-white truncate">{studentName}</p>
+              <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">
+                Pass ID #{studentUser?.studentId || "STU-1001"}
+              </p>
+              <p className="text-sm font-bold text-white truncate">
+                {studentName}
+              </p>
               <div className="flex items-center gap-2 mt-1">
                 <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[11px] text-slate-300 font-medium">Active Patron</span>
+                <span className="text-[11px] text-slate-300 font-medium">
+                  Active Patron
+                </span>
               </div>
             </div>
           </div>
@@ -270,9 +321,15 @@ export const StudentDashboardHome = () => {
         {/* Metric 1: Active Loans */}
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Active Loans</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1 font-mono">{activeLoans.length}</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">Max limit: 5 books</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Active Loans
+            </p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1 font-mono">
+              {activeLoans.length}
+            </p>
+            <p className="text-[10px] text-slate-500 mt-0.5">
+              Max limit: 5 books
+            </p>
           </div>
           <div className="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
             <BookOpen size={22} />
@@ -282,9 +339,15 @@ export const StudentDashboardHome = () => {
         {/* Metric 2: Reading Streak */}
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Reading Streak</p>
-            <p className="text-2xl font-black text-orange-500 mt-1 font-mono">{currentStreak} Days</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">{todayComplete ? 'Checked in today ✓' : 'Check-in pending'}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Reading Streak
+            </p>
+            <p className="text-2xl font-black text-orange-500 mt-1 font-mono">
+              {currentStreak} Days
+            </p>
+            <p className="text-[10px] text-slate-500 mt-0.5">
+              {todayComplete ? "Checked in today ✓" : "Check-in pending"}
+            </p>
           </div>
           <div className="w-11 h-11 rounded-xl bg-orange-50 dark:bg-orange-950/50 text-orange-500 flex items-center justify-center">
             <Flame size={22} fill="currentColor" />
@@ -294,8 +357,12 @@ export const StudentDashboardHome = () => {
         {/* Metric 3: Active Holds */}
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Active Holds</p>
-            <p className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-1 font-mono">{reservations.length}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Active Holds
+            </p>
+            <p className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-1 font-mono">
+              {reservations.length}
+            </p>
             <p className="text-[10px] text-slate-500 mt-0.5">In pickup queue</p>
           </div>
           <div className="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center">
@@ -306,13 +373,21 @@ export const StudentDashboardHome = () => {
         {/* Metric 4: Fines & Dues */}
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Unpaid Fines</p>
-            <p className={`text-2xl font-black mt-1 font-mono ${totalFine > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Unpaid Fines
+            </p>
+            <p
+              className={`text-2xl font-black mt-1 font-mono ${totalFine > 0 ? "text-red-600" : "text-emerald-600"}`}
+            >
               ₹{(isNaN(totalFine) ? 0 : totalFine).toFixed(2)}
             </p>
-            <p className="text-[10px] text-slate-500 mt-0.5">{totalFine > 0 ? 'Payment required' : 'Clear balance'}</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">
+              {totalFine > 0 ? "Payment required" : "Clear balance"}
+            </p>
           </div>
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${totalFine > 0 ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
+          <div
+            className={`w-11 h-11 rounded-xl flex items-center justify-center ${totalFine > 0 ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}`}
+          >
             <CreditCard size={22} />
           </div>
         </div>
@@ -333,8 +408,12 @@ export const StudentDashboardHome = () => {
                   <BookOpen size={18} />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white">Currently Borrowed Books</h2>
-                  <p className="text-xs text-slate-500">Track return due dates and renew eligible checkouts</p>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                    Currently Borrowed Books
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Track return due dates and renew eligible checkouts
+                  </p>
                 </div>
               </div>
               <Link
@@ -347,8 +426,13 @@ export const StudentDashboardHome = () => {
 
             {activeLoans.length === 0 ? (
               <div className="py-12 text-center text-slate-400 text-xs space-y-3">
-                <BookOpen size={36} className="mx-auto text-slate-300 dark:text-slate-700" />
-                <p className="font-medium">You have no books currently checked out.</p>
+                <BookOpen
+                  size={36}
+                  className="mx-auto text-slate-300 dark:text-slate-700"
+                />
+                <p className="font-medium">
+                  You have no books currently checked out.
+                </p>
                 <Link
                   to="/catalog"
                   className="inline-flex items-center gap-1 px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700 transition-all shadow"
@@ -362,13 +446,20 @@ export const StudentDashboardHome = () => {
                   const book = loan.bookId || {};
                   const dueDate = new Date(loan.dueDate);
                   const now = new Date();
-                  const isOverdue = dueDate < now && loan.status === 'active';
-                  const daysLeft = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
+                  const isOverdue = dueDate < now && loan.status === "active";
+                  const daysLeft = Math.ceil(
+                    (dueDate - now) / (1000 * 60 * 60 * 24),
+                  );
                   const maxDays = loan.maxLoanDays || 14;
                   const daysElapsed = Math.max(0, maxDays - daysLeft);
-                  const progressPct = Math.min(100, Math.max(5, (daysElapsed / maxDays) * 100));
+                  const progressPct = Math.min(
+                    100,
+                    Math.max(5, (daysElapsed / maxDays) * 100),
+                  );
 
-                  const eligibility = loan.renewalEligibility || { eligible: true };
+                  const eligibility = loan.renewalEligibility || {
+                    eligible: true,
+                  };
 
                   return (
                     <motion.div
@@ -392,22 +483,33 @@ export const StudentDashboardHome = () => {
                             </div>
                           )}
                           <div className="min-w-0">
-                            <h3 className="font-bold text-sm text-slate-900 dark:text-white truncate">{book.title || 'Library Title'}</h3>
-                            <p className="text-xs text-slate-500 truncate">{book.author || 'Unknown Author'}</p>
+                            <h3 className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                              {book.title || "Library Title"}
+                            </h3>
+                            <p className="text-xs text-slate-500 truncate">
+                              {book.author || "Unknown Author"}
+                            </p>
                             <div className="flex items-center gap-2 mt-1">
                               <span
                                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${
                                   isOverdue
-                                    ? 'bg-red-500/10 text-red-600 border border-red-500/20'
+                                    ? "bg-red-500/10 text-red-600 border border-red-500/20"
                                     : daysLeft <= 2
-                                    ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
-                                    : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
+                                      ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                                      : "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
                                 }`}
                               >
                                 <Clock size={10} />
-                                {isOverdue ? 'Overdue!' : daysLeft === 0 ? 'Due Today!' : `${daysLeft} days left`}
+                                {isOverdue
+                                  ? "Overdue!"
+                                  : daysLeft === 0
+                                    ? "Due Today!"
+                                    : `${daysLeft} days left`}
                               </span>
-                              <span className="text-[10px] text-slate-400">Renewals: {loan.renewalCount || 0}/{loan.maxRenewals || 2}</span>
+                              <span className="text-[10px] text-slate-400">
+                                Renewals: {loan.renewalCount || 0}/
+                                {loan.maxRenewals || 2}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -419,16 +521,31 @@ export const StudentDashboardHome = () => {
                             disabled={!eligibility.eligible || isRenewing}
                             className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm ${
                               eligibility.eligible
-                                ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                                : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                                ? "bg-indigo-600 hover:bg-indigo-700 text-white"
+                                : "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
                             }`}
                           >
-                            <RefreshCw size={13} className={isRenewing && renewingLoanId === loan._id ? 'animate-spin' : ''} />
-                            <span>{isRenewing && renewingLoanId === loan._id ? 'Renewing...' : 'Renew Loan'}</span>
+                            <RefreshCw
+                              size={13}
+                              className={
+                                isRenewing && renewingLoanId === loan._id
+                                  ? "animate-spin"
+                                  : ""
+                              }
+                            />
+                            <span>
+                              {isRenewing && renewingLoanId === loan._id
+                                ? "Renewing..."
+                                : "Renew Loan"}
+                            </span>
                           </button>
                           {!eligibility.eligible && (
                             <p className="text-[10px] text-red-500 font-medium text-right max-w-[140px] truncate">
-                              {eligibility.reason === 'on_hold' ? 'Blocked: Reserved by student' : eligibility.reason === 'limit_reached' ? 'Max renewals reached' : eligibility.reason}
+                              {eligibility.reason === "on_hold"
+                                ? "Blocked: Reserved by student"
+                                : eligibility.reason === "limit_reached"
+                                  ? "Max renewals reached"
+                                  : eligibility.reason}
                             </p>
                           )}
                         </div>
@@ -440,10 +557,10 @@ export const StudentDashboardHome = () => {
                           <div
                             className={`h-full rounded-full transition-all duration-500 ${
                               isOverdue
-                                ? 'bg-red-500'
+                                ? "bg-red-500"
                                 : daysLeft <= 2
-                                ? 'bg-amber-500'
-                                : 'bg-indigo-600'
+                                  ? "bg-amber-500"
+                                  : "bg-indigo-600"
                             }`}
                             style={{ width: `${progressPct}%` }}
                           />
@@ -464,7 +581,9 @@ export const StudentDashboardHome = () => {
                   <div className="p-2 bg-purple-50 dark:bg-purple-950/50 rounded-xl text-purple-600 dark:text-purple-400">
                     <BookMarked size={18} />
                   </div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white">Active Reservation Holds</h2>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                    Active Reservation Holds
+                  </h2>
                 </div>
                 <span className="text-xs text-purple-600 font-bold bg-purple-50 dark:bg-purple-950/50 px-2.5 py-1 rounded-full">
                   {reservations.length} Queue Items
@@ -474,7 +593,7 @@ export const StudentDashboardHome = () => {
               <div className="space-y-3">
                 {reservations.map((res) => {
                   const book = res.bookId || {};
-                  const isReady = res.status === 'ready_for_pickup';
+                  const isReady = res.status === "ready_for_pickup";
 
                   return (
                     <div
@@ -486,8 +605,12 @@ export const StudentDashboardHome = () => {
                           <Bookmark size={18} />
                         </div>
                         <div className="min-w-0">
-                          <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">{book.title || 'Reserved Book'}</h4>
-                          <p className="text-[11px] text-slate-500 truncate">{book.author || 'Author'}</p>
+                          <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                            {book.title || "Reserved Book"}
+                          </h4>
+                          <p className="text-[11px] text-slate-500 truncate">
+                            {book.author || "Author"}
+                          </p>
                         </div>
                       </div>
 
@@ -495,15 +618,19 @@ export const StudentDashboardHome = () => {
                         <span
                           className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
                             isReady
-                              ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 animate-pulse'
-                              : 'bg-purple-500/10 text-purple-600 border border-purple-500/20'
+                              ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 animate-pulse"
+                              : "bg-purple-500/10 text-purple-600 border border-purple-500/20"
                           }`}
                         >
-                          {isReady ? 'Ready at Desk!' : `Queue #${res.queuePosition || 1}`}
+                          {isReady
+                            ? "Ready at Desk!"
+                            : `Queue #${res.queuePosition || 1}`}
                         </span>
                         <button
                           onClick={() => handleCancelHold(res._id)}
-                          disabled={isCancellingHold && cancellingHoldId === res._id}
+                          disabled={
+                            isCancellingHold && cancellingHoldId === res._id
+                          }
                           className="text-xs text-slate-400 hover:text-red-500 p-1 font-bold transition-colors"
                           title="Cancel Hold"
                         >
@@ -525,13 +652,21 @@ export const StudentDashboardHome = () => {
                   <Sparkles size={24} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-300">Resume Digital Reading</p>
-                  <h4 className="font-bold text-sm text-white truncate">{eresource.title || 'Digital Resource'}</h4>
-                  <p className="text-xs text-slate-400">Page {recentProgress?.currentPage || 1} • Last read recently</p>
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-300">
+                    Resume Digital Reading
+                  </p>
+                  <h4 className="font-bold text-sm text-white truncate">
+                    {eresource.title || "Digital Resource"}
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Page {recentProgress?.currentPage || 1} • Last read recently
+                  </p>
                 </div>
               </div>
               <button
-                onClick={() => navigate(`/eresources/read/${eresource._id || eresource.id}`)}
+                onClick={() =>
+                  navigate(`/eresources/read/${eresource._id || eresource.id}`)
+                }
                 className="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-400 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 flex-shrink-0"
               >
                 <span>Continue Reading</span>
@@ -553,10 +688,17 @@ export const StudentDashboardHome = () => {
             <div className="relative z-10 space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <Flame className="text-orange-500 w-5 h-5" fill="currentColor" />
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white">Reading Streak</h2>
+                  <Flame
+                    className="text-orange-500 w-5 h-5"
+                    fill="currentColor"
+                  />
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                    Reading Streak
+                  </h2>
                 </div>
-                <span className="text-xl font-black text-orange-500 font-mono">{currentStreak} Days</span>
+                <span className="text-xl font-black text-orange-500 font-mono">
+                  {currentStreak} Days
+                </span>
               </div>
 
               <p className="text-xs text-slate-500 leading-relaxed">
@@ -570,8 +712,8 @@ export const StudentDashboardHome = () => {
                 disabled={todayComplete || isCheckInPending}
                 className={`w-full h-11 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md ${
                   todayComplete
-                    ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 cursor-default'
-                    : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white'
+                    ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 cursor-default"
+                    : "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
                 }`}
               >
                 {isCheckInPending ? (
@@ -597,8 +739,12 @@ export const StudentDashboardHome = () => {
                     <Snowflake
                       key={i}
                       size={14}
-                      className={i < freezesAvailable ? 'text-indigo-500 animate-pulse' : 'text-slate-200 dark:text-slate-700'}
-                      fill={i < freezesAvailable ? 'currentColor' : 'none'}
+                      className={
+                        i < freezesAvailable
+                          ? "text-indigo-500 animate-pulse"
+                          : "text-slate-200 dark:text-slate-700"
+                      }
+                      fill={i < freezesAvailable ? "currentColor" : "none"}
                     />
                   ))}
                 </div>
@@ -649,8 +795,13 @@ export const StudentDashboardHome = () => {
           {recommendations.length > 0 && (
             <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                <h2 className="text-base font-bold text-slate-900 dark:text-white">Recommended for You</h2>
-                <Link to="/recommendations" className="text-xs text-indigo-600 font-bold hover:underline">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                  Recommended for You
+                </h2>
+                <Link
+                  to="/recommendations"
+                  className="text-xs text-indigo-600 font-bold hover:underline"
+                >
                   More
                 </Link>
               </div>
@@ -662,17 +813,25 @@ export const StudentDashboardHome = () => {
                     className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                   >
                     {book.coverImage ? (
-                      <img src={book.coverImage} alt={book.title} className="w-10 h-14 object-cover rounded-md flex-shrink-0 shadow-sm" />
+                      <img
+                        src={book.coverImage}
+                        alt={book.title}
+                        className="w-10 h-14 object-cover rounded-md flex-shrink-0 shadow-sm"
+                      />
                     ) : (
                       <div className="w-10 h-14 bg-slate-100 dark:bg-slate-800 rounded-md flex items-center justify-center text-slate-400 font-bold text-xs flex-shrink-0">
                         <BookOpen size={16} />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">{book.title}</h4>
-                      <p className="text-[11px] text-slate-500 truncate">{book.author}</p>
+                      <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                        {book.title}
+                      </h4>
+                      <p className="text-[11px] text-slate-500 truncate">
+                        {book.author}
+                      </p>
                       <span className="inline-block mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300">
-                        {book.category || 'General'}
+                        {book.category || "General"}
                       </span>
                     </div>
                   </div>
@@ -695,7 +854,10 @@ const DashboardSkeleton = () => (
     {/* Metric Cards Skeleton */}
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="h-24 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+        <div
+          key={i}
+          className="h-24 bg-slate-200 dark:bg-slate-800 rounded-2xl"
+        />
       ))}
     </div>
 

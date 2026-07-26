@@ -1,8 +1,12 @@
-import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import featureApi from '../../api/featureApi';
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import featureApi from "../../api/featureApi";
 
-export default function UploadProgressPanel({ jobId, totalRows = 100, onComplete }) {
+export default function UploadProgressPanel({
+  jobId,
+  totalRows = 100,
+  onComplete,
+}) {
   const [progress, setProgress] = useState(15);
   const [processed, setProcessed] = useState(Math.floor(totalRows * 0.15));
   const [failed, setFailed] = useState(0);
@@ -15,7 +19,7 @@ export default function UploadProgressPanel({ jobId, totalRows = 100, onComplete
       try {
         const res = await featureApi.getUploadJobStatus(jobId);
 
-        if (res.status === 'completed') {
+        if (res.status === "completed") {
           setProgress(100);
           setProcessed(res.processed || totalRows);
           setFailed(res.failed || 0);
@@ -32,7 +36,7 @@ export default function UploadProgressPanel({ jobId, totalRows = 100, onComplete
         delay = Math.min(8000, delay * 1.5);
         timerId = setTimeout(pollStatus, delay);
       } catch (err) {
-        console.error('Job status polling error:', err);
+        console.error("Job status polling error:", err);
       }
     };
 
@@ -51,7 +55,10 @@ export default function UploadProgressPanel({ jobId, totalRows = 100, onComplete
           Processing Student Roster Import...
         </h3>
         <p className="text-slate-500 text-xs sm:text-sm">
-          Job ID: <code className="font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{jobId}</code>
+          Job ID:{" "}
+          <code className="font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+            {jobId}
+          </code>
         </p>
       </div>
 
@@ -71,10 +78,14 @@ export default function UploadProgressPanel({ jobId, totalRows = 100, onComplete
       <div className="grid grid-cols-2 gap-4 pt-2">
         <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
           <span className="text-xs text-slate-500 font-medium">Processed</span>
-          <p className="text-xl font-bold text-slate-900 mt-0.5">{processed} / {totalRows}</p>
+          <p className="text-xl font-bold text-slate-900 mt-0.5">
+            {processed} / {totalRows}
+          </p>
         </div>
         <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-          <span className="text-xs text-slate-500 font-medium">Flagged Errors</span>
+          <span className="text-xs text-slate-500 font-medium">
+            Flagged Errors
+          </span>
           <p className="text-xl font-bold text-rose-600 mt-0.5">{failed}</p>
         </div>
       </div>

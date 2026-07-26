@@ -1,32 +1,51 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import apiClient from '../../../api/client';
-import { motion, AnimatePresence } from 'framer-motion';
-import { BarChart2, BookOpen, Clock, Calendar } from 'lucide-react';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import apiClient from "../../../api/client";
+import { motion, AnimatePresence } from "framer-motion";
+import { BarChart2, BookOpen, Clock, Calendar } from "lucide-react";
 
 const fetchReadingAnalytics = async (days) => {
-  const { data } = await apiClient.get(`/dashboards/student/reading-analytics?days=${days}`);
+  const { data } = await apiClient.get(
+    `/dashboards/student/reading-analytics?days=${days}`,
+  );
   return data.data;
 };
 
 export const ReadingAnalyticsChart = () => {
   const [days, setDays] = useState(7);
-  const [activeMetric, setActiveMetric] = useState('pages'); // 'pages' | 'minutes'
+  const [activeMetric, setActiveMetric] = useState("pages"); // 'pages' | 'minutes'
   const [hoveredPoint, setHoveredPoint] = useState(null);
 
-  const { data: analyticsData, isLoading, isError } = useQuery({
-    queryKey: ['reading-analytics', days],
+  const {
+    data: analyticsData,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["reading-analytics", days],
     queryFn: () => fetchReadingAnalytics(days),
     staleTime: 60000,
   });
 
-  const chartPoints = Array.isArray(analyticsData?.analytics) ? analyticsData.analytics : [];
-  const isEmpty = analyticsData?.isEmpty || chartPoints.length === 0 || chartPoints.every((p) => (p?.pagesRead || 0) === 0 && (p?.minutesRead || 0) === 0);
+  const chartPoints = Array.isArray(analyticsData?.analytics)
+    ? analyticsData.analytics
+    : [];
+  const isEmpty =
+    analyticsData?.isEmpty ||
+    chartPoints.length === 0 ||
+    chartPoints.every(
+      (p) => (p?.pagesRead || 0) === 0 && (p?.minutesRead || 0) === 0,
+    );
 
-  const totalPages = analyticsData?.totalPagesRead ?? chartPoints.reduce((acc, p) => acc + (p?.pagesRead || 0), 0);
-  const totalMinutes = analyticsData?.totalMinutesRead ?? chartPoints.reduce((acc, p) => acc + (p?.minutesRead || 0), 0);
+  const totalPages =
+    analyticsData?.totalPagesRead ??
+    chartPoints.reduce((acc, p) => acc + (p?.pagesRead || 0), 0);
+  const totalMinutes =
+    analyticsData?.totalMinutesRead ??
+    chartPoints.reduce((acc, p) => acc + (p?.minutesRead || 0), 0);
 
-  const values = chartPoints.map((p) => (activeMetric === 'pages' ? (p?.pagesRead || 0) : (p?.minutesRead || 0)));
+  const values = chartPoints.map((p) =>
+    activeMetric === "pages" ? p?.pagesRead || 0 : p?.minutesRead || 0,
+  );
   const maxValue = Math.max(...values, 10);
 
   return (
@@ -41,7 +60,9 @@ export const ReadingAnalyticsChart = () => {
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               Reading Activity Analytics
             </h3>
-            <p className="text-xs text-slate-500">Track daily pages read and session duration</p>
+            <p className="text-xs text-slate-500">
+              Track daily pages read and session duration
+            </p>
           </div>
         </div>
 
@@ -50,22 +71,22 @@ export const ReadingAnalyticsChart = () => {
           {/* Metric Selector */}
           <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
             <button
-              onClick={() => setActiveMetric('pages')}
+              onClick={() => setActiveMetric("pages")}
               className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${
-                activeMetric === 'pages'
-                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                activeMetric === "pages"
+                  ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <BookOpen size={13} />
               <span>Pages</span>
             </button>
             <button
-              onClick={() => setActiveMetric('minutes')}
+              onClick={() => setActiveMetric("minutes")}
               className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${
-                activeMetric === 'minutes'
-                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                activeMetric === "minutes"
+                  ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Clock size={13} />
@@ -79,8 +100,8 @@ export const ReadingAnalyticsChart = () => {
               onClick={() => setDays(7)}
               className={`px-3 py-1.5 rounded-lg transition-all ${
                 days === 7
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               7 Days
@@ -89,8 +110,8 @@ export const ReadingAnalyticsChart = () => {
               onClick={() => setDays(30)}
               className={`px-3 py-1.5 rounded-lg transition-all ${
                 days === 30
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               30 Days
@@ -106,7 +127,9 @@ export const ReadingAnalyticsChart = () => {
             <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
               Total Pages ({days}D)
             </p>
-            <p className="text-xl font-black text-slate-900 dark:text-white font-mono mt-0.5">{totalPages}</p>
+            <p className="text-xl font-black text-slate-900 dark:text-white font-mono mt-0.5">
+              {totalPages}
+            </p>
           </div>
           <BookOpen className="text-indigo-400 opacity-80" size={24} />
         </div>
@@ -116,7 +139,9 @@ export const ReadingAnalyticsChart = () => {
             <p className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
               Total Minutes ({days}D)
             </p>
-            <p className="text-xl font-black text-slate-900 dark:text-white font-mono mt-0.5">{totalMinutes}</p>
+            <p className="text-xl font-black text-slate-900 dark:text-white font-mono mt-0.5">
+              {totalMinutes}
+            </p>
           </div>
           <Clock className="text-purple-400 opacity-80" size={24} />
         </div>
@@ -134,10 +159,16 @@ export const ReadingAnalyticsChart = () => {
       ) : isEmpty ? (
         /* Sensible Empty State for students with no history */
         <div className="py-12 px-4 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 space-y-2">
-          <Calendar size={36} className="mx-auto text-slate-300 dark:text-slate-600" />
-          <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">No Reading Activity Yet</h4>
+          <Calendar
+            size={36}
+            className="mx-auto text-slate-300 dark:text-slate-600"
+          />
+          <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+            No Reading Activity Yet
+          </h4>
           <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-            Your reading activity graph will automatically populate here as you read digital resources or log daily check-ins.
+            Your reading activity graph will automatically populate here as you
+            read digital resources or log daily check-ins.
           </p>
         </div>
       ) : (
@@ -152,8 +183,14 @@ export const ReadingAnalyticsChart = () => {
             </div>
 
             {chartPoints.map((point, index) => {
-              const val = activeMetric === 'pages' ? (point?.pagesRead || 0) : (point?.minutesRead || 0);
-              const heightPct = Math.max(6, (val / Math.max(maxValue, 1)) * 100);
+              const val =
+                activeMetric === "pages"
+                  ? point?.pagesRead || 0
+                  : point?.minutesRead || 0;
+              const heightPct = Math.max(
+                6,
+                (val / Math.max(maxValue, 1)) * 100,
+              );
               const isHovered = hoveredPoint?.date === point?.date;
 
               return (
@@ -172,9 +209,10 @@ export const ReadingAnalyticsChart = () => {
                         exit={{ opacity: 0, y: 5 }}
                         className="absolute bottom-full mb-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1.5 rounded-xl shadow-xl z-30 whitespace-nowrap pointer-events-none"
                       >
-                        <p>{point?.date || 'Today'}</p>
+                        <p>{point?.date || "Today"}</p>
                         <p className="text-indigo-300 dark:text-indigo-600 font-extrabold">
-                          {point?.pagesRead || 0} Pages • {point?.minutesRead || 0} Mins
+                          {point?.pagesRead || 0} Pages •{" "}
+                          {point?.minutesRead || 0} Mins
                         </p>
                       </motion.div>
                     )}
@@ -187,16 +225,22 @@ export const ReadingAnalyticsChart = () => {
                     transition={{ duration: 0.4, delay: index * 0.02 }}
                     className={`w-full max-w-[28px] rounded-t-xl transition-all duration-200 ${
                       isHovered
-                        ? 'bg-gradient-to-t from-indigo-600 to-purple-500 shadow-lg scale-105'
+                        ? "bg-gradient-to-t from-indigo-600 to-purple-500 shadow-lg scale-105"
                         : val > 0
-                        ? 'bg-indigo-600/85 dark:bg-indigo-500/85 hover:bg-indigo-600'
-                        : 'bg-slate-200 dark:bg-slate-800'
+                          ? "bg-indigo-600/85 dark:bg-indigo-500/85 hover:bg-indigo-600"
+                          : "bg-slate-200 dark:bg-slate-800"
                     }`}
                   />
 
                   {/* Day Label (X-Axis) */}
                   <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-2 truncate max-w-full">
-                    {days === 7 ? (point?.day || '') : (point?.date && typeof point.date === 'string' && point.date.includes('-') ? point.date.split('-')[2] : (point?.date || ''))}
+                    {days === 7
+                      ? point?.day || ""
+                      : point?.date &&
+                          typeof point.date === "string" &&
+                          point.date.includes("-")
+                        ? point.date.split("-")[2]
+                        : point?.date || ""}
                   </span>
                 </div>
               );

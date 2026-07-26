@@ -1,14 +1,14 @@
-import apiClient from './client';
+import apiClient from "./client";
 
 export const facilitiesApi = {
   getAvailability: async (labName, date) => {
-    const { data } = await apiClient.get('/lab/availability', {
+    const { data } = await apiClient.get("/lab/availability", {
       params: { labName, date },
     });
     return data.data;
   },
   createBooking: async (seatId, startTime, endTime) => {
-    const { data } = await apiClient.post('/lab/bookings', {
+    const { data } = await apiClient.post("/lab/bookings", {
       seatId,
       startTime,
       endTime,
@@ -16,7 +16,7 @@ export const facilitiesApi = {
     return data.data;
   },
   getMyBookings: async () => {
-    const { data } = await apiClient.get('/lab/bookings/me');
+    const { data } = await apiClient.get("/lab/bookings/me");
     return data.data;
   },
   cancelBooking: async (id) => {

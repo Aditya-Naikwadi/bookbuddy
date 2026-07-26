@@ -1,5 +1,5 @@
-import { useRef } from 'react';
-import { Monitor, Hammer, ShieldAlert, Check } from 'lucide-react';
+import { useRef } from "react";
+import { Monitor, Hammer, ShieldAlert, Check } from "lucide-react";
 
 export const WorkstationGrid = ({
   availability = [],
@@ -12,7 +12,11 @@ export const WorkstationGrid = ({
   // Helper to format slot times nicely (e.g., "8:00 AM - 9:00 AM")
   const formatTimeSlot = (startTimeISO) => {
     const d = new Date(startTimeISO);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
+    return d.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "UTC",
+    });
   };
 
   // Keyboard navigation handler for the grid structure
@@ -21,23 +25,23 @@ export const WorkstationGrid = ({
     let nextCol = slotIndex;
 
     switch (e.key) {
-      case 'ArrowRight':
+      case "ArrowRight":
         nextCol = (slotIndex + 1) % totalSlots;
         e.preventDefault();
         break;
-      case 'ArrowLeft':
+      case "ArrowLeft":
         nextCol = (slotIndex - 1 + totalSlots) % totalSlots;
         e.preventDefault();
         break;
-      case 'ArrowDown':
+      case "ArrowDown":
         nextRow = (seatIndex + 1) % totalSeats;
         e.preventDefault();
         break;
-      case 'ArrowUp':
+      case "ArrowUp":
         nextRow = (seatIndex - 1 + totalSeats) % totalSeats;
         e.preventDefault();
         break;
-      case 'Escape':
+      case "Escape":
         onSelectSlot(null); // Deselect
         e.preventDefault();
         break;
@@ -54,7 +58,12 @@ export const WorkstationGrid = ({
   };
 
   return (
-    <div ref={containerRef} className="space-y-6 w-full" role="region" aria-label="Workstation reservation grid">
+    <div
+      ref={containerRef}
+      className="space-y-6 w-full"
+      role="region"
+      aria-label="Workstation reservation grid"
+    >
       {availability.length === 0 ? (
         <div className="text-center py-12 text-slate-400 text-sm">
           No workstation slots found for this date.
@@ -63,24 +72,32 @@ export const WorkstationGrid = ({
         <div className="grid grid-cols-1 gap-6">
           {availability.map((item, seatIdx) => {
             const { seat, slots = [] } = item;
-            const isMaintenance = seat.maintenanceStatus !== 'operational';
+            const isMaintenance = seat.maintenanceStatus !== "operational";
 
             return (
               <div
                 key={seat._id}
                 className={`p-5 rounded-3xl border transition-all ${
                   isMaintenance
-                    ? 'bg-slate-50/50 border-slate-100 opacity-60'
-                    : 'bg-white border-slate-200 shadow-sm'
+                    ? "bg-slate-50/50 border-slate-100 opacity-60"
+                    : "bg-white border-slate-200 shadow-sm"
                 }`}
               >
                 {/* Header info */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
-                      isMaintenance ? 'bg-amber-50 text-amber-500' : 'bg-indigo-50 text-indigo-600'
-                    }`}>
-                      {isMaintenance ? <Hammer size={20} /> : <Monitor size={20} />}
+                    <div
+                      className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                        isMaintenance
+                          ? "bg-amber-50 text-amber-500"
+                          : "bg-indigo-50 text-indigo-600"
+                      }`}
+                    >
+                      {isMaintenance ? (
+                        <Hammer size={20} />
+                      ) : (
+                        <Monitor size={20} />
+                      )}
                     </div>
                     <div>
                       <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
@@ -91,7 +108,9 @@ export const WorkstationGrid = ({
                           </span>
                         )}
                       </h3>
-                      <p className="text-[10px] text-slate-400 font-medium">{seat.specs || 'Standard Lab Client'}</p>
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        {seat.specs || "Standard Lab Client"}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -100,7 +119,10 @@ export const WorkstationGrid = ({
                 {isMaintenance ? (
                   <div className="flex items-center gap-2 text-amber-700 text-xs font-semibold p-3 bg-amber-50 rounded-2xl border border-amber-100">
                     <ShieldAlert size={16} />
-                    <span>This workstation is temporarily out of service. Reservations are disabled.</span>
+                    <span>
+                      This workstation is temporarily out of service.
+                      Reservations are disabled.
+                    </span>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
@@ -113,14 +135,17 @@ export const WorkstationGrid = ({
 
                       const timeStr = `${formatTimeSlot(slot.startTime)} - ${formatTimeSlot(slot.endTime)}`;
 
-                      let btnStyle = 'border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-slate-700 bg-white';
+                      let btnStyle =
+                        "border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-slate-700 bg-white";
                       let ariaLabelText = `${seat.seatNumber}, Timeslot ${timeStr}, Available`;
 
                       if (isBooked) {
-                        btnStyle = 'bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed';
+                        btnStyle =
+                          "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed";
                         ariaLabelText = `${seat.seatNumber}, Timeslot ${timeStr}, Already Reserved`;
                       } else if (isSelected) {
-                        btnStyle = 'bg-indigo border-indigo text-white shadow-sm shadow-indigo-500/25';
+                        btnStyle =
+                          "bg-indigo border-indigo text-white shadow-sm shadow-indigo-500/25";
                         ariaLabelText = `${seat.seatNumber}, Timeslot ${timeStr}, Selected for Booking`;
                       }
 
@@ -141,7 +166,13 @@ export const WorkstationGrid = ({
                             }
                           }}
                           onKeyDown={(e) =>
-                            handleKeyDown(e, seatIdx, slotIdx, availability.length, slots.length)
+                            handleKeyDown(
+                              e,
+                              seatIdx,
+                              slotIdx,
+                              availability.length,
+                              slots.length,
+                            )
                           }
                           disabled={isBooked || hasActiveBooking}
                           className={`h-11 rounded-2xl border font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-600/50 ${btnStyle}`}

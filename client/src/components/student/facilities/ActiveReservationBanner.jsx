@@ -1,18 +1,27 @@
-import { Calendar, Clock, Monitor } from 'lucide-react';
+import { Calendar, Clock, Monitor } from "lucide-react";
 
 export const ActiveReservationBanner = ({ bookings = [] }) => {
-  const activeBooking = bookings.find((b) => b.status === 'booked');
+  const activeBooking = bookings.find((b) => b.status === "booked");
 
   if (!activeBooking) return null;
 
   const formatLocalDate = (dateVal) => {
     const d = new Date(dateVal);
-    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+    return d.toLocaleDateString(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    });
   };
 
   const formatLocalTime = (timeVal) => {
     const d = new Date(timeVal);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
+    return d.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "UTC",
+    });
   };
 
   const timeRange = `${formatLocalTime(activeBooking.startTime)} - ${formatLocalTime(activeBooking.endTime)}`;
@@ -29,10 +38,11 @@ export const ActiveReservationBanner = ({ bookings = [] }) => {
         </div>
         <div>
           <p className="text-xs font-bold text-slate-800">
-            Active Booking Reserved: {activeBooking.seatId?.seatNumber || 'PC'}
+            Active Booking Reserved: {activeBooking.seatId?.seatNumber || "PC"}
           </p>
           <p className="text-[10px] text-slate-500 font-medium">
-            Remember to check into your workstation at {activeBooking.seatId?.labName || 'Central Computing Lab'}.
+            Remember to check into your workstation at{" "}
+            {activeBooking.seatId?.labName || "Central Computing Lab"}.
           </p>
         </div>
       </div>

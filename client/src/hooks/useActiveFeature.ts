@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from "react";
 
 export function useActiveFeature(count: number) {
   const [activeIndex, setActiveIndex] = useState(0);
   const refs = useRef<(HTMLDivElement | null)[]>(Array(count).fill(null));
 
-  const setRef = useCallback((index: number) => (el: HTMLDivElement | null) => {
-    refs.current[index] = el;
-  }, []);
+  const setRef = useCallback(
+    (index: number) => (el: HTMLDivElement | null) => {
+      refs.current[index] = el;
+    },
+    [],
+  );
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -18,7 +21,7 @@ export function useActiveFeature(count: number) {
           }
         });
       },
-      { rootMargin: '-35% 0px -35% 0px', threshold: 0 }
+      { rootMargin: "-35% 0px -35% 0px", threshold: 0 },
     );
 
     refs.current.forEach((el) => el && observer.observe(el));

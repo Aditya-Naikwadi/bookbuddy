@@ -3,8 +3,27 @@ const mongoose = require('mongoose');
 jest.setTimeout(30000);
 
 beforeEach(async () => {
-  if (mongoose.connection.readyState === 0 && process.env.MONGO_URI) {
-    await mongoose.connect(process.env.MONGO_URI);
+  if (mongoose.connection.readyState === 0) {
+    const primaryUri = process.env.MONGO_URI;
+    const fallbackUris = [
+      'mongodb://127.0.0.1:27017/bookbuddy_test',
+      'mongodb://localhost:27017/bookbuddy_test',
+    ];
+    const uris = Array.from(new Set([primaryUri, ...fallbackUris])).filter(Boolean);
+
+    for (const uri of uris) {
+      try {
+        await mongoose.connect(uri, {
+          serverSelectionTimeoutMS: 2000,
+          connectTimeoutMS: 2000,
+          bufferCommands: false,
+          tlsAllowInvalidCertificates: true,
+        });
+        break;
+      } catch {
+        // Try next fallback URI
+      }
+    }
   }
   const { resetAllLimiters } = require('../middlewares/rateLimiters');
   resetAllLimiters();

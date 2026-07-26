@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
-import { ShieldCheck, RefreshCw } from 'lucide-react';
-import { usePatronCard } from '../../../hooks/usePatronCard';
+import { useState, useEffect } from "react";
+import { QRCodeSVG } from "qrcode.react";
+import { ShieldCheck, RefreshCw } from "lucide-react";
+import { usePatronCard } from "../../../hooks/usePatronCard";
 
-export const CardBack = ({ profile,  }) => {
-  const { studentId = 'N/A' } = profile || {};
+export const CardBack = ({ profile }) => {
+  const { studentId = "N/A" } = profile || {};
   const { rotatingToken, expiresAt } = usePatronCard();
   const [secondsLeft, setSecondsLeft] = useState(30);
 
@@ -12,7 +12,10 @@ export const CardBack = ({ profile,  }) => {
   useEffect(() => {
     const updateCountdown = () => {
       if (expiresAt) {
-        const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+        const remaining = Math.max(
+          0,
+          Math.ceil((expiresAt - Date.now()) / 1000),
+        );
         setSecondsLeft(remaining <= 0 ? 30 : remaining);
       }
     };
@@ -23,7 +26,8 @@ export const CardBack = ({ profile,  }) => {
   }, [expiresAt]);
 
   const qrValue = rotatingToken || studentId;
-  const signatureDisplay = qrValue.length > 20 ? `${qrValue.substring(0, 12)}...` : qrValue;
+  const signatureDisplay =
+    qrValue.length > 20 ? `${qrValue.substring(0, 12)}...` : qrValue;
 
   return (
     <div className="w-full h-full rounded-3xl overflow-hidden relative shadow-xl border border-indigo-500/20 bg-gradient-to-br from-slate-950 via-indigo-950 to-deep p-6 sm:p-8 flex flex-col justify-between select-none">
@@ -41,7 +45,7 @@ export const CardBack = ({ profile,  }) => {
 
       {/* Scannable Area */}
       <div className="flex items-center gap-6 my-auto">
-        <div 
+        <div
           className="bg-white p-3 rounded-2xl shadow-md shrink-0 flex items-center justify-center border border-white"
           role="img"
           aria-label={`Verification QR code for Student: ${studentId}`}
@@ -58,18 +62,29 @@ export const CardBack = ({ profile,  }) => {
 
         <div className="min-w-0 space-y-1.5">
           <div>
-            <p className="text-[9px] text-muted uppercase font-extrabold tracking-wider">Student ID</p>
-            <p className="text-sm font-mono font-black text-ink select-all">{studentId}</p>
+            <p className="text-[9px] text-muted uppercase font-extrabold tracking-wider">
+              Student ID
+            </p>
+            <p className="text-sm font-mono font-black text-ink select-all">
+              {studentId}
+            </p>
           </div>
 
           <div>
-            <p className="text-[9px] text-muted uppercase font-extrabold tracking-wider">Backend Token Signature</p>
-            <p className="text-xs font-mono font-extrabold text-ember truncate">{signatureDisplay}</p>
+            <p className="text-[9px] text-muted uppercase font-extrabold tracking-wider">
+              Backend Token Signature
+            </p>
+            <p className="text-xs font-mono font-extrabold text-ember truncate">
+              {signatureDisplay}
+            </p>
           </div>
 
           <div className="flex items-center gap-1 text-[10px] text-muted font-medium pt-1">
             <RefreshCw size={10} className="animate-spin text-ember-glow" />
-            <span>Refreshes in <strong className="text-white font-mono">{secondsLeft}s</strong></span>
+            <span>
+              Refreshes in{" "}
+              <strong className="text-white font-mono">{secondsLeft}s</strong>
+            </span>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   Building2,
   UserCheck,
@@ -11,42 +11,47 @@ import {
   CheckCircle2,
   AlertCircle,
   BookOpen,
-} from 'lucide-react';
-import registrationApi from '../../api/registrationApi';
+} from "lucide-react";
+import registrationApi from "../../api/registrationApi";
 
 export default function CollegeStudentRegister() {
   const { collegeSlug } = useParams();
   const navigate = useNavigate();
 
   const [collegeData, setCollegeData] = useState({
-    name: 'Stanford University',
-    slug: collegeSlug || 'stanford-univ',
-    domain: 'stanford.edu',
-    configuredDepartments: ['Computer Science', 'Electrical Engineering', 'Law', 'Business'],
+    name: "Stanford University",
+    slug: collegeSlug || "stanford-univ",
+    domain: "stanford.edu",
+    configuredDepartments: [
+      "Computer Science",
+      "Electrical Engineering",
+      "Law",
+      "Business",
+    ],
   });
 
   const [studentForm, setStudentForm] = useState({
-    firstName: '',
-    lastName: '',
-    rollNumber: '',
-    phone: '',
-    email: '',
-    department: '',
-    password: '',
-    confirmPassword: '',
+    firstName: "",
+    lastName: "",
+    rollNumber: "",
+    phone: "",
+    email: "",
+    department: "",
+    password: "",
+    confirmPassword: "",
     termsAccepted: false,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [globalError, setGlobalError] = useState('');
+  const [globalError, setGlobalError] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setGlobalError('');
+    setGlobalError("");
 
     if (studentForm.password !== studentForm.confirmPassword) {
-      setGlobalError('Passwords do not match.');
+      setGlobalError("Passwords do not match.");
       return;
     }
 
@@ -95,7 +100,12 @@ export default function CollegeStudentRegister() {
                   <input
                     type="text"
                     value={studentForm.firstName}
-                    onChange={(e) => setStudentForm({ ...studentForm, firstName: e.target.value })}
+                    onChange={(e) =>
+                      setStudentForm({
+                        ...studentForm,
+                        firstName: e.target.value,
+                      })
+                    }
                     placeholder="Alex"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-white text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
                     required
@@ -108,7 +118,12 @@ export default function CollegeStudentRegister() {
                   <input
                     type="text"
                     value={studentForm.lastName}
-                    onChange={(e) => setStudentForm({ ...studentForm, lastName: e.target.value })}
+                    onChange={(e) =>
+                      setStudentForm({
+                        ...studentForm,
+                        lastName: e.target.value,
+                      })
+                    }
                     placeholder="Morgan"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-white text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
                     required
@@ -125,7 +140,12 @@ export default function CollegeStudentRegister() {
                   <input
                     type="text"
                     value={studentForm.rollNumber}
-                    onChange={(e) => setStudentForm({ ...studentForm, rollNumber: e.target.value })}
+                    onChange={(e) =>
+                      setStudentForm({
+                        ...studentForm,
+                        rollNumber: e.target.value,
+                      })
+                    }
                     placeholder="CS-2026-089"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-indigo-300 font-mono text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
                     required
@@ -138,7 +158,9 @@ export default function CollegeStudentRegister() {
                   <input
                     type="tel"
                     value={studentForm.phone}
-                    onChange={(e) => setStudentForm({ ...studentForm, phone: e.target.value })}
+                    onChange={(e) =>
+                      setStudentForm({ ...studentForm, phone: e.target.value })
+                    }
                     placeholder="+15550000"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-white text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
                   />
@@ -155,7 +177,9 @@ export default function CollegeStudentRegister() {
                   <input
                     type="email"
                     value={studentForm.email}
-                    onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
+                    onChange={(e) =>
+                      setStudentForm({ ...studentForm, email: e.target.value })
+                    }
                     placeholder={`student@${collegeData.domain}`}
                     className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-white text-xs focus:ring-2 focus:ring-indigo-500 outline-none font-mono"
                     required
@@ -170,7 +194,12 @@ export default function CollegeStudentRegister() {
                 </label>
                 <select
                   value={studentForm.department}
-                  onChange={(e) => setStudentForm({ ...studentForm, department: e.target.value })}
+                  onChange={(e) =>
+                    setStudentForm({
+                      ...studentForm,
+                      department: e.target.value,
+                    })
+                  }
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-white text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
                   <option value="">-- Select Department --</option>
@@ -191,7 +220,12 @@ export default function CollegeStudentRegister() {
                   <input
                     type="password"
                     value={studentForm.password}
-                    onChange={(e) => setStudentForm({ ...studentForm, password: e.target.value })}
+                    onChange={(e) =>
+                      setStudentForm({
+                        ...studentForm,
+                        password: e.target.value,
+                      })
+                    }
                     placeholder="••••••••"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-white text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
                     required
@@ -204,7 +238,12 @@ export default function CollegeStudentRegister() {
                   <input
                     type="password"
                     value={studentForm.confirmPassword}
-                    onChange={(e) => setStudentForm({ ...studentForm, confirmPassword: e.target.value })}
+                    onChange={(e) =>
+                      setStudentForm({
+                        ...studentForm,
+                        confirmPassword: e.target.value,
+                      })
+                    }
                     placeholder="••••••••"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-white text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
                     required
@@ -217,7 +256,9 @@ export default function CollegeStudentRegister() {
                 disabled={isSubmitting}
                 className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-4"
               >
-                {isSubmitting ? 'Registering Account...' : 'Register Student Account'}
+                {isSubmitting
+                  ? "Registering Account..."
+                  : "Register Student Account"}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
@@ -227,9 +268,12 @@ export default function CollegeStudentRegister() {
             <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10" />
             </div>
-            <h2 className="text-xl font-bold text-white">Student Registration Complete!</h2>
+            <h2 className="text-xl font-bold text-white">
+              Student Registration Complete!
+            </h2>
             <p className="text-xs text-slate-400 max-w-xs mx-auto">
-              Your student membership at <strong>{collegeData.name}</strong> is registered.
+              Your student membership at <strong>{collegeData.name}</strong> is
+              registered.
             </p>
             <Link
               to="/auth/login"

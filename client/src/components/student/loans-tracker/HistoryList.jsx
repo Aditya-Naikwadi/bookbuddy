@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { BookOpen } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { useState } from "react";
+import { BookOpen } from "lucide-react";
+import { Button } from "../../ui/Button";
 
 export const HistoryList = ({ history }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -10,7 +10,7 @@ export const HistoryList = ({ history }) => {
 
   const paginatedHistory = history.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   const handlePrevPage = () => {
@@ -35,27 +35,48 @@ export const HistoryList = ({ history }) => {
         <table className="w-full text-left border-collapse text-xs text-muted">
           <thead>
             <tr className="bg-surface/30 border-b border-edge/20 text-ink">
-              <th scope="col" className="p-4 font-bold uppercase tracking-wider">Book Title</th>
-              <th scope="col" className="p-4 font-bold uppercase tracking-wider hidden sm:table-cell">Author</th>
-              <th scope="col" className="p-4 font-bold uppercase tracking-wider">Returned Date</th>
+              <th
+                scope="col"
+                className="p-4 font-bold uppercase tracking-wider"
+              >
+                Book Title
+              </th>
+              <th
+                scope="col"
+                className="p-4 font-bold uppercase tracking-wider hidden sm:table-cell"
+              >
+                Author
+              </th>
+              <th
+                scope="col"
+                className="p-4 font-bold uppercase tracking-wider"
+              >
+                Returned Date
+              </th>
             </tr>
           </thead>
           <tbody>
             {paginatedHistory.map((loan) => {
               const returnDateStr = loan.returnDate
                 ? new Date(loan.returnDate).toLocaleDateString()
-                : 'N/A';
+                : "N/A";
 
               return (
-                <tr key={loan._id} className="border-b border-edge/10 hover:bg-surface/20 transition-colors">
-                  <th scope="row" className="p-4 font-bold text-ink flex items-center gap-2">
+                <tr
+                  key={loan._id}
+                  className="border-b border-edge/10 hover:bg-surface/20 transition-colors"
+                >
+                  <th
+                    scope="row"
+                    className="p-4 font-bold text-ink flex items-center gap-2"
+                  >
                     <BookOpen size={14} className="text-indigo/60 shrink-0" />
                     <span className="truncate max-w-[150px] sm:max-w-xs">
-                      {loan.bookId?.title || 'Unknown Title'}
+                      {loan.bookId?.title || "Unknown Title"}
                     </span>
                   </th>
                   <td className="p-4 hidden sm:table-cell truncate max-w-[120px]">
-                    {loan.bookId?.author || 'Unknown'}
+                    {loan.bookId?.author || "Unknown"}
                   </td>
                   <td className="p-4">{returnDateStr}</td>
                 </tr>

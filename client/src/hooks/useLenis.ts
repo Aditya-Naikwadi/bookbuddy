@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import Lenis from 'lenis';
+import { useEffect, useRef } from "react";
+import Lenis from "lenis";
 
 export function useLenis(containerRef?: React.RefObject<HTMLElement>) {
   const lenisRef = useRef<Lenis | null>(null);

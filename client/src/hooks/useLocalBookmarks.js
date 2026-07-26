@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
-const LOCAL_STORAGE_KEY = 'bookbuddy_public_bookmarks';
+const LOCAL_STORAGE_KEY = "bookbuddy_public_bookmarks";
 
 export const useLocalBookmarks = () => {
   const [bookmarks, setBookmarks] = useState(() => {
@@ -16,7 +16,7 @@ export const useLocalBookmarks = () => {
     try {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(bookmarks));
     } catch (err) {
-      console.warn('Failed to save bookmarks to localStorage:', err);
+      console.warn("Failed to save bookmarks to localStorage:", err);
     }
   }, [bookmarks]);
 

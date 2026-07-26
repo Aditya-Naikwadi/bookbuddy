@@ -1,11 +1,18 @@
-import { HelpCircle, Trash2, Loader2 } from 'lucide-react';
+import { HelpCircle, Trash2, Loader2 } from "lucide-react";
 
-export const QueueHoldsList = ({ queue, onCancelHoldTrigger, isCancelling, cancellingHoldId }) => {
+export const QueueHoldsList = ({
+  queue,
+  onCancelHoldTrigger,
+  isCancelling,
+  cancellingHoldId,
+}) => {
   if (queue.length === 0) {
     return (
       <div className="text-center py-8 flex flex-col items-center">
         <HelpCircle className="text-muted/40 mb-2" size={30} />
-        <p className="text-xs text-muted">You are not currently in any reservation waitlists.</p>
+        <p className="text-xs text-muted">
+          You are not currently in any reservation waitlists.
+        </p>
       </div>
     );
   }
@@ -13,7 +20,8 @@ export const QueueHoldsList = ({ queue, onCancelHoldTrigger, isCancelling, cance
   return (
     <div className="space-y-3">
       {queue.map((item) => {
-        const isCurrentCancelling = isCancelling && cancellingHoldId === item._id;
+        const isCurrentCancelling =
+          isCancelling && cancellingHoldId === item._id;
 
         return (
           <div
@@ -22,10 +30,10 @@ export const QueueHoldsList = ({ queue, onCancelHoldTrigger, isCancelling, cance
           >
             <div className="min-w-0">
               <h4 className="font-bold text-ink text-sm leading-tight truncate max-w-[200px] sm:max-w-[350px]">
-                {item.bookId?.title || 'Library Book'}
+                {item.bookId?.title || "Library Book"}
               </h4>
               <p className="text-[10px] text-muted mt-1 uppercase tracking-wider font-semibold">
-                Status: {item.status ? item.status.replace('_', ' ') : 'Queued'}
+                Status: {item.status ? item.status.replace("_", " ") : "Queued"}
               </p>
             </div>
 
@@ -34,13 +42,19 @@ export const QueueHoldsList = ({ queue, onCancelHoldTrigger, isCancelling, cance
                 <span className="block text-2xl font-serif font-black text-ember leading-none">
                   #{item.queuePosition}
                 </span>
-                <span className="text-[9px] text-muted uppercase tracking-wider font-bold">in line</span>
+                <span className="text-[9px] text-muted uppercase tracking-wider font-bold">
+                  in line
+                </span>
               </div>
 
               <button
                 disabled={isCancelling}
                 onClick={() => {
-                  if (window.confirm('Are you sure you want to cancel this reservation hold?')) {
+                  if (
+                    window.confirm(
+                      "Are you sure you want to cancel this reservation hold?",
+                    )
+                  ) {
                     onCancelHoldTrigger(item._id);
                   }
                 }}

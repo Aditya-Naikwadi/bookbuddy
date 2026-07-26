@@ -1,7 +1,20 @@
-import { useState, useRef } from 'react';
-import { Copy, Check, QrCode, X, Share2, Info, ExternalLink } from 'lucide-react';
+import { useState, useRef } from "react";
+import {
+  Copy,
+  Check,
+  QrCode,
+  X,
+  Share2,
+  Info,
+  ExternalLink,
+} from "lucide-react";
 
-export default function ShareableRegistrationUrlModal({ collegeSlug = 'stanford-univ', collegeName = 'Stanford University', isOpen, onClose }) {
+export default function ShareableRegistrationUrlModal({
+  collegeSlug = "stanford-univ",
+  collegeName = "Stanford University",
+  isOpen,
+  onClose,
+}) {
   const [copied, setCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const qrCanvasRef = useRef(null);
@@ -35,7 +48,9 @@ export default function ShareableRegistrationUrlModal({ collegeSlug = 'stanford-
             <Share2 className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">Student Registration Portal Link</h3>
+            <h3 className="text-lg font-bold text-white">
+              Student Registration Portal Link
+            </h3>
             <p className="text-xs text-slate-400">{collegeName}</p>
           </div>
         </div>
@@ -44,9 +59,13 @@ export default function ShareableRegistrationUrlModal({ collegeSlug = 'stanford-
         <div className="mb-6 p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 text-xs text-indigo-200 flex items-start gap-3">
           <Info className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold mb-1">How Student Self-Registration Works:</p>
+            <p className="font-semibold mb-1">
+              How Student Self-Registration Works:
+            </p>
             <p className="text-indigo-300/90 leading-relaxed">
-              Share this dedicated URL with students during orientation or post it on your library board. Students signing up through this link are automatically linked to <strong>{collegeName}</strong>.
+              Share this dedicated URL with students during orientation or post
+              it on your library board. Students signing up through this link
+              are automatically linked to <strong>{collegeName}</strong>.
             </p>
           </div>
         </div>
@@ -67,8 +86,8 @@ export default function ShareableRegistrationUrlModal({ collegeSlug = 'stanford-
               onClick={handleCopy}
               className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all shrink-0 ${
                 copied
-                  ? 'bg-emerald-500 text-slate-950 shadow-md'
-                  : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                  ? "bg-emerald-500 text-slate-950 shadow-md"
+                  : "bg-indigo-600 hover:bg-indigo-500 text-white"
               }`}
             >
               {copied ? (
@@ -93,7 +112,7 @@ export default function ShareableRegistrationUrlModal({ collegeSlug = 'stanford-
             className="flex-1 py-3 px-4 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-800 text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
           >
             <QrCode className="w-4 h-4 text-indigo-400" />
-            <span>{showQr ? 'Hide QR Code' : 'Generate Poster QR'}</span>
+            <span>{showQr ? "Hide QR Code" : "Generate Poster QR"}</span>
           </button>
           <a
             href={registrationUrl}
@@ -121,7 +140,9 @@ export default function ShareableRegistrationUrlModal({ collegeSlug = 'stanford-
               </div>
             </div>
             <p className="font-bold text-sm mt-3">{collegeName}</p>
-            <p className="text-xs text-slate-500 font-mono mt-1">Scan to register for Library Portal</p>
+            <p className="text-xs text-slate-500 font-mono mt-1">
+              Scan to register for Library Portal
+            </p>
           </div>
         )}
       </div>

@@ -1,29 +1,36 @@
-import { ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-const QuickActionCard = ({ title, description, icon: Icon, to, badge, color = 'indigo' }) => {
+const QuickActionCard = ({
+  title,
+  description,
+  icon: Icon,
+  to,
+  badge,
+  color = "indigo",
+}) => {
   const navigate = useNavigate();
 
   const colorThemes = {
     indigo: {
-      bg: 'bg-indigo-50/70 hover:bg-indigo-100/80 border-indigo-200/80 text-indigo-700',
-      iconBg: 'bg-indigo-600 text-white',
-      badge: 'bg-indigo-100 text-indigo-800',
+      bg: "bg-indigo-50/70 hover:bg-indigo-100/80 border-indigo-200/80 text-indigo-700",
+      iconBg: "bg-indigo-600 text-white",
+      badge: "bg-indigo-100 text-indigo-800",
     },
     emerald: {
-      bg: 'bg-emerald-50/70 hover:bg-emerald-100/80 border-emerald-200/80 text-emerald-700',
-      iconBg: 'bg-emerald-600 text-white',
-      badge: 'bg-emerald-100 text-emerald-800',
+      bg: "bg-emerald-50/70 hover:bg-emerald-100/80 border-emerald-200/80 text-emerald-700",
+      iconBg: "bg-emerald-600 text-white",
+      badge: "bg-emerald-100 text-emerald-800",
     },
     amber: {
-      bg: 'bg-amber-50/70 hover:bg-amber-100/80 border-amber-200/80 text-amber-700',
-      iconBg: 'bg-amber-600 text-white',
-      badge: 'bg-amber-100 text-amber-800',
+      bg: "bg-amber-50/70 hover:bg-amber-100/80 border-amber-200/80 text-amber-700",
+      iconBg: "bg-amber-600 text-white",
+      badge: "bg-amber-100 text-amber-800",
     },
     purple: {
-      bg: 'bg-purple-50/70 hover:bg-purple-100/80 border-purple-200/80 text-purple-700',
-      iconBg: 'bg-purple-600 text-white',
-      badge: 'bg-purple-100 text-purple-800',
+      bg: "bg-purple-50/70 hover:bg-purple-100/80 border-purple-200/80 text-purple-700",
+      iconBg: "bg-purple-600 text-white",
+      badge: "bg-purple-100 text-purple-800",
     },
   };
 
@@ -39,7 +46,9 @@ const QuickActionCard = ({ title, description, icon: Icon, to, badge, color = 'i
           {Icon && <Icon className="w-6 h-6" />}
         </div>
         {badge && (
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${theme.badge}`}>
+          <span
+            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${theme.badge}`}
+          >
             {badge}
           </span>
         )}
@@ -49,7 +58,9 @@ const QuickActionCard = ({ title, description, icon: Icon, to, badge, color = 'i
         <h3 className="text-base font-bold text-slate-900 group-hover:text-indigo-900 transition-colors mb-1">
           {title}
         </h3>
-        <p className="text-xs text-slate-600 mb-4 line-clamp-2 leading-relaxed">{description}</p>
+        <p className="text-xs text-slate-600 mb-4 line-clamp-2 leading-relaxed">
+          {description}
+        </p>
 
         <div className="flex items-center text-xs font-semibold text-indigo-600 group-hover:text-indigo-700">
           <span>Explore Now</span>

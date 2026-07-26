@@ -1,5 +1,5 @@
-import { Flame, Snowflake, Trophy, RotateCcw } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { Flame, Snowflake, Trophy, RotateCcw } from "lucide-react";
+import { Button } from "../../ui/Button";
 
 export const StreakSummary = ({
   currentStreak = 0,
@@ -19,7 +19,9 @@ export const StreakSummary = ({
           <Flame size={40} className="animate-pulse" fill="currentColor" />
         </div>
         <div className="space-y-1">
-          <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Active Streak</p>
+          <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">
+            Active Streak
+          </p>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl sm:text-4xl font-serif font-black text-slate-900">
               {currentStreak} Days
@@ -43,17 +45,23 @@ export const StreakSummary = ({
       <div className="space-y-3 w-full md:w-auto">
         <div className="flex items-center justify-between gap-6">
           <div className="space-y-0.5">
-            <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Streak Freezes</p>
-            <div className="flex gap-1.5 mt-1" role="img" aria-label={`${freezesAvailable} streak freezes available`}>
+            <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">
+              Streak Freezes
+            </p>
+            <div
+              className="flex gap-1.5 mt-1"
+              role="img"
+              aria-label={`${freezesAvailable} streak freezes available`}
+            >
               {Array.from({ length: 3 }).map((_, i) => (
                 <Snowflake
                   key={i}
                   className={`w-5 h-5 transition-all ${
                     i < freezesAvailable
-                      ? 'text-indigo animate-bounce-slow'
-                      : 'text-slate-200'
+                      ? "text-indigo animate-bounce-slow"
+                      : "text-slate-200"
                   }`}
-                  fill={i < freezesAvailable ? 'currentColor' : 'none'}
+                  fill={i < freezesAvailable ? "currentColor" : "none"}
                 />
               ))}
             </div>
@@ -65,7 +73,8 @@ export const StreakSummary = ({
 
         {/* Informative description */}
         <p className="text-[10px] text-slate-500 max-w-xs leading-normal font-medium">
-          A **Streak Freeze** is a safety net. It automatically preserves your streak count if you miss a check-in day. 
+          A **Streak Freeze** is a safety net. It automatically preserves your
+          streak count if you miss a check-in day.
         </p>
 
         {/* Repair button if streak is broken (e.g. currentStreak is 0 but they have freezes) */}
@@ -77,7 +86,7 @@ export const StreakSummary = ({
             className="w-full sm:w-auto h-9 text-xs font-bold text-indigo hover:bg-indigo-50 border border-indigo-200/50 flex items-center gap-1.5 focus:ring-2 focus:ring-indigo-600 focus:outline-none"
           >
             <RotateCcw size={13} />
-            {isRepairPending ? 'Repairing...' : 'Repair Streak (Use 1 Freeze)'}
+            {isRepairPending ? "Repairing..." : "Repair Streak (Use 1 Freeze)"}
           </Button>
         )}
       </div>

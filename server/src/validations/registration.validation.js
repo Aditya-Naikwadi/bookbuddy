@@ -35,48 +35,31 @@ const verifyEmailSchema = z.object({
 const tenantOnboardingSchema = z.object({
   body: z
     .object({
-      legalName: z.string().min(3, 'Legal institution name must be at least 3 characters').trim(),
-      shortName: z.string().optional(),
-      institutionType: z.enum(['university', 'college', 'school', 'training_institute'], {
-        errorMap: () => ({ message: 'Please select a valid institution type' }),
-      }),
-      domain: z
-        .string()
-        .min(3, 'Official website domain is required (e.g., college.edu)')
-        .trim()
-        .toLowerCase(),
-      address: z.union([
-        z.string().min(5, 'Address is required'),
-        z.object({
-          street: z.string().optional(),
-          city: z.string().min(2, 'City is required'),
-          state: z.string().optional(),
-          country: z.string().min(2, 'Country is required'),
-          postalCode: z.string().optional(),
-        }),
-      ]),
-      contactPhone: z.string().min(5, 'Institutional contact phone is required').trim(),
-      adminName: z.string().min(2, 'Admin full name must be at least 2 characters').trim(),
-      adminEmail: z.string().email('Invalid admin email address').trim().toLowerCase(),
-      designation: z.string().min(2, 'Designation / role is required').trim(),
-      password: z.string().regex(passwordRegex, passwordMessage),
+      collegeName: z.string().min(2, 'College Name is required').optional(),
+      legalName: z.string().optional(),
+      collegeEmail: z.string().optional(),
+      domain: z.string().optional(),
+      adminName: z.string().min(2, 'Admin Full Name is required').trim(),
+      adminEmail: z.string().email('Invalid Admin Email address').trim().toLowerCase(),
+      password: z.string().min(6, 'Password must be at least 6 characters long'),
       confirmPassword: z.string(),
+      shortName: z.string().optional(),
+      institutionType: z.string().optional(),
+      address: z.any().optional(),
+      contactPhone: z.string().optional(),
+      designation: z.string().optional(),
       adminPhone: z.string().optional(),
-      desiredSlug: z
-        .string()
-        .regex(
-          /^[a-z0-9-]+$/,
-          'Tenant slug must be lowercase alphanumeric characters and hyphens only'
-        )
-        .min(2, 'Tenant slug must be at least 2 characters')
-        .trim(),
-      termsAccepted: z
-        .boolean()
-        .refine((val) => val === true, 'You must accept the Terms of Service & DPA'),
+      desiredSlug: z.string().optional(),
+      termsAccepted: z.any().optional(),
+      selectedServices: z.any().optional(),
     })
     .refine((data) => data.password === data.confirmPassword, {
       message: 'Passwords do not match',
       path: ['confirmPassword'],
+    })
+    .refine((data) => Boolean(data.collegeName || data.legalName), {
+      message: 'College / Institution Name is required',
+      path: ['collegeName'],
     }),
 });
 

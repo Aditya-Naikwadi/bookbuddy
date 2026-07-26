@@ -1,14 +1,16 @@
-import React from 'react';
-import { X, RotateCcw } from 'lucide-react';
+import React from "react";
+import { X, RotateCcw } from "lucide-react";
 
 const ActiveFilterChips = ({ chips = [], onRemoveChip, onResetAll }) => {
-  const activeChips = chips.filter((c) => c.value && c.value !== 'All');
+  const activeChips = chips.filter((c) => c.value && c.value !== "All");
 
   if (activeChips.length === 0) return null;
 
   return (
     <div className="flex items-center gap-1.5 flex-wrap text-xs pt-1 flex-shrink-0">
-      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Active:</span>
+      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+        Active:
+      </span>
 
       {activeChips.map((chip) => (
         <span

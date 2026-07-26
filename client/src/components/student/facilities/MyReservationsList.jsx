@@ -1,25 +1,40 @@
-import { useState } from 'react';
-import { Calendar, Clock, Trash2, Monitor, QrCode, X, ShieldCheck } from 'lucide-react';
-import { Button } from '../../ui/Button';
-import { QRCodeSVG } from 'qrcode.react';
+import { useState } from "react";
+import {
+  Calendar,
+  Clock,
+  Trash2,
+  Monitor,
+  QrCode,
+  X,
+  ShieldCheck,
+} from "lucide-react";
+import { Button } from "../../ui/Button";
+import { QRCodeSVG } from "qrcode.react";
 
-export const MyReservationsList = ({
-  bookings = [],
-  onCancelRequest,
-}) => {
+export const MyReservationsList = ({ bookings = [], onCancelRequest }) => {
   const [qrModalBooking, setQrModalBooking] = useState(null);
 
   // Filter active/booked bookings
-  const activeBookings = bookings.filter((b) => b.status === 'booked');
+  const activeBookings = bookings.filter((b) => b.status === "booked");
 
   const formatLocalDate = (dateVal) => {
     const d = new Date(dateVal);
-    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+    return d.toLocaleDateString(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC",
+    });
   };
 
   const formatLocalTime = (timeVal) => {
     const d = new Date(timeVal);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
+    return d.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "UTC",
+    });
   };
 
   return (
@@ -54,10 +69,10 @@ export const MyReservationsList = ({
                   </div>
                   <div>
                     <h4 className="font-bold text-sm text-slate-800 dark:text-white">
-                      Seat: {booking.seatId?.seatNumber || 'PC'}
+                      Seat: {booking.seatId?.seatNumber || "PC"}
                     </h4>
                     <p className="text-[10px] text-slate-400 font-medium">
-                      {booking.seatId?.labName || 'Digital Library Lab'}
+                      {booking.seatId?.labName || "Digital Library Lab"}
                     </p>
                   </div>
                 </div>
@@ -106,14 +121,21 @@ export const MyReservationsList = ({
                 <ShieldCheck size={18} className="text-emerald-500" />
                 Lab Kiosk Scan-In Pass
               </h4>
-              <button onClick={() => setQrModalBooking(null)} className="text-slate-400 hover:text-slate-600">
+              <button
+                onClick={() => setQrModalBooking(null)}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 <X size={18} />
               </button>
             </div>
 
             <p className="text-xs text-slate-500">
-              Scan this QR code at the lab kiosk terminal to log into workstation seat{' '}
-              <strong className="text-slate-800 dark:text-white font-mono">{qrModalBooking.seatId?.seatNumber}</strong>.
+              Scan this QR code at the lab kiosk terminal to log into
+              workstation seat{" "}
+              <strong className="text-slate-800 dark:text-white font-mono">
+                {qrModalBooking.seatId?.seatNumber}
+              </strong>
+              .
             </p>
 
             <div className="p-4 bg-white rounded-2xl shadow-inner border border-slate-200 inline-block">
@@ -134,7 +156,11 @@ export const MyReservationsList = ({
               Token expires 15 minutes after slot start time.
             </div>
 
-            <Button variant="ghost" className="w-full text-xs font-bold" onClick={() => setQrModalBooking(null)}>
+            <Button
+              variant="ghost"
+              className="w-full text-xs font-bold"
+              onClick={() => setQrModalBooking(null)}
+            >
               Done
             </Button>
           </div>

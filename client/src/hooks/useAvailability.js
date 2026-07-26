@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { facilitiesApi } from '../api/facilitiesApi';
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { facilitiesApi } from "../api/facilitiesApi";
 
 export const useAvailability = (labName, dateStr) => {
   const [isTabVisible, setIsTabVisible] = useState(true);
@@ -8,12 +8,12 @@ export const useAvailability = (labName, dateStr) => {
   // Monitor visibilityState to pause/resume polling
   useEffect(() => {
     const handleVisibilityChange = () => {
-      setIsTabVisible(document.visibilityState === 'visible');
+      setIsTabVisible(document.visibilityState === "visible");
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
@@ -24,7 +24,7 @@ export const useAvailability = (labName, dateStr) => {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['lab-availability', labName, dateStr],
+    queryKey: ["lab-availability", labName, dateStr],
     queryFn: () => facilitiesApi.getAvailability(labName, dateStr),
     enabled: !!labName && !!dateStr,
     // Poll every 20 seconds only if the tab is visible

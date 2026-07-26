@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
-import featureApi from '../../api/featureApi';
-import ServiceCard from './ServiceCard';
-import ServiceBundlePicker from './ServiceBundlePicker';
-import ServiceDependencyNotice from './ServiceDependencyNotice';
-import { AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
+import { useState, useEffect, useMemo } from "react";
+import featureApi from "../../api/featureApi";
+import ServiceCard from "./ServiceCard";
+import ServiceBundlePicker from "./ServiceBundlePicker";
+import ServiceDependencyNotice from "./ServiceDependencyNotice";
+import { AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
 
 export default function ServiceSelectionStep({
   selectedServices = [],
@@ -21,7 +21,7 @@ export default function ServiceSelectionStep({
         const data = await featureApi.getAvailableServices();
         setServices(data || []);
       } catch (err) {
-        console.error('Failed to load available services:', err);
+        console.error("Failed to load available services:", err);
       } finally {
         setIsLoading(false);
       }
@@ -32,7 +32,11 @@ export default function ServiceSelectionStep({
   useEffect(() => {
     if (services.length > 0 && selectedServices.length === 0) {
       const coreKeys = services
-        .filter((s) => s.isCore || ['catalog', 'loans', 'patron-card', 'fines'].includes(s.key))
+        .filter(
+          (s) =>
+            s.isCore ||
+            ["catalog", "loans", "patron-card", "fines"].includes(s.key),
+        )
         .map((s) => s.key);
       onChangeSelectedServices(coreKeys);
     }
@@ -53,7 +57,7 @@ export default function ServiceSelectionStep({
           updated.push(depKey);
           const depService = services.find((s) => s.key === depKey);
           newNotices.push(
-            `Enabling "${targetService.name}" automatically enabled required dependency "${depService?.name || depKey}".`
+            `Enabling "${targetService.name}" automatically enabled required dependency "${depService?.name || depKey}".`,
           );
         }
       });
@@ -71,7 +75,7 @@ export default function ServiceSelectionStep({
   const categories = useMemo(() => {
     const grouped = {};
     services.forEach((service) => {
-      const cat = service.category || 'Other';
+      const cat = service.category || "Other";
       if (!grouped[cat]) grouped[cat] = [];
       grouped[cat].push(service);
     });
@@ -80,7 +84,9 @@ export default function ServiceSelectionStep({
 
   const coreServicesSelected = useMemo(() => {
     const coreKeys = services.filter((s) => s.isCore).map((s) => s.key);
-    return selectedServices.some((k) => coreKeys.includes(k) || ['catalog', 'loans'].includes(k));
+    return selectedServices.some(
+      (k) => coreKeys.includes(k) || ["catalog", "loans"].includes(k),
+    );
   }, [services, selectedServices]);
 
   if (isLoading) {
@@ -102,7 +108,8 @@ export default function ServiceSelectionStep({
           Select College Service Modules
         </h2>
         <p className="text-slate-500 text-sm mt-1">
-          Choose the modules your library will license. This configures the features available to your admins and students.
+          Choose the modules your library will license. This configures the
+          features available to your admins and students.
         </p>
       </div>
 
@@ -142,7 +149,9 @@ export default function ServiceSelectionStep({
         <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-center gap-3">
           <AlertCircle size={18} className="shrink-0" />
           <span>
-            At least one Core service (such as Catalog & Discovery or Circulation & Loans) must be selected to proceed with college provisioning.
+            At least one Core service (such as Catalog & Discovery or
+            Circulation & Loans) must be selected to proceed with college
+            provisioning.
           </span>
         </div>
       )}
@@ -151,7 +160,8 @@ export default function ServiceSelectionStep({
         <div className="text-xs text-slate-500 flex items-center gap-2">
           <CheckCircle2 size={16} className="text-emerald-500" />
           <span>
-            <strong>{selectedServices.length}</strong> of {services.length} services enabled for this tenant.
+            <strong>{selectedServices.length}</strong> of {services.length}{" "}
+            services enabled for this tenant.
           </span>
         </div>
 
@@ -169,8 +179,8 @@ export default function ServiceSelectionStep({
             disabled={!coreServicesSelected}
             className={`w-1/2 sm:w-auto px-6 py-2.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all shadow-sm ${
               coreServicesSelected
-                ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
-                : 'bg-slate-300 cursor-not-allowed'
+                ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200"
+                : "bg-slate-300 cursor-not-allowed"
             }`}
           >
             <span>Proceed to Step 4</span>

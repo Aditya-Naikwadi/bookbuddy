@@ -1,23 +1,30 @@
-import { useState, useEffect, useCallback } from 'react';
-import { CheckCircle, XCircle, RefreshCw, Send, Eye, AlertTriangle } from 'lucide-react';
-import adminApi from '../../../api/adminApi';
+import { useState, useEffect, useCallback } from "react";
+import {
+  CheckCircle,
+  XCircle,
+  RefreshCw,
+  Send,
+  Eye,
+  AlertTriangle,
+} from "lucide-react";
+import adminApi from "../../../api/adminApi";
 
 const GlobalContentModeration = () => {
-  const [activeTab, setActiveTab] = useState('pending'); // 'pending' or 'approved'
+  const [activeTab, setActiveTab] = useState("pending"); // 'pending' or 'approved'
   const [resources, setResources] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Rejection dialog state
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [targetResourceId, setTargetResourceId] = useState(null);
-  const [rejectionNote, setRejectionNote] = useState('');
-  
+  const [rejectionNote, setRejectionNote] = useState("");
+
   // Announcement states
-  const [announcementTitle, setAnnouncementTitle] = useState('');
-  const [announcementBody, setAnnouncementBody] = useState('');
-  const [announcementSeverity, setAnnouncementSeverity] = useState('info');
-  
-  const [message, setMessage] = useState({ type: '', text: '' });
+  const [announcementTitle, setAnnouncementTitle] = useState("");
+  const [announcementBody, setAnnouncementBody] = useState("");
+  const [announcementSeverity, setAnnouncementSeverity] = useState("info");
+
+  const [message, setMessage] = useState({ type: "", text: "" });
 
   const fetchQueue = useCallback(async () => {
     try {
@@ -25,7 +32,7 @@ const GlobalContentModeration = () => {
       setResources(response.data || []);
     } catch (err) {
       console.error(err);
-      setMessage({ type: 'error', text: 'Failed to fetch moderation queue.' });
+      setMessage({ type: "error", text: "Failed to fetch moderation queue." });
     } finally {
       setIsLoading(false);
     }
@@ -33,7 +40,7 @@ const GlobalContentModeration = () => {
 
   const handleRefresh = () => {
     setIsLoading(true);
-    setMessage({ type: '', text: '' });
+    setMessage({ type: "", text: "" });
     fetchQueue();
   };
 
@@ -50,72 +57,103 @@ const GlobalContentModeration = () => {
   }, [fetchQueue]);
 
   const handleApprove = async (id) => {
-    if (!window.confirm('Are you sure you want to approve this e-resource?')) return;
+    if (!window.confirm("Are you sure you want to approve this e-resource?"))
+      return;
     try {
-      await adminApi.moderateResource(id, 'approved', 'Approved by Super Admin');
-      setMessage({ type: 'success', text: 'Resource approved successfully.' });
+      await adminApi.moderateResource(
+        id,
+        "approved",
+        "Approved by Super Admin",
+      );
+      setMessage({ type: "success", text: "Resource approved successfully." });
       fetchQueue();
     } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to approve resource.' });
+      setMessage({
+        type: "error",
+        text: err.response?.data?.message || "Failed to approve resource.",
+      });
     }
   };
 
   const handlePublish = async (id) => {
-    if (!window.confirm('Are you sure you want to publish this e-resource? It will become visible to all students immediately.')) return;
+    if (
+      !window.confirm(
+        "Are you sure you want to publish this e-resource? It will become visible to all students immediately.",
+      )
+    )
+      return;
     try {
       await adminApi.publishResource(id);
-      setMessage({ type: 'success', text: 'Resource published successfully.' });
+      setMessage({ type: "success", text: "Resource published successfully." });
       fetchQueue();
     } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to publish resource.' });
+      setMessage({
+        type: "error",
+        text: err.response?.data?.message || "Failed to publish resource.",
+      });
     }
   };
 
   const openRejectModal = (id) => {
     setTargetResourceId(id);
-    setRejectionNote('');
+    setRejectionNote("");
     setShowRejectModal(true);
   };
 
   const handleRejectSubmit = async (e) => {
     e.preventDefault();
     if (!rejectionNote.trim()) {
-      alert('Rejection note is required.');
+      alert("Rejection note is required.");
       return;
     }
     try {
-      await adminApi.moderateResource(targetResourceId, 'rejected', rejectionNote);
-      setMessage({ type: 'success', text: 'Resource rejected with feedback.' });
+      await adminApi.moderateResource(
+        targetResourceId,
+        "rejected",
+        rejectionNote,
+      );
+      setMessage({ type: "success", text: "Resource rejected with feedback." });
       setShowRejectModal(false);
       fetchQueue();
     } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to reject resource.' });
+      setMessage({
+        type: "error",
+        text: err.response?.data?.message || "Failed to reject resource.",
+      });
     }
   };
 
   const handlePublishAnnouncement = async (e) => {
     e.preventDefault();
     if (!announcementTitle.trim() || !announcementBody.trim()) {
-      alert('Announcement title and body are required.');
+      alert("Announcement title and body are required.");
       return;
     }
     // Simulate pushing announcement since it's a cross-cutting event logged in AuditLogs
     try {
       // Create a dummy request to trigger audit log (mocked announcement.create log)
       // Since we don't have a direct database collection for announcements, we log this event in the system audit logs.
-      alert(`Announcement published: "${announcementTitle}"\nThis action will be logged in the system Audit Trail.`);
-      
-      setAnnouncementTitle('');
-      setAnnouncementBody('');
-      setMessage({ type: 'success', text: 'Global announcement banner published successfully.' });
+      alert(
+        `Announcement published: "${announcementTitle}"\nThis action will be logged in the system Audit Trail.`,
+      );
+
+      setAnnouncementTitle("");
+      setAnnouncementBody("");
+      setMessage({
+        type: "success",
+        text: "Global announcement banner published successfully.",
+      });
     } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to publish announcement.' });
+      setMessage({
+        type: "error",
+        text: err.response?.data?.message || "Failed to publish announcement.",
+      });
     }
   };
 
   const getMediaUrl = (url) => {
-    if (url.startsWith('/')) {
-      return `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${url}`;
+    if (url.startsWith("/")) {
+      return `${import.meta.env.VITE_API_URL || "http://localhost:5000"}${url}`;
     }
     return url;
   };
@@ -124,8 +162,13 @@ const GlobalContentModeration = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-slate-900">Global Content & Moderation</h1>
-          <p className="text-slate-600">Review E-Resources uploaded by colleges and verify content before publishing.</p>
+          <h1 className="text-3xl font-serif font-bold text-slate-900">
+            Global Content & Moderation
+          </h1>
+          <p className="text-slate-600">
+            Review E-Resources uploaded by colleges and verify content before
+            publishing.
+          </p>
         </div>
         <button
           onClick={handleRefresh}
@@ -136,10 +179,18 @@ const GlobalContentModeration = () => {
       </div>
 
       {message.text && (
-        <div className={`p-4 rounded-lg text-sm border flex items-center gap-2 ${
-          message.type === 'error' ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-        }`}>
-          {message.type === 'error' ? <XCircle size={18} /> : <CheckCircle size={18} />}
+        <div
+          className={`p-4 rounded-lg text-sm border flex items-center gap-2 ${
+            message.type === "error"
+              ? "bg-rose-50 border-rose-200 text-rose-800"
+              : "bg-emerald-50 border-emerald-200 text-emerald-800"
+          }`}
+        >
+          {message.type === "error" ? (
+            <XCircle size={18} />
+          ) : (
+            <CheckCircle size={18} />
+          )}
           <span>{message.text}</span>
         </div>
       )}
@@ -147,21 +198,21 @@ const GlobalContentModeration = () => {
       {/* Tabs */}
       <div className="flex border-b border-slate-200 gap-6">
         <button
-          onClick={() => setActiveTab('pending')}
+          onClick={() => setActiveTab("pending")}
           className={`pb-3 text-sm font-bold border-b-2 transition-colors ${
-            activeTab === 'pending'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+            activeTab === "pending"
+              ? "border-indigo-600 text-indigo-600"
+              : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
           Pending Review
         </button>
         <button
-          onClick={() => setActiveTab('approved')}
+          onClick={() => setActiveTab("approved")}
           className={`pb-3 text-sm font-bold border-b-2 transition-colors ${
-            activeTab === 'approved'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+            activeTab === "approved"
+              ? "border-indigo-600 text-indigo-600"
+              : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
           Approved & Ready to Publish
@@ -181,39 +232,47 @@ const GlobalContentModeration = () => {
             </div>
           ) : (
             resources.map((resource) => (
-              <div key={resource._id} className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:shadow-xs transition-shadow">
+              <div
+                key={resource._id}
+                className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:shadow-xs transition-shadow"
+              >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-slate-900 text-md">{resource.title}</h3>
+                    <h3 className="font-bold text-slate-900 text-md">
+                      {resource.title}
+                    </h3>
                     <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase">
                       {resource.type}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-600">Author: {resource.author} | Category: {resource.category}</p>
+                  <p className="text-sm text-slate-600">
+                    Author: {resource.author} | Category: {resource.category}
+                  </p>
                   <p className="text-xs text-slate-400">
-                    Uploaded by {resource.uploadedBy?.name || 'Unknown'} (College: {resource.collegeId?.name || 'Unknown'})
+                    Uploaded by {resource.uploadedBy?.name || "Unknown"}{" "}
+                    (College: {resource.collegeId?.name || "Unknown"})
                   </p>
                 </div>
-                
+
                 <div className="flex gap-2 w-full md:w-auto">
-                  <a 
-                    href={getMediaUrl(resource.fileUrl)} 
-                    target="_blank" 
+                  <a
+                    href={getMediaUrl(resource.fileUrl)}
+                    target="_blank"
                     rel="noreferrer"
                     className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-50"
                   >
                     <Eye size={14} /> Preview
                   </a>
-                  
-                  {activeTab === 'pending' && (
+
+                  {activeTab === "pending" && (
                     <>
-                      <button 
+                      <button
                         onClick={() => handleApprove(resource._id)}
                         className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-emerald-700"
                       >
                         Approve
                       </button>
-                      <button 
+                      <button
                         onClick={() => openRejectModal(resource._id)}
                         className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 bg-rose-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-rose-700"
                       >
@@ -222,8 +281,8 @@ const GlobalContentModeration = () => {
                     </>
                   )}
 
-                  {activeTab === 'approved' && (
-                    <button 
+                  {activeTab === "approved" && (
+                    <button
                       onClick={() => handlePublish(resource._id)}
                       className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-indigo-700"
                     >
@@ -240,34 +299,42 @@ const GlobalContentModeration = () => {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 h-fit space-y-4">
           <div className="flex items-center gap-2 border-b pb-3">
             <Send className="text-indigo-600" />
-            <h2 className="text-lg font-bold text-slate-900">Push Global Notification</h2>
+            <h2 className="text-lg font-bold text-slate-900">
+              Push Global Notification
+            </h2>
           </div>
           <form onSubmit={handlePublishAnnouncement} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Announcement Title</label>
-              <input 
-                type="text" 
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Announcement Title
+              </label>
+              <input
+                type="text"
                 value={announcementTitle}
                 onChange={(e) => setAnnouncementTitle(e.target.value)}
-                placeholder="e.g. Scheduled Maintenance" 
-                className="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-indigo-500" 
+                placeholder="e.g. Scheduled Maintenance"
+                className="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-indigo-500"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Message Body</label>
-              <textarea 
-                rows={3} 
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Message Body
+              </label>
+              <textarea
+                rows={3}
                 value={announcementBody}
                 onChange={(e) => setAnnouncementBody(e.target.value)}
-                placeholder="The system will be offline for 2 hours..." 
+                placeholder="The system will be offline for 2 hours..."
                 className="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-indigo-500"
                 required
               ></textarea>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Severity</label>
-              <select 
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Severity
+              </label>
+              <select
                 value={announcementSeverity}
                 onChange={(e) => setAnnouncementSeverity(e.target.value)}
                 className="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white outline-none focus:ring-1 focus:ring-indigo-500"
@@ -277,7 +344,10 @@ const GlobalContentModeration = () => {
                 <option value="critical">Critical Alert (Red)</option>
               </select>
             </div>
-            <button type="submit" className="w-full bg-slate-900 text-white text-sm font-semibold py-2 rounded-lg hover:bg-slate-800 transition-colors">
+            <button
+              type="submit"
+              className="w-full bg-slate-900 text-white text-sm font-semibold py-2 rounded-lg hover:bg-slate-800 transition-colors"
+            >
               Publish Banner
             </button>
           </form>
@@ -293,7 +363,9 @@ const GlobalContentModeration = () => {
               <h3 className="font-bold text-lg">Provide Rejection Reason</h3>
             </div>
             <p className="text-xs text-slate-500">
-              Please enter an explanation of why this resource is being rejected. This feedback will be sent to the proposing college administrator.
+              Please enter an explanation of why this resource is being
+              rejected. This feedback will be sent to the proposing college
+              administrator.
             </p>
             <form onSubmit={handleRejectSubmit} className="space-y-4">
               <textarea

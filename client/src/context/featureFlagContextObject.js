@@ -1,6 +1,6 @@
-import { createContext } from 'react';
+import { createContext } from "react";
 
-export const DEFAULT_CORE_FEATURES = ['catalog', 'loans', 'patron-card'];
+export const DEFAULT_CORE_FEATURES = ["catalog", "loans", "patron-card"];
 
 export const FeatureFlagContext = createContext({
   enabledFeatures: DEFAULT_CORE_FEATURES,

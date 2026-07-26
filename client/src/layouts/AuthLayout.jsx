@@ -1,5 +1,5 @@
-import { Outlet, useLocation, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Outlet, useLocation, Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 const AuthLayout = () => {
   const location = useLocation();
@@ -11,12 +11,19 @@ const AuthLayout = () => {
 
       <div className="w-full max-w-[420px] z-10 relative m-4 flex flex-col items-center">
         <div className="text-center mb-5">
-          <Link to="/" className="inline-block transition-transform hover:scale-105">
-            <h1 className="text-3xl font-serif font-bold text-gradient-primary mb-1">BookBuddy</h1>
+          <Link
+            to="/"
+            className="inline-block transition-transform hover:scale-105"
+          >
+            <h1 className="text-3xl font-serif font-bold text-gradient-primary mb-1">
+              BookBuddy
+            </h1>
           </Link>
-          <p className="text-muted text-xs tracking-wide">Student Library Dashboard</p>
+          <p className="text-muted text-xs tracking-wide">
+            Student Library Dashboard
+          </p>
         </div>
-        
+
         <div className="w-full p-6 sm:p-8 glass-panel bg-deep/60 backdrop-blur-2xl border border-edge rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
           <AnimatePresence mode="wait">
             <motion.div

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { BookOpen } from 'lucide-react';
+import React, { useState } from "react";
+import { BookOpen } from "lucide-react";
 
 /**
  * Reusable, lazy-loaded Book Cover Image component with defined fallback placeholder
@@ -7,11 +7,11 @@ import { BookOpen } from 'lucide-react';
  */
 export const BookCoverImage = ({
   src,
-  alt = 'Book cover',
-  className = '',
-  aspectRatio = 'aspect-[3/4]',
-  fallbackTitle = '',
-  fallbackCategory = '',
+  alt = "Book cover",
+  className = "",
+  aspectRatio = "aspect-[3/4]",
+  fallbackTitle = "",
+  fallbackCategory = "",
 }) => {
   const [hasError, setHasError] = useState(false);
 
@@ -22,7 +22,7 @@ export const BookCoverImage = ({
         className={`w-full ${aspectRatio} bg-gradient-to-br from-indigo-900 via-slate-800 to-slate-900 rounded-xl p-3 flex flex-col justify-between relative overflow-hidden border border-white/10 ${className}`}
       >
         <span className="text-[9px] font-extrabold uppercase tracking-wider text-indigo-200 bg-indigo-950/80 px-2 py-0.5 rounded-md self-start border border-indigo-500/20 backdrop-blur-xs">
-          {fallbackCategory || 'Catalog'}
+          {fallbackCategory || "Catalog"}
         </span>
 
         <div className="my-auto text-center px-1">

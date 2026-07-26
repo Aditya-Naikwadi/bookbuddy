@@ -1,9 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '../api/client';
-import { streakApi } from '../api/streakApi';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import apiClient from "../api/client";
+import { streakApi } from "../api/streakApi";
 
 const fetchStudentOverview = async () => {
-  const { data } = await apiClient.get('/dashboards/student/overview');
+  const { data } = await apiClient.get("/dashboards/student/overview");
   return data.data;
 };
 
@@ -11,7 +11,7 @@ export const useStudentOverview = () => {
   const queryClient = useQueryClient();
 
   const overviewQuery = useQuery({
-    queryKey: ['student-overview'],
+    queryKey: ["student-overview"],
     queryFn: fetchStudentOverview,
     staleTime: 30000,
     refetchOnWindowFocus: true,
@@ -20,12 +20,14 @@ export const useStudentOverview = () => {
   // Renewal Mutation with Optimistic UI update
   const renewMutation = useMutation({
     mutationFn: async (loanId) => {
-      const { data } = await apiClient.post(`/dashboards/student/loans/${loanId}/renew`);
+      const { data } = await apiClient.post(
+        `/dashboards/student/loans/${loanId}/renew`,
+      );
       return data;
     },
     onMutate: async (loanId) => {
-      await queryClient.cancelQueries({ queryKey: ['student-overview'] });
-      const previousData = queryClient.getQueryData(['student-overview']);
+      await queryClient.cancelQueries({ queryKey: ["student-overview"] });
+      const previousData = queryClient.getQueryData(["student-overview"]);
 
       if (previousData?.activeLoans) {
         const updatedLoans = previousData.activeLoans.map((loan) => {
@@ -40,7 +42,7 @@ export const useStudentOverview = () => {
           }
           return loan;
         });
-        queryClient.setQueryData(['student-overview'], {
+        queryClient.setQueryData(["student-overview"], {
           ...previousData,
           activeLoans: updatedLoans,
         });
@@ -49,12 +51,12 @@ export const useStudentOverview = () => {
     },
     onError: (err, loanId, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(['student-overview'], context.previousData);
+        queryClient.setQueryData(["student-overview"], context.previousData);
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['student-overview'] });
-      queryClient.invalidateQueries({ queryKey: ['my-loans'] });
+      queryClient.invalidateQueries({ queryKey: ["student-overview"] });
+      queryClient.invalidateQueries({ queryKey: ["my-loans"] });
     },
   });
 
@@ -62,11 +64,11 @@ export const useStudentOverview = () => {
   const checkInMutation = useMutation({
     mutationFn: streakApi.checkIn,
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['student-overview'] });
-      const previousData = queryClient.getQueryData(['student-overview']);
+      await queryClient.cancelQueries({ queryKey: ["student-overview"] });
+      const previousData = queryClient.getQueryData(["student-overview"]);
 
       if (previousData?.streak) {
-        queryClient.setQueryData(['student-overview'], {
+        queryClient.setQueryData(["student-overview"], {
           ...previousData,
           streak: {
             ...previousData.streak,
@@ -79,12 +81,12 @@ export const useStudentOverview = () => {
     },
     onError: (err, vars, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(['student-overview'], context.previousData);
+        queryClient.setQueryData(["student-overview"], context.previousData);
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['student-overview'] });
-      queryClient.invalidateQueries({ queryKey: ['streak', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ["student-overview"] });
+      queryClient.invalidateQueries({ queryKey: ["streak", "me"] });
     },
   });
 
@@ -95,8 +97,8 @@ export const useStudentOverview = () => {
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['student-overview'] });
-      queryClient.invalidateQueries({ queryKey: ['my-queue'] });
+      queryClient.invalidateQueries({ queryKey: ["student-overview"] });
+      queryClient.invalidateQueries({ queryKey: ["my-queue"] });
     },
   });
 

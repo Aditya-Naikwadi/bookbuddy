@@ -1,18 +1,22 @@
-import { Trash2, ExternalLink, BookOpen, FileText } from 'lucide-react';
+import { Trash2, ExternalLink, BookOpen, FileText } from "lucide-react";
 
 const statusBadges = {
-  Available: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
-  'Open Access': 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
-  'On Hold': 'bg-amber-50 text-amber-700 border-amber-200/80',
-  'Checked Out': 'bg-rose-50 text-rose-700 border-rose-200/80',
+  Available: "bg-emerald-50 text-emerald-700 border-emerald-200/80",
+  "Open Access": "bg-emerald-50 text-emerald-700 border-emerald-200/80",
+  "On Hold": "bg-amber-50 text-amber-700 border-amber-200/80",
+  "Checked Out": "bg-rose-50 text-rose-700 border-rose-200/80",
 };
 
 const BookmarkCard = ({ item, onRemove, onAction }) => {
   if (!item) return null;
 
-  const isEresource = item.type === 'EResource' || item.gutenbergId || item.accessRequirement;
+  const isEresource =
+    item.type === "EResource" || item.gutenbergId || item.accessRequirement;
   const TypeIcon = isEresource ? FileText : BookOpen;
-  const status = item.availabilityStatus || item.status || (isEresource ? 'Open Access' : 'Available');
+  const status =
+    item.availabilityStatus ||
+    item.status ||
+    (isEresource ? "Open Access" : "Available");
   const badgeClass = statusBadges[status] || statusBadges.Available;
 
   return (
@@ -23,7 +27,7 @@ const BookmarkCard = ({ item, onRemove, onAction }) => {
             <TypeIcon className="w-4 h-4" />
           </div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            {isEresource ? 'E-Resource' : 'Book'}
+            {isEresource ? "E-Resource" : "Book"}
           </span>
         </div>
 
@@ -39,7 +43,9 @@ const BookmarkCard = ({ item, onRemove, onAction }) => {
 
       <div className="mb-4">
         <div className="flex items-center gap-2 mb-1">
-          <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-md border ${badgeClass}`}>
+          <span
+            className={`inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-md border ${badgeClass}`}
+          >
             {status}
           </span>
           {item.savedAt && (
@@ -52,7 +58,9 @@ const BookmarkCard = ({ item, onRemove, onAction }) => {
         <h3 className="font-bold text-slate-900 text-sm leading-snug line-clamp-2 group-hover:text-indigo-600 transition-colors mb-1">
           {item.title}
         </h3>
-        <p className="text-xs text-slate-500 line-clamp-1">{item.author || item.topic || 'Library Asset'}</p>
+        <p className="text-xs text-slate-500 line-clamp-1">
+          {item.author || item.topic || "Library Asset"}
+        </p>
       </div>
 
       <div className="pt-3 border-t border-slate-100 mt-auto">
@@ -60,7 +68,7 @@ const BookmarkCard = ({ item, onRemove, onAction }) => {
           onClick={() => onAction && onAction(item)}
           className="w-full text-xs font-semibold py-2 px-3 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center gap-1.5"
         >
-          <span>{isEresource ? 'Read Resource' : 'View Catalog Entry'}</span>
+          <span>{isEresource ? "Read Resource" : "View Catalog Entry"}</span>
           <ExternalLink className="w-3.5 h-3.5" />
         </button>
       </div>

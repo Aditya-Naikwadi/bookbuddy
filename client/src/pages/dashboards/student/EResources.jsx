@@ -1,18 +1,30 @@
-import { useState } from 'react';
-import { FileText, Loader2, BookOpen, Search, Upload, Clock, CheckCircle2, XCircle, Plus } from 'lucide-react';
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import apiClient from '../../../api/client';
-import { searchEbooks, openEbook } from '../../../api/eresourcesApi';
+import { useState } from "react";
+import {
+  FileText,
+  Loader2,
+  BookOpen,
+  Search,
+  Upload,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Plus,
+} from "lucide-react";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import apiClient from "../../../api/client";
+import { searchEbooks, openEbook } from "../../../api/eresourcesApi";
 
 const fetchInternalResources = async () => {
-  const { data } = await apiClient.get('/dashboards/student/eresources');
+  const { data } = await apiClient.get("/dashboards/student/eresources");
   return data.data || [];
 };
 
 const fetchMySubmissions = async () => {
   try {
-    const { data } = await apiClient.get('/dashboards/student/eresources/my-submissions');
+    const { data } = await apiClient.get(
+      "/dashboards/student/eresources/my-submissions",
+    );
     return data.data || [];
   } catch {
     return [];
@@ -20,33 +32,41 @@ const fetchMySubmissions = async () => {
 };
 
 export const EResources = () => {
-  const [activeTab, setActiveTab] = useState('internal'); // 'internal' | 'ebooks' | 'my-submissions'
-  const [searchQuery, setSearchQuery] = useState('');
-  const [topic, setTopic] = useState('');
+  const [activeTab, setActiveTab] = useState("internal"); // 'internal' | 'ebooks' | 'my-submissions'
+  const [searchQuery, setSearchQuery] = useState("");
+  const [topic, setTopic] = useState("");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   // Upload Form Fields
-  const [uploadTitle, setUploadTitle] = useState('');
-  const [uploadCategory, setUploadCategory] = useState('Computer Science');
-  const [uploadDescription, setUploadDescription] = useState('');
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadCategory, setUploadCategory] = useState("Computer Science");
+  const [uploadDescription, setUploadDescription] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadMessage, setUploadMessage] = useState('');
+  const [uploadMessage, setUploadMessage] = useState("");
 
   const navigate = useNavigate();
 
   // Internal resources query
-  const { data: internalResources, isLoading: loadingInternal, error: errorInternal } = useQuery({
-    queryKey: ['e-resources', 'internal'],
+  const {
+    data: internalResources,
+    isLoading: loadingInternal,
+    error: errorInternal,
+  } = useQuery({
+    queryKey: ["e-resources", "internal"],
     queryFn: fetchInternalResources,
-    enabled: activeTab === 'internal',
+    enabled: activeTab === "internal",
   });
 
   // Student's own submissions query
-  const { data: mySubmissions = [], isLoading: loadingSubmissions, refetch: refetchSubmissions } = useQuery({
-    queryKey: ['e-resources', 'my-submissions'],
+  const {
+    data: mySubmissions = [],
+    isLoading: loadingSubmissions,
+    refetch: refetchSubmissions,
+  } = useQuery({
+    queryKey: ["e-resources", "my-submissions"],
     queryFn: fetchMySubmissions,
-    enabled: activeTab === 'my-submissions',
+    enabled: activeTab === "my-submissions",
   });
 
   // Gutenberg infinite query
@@ -55,15 +75,16 @@ export const EResources = () => {
     isLoading: loadingEbooks,
     refetch: refetchEbooks,
   } = useInfiniteQuery({
-    queryKey: ['e-resources', 'gutenberg', searchQuery, topic],
-    queryFn: ({ pageParam = 1 }) => searchEbooks({ search: searchQuery, topic, page: pageParam }),
+    queryKey: ["e-resources", "gutenberg", searchQuery, topic],
+    queryFn: ({ pageParam = 1 }) =>
+      searchEbooks({ search: searchQuery, topic, page: pageParam }),
     getNextPageParam: (lastPage) => lastPage.nextPage,
-    enabled: activeTab === 'ebooks',
+    enabled: activeTab === "ebooks",
   });
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (activeTab === 'ebooks') {
+    if (activeTab === "ebooks") {
       refetchEbooks();
     }
   };
@@ -73,8 +94,8 @@ export const EResources = () => {
       const { resourceId } = await openEbook(gutenbergId);
       navigate(`/eresources/read/${resourceId}`);
     } catch (error) {
-      console.error('Failed to open ebook', error);
-      alert('Failed to open this book. Please try again later.');
+      console.error("Failed to open ebook", error);
+      alert("Failed to open this book. Please try again later.");
     }
   };
 
@@ -82,36 +103,40 @@ export const EResources = () => {
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
     if (!uploadTitle || !selectedFile) {
-      setUploadMessage('Please provide a title and select a file.');
+      setUploadMessage("Please provide a title and select a file.");
       return;
     }
 
     setIsSubmitting(true);
-    setUploadMessage('');
+    setUploadMessage("");
 
     try {
       const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('title', uploadTitle);
-      formData.append('category', uploadCategory);
-      formData.append('description', uploadDescription);
+      formData.append("file", selectedFile);
+      formData.append("title", uploadTitle);
+      formData.append("category", uploadCategory);
+      formData.append("description", uploadDescription);
 
-      await apiClient.post('/dashboards/student/eresources', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      await apiClient.post("/dashboards/student/eresources", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setUploadMessage('Material submitted successfully! It is now pending staff moderation.');
+      setUploadMessage(
+        "Material submitted successfully! It is now pending staff moderation.",
+      );
       setTimeout(() => {
         setUploadModalOpen(false);
-        setUploadTitle('');
-        setUploadDescription('');
+        setUploadTitle("");
+        setUploadDescription("");
         setSelectedFile(null);
-        setUploadMessage('');
-        setActiveTab('my-submissions');
+        setUploadMessage("");
+        setActiveTab("my-submissions");
         refetchSubmissions();
       }, 1500);
     } catch (err) {
-      setUploadMessage(err?.response?.data?.message || 'Failed to submit material.');
+      setUploadMessage(
+        err?.response?.data?.message || "Failed to submit material.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -122,8 +147,13 @@ export const EResources = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-slate-900 dark:text-white">Integrated E-Resources</h1>
-          <p className="text-xs text-slate-500 mt-1">Access academic journals, textbooks, research papers, and open e-books.</p>
+          <h1 className="text-3xl font-serif font-bold text-slate-900 dark:text-white">
+            Integrated E-Resources
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Access academic journals, textbooks, research papers, and open
+            e-books.
+          </p>
         </div>
 
         <div className="flex items-center gap-3 w-full md:w-auto">
@@ -136,7 +166,10 @@ export const EResources = () => {
           </button>
 
           {/* Search Bar */}
-          <form onSubmit={handleSearchSubmit} className="relative flex-1 md:w-64">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative flex-1 md:w-64"
+          >
             <input
               type="text"
               placeholder="Search title, author, or subject..."
@@ -144,7 +177,10 @@ export const EResources = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-600"
             />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              size={16}
+            />
           </form>
         </div>
       </div>
@@ -152,31 +188,31 @@ export const EResources = () => {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
         <button
-          onClick={() => setActiveTab('internal')}
+          onClick={() => setActiveTab("internal")}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeTab === 'internal'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+            activeTab === "internal"
+              ? "bg-indigo-600 text-white shadow-sm"
+              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
           }`}
         >
           Journals & Academic Papers
         </button>
         <button
-          onClick={() => setActiveTab('ebooks')}
+          onClick={() => setActiveTab("ebooks")}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeTab === 'ebooks'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+            activeTab === "ebooks"
+              ? "bg-indigo-600 text-white shadow-sm"
+              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
           }`}
         >
           Gutenberg Open E-Books
         </button>
         <button
-          onClick={() => setActiveTab('my-submissions')}
+          onClick={() => setActiveTab("my-submissions")}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-            activeTab === 'my-submissions'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+            activeTab === "my-submissions"
+              ? "bg-indigo-600 text-white shadow-sm"
+              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
           }`}
         >
           <Upload size={14} />
@@ -185,7 +221,7 @@ export const EResources = () => {
       </div>
 
       {/* Internal Resources */}
-      {activeTab === 'internal' && (
+      {activeTab === "internal" && (
         <>
           {loadingInternal && (
             <div className="flex justify-center items-center py-20">
@@ -201,7 +237,9 @@ export const EResources = () => {
 
           {!loadingInternal && !errorInternal && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {internalResources?.length === 0 && <p className="text-slate-400 text-xs">No resources found.</p>}
+              {internalResources?.length === 0 && (
+                <p className="text-slate-400 text-xs">No resources found.</p>
+              )}
 
               {internalResources?.map((resource) => (
                 <div
@@ -214,15 +252,21 @@ export const EResources = () => {
                         <FileText size={24} />
                       </div>
                       <span className="text-[10px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2.5 py-1 rounded-full uppercase tracking-wider">
-                        {resource.type || 'PDF'}
+                        {resource.type || "PDF"}
                       </span>
                     </div>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-base mb-1">{resource.title}</h3>
-                    <p className="text-xs text-slate-500 mb-4">{resource.category}</p>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-base mb-1">
+                      {resource.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 mb-4">
+                      {resource.category}
+                    </p>
                   </div>
                   <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
                     <button
-                      onClick={() => navigate(`/eresources/read/${resource._id}`)}
+                      onClick={() =>
+                        navigate(`/eresources/read/${resource._id}`)
+                      }
                       className="w-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold py-2.5 rounded-xl hover:bg-indigo-100 transition-colors flex justify-center items-center gap-2 text-xs"
                     >
                       <BookOpen size={16} /> Read Online
@@ -236,16 +280,25 @@ export const EResources = () => {
       )}
 
       {/* Student My Submissions Tab */}
-      {activeTab === 'my-submissions' && (
+      {activeTab === "my-submissions" && (
         <div className="space-y-4">
-          <p className="text-xs text-slate-500">Track the moderation status of study materials you've uploaded.</p>
+          <p className="text-xs text-slate-500">
+            Track the moderation status of study materials you've uploaded.
+          </p>
 
           {loadingSubmissions ? (
-            <div className="py-20 text-center text-slate-400 text-xs">Loading your submissions...</div>
+            <div className="py-20 text-center text-slate-400 text-xs">
+              Loading your submissions...
+            </div>
           ) : mySubmissions.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center text-slate-400 space-y-3">
-              <Upload size={36} className="mx-auto text-slate-300 dark:text-slate-700" />
-              <p className="font-bold text-sm text-slate-700 dark:text-slate-300">No submissions uploaded yet</p>
+              <Upload
+                size={36}
+                className="mx-auto text-slate-300 dark:text-slate-700"
+              />
+              <p className="font-bold text-sm text-slate-700 dark:text-slate-300">
+                No submissions uploaded yet
+              </p>
               <button
                 onClick={() => setUploadModalOpen(true)}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold"
@@ -256,8 +309,10 @@ export const EResources = () => {
           ) : (
             <div className="space-y-3">
               {mySubmissions.map((sub) => {
-                const isApproved = sub.moderationStatus === 'approved' || sub.moderationStatus === 'published';
-                const isRejected = sub.moderationStatus === 'rejected';
+                const isApproved =
+                  sub.moderationStatus === "approved" ||
+                  sub.moderationStatus === "published";
+                const isRejected = sub.moderationStatus === "rejected";
 
                 return (
                   <div
@@ -269,8 +324,12 @@ export const EResources = () => {
                         <FileText size={20} />
                       </div>
                       <div>
-                        <h4 className="font-bold text-xs text-slate-900 dark:text-white">{sub.title}</h4>
-                        <p className="text-[10px] text-slate-400">Category: {sub.category} • Submitted recently</p>
+                        <h4 className="font-bold text-xs text-slate-900 dark:text-white">
+                          {sub.title}
+                        </h4>
+                        <p className="text-[10px] text-slate-400">
+                          Category: {sub.category} • Submitted recently
+                        </p>
                         {sub.moderationFeedback && (
                           <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 italic">
                             Feedback: "{sub.moderationFeedback}"
@@ -283,14 +342,20 @@ export const EResources = () => {
                       <span
                         className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                           isApproved
-                            ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
+                            ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
                             : isRejected
-                            ? 'bg-red-500/10 text-red-600 border border-red-500/20'
-                            : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
+                              ? "bg-red-500/10 text-red-600 border border-red-500/20"
+                              : "bg-amber-500/10 text-amber-600 border border-amber-500/20"
                         }`}
                       >
-                        {isApproved ? <CheckCircle2 size={14} /> : isRejected ? <XCircle size={14} /> : <Clock size={14} />}
-                        {sub.moderationStatus || 'pending'}
+                        {isApproved ? (
+                          <CheckCircle2 size={14} />
+                        ) : isRejected ? (
+                          <XCircle size={14} />
+                        ) : (
+                          <Clock size={14} />
+                        )}
+                        {sub.moderationStatus || "pending"}
                       </span>
                     </div>
                   </div>
@@ -302,20 +367,22 @@ export const EResources = () => {
       )}
 
       {/* Gutenberg E-Books */}
-      {activeTab === 'ebooks' && (
+      {activeTab === "ebooks" && (
         <>
           <div className="flex flex-wrap gap-2 mb-6">
-            {['', 'fiction', 'history', 'science', 'philosophy'].map((t) => (
+            {["", "fiction", "history", "science", "philosophy"].map((t) => (
               <button
                 key={t}
                 onClick={() => setTopic(t)}
                 className={`px-3.5 py-1.5 text-xs font-bold rounded-xl border transition-all ${
                   topic === t
-                    ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900'
-                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800'
+                    ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900"
+                    : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800"
                 }`}
               >
-                {t === '' ? 'All Subjects' : t.charAt(0).toUpperCase() + t.slice(1)}
+                {t === ""
+                  ? "All Subjects"
+                  : t.charAt(0).toUpperCase() + t.slice(1)}
               </button>
             ))}
           </div>
@@ -336,7 +403,11 @@ export const EResources = () => {
                       <div className="flex items-start gap-4 mb-4">
                         <div className="w-16 h-24 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden shrink-0 shadow-sm">
                           {book.coverImage ? (
-                            <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover" />
+                            <img
+                              src={book.coverImage}
+                              alt={book.title}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <div className="w-full h-full flex justify-center items-center text-slate-400">
                               <BookOpen size={20} />
@@ -344,8 +415,12 @@ export const EResources = () => {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-slate-900 dark:text-white text-sm mb-1 line-clamp-2">{book.title}</h3>
-                          <p className="text-xs text-slate-500 line-clamp-1">{book.author}</p>
+                          <h3 className="font-bold text-slate-900 dark:text-white text-sm mb-1 line-clamp-2">
+                            {book.title}
+                          </h3>
+                          <p className="text-xs text-slate-500 line-clamp-1">
+                            {book.author}
+                          </p>
                         </div>
                       </div>
                       <button
@@ -372,7 +447,10 @@ export const EResources = () => {
                 <Upload size={18} className="text-indigo-600" />
                 Submit Study Material for Moderation
               </h3>
-              <button onClick={() => setUploadModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button
+                onClick={() => setUploadModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 ✕
               </button>
             </div>
@@ -380,9 +458,9 @@ export const EResources = () => {
             {uploadMessage && (
               <p
                 className={`text-xs p-3 rounded-xl font-bold ${
-                  uploadMessage.includes('successfully')
-                    ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
-                    : 'bg-red-500/10 text-red-600 border border-red-500/20'
+                  uploadMessage.includes("successfully")
+                    ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                    : "bg-red-500/10 text-red-600 border border-red-500/20"
                 }`}
               >
                 {uploadMessage}
@@ -459,7 +537,7 @@ export const EResources = () => {
                   disabled={isSubmitting}
                   className="flex-1 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow"
                 >
-                  {isSubmitting ? 'Uploading...' : 'Submit Material'}
+                  {isSubmitting ? "Uploading..." : "Submit Material"}
                 </button>
               </div>
             </form>

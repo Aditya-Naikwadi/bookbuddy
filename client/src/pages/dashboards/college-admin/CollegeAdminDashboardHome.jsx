@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   UploadCloud,
   Settings2,
@@ -19,10 +19,13 @@ import {
   Sliders,
   CheckCircle2,
   Layers,
-} from 'lucide-react';
-import useAuthStore from '../../../store/authStore';
-import { FEATURE_REGISTRY, getEnabledFeaturesList } from '../../../config/featureRegistry';
-import CollegeAdminOnboardingWizard from '../../../components/admin/CollegeAdminOnboardingWizard';
+} from "lucide-react";
+import useAuthStore from "../../../store/authStore";
+import {
+  FEATURE_REGISTRY,
+  getEnabledFeaturesList,
+} from "../../../config/featureRegistry";
+import CollegeAdminOnboardingWizard from "../../../components/admin/CollegeAdminOnboardingWizard";
 
 export default function CollegeAdminDashboardHome() {
   const { user, updateUser } = useAuthStore();
@@ -30,17 +33,28 @@ export default function CollegeAdminDashboardHome() {
 
   // College Profile & Features state
   const collegeProfile = user?.collegeProfile || {
-    name: user?.collegeName || 'Stanford University',
-    shortName: 'Stanford',
-    slug: 'stanford-univ',
-    enabledFeatures: ['catalog', 'patrons', 'loans', 'fines', 'e-resources', 'reading-lists'],
+    name: user?.collegeName || "Stanford University",
+    shortName: "Stanford",
+    slug: "stanford-univ",
+    enabledFeatures: [
+      "catalog",
+      "patrons",
+      "loans",
+      "fines",
+      "e-resources",
+      "reading-lists",
+    ],
     isOnboarded: true,
   };
 
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(!collegeProfile.isOnboarded);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(
+    !collegeProfile.isOnboarded,
+  );
   const enabledIds = getEnabledFeaturesList(collegeProfile.enabledFeatures);
 
-  const [activeModuleTab, setActiveModuleTab] = useState(enabledIds[0] || 'catalog');
+  const [activeModuleTab, setActiveModuleTab] = useState(
+    enabledIds[0] || "catalog",
+  );
 
   const handleOnboardingComplete = (updatedData) => {
     const updatedProfile = {
@@ -70,7 +84,8 @@ export default function CollegeAdminDashboardHome() {
     );
   }
 
-  const activeFeatureObj = FEATURE_REGISTRY[activeModuleTab] || FEATURE_REGISTRY.catalog;
+  const activeFeatureObj =
+    FEATURE_REGISTRY[activeModuleTab] || FEATURE_REGISTRY.catalog;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8 space-y-8">
@@ -82,7 +97,7 @@ export default function CollegeAdminDashboardHome() {
               Multi-Tenant Campus Console
             </span>
             <span className="text-xs text-slate-500 font-mono">
-              Slug: /{collegeProfile.slug || 'stanford-univ'}
+              Slug: /{collegeProfile.slug || "stanford-univ"}
             </span>
           </div>
 
@@ -90,7 +105,11 @@ export default function CollegeAdminDashboardHome() {
             {collegeProfile.name}
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 max-w-xl">
-            Custom Provisioned Dashboard — Active Modules: <span className="font-mono text-indigo-300 font-bold">{enabledIds.length}</span> enabled
+            Custom Provisioned Dashboard — Active Modules:{" "}
+            <span className="font-mono text-indigo-300 font-bold">
+              {enabledIds.length}
+            </span>{" "}
+            enabled
           </p>
         </div>
 
@@ -142,13 +161,15 @@ export default function CollegeAdminDashboardHome() {
                 onClick={() => setActiveModuleTab(featId)}
                 className={`px-4 py-3 rounded-2xl font-bold text-xs flex items-center gap-2.5 transition-all shrink-0 border ${
                   isActive
-                    ? 'bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-600/30'
-                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
+                    ? "bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-600/30"
+                    : "bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200"
                 }`}
               >
                 <IconComp className="w-4 h-4" />
                 <span>{feat.name}</span>
-                {isActive && <CheckCircle2 className="w-3.5 h-3.5 stroke-[3]" />}
+                {isActive && (
+                  <CheckCircle2 className="w-3.5 h-3.5 stroke-[3]" />
+                )}
               </button>
             );
           })}
@@ -161,7 +182,9 @@ export default function CollegeAdminDashboardHome() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
-              {activeFeatureObj.icon && <activeFeatureObj.icon className="w-6 h-6" />}
+              {activeFeatureObj.icon && (
+                <activeFeatureObj.icon className="w-6 h-6" />
+              )}
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -174,7 +197,9 @@ export default function CollegeAdminDashboardHome() {
                   </span>
                 )}
               </div>
-              <h3 className="text-xl font-bold text-white mt-1">{activeFeatureObj.name}</h3>
+              <h3 className="text-xl font-bold text-white mt-1">
+                {activeFeatureObj.name}
+              </h3>
             </div>
           </div>
 
@@ -184,9 +209,11 @@ export default function CollegeAdminDashboardHome() {
         </div>
 
         {/* Operational Module Content Shell */}
-        <ModuleViewShell featureId={activeModuleTab} collegeName={collegeProfile.name} />
+        <ModuleViewShell
+          featureId={activeModuleTab}
+          collegeName={collegeProfile.name}
+        />
       </div>
-
     </div>
   );
 }
@@ -194,89 +221,118 @@ export default function CollegeAdminDashboardHome() {
 // Sub-component rendering operational empty / initial states for each enabled feature
 function ModuleViewShell({ featureId, collegeName }) {
   switch (featureId) {
-    case 'catalog':
+    case "catalog":
       return (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
-              <p className="text-xs font-mono text-slate-400 uppercase">Total Titles</p>
+              <p className="text-xs font-mono text-slate-400 uppercase">
+                Total Titles
+              </p>
               <p className="text-2xl font-bold text-white mt-1">1,240</p>
             </div>
             <div className="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
-              <p className="text-xs font-mono text-slate-400 uppercase">Available Copies</p>
+              <p className="text-xs font-mono text-slate-400 uppercase">
+                Available Copies
+              </p>
               <p className="text-2xl font-bold text-emerald-400 mt-1">890</p>
             </div>
             <div className="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
-              <p className="text-xs font-mono text-slate-400 uppercase">Categories</p>
+              <p className="text-xs font-mono text-slate-400 uppercase">
+                Categories
+              </p>
               <p className="text-2xl font-bold text-indigo-400 mt-1">24</p>
             </div>
           </div>
           <div className="p-8 border border-dashed border-slate-800 rounded-2xl text-center space-y-3 bg-slate-950/40">
             <BookOpen className="w-10 h-10 text-indigo-400 mx-auto" />
-            <h4 className="text-base font-bold text-white">Central Book Catalog Active</h4>
+            <h4 className="text-base font-bold text-white">
+              Central Book Catalog Active
+            </h4>
             <p className="text-xs text-slate-400 max-w-md mx-auto">
-              Scan ISBN barcodes or import catalog MARC entries to populate {collegeName}'s physical book collection.
+              Scan ISBN barcodes or import catalog MARC entries to populate{" "}
+              {collegeName}'s physical book collection.
             </p>
           </div>
         </div>
       );
 
-    case 'patrons':
+    case "patrons":
       return (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
-              <p className="text-xs font-mono text-slate-400 uppercase">Active Students</p>
+              <p className="text-xs font-mono text-slate-400 uppercase">
+                Active Students
+              </p>
               <p className="text-2xl font-bold text-white mt-1">350</p>
             </div>
             <div className="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
-              <p className="text-xs font-mono text-slate-400 uppercase">Domain Whitelisted</p>
-              <p className="text-2xl font-bold text-emerald-400 mt-1">Verified</p>
+              <p className="text-xs font-mono text-slate-400 uppercase">
+                Domain Whitelisted
+              </p>
+              <p className="text-2xl font-bold text-emerald-400 mt-1">
+                Verified
+              </p>
             </div>
             <div className="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
-              <p className="text-xs font-mono text-slate-400 uppercase">Patron Cards Issued</p>
+              <p className="text-xs font-mono text-slate-400 uppercase">
+                Patron Cards Issued
+              </p>
               <p className="text-2xl font-bold text-indigo-400 mt-1">328</p>
             </div>
           </div>
           <div className="p-8 border border-dashed border-slate-800 rounded-2xl text-center space-y-3 bg-slate-950/40">
             <Users className="w-10 h-10 text-indigo-400 mx-auto" />
-            <h4 className="text-base font-bold text-white">Patron Digital ID Records</h4>
+            <h4 className="text-base font-bold text-white">
+              Patron Digital ID Records
+            </h4>
             <p className="text-xs text-slate-400 max-w-md mx-auto">
-              Manage student roster memberships, issue digital patron cards, and enforce roll number validation.
+              Manage student roster memberships, issue digital patron cards, and
+              enforce roll number validation.
             </p>
           </div>
         </div>
       );
 
-    case 'loans':
+    case "loans":
       return (
         <div className="p-8 border border-dashed border-slate-800 rounded-2xl text-center space-y-3 bg-slate-950/40">
           <Library className="w-10 h-10 text-indigo-400 mx-auto" />
-          <h4 className="text-base font-bold text-white">Circulation & Borrowing Desk</h4>
+          <h4 className="text-base font-bold text-white">
+            Circulation & Borrowing Desk
+          </h4>
           <p className="text-xs text-slate-400 max-w-md mx-auto">
-            Process book checkouts, return queues, reserve holds, and automated return due reminders.
+            Process book checkouts, return queues, reserve holds, and automated
+            return due reminders.
           </p>
         </div>
       );
 
-    case 'fines':
+    case "fines":
       return (
         <div className="p-8 border border-dashed border-slate-800 rounded-2xl text-center space-y-3 bg-slate-950/40">
           <Receipt className="w-10 h-10 text-amber-400 mx-auto" />
-          <h4 className="text-base font-bold text-white">Fine Management & Fee Ledgers</h4>
+          <h4 className="text-base font-bold text-white">
+            Fine Management & Fee Ledgers
+          </h4>
           <p className="text-xs text-slate-400 max-w-md mx-auto">
-            Automate daily overdue penalties, track unpaid fine balances, and record payment receipts.
+            Automate daily overdue penalties, track unpaid fine balances, and
+            record payment receipts.
           </p>
         </div>
       );
 
-    case 'e-resources':
+    case "e-resources":
       return (
         <div className="p-8 border border-dashed border-slate-800 rounded-2xl text-center space-y-3 bg-slate-950/40">
           <FileText className="w-10 h-10 text-indigo-400 mx-auto" />
-          <h4 className="text-base font-bold text-white">Digital E-Resources & E-Books</h4>
+          <h4 className="text-base font-bold text-white">
+            Digital E-Resources & E-Books
+          </h4>
           <p className="text-xs text-slate-400 max-w-md mx-auto">
-            Upload institutional PDFs, syllabus e-books, and research papers accessible via embedded readers.
+            Upload institutional PDFs, syllabus e-books, and research papers
+            accessible via embedded readers.
           </p>
         </div>
       );
@@ -285,9 +341,12 @@ function ModuleViewShell({ featureId, collegeName }) {
       return (
         <div className="p-8 border border-dashed border-slate-800 rounded-2xl text-center space-y-3 bg-slate-950/40">
           <Sparkles className="w-10 h-10 text-indigo-400 mx-auto" />
-          <h4 className="text-base font-bold text-white">Module Operational State Active</h4>
+          <h4 className="text-base font-bold text-white">
+            Module Operational State Active
+          </h4>
           <p className="text-xs text-slate-400 max-w-md mx-auto">
-            This module is enabled and operational for {collegeName}. Staff members can perform daily admin tasks.
+            This module is enabled and operational for {collegeName}. Staff
+            members can perform daily admin tasks.
           </p>
         </div>
       );

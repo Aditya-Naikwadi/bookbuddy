@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { ShieldAlert, ArrowLeft, Building2 } from 'lucide-react';
+import { Link } from "react-router-dom";
+import { ShieldAlert, ArrowLeft, Building2 } from "lucide-react";
 
 export default function FeatureUnavailablePage({ featureKey }) {
   return (
@@ -17,7 +17,9 @@ export default function FeatureUnavailablePage({ featureKey }) {
       </h1>
 
       <p className="text-slate-600 max-w-md mb-8 text-sm md:text-base leading-relaxed">
-        This service module {featureKey ? `("${featureKey}")` : ''} has not been enabled by your college administrator. Please contact your campus library administration if you believe this is an error.
+        This service module {featureKey ? `("${featureKey}")` : ""} has not been
+        enabled by your college administrator. Please contact your campus
+        library administration if you believe this is an error.
       </p>
 
       <div className="flex flex-col sm:flex-row items-center gap-3">

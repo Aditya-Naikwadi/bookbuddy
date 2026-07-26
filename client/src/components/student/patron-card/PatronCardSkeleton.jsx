@@ -1,4 +1,3 @@
-
 export const PatronCardSkeleton = () => {
   return (
     <div className="w-full max-w-md mx-auto h-[260px] sm:h-[280px] rounded-3xl border border-edge/30 bg-surface/30 glass-panel p-6 flex flex-col justify-between shadow-lg relative overflow-hidden animate-pulse">

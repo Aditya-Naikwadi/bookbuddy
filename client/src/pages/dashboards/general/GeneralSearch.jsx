@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   BookOpen,
   CheckCircle2,
@@ -9,43 +9,43 @@ import {
   MapPin,
   X,
   SlidersHorizontal,
-} from 'lucide-react';
-import ResultCard from '../../../components/general/ResultCard';
-import useLocalBookmarks from '../../../hooks/useLocalBookmarks';
-import StickyControlBar from '../../../components/general/StickyControlBar';
-import ActiveFilterChips from '../../../components/general/ActiveFilterChips';
-import StatSummaryStrip from '../../../components/general/StatSummaryStrip';
-import VirtualizedCardGrid from '../../../components/general/VirtualizedCardGrid';
-import MobileFilterSheet from '../../../components/general/MobileFilterSheet';
-import DigitalReaderModal from '../../../components/general/DigitalReaderModal';
-import useAuthStore from '../../../store/authStore';
-import { useBookSearch } from '../../../hooks/useBookData';
-import BookDataState from '../../../components/common/BookDataState';
+} from "lucide-react";
+import ResultCard from "../../../components/general/ResultCard";
+import useLocalBookmarks from "../../../hooks/useLocalBookmarks";
+import StickyControlBar from "../../../components/general/StickyControlBar";
+import ActiveFilterChips from "../../../components/general/ActiveFilterChips";
+import StatSummaryStrip from "../../../components/general/StatSummaryStrip";
+import VirtualizedCardGrid from "../../../components/general/VirtualizedCardGrid";
+import MobileFilterSheet from "../../../components/general/MobileFilterSheet";
+import DigitalReaderModal from "../../../components/general/DigitalReaderModal";
+import useAuthStore from "../../../store/authStore";
+import { useBookSearch } from "../../../hooks/useBookData";
+import BookDataState from "../../../components/common/BookDataState";
 
 const GENRES = [
-  'All',
-  'Computer Science',
-  'Architecture',
-  'Economics',
-  'Biology',
-  'Literature',
-  'Chemistry',
-  'Environmental Science',
-  'Physics',
+  "All",
+  "Computer Science",
+  "Architecture",
+  "Economics",
+  "Biology",
+  "Literature",
+  "Chemistry",
+  "Environmental Science",
+  "Physics",
 ];
-export const FORMAT_OPTIONS = ['All', 'physical', 'digital', 'Hardcover', 'Paperback'];
-export const AVAILABILITY_OPTIONS = ['All', 'available', 'checked_out', 'on_hold'];
+const FORMAT_OPTIONS = ["All", "physical", "digital", "Hardcover", "Paperback"];
+const AVAILABILITY_OPTIONS = ["All", "available", "checked_out", "on_hold"];
 
 const SORT_OPTIONS = [
-  { value: 'relevance', label: 'Sort: Relevance' },
-  { value: 'title', label: 'Title (A-Z)' },
-  { value: 'newest', label: 'Publication Year (Newest)' },
-  { value: 'available', label: 'Most Available Copies' },
+  { value: "relevance", label: "Sort: Relevance" },
+  { value: "title", label: "Title (A-Z)" },
+  { value: "newest", label: "Publication Year (Newest)" },
+  { value: "available", label: "Most Available Copies" },
 ];
 
 const GeneralSearch = () => {
   const [searchParams] = useSearchParams();
-  const initialQuery = searchParams.get('q') || '';
+  const initialQuery = searchParams.get("q") || "";
   const { user } = useAuthStore();
   const collegeId = user?.collegeId || null;
 
@@ -53,13 +53,13 @@ const GeneralSearch = () => {
 
   const [rawQuery, setRawQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
-  const [selectedGenre, setSelectedGenre] = useState('All');
-  const [selectedAvailability, setSelectedAvailability] = useState('All');
-  const [selectedFormat, setSelectedFormat] = useState('All');
-  const [sortBy, setSortBy] = useState('relevance');
-  const [viewMode, setViewMode] = useState('grid');
+  const [selectedGenre, setSelectedGenre] = useState("All");
+  const [selectedAvailability, setSelectedAvailability] = useState("All");
+  const [selectedFormat, setSelectedFormat] = useState("All");
+  const [sortBy, setSortBy] = useState("relevance");
+  const [viewMode, setViewMode] = useState("grid");
   const [showFiltersSheet, setShowFiltersSheet] = useState(false);
-  const [genreSearch, setGenreSearch] = useState('');
+  const [genreSearch, setGenreSearch] = useState("");
   const [selectedLocationBook, setSelectedLocationBook] = useState(null);
   const [activeDigitalBook, setActiveDigitalBook] = useState(null);
 
@@ -91,42 +91,74 @@ const GeneralSearch = () => {
 
   // Compute stat summary metrics
   const stats = useMemo(() => {
-    const available = catalogBooks.filter((b) => b.availabilityStatus === 'available' || b.availableCopies > 0).length;
-    const onHold = catalogBooks.filter((b) => b.availabilityStatus === 'on_hold').length;
-    const checkedOut = catalogBooks.filter((b) => b.availabilityStatus === 'checked_out' || b.availableCopies === 0).length;
+    const available = catalogBooks.filter(
+      (b) => b.availabilityStatus === "available" || b.availableCopies > 0,
+    ).length;
+    const onHold = catalogBooks.filter(
+      (b) => b.availabilityStatus === "on_hold",
+    ).length;
+    const checkedOut = catalogBooks.filter(
+      (b) => b.availabilityStatus === "checked_out" || b.availableCopies === 0,
+    ).length;
 
     return [
-      { label: 'Total Matches', value: catalogBooks.length, icon: BookOpen, colorClass: 'text-indigo-600', bgBadgeClass: 'bg-indigo-50 text-indigo-700' },
-      { label: 'Available', value: available, icon: CheckCircle2, colorClass: 'text-emerald-600', bgBadgeClass: 'bg-emerald-50 text-emerald-700' },
-      { label: 'On Hold', value: onHold, icon: Clock, colorClass: 'text-amber-600', bgBadgeClass: 'bg-amber-50 text-amber-700' },
-      { label: 'Checked Out', value: checkedOut, icon: BookX, colorClass: 'text-rose-600', bgBadgeClass: 'bg-rose-50 text-rose-700' },
+      {
+        label: "Total Matches",
+        value: catalogBooks.length,
+        icon: BookOpen,
+        colorClass: "text-indigo-600",
+        bgBadgeClass: "bg-indigo-50 text-indigo-700",
+      },
+      {
+        label: "Available",
+        value: available,
+        icon: CheckCircle2,
+        colorClass: "text-emerald-600",
+        bgBadgeClass: "bg-emerald-50 text-emerald-700",
+      },
+      {
+        label: "On Hold",
+        value: onHold,
+        icon: Clock,
+        colorClass: "text-amber-600",
+        bgBadgeClass: "bg-amber-50 text-amber-700",
+      },
+      {
+        label: "Checked Out",
+        value: checkedOut,
+        icon: BookX,
+        colorClass: "text-rose-600",
+        bgBadgeClass: "bg-rose-50 text-rose-700",
+      },
     ];
   }, [catalogBooks]);
 
   const activeChips = [
-    { key: 'query', label: 'Keyword', value: debouncedQuery },
-    { key: 'genre', label: 'Genre', value: selectedGenre },
-    { key: 'availability', label: 'Status', value: selectedAvailability },
-    { key: 'format', label: 'Format', value: selectedFormat },
+    { key: "query", label: "Keyword", value: debouncedQuery },
+    { key: "genre", label: "Genre", value: selectedGenre },
+    { key: "availability", label: "Status", value: selectedAvailability },
+    { key: "format", label: "Format", value: selectedFormat },
   ];
 
   const handleRemoveChip = (key) => {
-    if (key === 'query') setRawQuery('');
-    if (key === 'genre') setSelectedGenre('All');
-    if (key === 'availability') setSelectedAvailability('All');
-    if (key === 'format') setSelectedFormat('All');
+    if (key === "query") setRawQuery("");
+    if (key === "genre") setSelectedGenre("All");
+    if (key === "availability") setSelectedAvailability("All");
+    if (key === "format") setSelectedFormat("All");
   };
 
   const handleResetAll = () => {
-    setRawQuery('');
-    setDebouncedQuery('');
-    setSelectedGenre('All');
-    setSelectedAvailability('All');
-    setSelectedFormat('All');
-    setSortBy('relevance');
+    setRawQuery("");
+    setDebouncedQuery("");
+    setSelectedGenre("All");
+    setSelectedAvailability("All");
+    setSelectedFormat("All");
+    setSortBy("relevance");
   };
 
-  const filteredGenresList = GENRES.filter((g) => g.toLowerCase().includes(genreSearch.toLowerCase()));
+  const filteredGenresList = GENRES.filter((g) =>
+    g.toLowerCase().includes(genreSearch.toLowerCase()),
+  );
 
   const filterContent = (
     <div className="space-y-5">
@@ -150,11 +182,15 @@ const GeneralSearch = () => {
               key={genre}
               onClick={() => setSelectedGenre(genre)}
               className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between ${
-                selectedGenre === genre ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-50'
+                selectedGenre === genre
+                  ? "bg-indigo-50 text-indigo-700 font-bold"
+                  : "text-slate-600 hover:bg-slate-50"
               }`}
             >
               <span>{genre}</span>
-              {selectedGenre === genre && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
+              {selectedGenre === genre && (
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+              )}
             </button>
           ))}
         </div>
@@ -170,11 +206,15 @@ const GeneralSearch = () => {
               key={status}
               onClick={() => setSelectedAvailability(status)}
               className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between ${
-                selectedAvailability === status ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-50'
+                selectedAvailability === status
+                  ? "bg-indigo-50 text-indigo-700 font-bold"
+                  : "text-slate-600 hover:bg-slate-50"
               }`}
             >
               <span>{status}</span>
-              {selectedAvailability === status && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
+              {selectedAvailability === status && (
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+              )}
             </button>
           ))}
         </div>
@@ -187,7 +227,7 @@ const GeneralSearch = () => {
       <StickyControlBar
         searchQuery={rawQuery}
         onSearchChange={setRawQuery}
-        onClearSearch={() => setRawQuery('')}
+        onClearSearch={() => setRawQuery("")}
         placeholder="Search catalog by title, author, or discipline..."
         sortBy={sortBy}
         onSortChange={setSortBy}
@@ -210,7 +250,11 @@ const GeneralSearch = () => {
         }
       />
 
-      <ActiveFilterChips chips={activeChips} onRemoveChip={handleRemoveChip} onResetAll={handleResetAll} />
+      <ActiveFilterChips
+        chips={activeChips}
+        onRemoveChip={handleRemoveChip}
+        onResetAll={handleResetAll}
+      />
 
       <BookDataState
         isLoading={isLoading}
@@ -223,9 +267,12 @@ const GeneralSearch = () => {
             <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl w-12 h-12 mx-auto flex items-center justify-center">
               <BookOpen className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-slate-900">No Matching Catalog Items</h3>
+            <h3 className="text-base font-bold text-slate-900">
+              No Matching Catalog Items
+            </h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              We couldn’t find any physical books matching your active search query and filter combination.
+              We couldn’t find any physical books matching your active search
+              query and filter combination.
             </p>
             <button
               onClick={handleResetAll}
@@ -249,7 +296,7 @@ const GeneralSearch = () => {
                 id: book._id || book.id,
                 genre: book.category || book.genre,
                 availableCopies: book.availableCopies,
-                location: book.shelfLocation || 'Main Stacks',
+                location: book.shelfLocation || "Main Stacks",
               }}
               isBookmarked={isBookmarked(book._id || book.id)}
               onToggleBookmark={toggleBookmark}
@@ -273,7 +320,9 @@ const GeneralSearch = () => {
         isOpen={Boolean(activeDigitalBook)}
         onClose={() => setActiveDigitalBook(null)}
         fileUrl={activeDigitalBook?.fileUrl}
-        fileType={activeDigitalBook?.fileType || activeDigitalBook?.format || 'pdf'}
+        fileType={
+          activeDigitalBook?.fileType || activeDigitalBook?.format || "pdf"
+        }
         title={activeDigitalBook?.title}
       />
 
@@ -292,7 +341,9 @@ const GeneralSearch = () => {
                 <MapPin className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">{selectedLocationBook.title}</h3>
+                <h3 className="text-sm font-bold text-slate-900">
+                  {selectedLocationBook.title}
+                </h3>
                 <p className="text-xs text-slate-500">Physical Shelf Mapping</p>
               </div>
             </div>
@@ -300,11 +351,19 @@ const GeneralSearch = () => {
             <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2.5 text-xs">
               <div className="flex justify-between py-1 border-b border-slate-200/60">
                 <span className="text-slate-500 font-medium">Shelf Code</span>
-                <span className="font-bold text-indigo-900">{selectedLocationBook.shelfLocation || selectedLocationBook.location || 'Main Stacks'}</span>
+                <span className="font-bold text-indigo-900">
+                  {selectedLocationBook.shelfLocation ||
+                    selectedLocationBook.location ||
+                    "Main Stacks"}
+                </span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-200/60">
-                <span className="text-slate-500 font-medium">Copies Available</span>
-                <span className="font-bold text-slate-900">{selectedLocationBook.availableCopies} Copies</span>
+                <span className="text-slate-500 font-medium">
+                  Copies Available
+                </span>
+                <span className="font-bold text-slate-900">
+                  {selectedLocationBook.availableCopies} Copies
+                </span>
               </div>
             </div>
 

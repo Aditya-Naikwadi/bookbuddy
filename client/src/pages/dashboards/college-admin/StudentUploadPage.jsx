@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   UploadCloud,
   Download,
@@ -11,8 +11,8 @@ import {
   Info,
   Check,
   RefreshCw,
-} from 'lucide-react';
-import bulkUploadApi from '../../../api/bulkUploadApi';
+} from "lucide-react";
+import bulkUploadApi from "../../../api/bulkUploadApi";
 
 export default function StudentUploadPage() {
   const [file, setFile] = useState(null);
@@ -23,17 +23,17 @@ export default function StudentUploadPage() {
   // Sample CSV Mock Data Generator
   const handleDownloadSampleCsv = () => {
     const csvContent =
-      'data:text/csv;charset=utf-8,' +
+      "data:text/csv;charset=utf-8," +
       encodeURIComponent(
-        'RollNumber,FullName,Email,Department,Phone\n' +
-          'CS-2026-001,Arthur Pendelton,arthur@stanford.edu,Computer Science,+16505550101\n' +
-          'CS-2026-002,Beatrix Potter,beatrix@stanford.edu,English Literature,+16505550102\n' +
-          'INVALID_ROW,Charles Xavier,invalid-email-format,Physics,\n' +
-          'CS-2026-004,Diana Prince,diana@stanford.edu,Law,+16505550104\n'
+        "RollNumber,FullName,Email,Department,Phone\n" +
+          "CS-2026-001,Arthur Pendelton,arthur@stanford.edu,Computer Science,+16505550101\n" +
+          "CS-2026-002,Beatrix Potter,beatrix@stanford.edu,English Literature,+16505550102\n" +
+          "INVALID_ROW,Charles Xavier,invalid-email-format,Physics,\n" +
+          "CS-2026-004,Diana Prince,diana@stanford.edu,Law,+16505550104\n",
       );
-    const link = document.createElement('a');
-    link.setAttribute('href', csvContent);
-    link.setAttribute('download', 'bookbuddy_student_upload_template.csv');
+    const link = document.createElement("a");
+    link.setAttribute("href", csvContent);
+    link.setAttribute("download", "bookbuddy_student_upload_template.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -42,9 +42,9 @@ export default function StudentUploadPage() {
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
+    if (e.type === "dragenter" || e.type === "dragover") {
       setDragActive(true);
-    } else if (e.type === 'dragleave') {
+    } else if (e.type === "dragleave") {
       setDragActive(false);
     }
   };
@@ -81,39 +81,40 @@ export default function StudentUploadPage() {
         rows: [
           {
             rowNumber: 1,
-            rollNumber: 'CS-2026-001',
-            fullName: 'Arthur Pendelton',
-            email: 'arthur@stanford.edu',
-            department: 'Computer Science',
-            status: 'VALID',
-            reason: 'All fields valid',
+            rollNumber: "CS-2026-001",
+            fullName: "Arthur Pendelton",
+            email: "arthur@stanford.edu",
+            department: "Computer Science",
+            status: "VALID",
+            reason: "All fields valid",
           },
           {
             rowNumber: 2,
-            rollNumber: 'CS-2026-002',
-            fullName: 'Beatrix Potter',
-            email: 'beatrix@stanford.edu',
-            department: 'English Literature',
-            status: 'VALID',
-            reason: 'All fields valid',
+            rollNumber: "CS-2026-002",
+            fullName: "Beatrix Potter",
+            email: "beatrix@stanford.edu",
+            department: "English Literature",
+            status: "VALID",
+            reason: "All fields valid",
           },
           {
             rowNumber: 3,
-            rollNumber: 'INVALID_ROW',
-            fullName: 'Charles Xavier',
-            email: 'invalid-email-format',
-            department: 'Physics',
-            status: 'FAILED',
-            reason: 'Invalid email domain format (@stanford.edu required); Missing phone number',
+            rollNumber: "INVALID_ROW",
+            fullName: "Charles Xavier",
+            email: "invalid-email-format",
+            department: "Physics",
+            status: "FAILED",
+            reason:
+              "Invalid email domain format (@stanford.edu required); Missing phone number",
           },
           {
             rowNumber: 4,
-            rollNumber: 'CS-2026-004',
-            fullName: 'Diana Prince',
-            email: 'diana@stanford.edu',
-            department: 'Law',
-            status: 'VALID',
-            reason: 'All fields valid',
+            rollNumber: "CS-2026-004",
+            fullName: "Diana Prince",
+            email: "diana@stanford.edu",
+            department: "Law",
+            status: "VALID",
+            reason: "All fields valid",
           },
         ],
       });
@@ -121,7 +122,9 @@ export default function StudentUploadPage() {
   };
 
   const handleConfirmCommit = async () => {
-    alert(`Successfully provisioned ${report?.validCount || 3} student accounts for Stanford University!`);
+    alert(
+      `Successfully provisioned ${report?.validCount || 3} student accounts for Stanford University!`,
+    );
     setFile(null);
     setReport(null);
   };
@@ -149,7 +152,9 @@ export default function StudentUploadPage() {
             Bulk Student Roster Import (CSV)
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl">
-            Upload student roster CSV files to provision student accounts directly. Failed rows are highlighted with clear actionable validation reasons.
+            Upload student roster CSV files to provision student accounts
+            directly. Failed rows are highlighted with clear actionable
+            validation reasons.
           </p>
         </div>
 
@@ -171,8 +176,8 @@ export default function StudentUploadPage() {
           onDrop={handleDrop}
           className={`border-2 border-dashed rounded-3xl p-10 text-center transition-all bg-slate-900/60 ${
             dragActive
-              ? 'border-indigo-500 bg-indigo-950/20'
-              : 'border-slate-800 hover:border-slate-700'
+              ? "border-indigo-500 bg-indigo-950/20"
+              : "border-slate-800 hover:border-slate-700"
           }`}
         >
           <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto mb-4">
@@ -183,7 +188,8 @@ export default function StudentUploadPage() {
             Drag and Drop Student Roster CSV File Here
           </h3>
           <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-            Or click below to browse files on your device (.csv format, max 10MB)
+            Or click below to browse files on your device (.csv format, max
+            10MB)
           </p>
 
           <div className="mt-6">
@@ -219,7 +225,14 @@ export default function StudentUploadPage() {
                 Validation Report — {report.fileName}
               </h3>
               <p className="text-xs text-slate-400 mt-1">
-                Found {report.totalRows} records: <span className="text-emerald-400 font-bold">{report.validCount} valid</span>, <span className="text-rose-400 font-bold">{report.failedCount} failed</span>
+                Found {report.totalRows} records:{" "}
+                <span className="text-emerald-400 font-bold">
+                  {report.validCount} valid
+                </span>
+                ,{" "}
+                <span className="text-rose-400 font-bold">
+                  {report.failedCount} failed
+                </span>
               </p>
             </div>
 
@@ -263,18 +276,26 @@ export default function StudentUploadPage() {
                   <tr
                     key={row.rowNumber}
                     className={`transition-colors ${
-                      row.status === 'FAILED'
-                        ? 'bg-rose-950/20 hover:bg-rose-950/30'
-                        : 'hover:bg-slate-950/40'
+                      row.status === "FAILED"
+                        ? "bg-rose-950/20 hover:bg-rose-950/30"
+                        : "hover:bg-slate-950/40"
                     }`}
                   >
-                    <td className="p-3 font-bold text-slate-400">#{row.rowNumber}</td>
-                    <td className="p-3 font-bold text-white">{row.rollNumber}</td>
-                    <td className="p-3 font-sans text-slate-200">{row.fullName}</td>
+                    <td className="p-3 font-bold text-slate-400">
+                      #{row.rowNumber}
+                    </td>
+                    <td className="p-3 font-bold text-white">
+                      {row.rollNumber}
+                    </td>
+                    <td className="p-3 font-sans text-slate-200">
+                      {row.fullName}
+                    </td>
                     <td className="p-3 text-indigo-300">{row.email}</td>
-                    <td className="p-3 font-sans text-slate-400">{row.department}</td>
+                    <td className="p-3 font-sans text-slate-400">
+                      {row.department}
+                    </td>
                     <td className="p-3">
-                      {row.status === 'VALID' ? (
+                      {row.status === "VALID" ? (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                           <CheckCircle2 className="w-3 h-3" /> VALID
                         </span>
@@ -286,7 +307,9 @@ export default function StudentUploadPage() {
                     </td>
                     <td
                       className={`p-3 font-sans text-xs ${
-                        row.status === 'FAILED' ? 'text-rose-300 font-semibold' : 'text-slate-500'
+                        row.status === "FAILED"
+                          ? "text-rose-300 font-semibold"
+                          : "text-slate-500"
                       }`}
                     >
                       {row.reason}

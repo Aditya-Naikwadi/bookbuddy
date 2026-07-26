@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import apiClient from '../api/client';
+import { useState, useEffect, useRef } from "react";
+import apiClient from "../api/client";
 
 export const useReaderPosition = (resourceId, userId, rendition, pdfState) => {
   const [currentCfi, setCurrentCfi] = useState(null);
@@ -20,7 +20,9 @@ export const useReaderPosition = (resourceId, userId, rendition, pdfState) => {
       try {
         let savedData = null;
         try {
-          const { data } = await apiClient.get(`/reader/${resourceId}/position`);
+          const { data } = await apiClient.get(
+            `/reader/${resourceId}/position`,
+          );
           savedData = data.data;
         } catch {
           const cached = localStorage.getItem(localKey);
@@ -31,10 +33,11 @@ export const useReaderPosition = (resourceId, userId, rendition, pdfState) => {
           setInitialPosition(savedData);
           if (savedData.cfi) setCurrentCfi(savedData.cfi);
           if (savedData.page) setCurrentPageState(savedData.page);
-          if (savedData.progressPercentage) setPercentCompleteState(savedData.progressPercentage);
+          if (savedData.progressPercentage)
+            setPercentCompleteState(savedData.progressPercentage);
         }
       } catch (e) {
-        console.error('Failed to load saved reader position:', e);
+        console.error("Failed to load saved reader position:", e);
       }
     };
 
@@ -56,19 +59,25 @@ export const useReaderPosition = (resourceId, userId, rendition, pdfState) => {
       setCurrentCfi(cfi);
       setPercentCompleteState(percent);
 
-      const payload = { cfi, progressPercentage: percent, timestamp: Date.now() };
+      const payload = {
+        cfi,
+        progressPercentage: percent,
+        timestamp: Date.now(),
+      };
 
       try {
         localStorage.setItem(localKey, JSON.stringify(payload));
-        await apiClient.put(`/reader/${resourceId}/position`, payload).catch(() => {});
+        await apiClient
+          .put(`/reader/${resourceId}/position`, payload)
+          .catch(() => {});
       } catch (e) {
-        console.error('Failed to save EPUB position:', e);
+        console.error("Failed to save EPUB position:", e);
       }
     };
 
-    rendition.on('relocated', handleRelocate);
+    rendition.on("relocated", handleRelocate);
     return () => {
-      rendition.off('relocated', handleRelocate);
+      rendition.off("relocated", handleRelocate);
     };
   }, [rendition, initialPosition, resourceId, localKey]);
 
@@ -78,20 +87,26 @@ export const useReaderPosition = (resourceId, userId, rendition, pdfState) => {
     if (!pdfPage || !pdfTotalPages || pdfTotalPages <= 0) return;
 
     const percent = Math.round((pdfPage / pdfTotalPages) * 100);
-    const payload = { page: pdfPage, totalPages: pdfTotalPages, progressPercentage: percent, timestamp: Date.now() };
+    const payload = {
+      page: pdfPage,
+      totalPages: pdfTotalPages,
+      progressPercentage: percent,
+      timestamp: Date.now(),
+    };
 
     try {
       localStorage.setItem(localKey, JSON.stringify(payload));
       apiClient.put(`/reader/${resourceId}/position`, payload).catch(() => {});
     } catch (e) {
-      console.error('Failed to save PDF position:', e);
+      console.error("Failed to save PDF position:", e);
     }
   }, [pdfPage, pdfTotalPages, resourceId, localKey]);
 
   const currentPage = pdfState?.page || currentPageState;
-  const percentComplete = pdfState?.page && pdfState?.totalPages 
-    ? Math.round((pdfState.page / pdfState.totalPages) * 100) 
-    : percentCompleteState;
+  const percentComplete =
+    pdfState?.page && pdfState?.totalPages
+      ? Math.round((pdfState.page / pdfState.totalPages) * 100)
+      : percentCompleteState;
 
   // 4. Reading time counter & periodic heartbeat
   useEffect(() => {
@@ -99,13 +114,15 @@ export const useReaderPosition = (resourceId, userId, rendition, pdfState) => {
 
     const syncProgressToServer = async (seconds) => {
       try {
-        await apiClient.post(`/eresources/${resourceId}/progress`, {
-          dailySecondsToday: seconds,
-          readingTimeMinutes: Math.floor(seconds / 60),
-        }).catch(() => {});
+        await apiClient
+          .post(`/eresources/${resourceId}/progress`, {
+            dailySecondsToday: seconds,
+            readingTimeMinutes: Math.floor(seconds / 60),
+          })
+          .catch(() => {});
         lastSyncRef.current = seconds;
       } catch (e) {
-        console.error('Failed to sync reading time:', e);
+        console.error("Failed to sync reading time:", e);
       }
     };
 

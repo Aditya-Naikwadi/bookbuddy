@@ -1,14 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { academicSupportApi } from '../api/academicSupportApi';
-import useAuthStore from '../store/authStore';
-import useSocket from './useSocket';
-import { useState, useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { academicSupportApi } from "../api/academicSupportApi";
+import useAuthStore from "../store/authStore";
+import useSocket from "./useSocket";
+import { useState, useEffect } from "react";
 
 export const useAcademicSupport = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { socket, isConnected } = useSocket();
-  const [liveAnnouncement, setLiveAnnouncement] = useState('');
+  const [liveAnnouncement, setLiveAnnouncement] = useState("");
 
   // Real-time socket event subscription for ticket updates
   useEffect(() => {
@@ -17,19 +17,23 @@ export const useAcademicSupport = () => {
     const handleComplaintUpdated = (updatedTicket) => {
       if (!updatedTicket || !updatedTicket._id) return;
 
-      queryClient.setQueryData(['my-complaints'], (oldData = []) => {
-        return oldData.map((c) => (c._id === updatedTicket._id ? { ...c, ...updatedTicket } : c));
+      queryClient.setQueryData(["my-complaints"], (oldData = []) => {
+        return oldData.map((c) =>
+          c._id === updatedTicket._id ? { ...c, ...updatedTicket } : c,
+        );
       });
 
-      setLiveAnnouncement(`Support ticket update: "${updatedTicket.subject || 'Ticket'}" is now ${updatedTicket.status || 'updated'}.`);
+      setLiveAnnouncement(
+        `Support ticket update: "${updatedTicket.subject || "Ticket"}" is now ${updatedTicket.status || "updated"}.`,
+      );
     };
 
-    socket.on('complaint:updated', handleComplaintUpdated);
-    socket.on('ticket:updated', handleComplaintUpdated);
+    socket.on("complaint:updated", handleComplaintUpdated);
+    socket.on("ticket:updated", handleComplaintUpdated);
 
     return () => {
-      socket.off('complaint:updated', handleComplaintUpdated);
-      socket.off('ticket:updated', handleComplaintUpdated);
+      socket.off("complaint:updated", handleComplaintUpdated);
+      socket.off("ticket:updated", handleComplaintUpdated);
     };
   }, [socket, queryClient]);
 
@@ -39,7 +43,7 @@ export const useAcademicSupport = () => {
     isLoading: loadingComplaints,
     refetch: refetchComplaints,
   } = useQuery({
-    queryKey: ['my-complaints'],
+    queryKey: ["my-complaints"],
     queryFn: academicSupportApi.getMyComplaints,
     staleTime: 30000,
   });
@@ -50,13 +54,14 @@ export const useAcademicSupport = () => {
     isLoading: loadingSuggestions,
     refetch: refetchSuggestions,
   } = useQuery({
-    queryKey: ['all-book-suggestions'],
+    queryKey: ["all-book-suggestions"],
     queryFn: academicSupportApi.getBookSuggestions,
     staleTime: 30000,
   });
 
   const mySuggestions = allSuggestions.filter((s) => {
-    const suggestedUserId = s.suggestedBy?._id?.toString() || s.suggestedBy?.toString();
+    const suggestedUserId =
+      s.suggestedBy?._id?.toString() || s.suggestedBy?.toString();
     return suggestedUserId === user?._id?.toString();
   });
 
@@ -66,13 +71,14 @@ export const useAcademicSupport = () => {
     isLoading: loadingFeedback,
     refetch: refetchFeedback,
   } = useQuery({
-    queryKey: ['all-feedback'],
+    queryKey: ["all-feedback"],
     queryFn: academicSupportApi.getFeedback,
     staleTime: 30000,
   });
 
   const myFeedback = allFeedback.filter((f) => {
-    const submittedUserId = f.submittedBy?._id?.toString() || f.submittedBy?.toString();
+    const submittedUserId =
+      f.submittedBy?._id?.toString() || f.submittedBy?.toString();
     return submittedUserId === user?._id?.toString();
   });
 
@@ -81,11 +87,13 @@ export const useAcademicSupport = () => {
     mutationFn: ({ title, author, reason }) =>
       academicSupportApi.submitBookSuggestion(title, author, reason),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['all-book-suggestions'] });
-      setLiveAnnouncement('Purchase suggestion submitted successfully.');
+      queryClient.invalidateQueries({ queryKey: ["all-book-suggestions"] });
+      setLiveAnnouncement("Purchase suggestion submitted successfully.");
     },
     onError: (err) => {
-      setLiveAnnouncement(`Submission failed. ${err.response?.data?.message || err.message}`);
+      setLiveAnnouncement(
+        `Submission failed. ${err.response?.data?.message || err.message}`,
+      );
     },
   });
 
@@ -94,11 +102,15 @@ export const useAcademicSupport = () => {
     mutationFn: ({ subject, description }) =>
       academicSupportApi.submitComplaint(subject, description),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-complaints'] });
-      setLiveAnnouncement('Complaint submitted successfully. An administrator will review it.');
+      queryClient.invalidateQueries({ queryKey: ["my-complaints"] });
+      setLiveAnnouncement(
+        "Complaint submitted successfully. An administrator will review it.",
+      );
     },
     onError: (err) => {
-      setLiveAnnouncement(`Submission failed. ${err.response?.data?.message || err.message}`);
+      setLiveAnnouncement(
+        `Submission failed. ${err.response?.data?.message || err.message}`,
+      );
     },
   });
 
@@ -107,11 +119,15 @@ export const useAcademicSupport = () => {
     mutationFn: ({ category, message, rating }) =>
       academicSupportApi.submitFeedback(category, message, rating),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['all-feedback'] });
-      setLiveAnnouncement('Feedback submitted successfully. Thank you for your review.');
+      queryClient.invalidateQueries({ queryKey: ["all-feedback"] });
+      setLiveAnnouncement(
+        "Feedback submitted successfully. Thank you for your review.",
+      );
     },
     onError: (err) => {
-      setLiveAnnouncement(`Submission failed. ${err.response?.data?.message || err.message}`);
+      setLiveAnnouncement(
+        `Submission failed. ${err.response?.data?.message || err.message}`,
+      );
     },
   });
 

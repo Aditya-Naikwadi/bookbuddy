@@ -1,10 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { facilitiesApi } from '../api/facilitiesApi';
-import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { facilitiesApi } from "../api/facilitiesApi";
+import { useState } from "react";
 
 export const useReservation = () => {
   const queryClient = useQueryClient();
-  const [liveAnnouncement, setLiveAnnouncement] = useState('');
+  const [liveAnnouncement, setLiveAnnouncement] = useState("");
 
   // 1. Fetch Student's Bookings
   const {
@@ -12,7 +12,7 @@ export const useReservation = () => {
     isLoading: loadingMyBookings,
     error: errorMyBookings,
   } = useQuery({
-    queryKey: ['my-lab-bookings'],
+    queryKey: ["my-lab-bookings"],
     queryFn: facilitiesApi.getMyBookings,
   });
 
@@ -22,18 +22,22 @@ export const useReservation = () => {
       facilitiesApi.createBooking(seatId, startTime, endTime),
     onSuccess: () => {
       // Invalidate availability and booking lists
-      queryClient.invalidateQueries({ queryKey: ['lab-availability'] });
-      queryClient.invalidateQueries({ queryKey: ['my-lab-bookings'] });
+      queryClient.invalidateQueries({ queryKey: ["lab-availability"] });
+      queryClient.invalidateQueries({ queryKey: ["my-lab-bookings"] });
       // Invalidate streak query since booking counts as a qualifying action!
-      queryClient.invalidateQueries({ queryKey: ['streak', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ["streak", "me"] });
 
-      setLiveAnnouncement(`Reservation successful! Your workstation booking has been confirmed.`);
+      setLiveAnnouncement(
+        `Reservation successful! Your workstation booking has been confirmed.`,
+      );
     },
     onError: (error) => {
-      const isConflict = error.response?.status === 409 || error.message?.includes('409');
+      const isConflict =
+        error.response?.status === 409 || error.message?.includes("409");
       const message = isConflict
-        ? 'Double-booking conflict: This workstation slot was just reserved by another student. Please select a different timeslot.'
-        : error.response?.data?.message || 'Failed to complete reservation. Please try again.';
+        ? "Double-booking conflict: This workstation slot was just reserved by another student. Please select a different timeslot."
+        : error.response?.data?.message ||
+          "Failed to complete reservation. Please try again.";
 
       setLiveAnnouncement(`Reservation failed. ${message}`);
       // Re-throw with custom message for component UI consumption
@@ -46,35 +50,37 @@ export const useReservation = () => {
     mutationFn: facilitiesApi.cancelBooking,
     onMutate: async (bookingId) => {
       // Cancel outgoing refetches so they don't overwrite our optimistic update
-      await queryClient.cancelQueries({ queryKey: ['my-lab-bookings'] });
+      await queryClient.cancelQueries({ queryKey: ["my-lab-bookings"] });
 
       // Snapshot previous value
-      const prevBookings = queryClient.getQueryData(['my-lab-bookings']);
+      const prevBookings = queryClient.getQueryData(["my-lab-bookings"]);
 
       // Optimistically remove the booking from cache
       if (prevBookings) {
         queryClient.setQueryData(
-          ['my-lab-bookings'],
-          prevBookings.filter((b) => b._id !== bookingId)
+          ["my-lab-bookings"],
+          prevBookings.filter((b) => b._id !== bookingId),
         );
       }
 
       return { prevBookings };
     },
     onSuccess: () => {
-      setLiveAnnouncement('Workstation booking cancelled successfully.');
+      setLiveAnnouncement("Workstation booking cancelled successfully.");
     },
     onError: (err, bookingId, context) => {
       // Rollback on error
       if (context?.prevBookings) {
-        queryClient.setQueryData(['my-lab-bookings'], context.prevBookings);
+        queryClient.setQueryData(["my-lab-bookings"], context.prevBookings);
       }
-      setLiveAnnouncement('Cancellation failed. Please verify your connection.');
+      setLiveAnnouncement(
+        "Cancellation failed. Please verify your connection.",
+      );
     },
     onSettled: () => {
       // Always refetch to reconcile with server state
-      queryClient.invalidateQueries({ queryKey: ['lab-availability'] });
-      queryClient.invalidateQueries({ queryKey: ['my-lab-bookings'] });
+      queryClient.invalidateQueries({ queryKey: ["lab-availability"] });
+      queryClient.invalidateQueries({ queryKey: ["my-lab-bookings"] });
     },
   });
 

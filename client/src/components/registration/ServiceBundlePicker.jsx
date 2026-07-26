@@ -1,4 +1,4 @@
-import { Sparkles, Layers, Check } from 'lucide-react';
+import { Sparkles, Layers, Check } from "lucide-react";
 
 export default function ServiceBundlePicker({
   services = [],
@@ -6,7 +6,13 @@ export default function ServiceBundlePicker({
   onSelectBundle,
 }) {
   const allKeys = services.map((s) => s.key);
-  const coreKeys = services.filter((s) => s.isCore || ['catalog', 'loans', 'patron-card', 'fines'].includes(s.key)).map((s) => s.key);
+  const coreKeys = services
+    .filter(
+      (s) =>
+        s.isCore ||
+        ["catalog", "loans", "patron-card", "fines"].includes(s.key),
+    )
+    .map((s) => s.key);
 
   const isEssentialsSelected =
     selectedKeys.length === coreKeys.length &&
@@ -38,8 +44,8 @@ export default function ServiceBundlePicker({
             onClick={() => onSelectBundle(coreKeys)}
             className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 border ${
               isEssentialsSelected
-                ? 'bg-indigo-600 border-indigo-400 text-white shadow-sm shadow-indigo-500/50'
-                : 'bg-white/10 hover:bg-white/20 border-white/10 text-slate-200'
+                ? "bg-indigo-600 border-indigo-400 text-white shadow-sm shadow-indigo-500/50"
+                : "bg-white/10 hover:bg-white/20 border-white/10 text-slate-200"
             }`}
           >
             {isEssentialsSelected && <Check size={14} />}
@@ -51,8 +57,8 @@ export default function ServiceBundlePicker({
             onClick={() => onSelectBundle(allKeys)}
             className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 border ${
               isFullSuiteSelected
-                ? 'bg-indigo-600 border-indigo-400 text-white shadow-sm shadow-indigo-500/50'
-                : 'bg-white/10 hover:bg-white/20 border-white/10 text-slate-200'
+                ? "bg-indigo-600 border-indigo-400 text-white shadow-sm shadow-indigo-500/50"
+                : "bg-white/10 hover:bg-white/20 border-white/10 text-slate-200"
             }`}
           >
             <Layers size={14} />

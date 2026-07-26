@@ -1,6 +1,13 @@
-import { useEffect, useRef } from 'react';
-import { Monitor, Calendar, Clock, ShieldCheck, X, Loader2 } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { useEffect, useRef } from "react";
+import {
+  Monitor,
+  Calendar,
+  Clock,
+  ShieldCheck,
+  X,
+  Loader2,
+} from "lucide-react";
+import { Button } from "../../ui/Button";
 
 export const ReservationModal = ({
   slot,
@@ -16,22 +23,22 @@ export const ReservationModal = ({
   // Focus trap implementation
   useEffect(() => {
     if (!slot) return;
-    
+
     // Focus the first element (close button) when modal opens
     setTimeout(() => {
       closeBtnRef.current?.focus();
     }, 50);
 
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
         return;
       }
 
-      if (e.key === 'Tab') {
+      if (e.key === "Tab") {
         if (!modalRef.current) return;
         const focusableElements = modalRef.current.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
         );
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
@@ -52,8 +59,8 @@ export const ReservationModal = ({
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [slot, onClose]);
 
   if (!slot) return null;
@@ -88,25 +95,36 @@ export const ReservationModal = ({
         </button>
 
         {/* Heading */}
-        <h3 id="confirm-reservation-title" className="text-xl font-serif font-black text-slate-900 pr-8">
+        <h3
+          id="confirm-reservation-title"
+          className="text-xl font-serif font-black text-slate-900 pr-8"
+        >
           Confirm Your Workstation Reservation
         </h3>
-        <p className="text-xs text-slate-500 mt-1">Review timeslot and seat specifications before finalizing.</p>
+        <p className="text-xs text-slate-500 mt-1">
+          Review timeslot and seat specifications before finalizing.
+        </p>
 
         {/* Workstation summary box */}
         <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 my-5 space-y-3.5">
           <div className="flex items-center gap-3">
             <Monitor className="text-indigo-600 w-5 h-5 shrink-0" />
             <div>
-              <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">Workstation</p>
-              <p className="text-sm font-bold text-slate-800">{slot.seatNumber}</p>
+              <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">
+                Workstation
+              </p>
+              <p className="text-sm font-bold text-slate-800">
+                {slot.seatNumber}
+              </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <Calendar className="text-indigo-600 w-5 h-5 shrink-0" />
             <div>
-              <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">Date</p>
+              <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">
+                Date
+              </p>
               <p className="text-sm font-bold text-slate-800">{dateLabel}</p>
             </div>
           </div>
@@ -114,8 +132,12 @@ export const ReservationModal = ({
           <div className="flex items-center gap-3">
             <Clock className="text-indigo-600 w-5 h-5 shrink-0" />
             <div>
-              <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">Reserved Time & Duration</p>
-              <p className="text-sm font-bold text-slate-800">{slot.timeLabel} (1 hour)</p>
+              <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">
+                Reserved Time & Duration
+              </p>
+              <p className="text-sm font-bold text-slate-800">
+                {slot.timeLabel} (1 hour)
+              </p>
             </div>
           </div>
         </div>

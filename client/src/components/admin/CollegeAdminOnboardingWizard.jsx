@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Building2,
   User,
@@ -15,41 +15,49 @@ import {
   Award,
   Crown,
   Laptop,
-} from 'lucide-react';
+} from "lucide-react";
 
 const INSTITUTION_TYPES = [
-  { key: 'university', label: 'University', icon: Building2, emoji: '🏛️' },
-  { key: 'college', label: 'College', icon: School, emoji: '🏫' },
-  { key: 'institute', label: 'Tech Institute', icon: Laptop, emoji: '🔬' },
-  { key: 'academy', label: 'Academy / School', icon: GraduationCap, emoji: '🎓' },
+  { key: "university", label: "University", icon: Building2, emoji: "🏛️" },
+  { key: "college", label: "College", icon: School, emoji: "🏫" },
+  { key: "institute", label: "Tech Institute", icon: Laptop, emoji: "🔬" },
+  {
+    key: "academy",
+    label: "Academy / School",
+    icon: GraduationCap,
+    emoji: "🎓",
+  },
 ];
 
 const ADMIN_ROLES = [
-  { key: 'head_librarian', label: 'Head / Chief Librarian', emoji: '📖' },
-  { key: 'campus_admin', label: 'Campus Administrator', emoji: '🛡️' },
-  { key: 'academic_dean', label: 'Dean of Academics', emoji: '🎓' },
-  { key: 'it_director', label: 'IT & Systems Director', emoji: '💻' },
+  { key: "head_librarian", label: "Head / Chief Librarian", emoji: "📖" },
+  { key: "campus_admin", label: "Campus Administrator", emoji: "🛡️" },
+  { key: "academic_dean", label: "Dean of Academics", emoji: "🎓" },
+  { key: "it_director", label: "IT & Systems Director", emoji: "💻" },
 ];
 
-export default function CollegeAdminOnboardingWizard({ initialProfile, onComplete }) {
+export default function CollegeAdminOnboardingWizard({
+  initialProfile,
+  onComplete,
+}) {
   const [step, setStep] = useState(1);
 
   // Micro Data State: Only College & Admin Details
   const [formData, setFormData] = useState({
     // College Info
-    collegeName: initialProfile?.name || '',
-    domain: initialProfile?.domain || '',
-    institutionType: 'university',
+    collegeName: initialProfile?.name || "",
+    domain: initialProfile?.domain || "",
+    institutionType: "university",
 
     // Admin Info
-    adminName: initialProfile?.adminName || '',
-    adminRole: 'head_librarian',
-    phone: initialProfile?.contactPhone || '',
+    adminName: initialProfile?.adminName || "",
+    adminRole: "head_librarian",
+    phone: initialProfile?.contactPhone || "",
   });
 
   const handleDomainAutoFill = (name) => {
-    if (!name) return '';
-    const clean = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!name) return "";
+    const clean = name.toLowerCase().replace(/[^a-z0-9]/g, "");
     return `${clean.slice(0, 15)}.edu`;
   };
 
@@ -76,12 +84,19 @@ export default function CollegeAdminOnboardingWizard({ initialProfile, onComplet
   const handleFinalLaunch = () => {
     onComplete({
       name: formData.collegeName,
-      domain: formData.domain || 'campus.edu',
+      domain: formData.domain || "campus.edu",
       institutionType: formData.institutionType,
       adminName: formData.adminName,
       adminRole: formData.adminRole,
       contactPhone: formData.phone,
-      enabledFeatures: ['catalog', 'patrons', 'loans', 'fines', 'e-resources', 'reading-lists'],
+      enabledFeatures: [
+        "catalog",
+        "patrons",
+        "loans",
+        "fines",
+        "e-resources",
+        "reading-lists",
+      ],
     });
   };
 
@@ -97,19 +112,22 @@ export default function CollegeAdminOnboardingWizard({ initialProfile, onComplet
           Welcome to BookBuddy Campus!
         </h1>
         <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
-          Let’s personalize your library portal. Just two quick details to get started.
+          Let’s personalize your library portal. Just two quick details to get
+          started.
         </p>
 
         {/* Friendly Micro Progress Dots */}
         <div className="flex items-center justify-center gap-3 pt-4">
           <div
             className={`flex items-center gap-1.5 text-xs font-mono font-bold transition-all ${
-              step >= 1 ? 'text-indigo-400' : 'text-slate-600'
+              step >= 1 ? "text-indigo-400" : "text-slate-600"
             }`}
           >
             <span
               className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                step >= 1 ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-500'
+                step >= 1
+                  ? "bg-indigo-600 text-white"
+                  : "bg-slate-800 text-slate-500"
               }`}
             >
               1
@@ -117,16 +135,20 @@ export default function CollegeAdminOnboardingWizard({ initialProfile, onComplet
             <span>College</span>
           </div>
 
-          <div className={`w-8 h-0.5 ${step >= 2 ? 'bg-indigo-500' : 'bg-slate-800'}`} />
+          <div
+            className={`w-8 h-0.5 ${step >= 2 ? "bg-indigo-500" : "bg-slate-800"}`}
+          />
 
           <div
             className={`flex items-center gap-1.5 text-xs font-mono font-bold transition-all ${
-              step >= 2 ? 'text-indigo-400' : 'text-slate-600'
+              step >= 2 ? "text-indigo-400" : "text-slate-600"
             }`}
           >
             <span
               className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                step >= 2 ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-500'
+                step >= 2
+                  ? "bg-indigo-600 text-white"
+                  : "bg-slate-800 text-slate-500"
               }`}
             >
               2
@@ -134,16 +156,20 @@ export default function CollegeAdminOnboardingWizard({ initialProfile, onComplet
             <span>Admin</span>
           </div>
 
-          <div className={`w-8 h-0.5 ${step >= 3 ? 'bg-indigo-500' : 'bg-slate-800'}`} />
+          <div
+            className={`w-8 h-0.5 ${step >= 3 ? "bg-indigo-500" : "bg-slate-800"}`}
+          />
 
           <div
             className={`flex items-center gap-1.5 text-xs font-mono font-bold transition-all ${
-              step === 3 ? 'text-emerald-400' : 'text-slate-600'
+              step === 3 ? "text-emerald-400" : "text-slate-600"
             }`}
           >
             <span
               className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                step === 3 ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-500'
+                step === 3
+                  ? "bg-emerald-600 text-white"
+                  : "bg-slate-800 text-slate-500"
               }`}
             >
               ✓
@@ -163,8 +189,12 @@ export default function CollegeAdminOnboardingWizard({ initialProfile, onComplet
               🏛️
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">Tell us about your Institution</h2>
-              <p className="text-xs text-slate-400">What is the official name of your campus?</p>
+              <h2 className="text-lg font-bold text-white">
+                Tell us about your Institution
+              </h2>
+              <p className="text-xs text-slate-400">
+                What is the official name of your campus?
+              </p>
             </div>
           </div>
 
@@ -172,7 +202,8 @@ export default function CollegeAdminOnboardingWizard({ initialProfile, onComplet
             {/* Institution Name Input */}
             <div>
               <label className="block text-xs font-mono font-bold uppercase text-slate-300 mb-2">
-                College / Institution Full Name <span className="text-rose-400">*</span>
+                College / Institution Full Name{" "}
+                <span className="text-rose-400">*</span>
               </label>
               <input
                 type="text"
@@ -197,11 +228,13 @@ export default function CollegeAdminOnboardingWizard({ initialProfile, onComplet
                     <button
                       key={item.key}
                       type="button"
-                      onClick={() => setFormData({ ...formData, institutionType: item.key })}
+                      onClick={() =>
+                        setFormData({ ...formData, institutionType: item.key })
+                      }
                       className={`p-3 rounded-2xl border text-left transition-all flex flex-col items-center justify-center gap-1.5 text-center ${
                         isSelected
-                          ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30 scale-105'
-                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                          ? "bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30 scale-105"
+                          : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200"
                       }`}
                     >
                       <span className="text-lg">{item.emoji}</span>
@@ -222,13 +255,19 @@ export default function CollegeAdminOnboardingWizard({ initialProfile, onComplet
                 <input
                   type="text"
                   value={formData.domain}
-                  onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, domain: e.target.value })
+                  }
                   placeholder="stanford.edu"
                   className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-800 bg-slate-950 text-indigo-300 text-xs font-mono focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
               <p className="text-[11px] text-slate-500 mt-1">
-                Used to verify student self-registration (e.g. student@<span className="text-indigo-400">{formData.domain || 'college.edu'}</span>).
+                Used to verify student self-registration (e.g. student@
+                <span className="text-indigo-400">
+                  {formData.domain || "college.edu"}
+                </span>
+                ).
               </p>
             </div>
 
@@ -255,8 +294,12 @@ export default function CollegeAdminOnboardingWizard({ initialProfile, onComplet
                 👤
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Who is managing the Library?</h2>
-                <p className="text-xs text-slate-400">Enter administrator details for {formData.collegeName}.</p>
+                <h2 className="text-lg font-bold text-white">
+                  Who is managing the Library?
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Enter administrator details for {formData.collegeName}.
+                </p>
               </div>
             </div>
 
@@ -279,7 +322,9 @@ export default function CollegeAdminOnboardingWizard({ initialProfile, onComplet
                 <input
                   type="text"
                   value={formData.adminName}
-                  onChange={(e) => setFormData({ ...formData, adminName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, adminName: e.target.value })
+                  }
                   placeholder="e.g. Dr. Eleanor Vance"
                   className="w-full pl-10 pr-4 py-3.5 rounded-2xl border border-slate-800 bg-slate-950 text-white text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none placeholder:text-slate-600"
                   required
@@ -300,11 +345,13 @@ export default function CollegeAdminOnboardingWizard({ initialProfile, onComplet
                     <button
                       key={role.key}
                       type="button"
-                      onClick={() => setFormData({ ...formData, adminRole: role.key })}
+                      onClick={() =>
+                        setFormData({ ...formData, adminRole: role.key })
+                      }
                       className={`p-3 rounded-2xl border text-left transition-all flex items-center gap-3 ${
                         isSelected
-                          ? 'bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-600/30'
-                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                          ? "bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-600/30"
+                          : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200"
                       }`}
                     >
                       <span className="text-lg">{role.emoji}</span>
@@ -325,7 +372,9 @@ export default function CollegeAdminOnboardingWizard({ initialProfile, onComplet
                 <input
                   type="tel"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                   placeholder="+1 (650) 555-0199"
                   className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-800 bg-slate-950 text-white text-xs font-mono focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
@@ -354,7 +403,9 @@ export default function CollegeAdminOnboardingWizard({ initialProfile, onComplet
           </div>
 
           <div>
-            <h2 className="text-2xl font-extrabold text-white">Your Campus Portal is Ready!</h2>
+            <h2 className="text-2xl font-extrabold text-white">
+              Your Campus Portal is Ready!
+            </h2>
             <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
               We have configured your institution and administrator credentials.
             </p>
@@ -364,7 +415,9 @@ export default function CollegeAdminOnboardingWizard({ initialProfile, onComplet
           <div className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4 text-left space-y-3 font-mono text-xs">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <span className="text-slate-400">Institution:</span>
-              <span className="font-bold text-white">{formData.collegeName}</span>
+              <span className="font-bold text-white">
+                {formData.collegeName}
+              </span>
             </div>
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <span className="text-slate-400">Domain:</span>
@@ -372,11 +425,15 @@ export default function CollegeAdminOnboardingWizard({ initialProfile, onComplet
             </div>
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <span className="text-slate-400">Administrator:</span>
-              <span className="font-bold text-emerald-400">{formData.adminName}</span>
+              <span className="font-bold text-emerald-400">
+                {formData.adminName}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-400">Designation:</span>
-              <span className="text-slate-300 uppercase">{formData.adminRole.replace('_', ' ')}</span>
+              <span className="text-slate-300 uppercase">
+                {formData.adminRole.replace("_", " ")}
+              </span>
             </div>
           </div>
 

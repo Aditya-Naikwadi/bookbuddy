@@ -1,4 +1,10 @@
-import { CheckCircle2, AlertOctagon, Download, RefreshCw, ArrowLeft } from 'lucide-react';
+import {
+  CheckCircle2,
+  AlertOctagon,
+  Download,
+  RefreshCw,
+  ArrowLeft,
+} from "lucide-react";
 
 export default function UploadResultSummary({
   result,
@@ -11,21 +17,21 @@ export default function UploadResultSummary({
   const successCount = Math.max(0, processedCount - failedCount);
 
   const handleDownloadErrorReport = () => {
-    const columns = ['Row', 'Student ID', 'Error Details'];
+    const columns = ["Row", "Student ID", "Error Details"];
     const rowsData = (result?.errors || failedRows).map((err, idx) => [
       err.row || idx + 1,
-      err.studentId || 'N/A',
-      `"${(err.error || err.errors?.join(', ') || 'Validation error').replace(/"/g, '""')}"`,
+      err.studentId || "N/A",
+      `"${(err.error || err.errors?.join(", ") || "Validation error").replace(/"/g, '""')}"`,
     ]);
 
     const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      [columns.join(','), ...rowsData.map((r) => r.join(','))].join('\n');
+      "data:text/csv;charset=utf-8," +
+      [columns.join(","), ...rowsData.map((r) => r.join(","))].join("\n");
 
     const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `upload_error_report_${Date.now()}.csv`);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `upload_error_report_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -41,23 +47,34 @@ export default function UploadResultSummary({
           Bulk Roster Import Complete
         </h2>
         <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
-          Student records have been processed and enrolled under your college institution account.
+          Student records have been processed and enrolled under your college
+          institution account.
         </p>
       </div>
 
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total</span>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{processedCount}</p>
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            Total
+          </span>
+          <p className="text-2xl font-bold text-slate-900 mt-1">
+            {processedCount}
+          </p>
         </div>
 
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
-          <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Enrolled</span>
-          <p className="text-2xl font-bold text-emerald-700 mt-1">{successCount}</p>
+          <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">
+            Enrolled
+          </span>
+          <p className="text-2xl font-bold text-emerald-700 mt-1">
+            {successCount}
+          </p>
         </div>
 
         <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl">
-          <span className="text-[11px] font-semibold text-rose-700 uppercase tracking-wider">Failed</span>
+          <span className="text-[11px] font-semibold text-rose-700 uppercase tracking-wider">
+            Failed
+          </span>
           <p className="text-2xl font-bold text-rose-700 mt-1">{failedCount}</p>
         </div>
       </div>
@@ -67,7 +84,9 @@ export default function UploadResultSummary({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-amber-900 text-xs font-bold">
               <AlertOctagon size={16} className="text-amber-600" />
-              <span>{failedCount} student record(s) failed validation or enrollment</span>
+              <span>
+                {failedCount} student record(s) failed validation or enrollment
+              </span>
             </div>
             <button
               type="button"
@@ -79,7 +98,8 @@ export default function UploadResultSummary({
             </button>
           </div>
           <p className="text-xs text-amber-800">
-            You can download the error CSV report to see specific failure reasons or re-upload corrected rows.
+            You can download the error CSV report to see specific failure
+            reasons or re-upload corrected rows.
           </p>
         </div>
       )}

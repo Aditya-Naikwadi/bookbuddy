@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const collegeFeatureConfigSchema = new mongoose.Schema(
+const CollegeFeatureConfigSchema = new mongoose.Schema(
   {
     collegeId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -18,16 +18,26 @@ const collegeFeatureConfigSchema = new mongoose.Schema(
     ],
     pendingRequests: [
       {
-        featureKey: { type: String, required: true },
-        requestedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        featureId: { type: String, required: true },
         requestedAt: { type: Date, default: Date.now },
-        status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+        requestedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        reason: { type: String, default: '' },
+        status: {
+          type: String,
+          enum: ['pending', 'approved', 'rejected'],
+          default: 'pending',
+        },
       },
     ],
+    customSettings: {
+      type: Map,
+      of: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-module.exports = mongoose.model('CollegeFeatureConfig', collegeFeatureConfigSchema);
+module.exports =
+  mongoose.models.CollegeFeatureConfig ||
+  mongoose.model('CollegeFeatureConfig', CollegeFeatureConfigSchema);

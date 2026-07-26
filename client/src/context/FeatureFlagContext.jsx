@@ -1,12 +1,15 @@
-import { useMemo, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import useAuthStore from '../store/authStore';
-import featureApi from '../api/featureApi';
-import { FeatureFlagContext, DEFAULT_CORE_FEATURES } from './featureFlagContextObject';
+import { useMemo, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import useAuthStore from "../store/authStore";
+import featureApi from "../api/featureApi";
+import {
+  FeatureFlagContext,
+  DEFAULT_CORE_FEATURES,
+} from "./featureFlagContextObject";
 
 export function FeatureFlagProvider({ children }) {
   const { user } = useAuthStore();
-  const collegeId = user?.collegeId || 'current';
+  const collegeId = user?.collegeId || "current";
 
   const {
     data,
@@ -14,7 +17,7 @@ export function FeatureFlagProvider({ children }) {
     isError,
     refetch: refetchFeatures,
   } = useQuery({
-    queryKey: ['collegeFeatures', collegeId, user?.role],
+    queryKey: ["collegeFeatures", collegeId, user?.role],
     queryFn: () => featureApi.getCollegeFeatures(collegeId),
     enabled: !!user,
     staleTime: 1000 * 60 * 15,
@@ -34,10 +37,10 @@ export function FeatureFlagProvider({ children }) {
     (key) => {
       if (!key) return true;
       if (DEFAULT_CORE_FEATURES.includes(key)) return true;
-      if (user?.role === 'super-admin') return true;
+      if (user?.role === "super-admin") return true;
       return enabledFeatures.includes(key);
     },
-    [user?.role, enabledFeatures]
+    [user?.role, enabledFeatures],
   );
 
   const value = useMemo(
@@ -49,7 +52,14 @@ export function FeatureFlagProvider({ children }) {
       isFeatureEnabled,
       refetchFeatures,
     }),
-    [enabledFeatures, limits, isLoading, isError, isFeatureEnabled, refetchFeatures]
+    [
+      enabledFeatures,
+      limits,
+      isLoading,
+      isError,
+      isFeatureEnabled,
+      refetchFeatures,
+    ],
   );
 
   return (

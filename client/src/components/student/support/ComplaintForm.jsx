@@ -1,5 +1,5 @@
-import { AlertTriangle, Loader2 } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { AlertTriangle, Loader2 } from "lucide-react";
+import { Button } from "../../ui/Button";
 
 export const ComplaintForm = ({
   values = {},
@@ -16,7 +16,8 @@ export const ComplaintForm = ({
           File an Official Complaint
         </h2>
         <p className="text-xs text-slate-500 mt-1">
-          Submit concerns regarding library facilities, service staff conduct, or digital portal bugs.
+          Submit concerns regarding library facilities, service staff conduct,
+          or digital portal bugs.
         </p>
       </div>
 
@@ -26,7 +27,10 @@ export const ComplaintForm = ({
 
       {/* serious tone policy information */}
       <div className="p-3 bg-slate-50 border border-slate-150 rounded-2xl text-[10px] text-slate-600 leading-relaxed font-medium">
-        <strong className="text-slate-800 font-bold">Privacy Policy:</strong> Complaints are logged securely to your account for administrative review. Issues are typically processed and resolved within 3-5 business days.
+        <strong className="text-slate-800 font-bold">Privacy Policy:</strong>{" "}
+        Complaints are logged securely to your account for administrative
+        review. Issues are typically processed and resolved within 3-5 business
+        days.
       </div>
 
       <form
@@ -47,14 +51,16 @@ export const ComplaintForm = ({
           </label>
           <select
             id="complaint-subject"
-            value={values.subject || ''}
-            onChange={(e) => onFieldChange('subject', e.target.value)}
+            value={values.subject || ""}
+            onChange={(e) => onFieldChange("subject", e.target.value)}
             disabled={isPending}
             className={`w-full p-2.5 text-xs border rounded-xl focus:ring-2 focus:ring-red-500/50 focus:outline-none bg-white text-slate-700 ${
-              errors.subject ? 'border-red-500 bg-red-50/10' : 'border-slate-200'
+              errors.subject
+                ? "border-red-500 bg-red-50/10"
+                : "border-slate-200"
             }`}
             aria-required="true"
-            aria-describedby={errors.subject ? 'error-subject' : undefined}
+            aria-describedby={errors.subject ? "error-subject" : undefined}
           >
             <option value="">Select Category</option>
             <option value="Facility Issue">Facility Issue</option>
@@ -85,15 +91,19 @@ export const ComplaintForm = ({
           <textarea
             id="complaint-description"
             rows="4"
-            value={values.description || ''}
-            onChange={(e) => onFieldChange('description', e.target.value)}
+            value={values.description || ""}
+            onChange={(e) => onFieldChange("description", e.target.value)}
             disabled={isPending}
             className={`w-full p-2.5 text-xs border rounded-xl focus:ring-2 focus:ring-red-500/50 focus:outline-none resize-none ${
-              errors.description ? 'border-red-500 bg-red-50/10' : 'border-slate-200'
+              errors.description
+                ? "border-red-500 bg-red-50/10"
+                : "border-slate-200"
             }`}
             placeholder="Please provide complete details, dates, and locations if applicable..."
             aria-required="true"
-            aria-describedby={errors.description ? 'error-description' : undefined}
+            aria-describedby={
+              errors.description ? "error-description" : undefined
+            }
           />
           {errors.description && (
             <p

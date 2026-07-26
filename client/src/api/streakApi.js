@@ -1,30 +1,30 @@
-import apiClient from './client';
+import apiClient from "./client";
 
 export const streakApi = {
   getMyStreak: async () => {
-    const { data } = await apiClient.get('/streak/me');
+    const { data } = await apiClient.get("/streak/me");
     return data.data;
   },
   checkIn: async () => {
-    const { data } = await apiClient.post('/streak/check-in');
+    const { data } = await apiClient.post("/streak/check-in");
     return data.data;
   },
   repairStreak: async () => {
-    const { data } = await apiClient.post('/streak/repair');
+    const { data } = await apiClient.post("/streak/repair");
     return data.data;
   },
   getStickerCatalog: async () => {
-    const { data } = await apiClient.get('/stickers');
+    const { data } = await apiClient.get("/stickers");
     return data.data;
   },
   getMyStickers: async () => {
-    const { data } = await apiClient.get('/stickers/me');
+    const { data } = await apiClient.get("/stickers/me");
     return data.data;
   },
   getRewardsLadder: async () => {
-    const { data } = await apiClient.get('/streak/rewards');
+    const { data } = await apiClient.get("/streak/rewards");
     return data.data;
-  }
+  },
 };
 
 export default streakApi;

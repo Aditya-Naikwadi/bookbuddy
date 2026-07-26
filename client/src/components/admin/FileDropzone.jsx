@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { UploadCloud, FileText, AlertCircle } from 'lucide-react';
+import { useRef, useState } from "react";
+import { UploadCloud, FileText, AlertCircle } from "lucide-react";
 
 export default function FileDropzone({ onFileSelected, isParsing = false }) {
   const [isDragOver, setIsDragOver] = useState(false);
@@ -11,12 +11,12 @@ export default function FileDropzone({ onFileSelected, isParsing = false }) {
     if (!file) return;
 
     if (!file.name.match(/\.(csv|txt|xlsx)$/i)) {
-      setError('Please select a valid CSV or XLSX file.');
+      setError("Please select a valid CSV or XLSX file.");
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setError('File size exceeds 10MB sanity limit.');
+      setError("File size exceeds 10MB sanity limit.");
       return;
     }
 
@@ -49,7 +49,7 @@ export default function FileDropzone({ onFileSelected, isParsing = false }) {
         aria-label="Upload student roster CSV file"
         onClick={() => fileInputRef.current?.click()}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
+          if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             fileInputRef.current?.click();
           }
@@ -59,15 +59,17 @@ export default function FileDropzone({ onFileSelected, isParsing = false }) {
         onDragLeave={handleDragLeave}
         className={`relative border-2 border-dashed rounded-3xl p-8 sm:p-12 text-center transition-all cursor-pointer select-none outline-none focus:ring-4 focus:ring-indigo-100 ${
           isDragOver
-            ? 'border-indigo-500 bg-indigo-50/70 scale-[1.01]'
-            : 'border-slate-300 hover:border-indigo-400 bg-white hover:bg-slate-50/50'
-        } ${isParsing ? 'opacity-50 pointer-events-none' : ''}`}
+            ? "border-indigo-500 bg-indigo-50/70 scale-[1.01]"
+            : "border-slate-300 hover:border-indigo-400 bg-white hover:bg-slate-50/50"
+        } ${isParsing ? "opacity-50 pointer-events-none" : ""}`}
       >
         <input
           ref={fileInputRef}
           type="file"
           accept=".csv,.txt,.xlsx"
-          onChange={(e) => e.target.files?.[0] && handleFileChange(e.target.files[0])}
+          onChange={(e) =>
+            e.target.files?.[0] && handleFileChange(e.target.files[0])
+          }
           className="sr-only"
         />
 
@@ -79,7 +81,8 @@ export default function FileDropzone({ onFileSelected, isParsing = false }) {
           Drag & Drop Student Roster File Here
         </h3>
         <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto mb-4">
-          Support for <strong>CSV</strong> or <strong>XLSX</strong> files containing thousands of student records.
+          Support for <strong>CSV</strong> or <strong>XLSX</strong> files
+          containing thousands of student records.
         </p>
 
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-md transition-all">

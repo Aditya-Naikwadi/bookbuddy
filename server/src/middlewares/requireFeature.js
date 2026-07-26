@@ -1,37 +1,73 @@
-const AppError = require('../utils/AppError');
-const { getCollegeFeatures } = require('../services/serviceCatalogService');
+const redisClient = require('../utils/redisCache');
+const CollegeFeatureConfig = require('../models/CollegeFeatureConfig');
 
 /**
- * Express middleware to enforce server-side feature flag permissions per tenant.
- * @param {string} featureKey The feature key required to access the route
+ * Feature Gating Middleware Generator
+ * Checks if the specified feature is activated for the tenant.
+ * Uses Redis caching (1hr TTL) to avoid N+1 database lookups on every request.
+ * Returns 404 Not Found if feature is disabled to prevent cross-tenant resource enumeration.
  */
-const requireFeature = (featureKey) => {
+function requireFeature(requiredFeatureId) {
   return async (req, res, next) => {
     try {
-      if (!req.user) {
-        return next(new AppError('Authentication required.', 401));
-      }
-
-      // Super-admins bypass tenant feature flags
-      if (req.user.role === 'super-admin' || req.user.role === 'super_admin') {
+      // Allow SuperAdmin bypass
+      if (req.user && req.user.role === 'superadmin') {
         return next();
       }
 
-      const collegeId = req.user.collegeId;
-      if (!collegeId) {
-        return next(new AppError('User is not associated with an institution tenant.', 403));
+      const tenantId = req.tenantId || req.user?.collegeId;
+      if (!tenantId) {
+        return res.status(404).json({
+          success: false,
+          message: 'Resource not found',
+        });
       }
 
-      const featuresData = await getCollegeFeatures(collegeId.toString());
-      const enabledFeatures = featuresData.enabledFeatures || [];
+      const cacheKey = `college:features:${tenantId}`;
+      let enabledFeatures = null;
 
-      if (!enabledFeatures.includes(featureKey.toLowerCase())) {
-        return next(
-          new AppError(
-            `Access Forbidden: Feature '${featureKey}' is not licensed or enabled for your institution.`,
-            403
-          )
-        );
+      // 1. Try Redis Cache Lookup
+      try {
+        const cachedData = await redisClient.get(cacheKey);
+        if (cachedData) {
+          enabledFeatures = JSON.parse(cachedData);
+        }
+      } catch (cacheErr) {
+        // Log cache miss/error silently and fallback to DB
+      }
+
+      // 2. Fallback to Database if cache miss
+      if (!enabledFeatures) {
+        const configDoc = await CollegeFeatureConfig.findOne({ collegeId: tenantId }).lean();
+        enabledFeatures = configDoc
+          ? configDoc.enabledFeatures || []
+          : [
+              'catalog',
+              'loans',
+              'fines',
+              'patron-card',
+              'e-resources',
+              'reading-lists',
+              'recommendations',
+              'saved',
+              'facilities',
+              'support',
+              'gamification',
+            ];
+
+        try {
+          await redisClient.setex(cacheKey, 3600, JSON.stringify(enabledFeatures));
+        } catch (setCacheErr) {
+          // Ignore cache set error
+        }
+      }
+
+      // 3. Evaluate Activation State
+      if (!enabledFeatures.includes(requiredFeatureId)) {
+        return res.status(404).json({
+          success: false,
+          message: 'Resource not found or disabled for institution',
+        });
       }
 
       next();
@@ -39,6 +75,6 @@ const requireFeature = (featureKey) => {
       next(error);
     }
   };
-};
+}
 
 module.exports = requireFeature;

@@ -1,10 +1,10 @@
-import { useEffect, useRef } from 'react';
-import { X, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { useEffect, useRef } from "react";
+import { X, RotateCcw, SlidersHorizontal } from "lucide-react";
 
 const MobileFilterSheet = ({
   isOpen,
   onClose,
-  title = 'Faceted Filters',
+  title = "Faceted Filters",
   onResetAll,
   children,
 }) => {
@@ -13,12 +13,12 @@ const MobileFilterSheet = ({
   // Close on ESC key
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === "Escape" && isOpen) {
         onClose();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -63,7 +63,9 @@ const MobileFilterSheet = ({
         </div>
 
         {/* Scrollable Sheet Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-6 text-xs">{children}</div>
+        <div className="flex-1 overflow-y-auto p-5 space-y-6 text-xs">
+          {children}
+        </div>
 
         {/* Sheet Footer */}
         <div className="p-4 border-t border-slate-100 flex-shrink-0 bg-white">
