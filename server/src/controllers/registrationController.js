@@ -227,9 +227,11 @@ const submitTenantOnboarding = async (req, res, next) => {
   try {
     const {
       legalName,
+      collegeName,
       shortName,
       institutionType,
       domain,
+      collegeEmail,
       address,
       contactPhone,
       adminName,
@@ -238,14 +240,32 @@ const submitTenantOnboarding = async (req, res, next) => {
       password,
       adminPhone,
       desiredSlug,
+      selectedServices,
     } = req.body;
 
-    const normalizedDomain = domain.toLowerCase().trim();
-    const normalizedAdminEmail = adminEmail.toLowerCase().trim();
-    const normalizedSlug = desiredSlug.toLowerCase().trim();
+    const effectiveLegalName = (collegeName || legalName || '').trim();
+    if (!effectiveLegalName) {
+      return next(new AppError('College / Institution name is required.', 400));
+    }
+
+    const effectiveAdminEmail = (adminEmail || '').toLowerCase().trim();
+    if (!effectiveAdminEmail) {
+      return next(new AppError('College Admin Email is required.', 400));
+    }
+
+    const effectiveCollegeEmail = (collegeEmail || effectiveAdminEmail).toLowerCase().trim();
+    const emailDomain = effectiveAdminEmail.split('@')[1] || effectiveCollegeEmail.split('@')[1] || '';
+
+    const normalizedDomain = (domain || emailDomain).toLowerCase().trim();
+    const normalizedAdminEmail = effectiveAdminEmail;
+
+    const slugBase =
+      desiredSlug ||
+      normalizedDomain.split('.')[0] ||
+      effectiveLegalName.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    const normalizedSlug = slugBase.toLowerCase().trim();
 
     // 1. Validate domain match between admin email & institution domain
-    const emailDomain = normalizedAdminEmail.split('@')[1];
     if (
       !emailDomain ||
       (emailDomain !== normalizedDomain && !emailDomain.endsWith(`.${normalizedDomain}`))
@@ -260,13 +280,13 @@ const submitTenantOnboarding = async (req, res, next) => {
       $or: [
         { domain: normalizedDomain },
         { slug: normalizedSlug },
-        { name: new RegExp(`^${legalName.trim()}$`, 'i') },
+        { name: new RegExp(`^${effectiveLegalName}$`, 'i') },
       ],
     });
     if (existingCollege) {
       return next(
         new AppError(
-          'An institution with this legal name, domain, or tenant slug is already registered.',
+          'An institution with this name, domain, or tenant slug is already registered.',
           400
         )
       );
@@ -279,7 +299,7 @@ const submitTenantOnboarding = async (req, res, next) => {
       $or: [
         { 'tenantData.domain': normalizedDomain },
         { 'tenantData.desiredSlug': normalizedSlug },
-        { 'tenantData.legalName': new RegExp(`^${legalName.trim()}$`, 'i') },
+        { 'tenantData.legalName': new RegExp(`^${effectiveLegalName}$`, 'i') },
       ],
     });
     if (existingRequest) {
@@ -297,7 +317,33 @@ const submitTenantOnboarding = async (req, res, next) => {
       return next(new AppError('An account with this admin email already exists.', 400));
     }
 
-    // 5. Handle document upload metadata
+    // 5. Parse selectedServices / enabled features
+    let parsedServices = [
+      'catalog',
+      'loans',
+      'fines',
+      'patron-card',
+      'e-resources',
+      'reading-lists',
+      'recommendations',
+      'saved',
+      'facilities',
+      'support',
+      'gamification',
+    ];
+    if (selectedServices) {
+      if (typeof selectedServices === 'string') {
+        try {
+          parsedServices = JSON.parse(selectedServices);
+        } catch {
+          parsedServices = selectedServices.split(',').map((s) => s.trim()).filter(Boolean);
+        }
+      } else if (Array.isArray(selectedServices)) {
+        parsedServices = selectedServices;
+      }
+    }
+
+    // 6. Handle document upload metadata
     let docPath = '';
     let docUrl = '';
     if (req.file) {
@@ -313,7 +359,7 @@ const submitTenantOnboarding = async (req, res, next) => {
     const domainVerificationToken = crypto.randomBytes(32).toString('hex');
 
     // Parse address if sent as string
-    let parsedAddress = address;
+    let parsedAddress = address || { street: '', city: '', state: '', country: '', postalCode: '' };
     if (typeof address === 'string') {
       try {
         parsedAddress = JSON.parse(address);
@@ -327,17 +373,19 @@ const submitTenantOnboarding = async (req, res, next) => {
       type: 'tenant_onboarding',
       status: 'pending_review',
       tenantData: {
-        legalName: legalName.trim(),
-        shortName: shortName ? shortName.trim() : '',
-        institutionType,
+        legalName: effectiveLegalName,
+        shortName: shortName ? shortName.trim() : effectiveLegalName,
+        institutionType: institutionType || 'college',
         domain: normalizedDomain,
+        contactEmail: effectiveCollegeEmail,
         address: parsedAddress,
-        contactPhone: contactPhone.trim(),
-        adminName: adminName.trim(),
+        contactPhone: contactPhone ? contactPhone.trim() : '',
+        adminName: (adminName || '').trim(),
         adminEmail: normalizedAdminEmail,
-        designation: designation.trim(),
+        designation: (designation || 'College Admin').trim(),
         passwordHash,
         adminPhone: adminPhone ? adminPhone.trim() : '',
+        selectedServices: parsedServices,
         verificationDocumentPath: docPath,
         verificationDocumentUrl: docUrl,
         domainVerificationToken,

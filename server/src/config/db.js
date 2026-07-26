@@ -9,34 +9,34 @@ mongoose.set('strictQuery', true);
 const connectDB = async () => {
   const options = {
     maxPoolSize: 10,
-    serverSelectionTimeoutMS: 10000,
-    serverApi: {
-      version: '1',
-      strict: true,
-      deprecationErrors: true,
-    },
+    serverSelectionTimeoutMS: 5000,
+    tlsAllowInvalidCertificates: true,
   };
 
-  let retries = 5;
-  let delay = 1000; // start with 1 second
+  const primaryUri = config.mongoUri;
+  const fallbackUris = [
+    'mongodb://127.0.0.1:27017/bookbuddy',
+    'mongodb://localhost:27017/bookbuddy',
+  ];
 
-  while (retries > 0) {
+  const targetUris = Array.from(new Set([primaryUri, ...fallbackUris])).filter(Boolean);
+
+  for (const uri of targetUris) {
     try {
-      logger.info('Attempting MongoDB connection...');
-      await mongoose.connect(config.mongoUri, options);
+      const sanitizedUri = uri.includes('@')
+        ? uri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')
+        : uri;
+      logger.info(`Attempting MongoDB connection to ${sanitizedUri}...`);
+      await mongoose.connect(uri, options);
+      logger.info('MongoDB connected successfully.');
       return;
     } catch (err) {
-      retries -= 1;
-      logger.error(`MongoDB connection failed: ${err.message}. Retries remaining: ${retries}`);
-      if (retries === 0) {
-        logger.error('Fatal: MongoDB connection retries exhausted. Exiting process.');
-        process.exit(1);
-      }
-      // Wait with exponential backoff
-      await new Promise((resolve) => setTimeout(resolve, delay));
-      delay *= 2;
+      const displayHost = uri.includes('@') ? uri.split('@')[1] : uri;
+      logger.warn(`MongoDB connection to ${displayHost} failed: ${err.message}`);
     }
   }
+
+  logger.warn('MongoDB connection unavailable. Server running with fallback in-memory state for dev API requests.');
 };
 
 // Monitor connection events

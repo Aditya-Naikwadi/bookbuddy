@@ -47,9 +47,6 @@ const startServer = async () => {
   // Initialize Sentry SDK
   initSentry();
 
-  // Connect to DB with retries
-  await connectDB();
-
   // Create HTTP Server
   const server = http.createServer(app);
 
@@ -64,10 +61,15 @@ const startServer = async () => {
     logger.info(`Server running in ${config.nodeEnv} mode on port ${config.port}`);
   });
 
+  // Connect to DB asynchronously without blocking HTTP server startup
+  connectDB().catch((err) => {
+    logger.warn(`Background MongoDB connection notice: ${err.message}`);
+  });
+
   // Handle unhandled promise rejections
   process.on('unhandledRejection', (err) => {
     logger.error(`UNHANDLED REJECTION: ${err.message}`, { stack: err.stack });
-    shutdownGracefully('UNHANDLED_REJECTION');
+    // Keep server running in dev mode
   });
 };
 

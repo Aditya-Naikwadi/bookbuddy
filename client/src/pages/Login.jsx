@@ -31,15 +31,24 @@ const Login = () => {
   const location = useLocation();
   const { login, loginWithGoogle, isLoading, error } = useAuthStore();
 
+  const [redirectingMsg, setRedirectingMsg] = useState(null);
+
   const handlePostAuthNavigate = () => {
     const user = useAuthStore.getState().user;
     let defaultRoute = '/student-dashboard';
+    let collegeName = user?.collegeName || 'your institution';
+
     if (user?.role === 'college-admin') defaultRoute = '/college-admin';
     else if (user?.role === 'general') defaultRoute = '/general-dashboard';
     else if (user?.role === 'super-admin') defaultRoute = '/admin-portal';
 
     const targetPath = location.state?.from?.pathname || defaultRoute;
-    navigate(targetPath, { replace: true });
+
+    // Show transition overlay for 1.2s to orient student/user to their college portal
+    setRedirectingMsg(`Taking you to ${collegeName}'s library...`);
+    setTimeout(() => {
+      navigate(targetPath, { replace: true });
+    }, 1200);
   };
 
   const handleSubmit = async (e) => {
@@ -81,6 +90,16 @@ const Login = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full">
+      {redirectingMsg && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl p-8 max-w-sm w-full text-center space-y-4 shadow-2xl">
+            <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <h3 className="text-base font-bold text-white font-serif">{redirectingMsg}</h3>
+            <p className="text-xs text-slate-400">Loading your scoped digital library dashboard...</p>
+          </div>
+        </div>
+      )}
+
       <motion.h2 
         initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
         className="text-xl font-serif font-bold text-ink mb-3 text-center"

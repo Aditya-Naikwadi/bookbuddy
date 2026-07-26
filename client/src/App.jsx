@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 // Lazy loaded public pages
 const Landing = lazy(() => import('./pages/public/Landing'));
 const RegistrationPage = lazy(() => import('./pages/public/RegistrationPage'));
+const CollegeStudentRegister = lazy(() => import('./pages/public/CollegeStudentRegister'));
 const Unauthorized = lazy(() => import('./pages/Unauthorized'));
 
 // Lazy loaded layout components
@@ -31,16 +32,7 @@ const SystemSettings = lazy(() => import('./pages/dashboards/admin-portal/System
 
 // Lazy loaded College Admin Dashboard Features
 const CollegeAdminDashboardHome = lazy(() => import('./pages/dashboards/college-admin/CollegeAdminDashboardHome'));
-const PatronManagement = lazy(() => import('./pages/dashboards/college-admin/PatronManagement'));
-const Circulation = lazy(() => import('./pages/dashboards/college-admin/Circulation'));
-const Cataloging = lazy(() => import('./pages/dashboards/college-admin/Cataloging'));
-const DigitalAssets = lazy(() => import('./pages/dashboards/college-admin/DigitalAssets'));
-const Inventory = lazy(() => import('./pages/dashboards/college-admin/Inventory'));
-const Finances = lazy(() => import('./pages/dashboards/college-admin/Finances'));
-const SystemConfig = lazy(() => import('./pages/dashboards/college-admin/SystemConfig'));
-const Facilities = lazy(() => import('./pages/dashboards/college-admin/Facilities'));
-const Helpdesk = lazy(() => import('./pages/dashboards/college-admin/Helpdesk'));
-const Analytics = lazy(() => import('./pages/dashboards/college-admin/Analytics'));
+const FeatureManagerSettings = lazy(() => import('./pages/dashboards/college-admin/FeatureManagerSettings'));
 const StudentUploadPage = lazy(() => import('./pages/dashboards/college-admin/StudentUploadPage'));
 
 // Lazy loaded General Dashboard Features
@@ -126,6 +118,7 @@ function App() {
               {/* Public Landing Page & Dual Registration */}
               <Route path="/" element={<Landing />} />
               <Route path="/register" element={<RegistrationPage />} />
+              <Route path="/register/:collegeSlug" element={<CollegeStudentRegister />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
 
               {/* Auth Routes */}
@@ -151,17 +144,8 @@ function App() {
                 {/* College Admin Routes */}
                 <Route element={<ProtectedRoute allowedRoles={['college-admin']} />}>
                   <Route path="college-admin" element={<CollegeAdminDashboardHome />} />
+                  <Route path="college-admin/features" element={<FeatureManagerSettings />} />
                   <Route path="college-admin/bulk-upload" element={<StudentUploadPage />} />
-                  <Route path="college-admin/patrons" element={<PatronManagement />} />
-                  <Route path="college-admin/circulation" element={<Circulation />} />
-                  <Route path="college-admin/cataloging" element={<Cataloging />} />
-                  <Route path="college-admin/digital-assets" element={<DigitalAssets />} />
-                  <Route path="college-admin/inventory" element={<Inventory />} />
-                  <Route path="college-admin/finances" element={<Finances />} />
-                  <Route path="college-admin/system-config" element={<SystemConfig />} />
-                  <Route path="college-admin/facilities" element={<Facilities />} />
-                  <Route path="college-admin/helpdesk" element={<Helpdesk />} />
-                  <Route path="college-admin/analytics" element={<Analytics />} />
                 </Route>
 
                 {/* General Dashboard Routes */}

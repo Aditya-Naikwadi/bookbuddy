@@ -657,13 +657,33 @@ const approveTenantOnboarding = async (req, res, next) => {
       shortName,
       institutionType,
       domain,
+      contactEmail,
       address,
       contactPhone,
       adminName,
       adminEmail,
       passwordHash,
       desiredSlug,
+      selectedServices,
     } = regRequest.tenantData;
+
+    const defaultServices = [
+      'catalog',
+      'loans',
+      'fines',
+      'patron-card',
+      'e-resources',
+      'reading-lists',
+      'recommendations',
+      'saved',
+      'facilities',
+      'support',
+      'gamification',
+    ];
+    const activeServices =
+      Array.isArray(selectedServices) && selectedServices.length > 0
+        ? selectedServices
+        : defaultServices;
 
     // Execute atomic creation of College + College Admin User inside MongoDB transaction
     const { college, adminUser } = await runInTransaction(async (session) => {
@@ -682,9 +702,11 @@ const approveTenantOnboarding = async (req, res, next) => {
             domain,
             status: 'active',
             isActive: true,
-            contactEmail: adminEmail,
+            contactEmail: contactEmail || adminEmail,
             contactPhone,
             address: addressString,
+            selectedServices: activeServices,
+            enabledFeatures: activeServices,
           },
         ],
         { session }
