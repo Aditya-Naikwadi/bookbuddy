@@ -108,4 +108,7 @@ const eResourceSchema = new mongoose.Schema(
 // Compound index for listing approved resources by category
 eResourceSchema.index({ collegeId: 1, moderationStatus: 1, category: 1 });
 
+// Queue index for processing pending reviews in oldest-first order
+eResourceSchema.index({ moderationStatus: 1, createdAt: 1 });
+
 module.exports = mongoose.model('EResource', eResourceSchema);

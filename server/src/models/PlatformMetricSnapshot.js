@@ -55,6 +55,7 @@ const platformMetricSnapshotSchema = new mongoose.Schema(
   }
 );
 
+platformMetricSnapshotSchema.index({ snapshotDate: -1 });
 platformMetricSnapshotSchema.index({ collegeId: 1, snapshotDate: -1 });
 
 module.exports = mongoose.model('PlatformMetricSnapshot', platformMetricSnapshotSchema);

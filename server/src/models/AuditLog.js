@@ -76,6 +76,11 @@ auditLogSchema.pre('save', function (next) {
   next();
 });
 
+// Compound Indexes for Advanced Security Filtering:
+auditLogSchema.index({ actorRole: 1, createdAt: -1 });
+auditLogSchema.index({ action: 1, createdAt: -1 });
+auditLogSchema.index({ severity: 1, createdAt: -1 });
+
 // Institutional Compliance Retention: 365 days TTL
 auditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 31536000 });
 
