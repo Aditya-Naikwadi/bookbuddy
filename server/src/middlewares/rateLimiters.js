@@ -17,6 +17,7 @@ if (isTest && isMock) {
       maxRetriesPerRequest: 1,
       connectTimeout: 2000,
       reconnectOnError: () => false,
+      retryStrategy: () => null,
       lazyConnect: isTest,
     });
 

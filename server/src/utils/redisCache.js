@@ -10,6 +10,7 @@ if (config.redisUrl || process.env.NODE_ENV !== 'test') {
     redisClient = new Redis(config.redisUrl || 'redis://127.0.0.1:6379', {
       maxRetriesPerRequest: 1,
       connectTimeout: 2000,
+      retryStrategy: () => null,
       lazyConnect: true,
     });
 
