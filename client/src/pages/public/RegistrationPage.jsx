@@ -574,11 +574,14 @@ export default function RegistrationPage() {
             </div>
             <div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                Registration Submitted!
+                Registration Submitted & Pending Review
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
                 Your onboarding request for{" "}
-                <strong>{adminForm.collegeName}</strong> is submitted.
+                <strong>{adminForm.collegeName}</strong> has been submitted successfully and is currently under review by Super Admin.
+              </p>
+              <p className="text-[11px] text-indigo-500 dark:text-indigo-400 mt-2 font-medium">
+                Applications are typically reviewed within 24 hours. An approval email will be sent to <strong>{adminForm.adminEmail}</strong> upon activation.
               </p>
             </div>
 
@@ -586,7 +589,7 @@ export default function RegistrationPage() {
               onClick={() => navigate("/auth/login")}
               className="py-2.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all inline-flex items-center gap-2"
             >
-              <span>Go to Login Page</span>
+              <span>Return to Login</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
