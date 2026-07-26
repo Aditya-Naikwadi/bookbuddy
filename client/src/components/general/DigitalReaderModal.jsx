@@ -37,7 +37,18 @@ const PdfViewerEngine = lazy(async () => {
 
         const loadPdf = async () => {
           try {
-            const loadingTask = pdfjsLib.getDocument(fileUrl);
+            const pdfUrlString =
+              typeof fileUrl === "string"
+                ? fileUrl
+                : fileUrl?.url || fileUrl?.fileUrl || fileUrl?.pdfUrl || "";
+
+            if (!pdfUrlString) {
+              throw new Error(
+                "No digital document URL provided for in-app viewing."
+              );
+            }
+
+            const loadingTask = pdfjsLib.getDocument({ url: pdfUrlString });
             pdfDocInstance = await loadingTask.promise;
             if (isMounted) {
               onTotalPages(pdfDocInstance.numPages);

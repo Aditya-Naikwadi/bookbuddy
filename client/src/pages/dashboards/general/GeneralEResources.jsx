@@ -354,6 +354,10 @@ const GeneralEResources = () => {
                   onClick={() => {
                     const url =
                       item.fileUrl ||
+                      item.readUrl ||
+                      item.epubUrl ||
+                      item.downloadUrl ||
+                      item.pdfUrl ||
                       (item.gutenbergId
                         ? `https://www.gutenberg.org/files/${item.gutenbergId}/${item.gutenbergId}-h/${item.gutenbergId}-h.htm`
                         : null);

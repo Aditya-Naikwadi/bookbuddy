@@ -141,7 +141,8 @@ const EbookReader = () => {
 
     let isCancelled = false;
 
-    const loadingTask = pdfjsLib.getDocument(fileUrl);
+    const pdfUrlString = typeof fileUrl === "string" ? fileUrl : (fileUrl?.url || fileUrl?.fileUrl || "");
+    const loadingTask = pdfjsLib.getDocument({ url: pdfUrlString });
     loadingTask.promise
       .then(async (doc) => {
         if (isCancelled) return;
