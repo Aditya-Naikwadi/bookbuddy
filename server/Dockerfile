@@ -3,10 +3,13 @@ FROM node:20-alpine AS build
 
 WORKDIR /usr/src/app
 
+# Install build tools required for native C++ modules (argon2, bcrypt)
+RUN apk add --no-cache python3 make g++
+
 COPY package*.json ./
 
-# Install production dependencies only
-RUN npm ci --omit=dev --legacy-peer-deps
+# Install production dependencies for Alpine Linux
+RUN npm install --omit=dev --legacy-peer-deps
 
 # Stage 2: Production image
 FROM node:20-alpine AS production
