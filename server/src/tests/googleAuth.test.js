@@ -11,7 +11,9 @@ describe('Google OAuth 2.0 Single Sign-On Integration Tests', () => {
         await mongoose.connect(uri, { serverSelectionTimeoutMS: 3000 });
       } catch {
         try {
-          await mongoose.connect('mongodb://127.0.0.1:27017/bookbuddy_test', { serverSelectionTimeoutMS: 3000 });
+          await mongoose.connect('mongodb://127.0.0.1:27017/bookbuddy_test', {
+            serverSelectionTimeoutMS: 3000,
+          });
         } catch (err) {
           // eslint-disable-next-line no-console
           console.warn('MongoDB connection notice in test:', err.message);

@@ -5,10 +5,6 @@ const RefreshToken = require('../models/RefreshToken');
 const AppError = require('../utils/AppError');
 const { generateTokenPair } = require('../utils/token');
 const config = require('../config');
-const crypto = require('crypto');
-
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
 const setRefreshTokenCookie = (res, token) => {
   res.cookie('refreshToken', token, {
     httpOnly: true,
