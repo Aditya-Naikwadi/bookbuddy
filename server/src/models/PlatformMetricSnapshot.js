@@ -13,6 +13,22 @@ const platformMetricSnapshotSchema = new mongoose.Schema(
       default: Date.now,
       index: true,
     },
+    totalColleges: {
+      type: Number,
+      default: 0,
+    },
+    activeColleges: {
+      type: Number,
+      default: 0,
+    },
+    pendingColleges: {
+      type: Number,
+      default: 0,
+    },
+    totalStudents: {
+      type: Number,
+      default: 0,
+    },
     activeStudents: {
       type: Number,
       default: 0,
@@ -20,6 +36,26 @@ const platformMetricSnapshotSchema = new mongoose.Schema(
     activeAdmins: {
       type: Number,
       default: 0,
+    },
+    featureAdoptionBreakdown: [
+      {
+        featureKey: { type: String, required: true },
+        collegeCount: { type: Number, default: 0 },
+      },
+    ],
+    eResourcesCount: {
+      type: Number,
+      default: 0,
+    },
+    pendingModerationCount: {
+      type: Number,
+      default: 0,
+    },
+    eResourceMetrics: {
+      totalUploaded: { type: Number, default: 0 },
+      pendingModeration: { type: Number, default: 0 },
+      approvedCount: { type: Number, default: 0 },
+      rejectedCount: { type: Number, default: 0 },
     },
     activeLoans: {
       type: Number,
@@ -37,14 +73,6 @@ const platformMetricSnapshotSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    eResourcesCount: {
-      type: Number,
-      default: 0,
-    },
-    pendingModerationCount: {
-      type: Number,
-      default: 0,
-    },
     storageUsageBytes: {
       type: Number,
       default: 0,
@@ -55,7 +83,22 @@ const platformMetricSnapshotSchema = new mongoose.Schema(
   }
 );
 
-platformMetricSnapshotSchema.index({ snapshotDate: -1 });
+/* -------------------------------------------------------------------------- */
+/*                                INDEXES                                     */
+/* -------------------------------------------------------------------------- */
+
+// Global & Per-College Snapshot Lookup Index (Hot Path)
 platformMetricSnapshotSchema.index({ collegeId: 1, snapshotDate: -1 });
 
-module.exports = mongoose.model('PlatformMetricSnapshot', platformMetricSnapshotSchema);
+// Time-Series Trend History Index
+platformMetricSnapshotSchema.index({ snapshotDate: -1 });
+
+// TTL Retention Index (90-day hot retention auto-purge)
+platformMetricSnapshotSchema.index({ snapshotDate: 1 }, { expireAfterSeconds: 7776000 });
+
+const Model = mongoose.models.PlatformMetricSnapshot || mongoose.model('PlatformMetricSnapshot', platformMetricSnapshotSchema);
+if (!mongoose.models.PlatformMetricsSnapshot) {
+  mongoose.model('PlatformMetricsSnapshot', platformMetricSnapshotSchema);
+}
+
+module.exports = Model;

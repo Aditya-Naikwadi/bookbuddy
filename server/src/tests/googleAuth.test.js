@@ -10,7 +10,7 @@ describe('Google OAuth 2.0 Single Sign-On Integration Tests', () => {
     }
   });
   it('should reject Google auth request when idToken is missing', async () => {
-    const res = await request(app).post('/api/auth/google').send({});
+    const res = await request(app).post('/api/v1/auth/google').send({});
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
@@ -28,7 +28,7 @@ describe('Google OAuth 2.0 Single Sign-On Integration Tests', () => {
       })
     ).toString('base64')}.signature`;
 
-    const res = await request(app).post('/api/auth/google').send({ idToken: dummyIdToken });
+    const res = await request(app).post('/api/v1/auth/google').send({ idToken: dummyIdToken });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);

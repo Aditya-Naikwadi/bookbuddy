@@ -30,6 +30,10 @@ const pendingAdminSetupSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    consumedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

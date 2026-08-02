@@ -56,6 +56,11 @@ const collegeSchema = new mongoose.Schema(
       enum: ['self_service', 'operator_direct'],
       default: 'operator_direct',
     },
+    createdVia: {
+      type: String,
+      enum: ['self_service', 'operator_direct'],
+      default: 'operator_direct',
+    },
     approvalStatus: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],
@@ -104,6 +109,19 @@ const collegeSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Keep creationPath and createdVia synchronized
+collegeSchema.pre('save', function (next) {
+  if (this.createdVia && !this.creationPath) {
+    this.creationPath = this.createdVia;
+  } else if (this.creationPath && !this.createdVia) {
+    this.createdVia = this.creationPath;
+  }
+  next();
+});
+
+// Text search index for full-text search across tenant names and codes
+collegeSchema.index({ name: 'text', code: 'text' });
 
 // Compound index for listing active/pending tenant list (status + newest first)
 collegeSchema.index({ status: 1, createdAt: -1 });
