@@ -6,7 +6,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production
+RUN npm ci --omit=dev --legacy-peer-deps
 
 # Stage 2: Production image
 FROM node:20-alpine AS production
