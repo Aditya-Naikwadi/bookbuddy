@@ -427,6 +427,11 @@ erDiagram
 | `streaks` | `{ userId: 1 }` | Single-Field, Unique | Direct streak status lookup and daily update |
 | `checkinlogs` | `{ userId: 1, checkInDate: 1 }` | Compound, Unique | Enforces single check-in per day |
 | `refreshtokens` | `{ token: 1 }`, `{ userId: 1 }` | Single-Field / Compound | Fast session lookup and user logout revocation |
+| `pendingadminsetups` | `{ setupToken: 1 }` | Single-Field, Unique | Fast lookup for college admin onboarding setup tokens |
+| `platformmetricsnapshots` | `{ snapshotDate: -1 }` | Single-Field | Rapid historical platform health and metrics trends lookup |
+| `auditlogs` | `{ collegeId: 1, createdAt: -1 }` | Compound | Scoped tenant audit trail queries with immutability protection |
+| `eresourcesubmissions` | `{ status: 1, createdAt: -1 }` | Compound | Super Admin platform content moderation queue |
+| `collegefeatureconfigs` | `{ collegeId: 1 }` | Single-Field, Unique | Fast tenant service feature flags and gating lookup |
 
 ---
 
@@ -506,11 +511,11 @@ BookBuddy provides a comprehensive suite of migration and maintenance scripts un
 - **Lab Workstation Management**: Define lab layouts, add workstation seats, and monitor bookings.
 - **Financial & Analytics Hub**: Monitor circulation metrics, popular titles, and revenue collections.
 
-### 🌐 Super Admin Portal
-- **Platform Health Overview**: System-wide metrics across all onboarded institutions.
-- **College Tenant Onboarding**: Create and configure new college tenants and assign primary college admin credentials.
-- **E-Resource Moderation**: Review and verify public e-resources before publishing platform-wide.
-- **Centralized Security Audit Log**: Read-only access to system mutations and administrative security events.
+### 🌐 Super Admin Portal & Operations Control Plane
+- **Platform System Overview**: Monitor real-time platform metrics, active college tenant counters, patron volumes, digital resource storage stats, and historical metric snapshot trends (`PlatformMetricSnapshot`).
+- **College Tenant & Admin Manager**: Onboard new college institutions, configure feature-gated service modules, issue single-use secure setup links (`PendingAdminSetup`), and provision college admin access credentials.
+- **Global Content Moderation**: Review, approve, or reject public e-resource submissions (`EResourceSubmission`) with automated Stored-XSS scanning, status badges, and platform-wide distribution controls.
+- **Centralized Security Audit Logs**: Operational data tables (`OpsDataTable`, `OpsSeverityBadge`, `OpsHeader`) with immutable audit trails (`AuditLog`), category/severity filtering, and IP tracing for system mutations and security events.
 
 ---
 
@@ -788,14 +793,16 @@ npm run db:clear
    ```
    *Open `http://localhost:5173` in your browser.*
 
-### Docker Compose Launch
+### Docker Container Launch
 
-Boot MongoDB, Redis, and the Node.js server using Docker Compose:
+Boot MongoDB, Redis, and the multi-stage Node.js server container:
 
 ```bash
 cd server
 docker-compose up --build
 ```
+
+*Note: The production `Dockerfile` uses a multi-stage Alpine build (`node:20-alpine`) featuring native C++ build tools (`python3`, `make`, `g++`) for native dependencies (`bcrypt`), non-root execution (`USER node`), and automated database migrations (`npx migrate-mongo up`) upon container initialization.*
 
 ### Running Tests
 
@@ -904,6 +911,24 @@ For client-side single page application routing (`react-router-dom`), serverless
 - Provide strong random JWT secret strings (`JWT_SECRET`, `REFRESH_TOKEN_SECRET`) with 64+ characters.
 - Configure `OPEN_LIBRARY_USER_AGENT` with valid platform contact details.
 - Ensure CORS origin (`CLIENT_URL`) matches your production frontend domain.
+
+### 4. GitHub Actions Automated CI/CD Pipeline (`.github/workflows/ci.yml`)
+BookBuddy utilizes a GitHub Actions workflow with three automated pipeline jobs:
+1. **Continuous Integration (`ci`)**:
+   - Spawns a `mongo:6.0` service container on `localhost:27017`.
+   - Installs server dependencies and verifies Linter compliance (`npm run lint`).
+   - Validates environment variables (`MONGO_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CLIENT_ORIGIN`).
+   - Executes Jest integration, security, and schema test suites (`npm test`).
+   - Verifies production Vite bundle compilation (`npm run build`).
+2. **Automated Vercel Deployment (`deploy-vercel`)**:
+   - Triggers on push to `main`/`master` branches.
+   - Detects `VERCEL_TOKEN` repository secret availability.
+   - Pulls production environment variables, prebuilds deployment artifacts, and deploys to Vercel Production (`vercel deploy --prebuilt --prod`).
+3. **GitHub Container Registry Deployment (`deploy-docker`)**:
+   - Triggers on push to `main`/`master` branches.
+   - Converts repository name to lowercase (`REPO_LOWER`).
+   - Builds multi-stage Docker image via Docker Buildx (`server/Dockerfile`).
+   - Pushes tagged Docker image (`ghcr.io/<repo>/bookbuddy-server:latest` and `:commit-sha`) to GitHub Container Registry (`ghcr.io`).
 
 ---
 
