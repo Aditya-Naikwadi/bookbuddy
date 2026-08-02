@@ -49,8 +49,8 @@ function requireFeature(requiredFeatureId) {
             enabledFeatures = collegeDoc.enabledFeatures?.length
               ? collegeDoc.enabledFeatures
               : collegeDoc.selectedServices?.length
-              ? collegeDoc.selectedServices
-              : null;
+                ? collegeDoc.selectedServices
+                : null;
           }
         }
 
