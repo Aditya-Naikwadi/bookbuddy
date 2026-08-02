@@ -91,20 +91,23 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production
         env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Build Project Artifacts
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --prod
         env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Deploy to Vercel Production
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prebuilt --prod
         env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
@@ -120,6 +123,10 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Lowercase Repository Name
+        run: |
+          echo "REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -138,7 +145,7 @@ jobs:
           file: ./server/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/bookbuddy-server:latest
-            ghcr.io/${{ github.repository }}/bookbuddy-server:${{ github.sha }}
+            ghcr.io/${{ env.REPO_LOWER }}/bookbuddy-server:latest
+            ghcr.io/${{ env.REPO_LOWER }}/bookbuddy-server:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
