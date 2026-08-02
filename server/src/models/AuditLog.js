@@ -69,11 +69,10 @@ const auditLogSchema = new mongoose.Schema(
 );
 
 // Prevent document mutations (Immutable Log Ledger)
-auditLogSchema.pre('save', function (next) {
+auditLogSchema.pre('save', function () {
   if (!this.isNew) {
-    return next(new Error('Audit log entries are immutable and cannot be updated.'));
+    throw new Error('Audit log entries are immutable and cannot be updated.');
   }
-  next();
 });
 
 // Compound Indexes for Advanced Security Filtering:
