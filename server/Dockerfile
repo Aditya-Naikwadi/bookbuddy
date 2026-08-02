@@ -17,9 +17,9 @@ FROM node:20-alpine AS production
 WORKDIR /usr/src/app
 
 # Copy node_modules from build stage
-COPY --from=build /usr/src/app/node_modules ./node_modules
+COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 # Copy source files
-COPY . .
+COPY --chown=node:node . .
 
 # Ensure secure process owner (use default node user)
 USER node
