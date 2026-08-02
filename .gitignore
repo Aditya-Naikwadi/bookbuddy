@@ -56,3 +56,5 @@ uploads/
 
 # Package tarballs
 *.tgz
+
+.vercel
