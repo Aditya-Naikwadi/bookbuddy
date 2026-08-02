@@ -96,7 +96,9 @@ platformMetricSnapshotSchema.index({ snapshotDate: -1 });
 // TTL Retention Index (90-day hot retention auto-purge)
 platformMetricSnapshotSchema.index({ snapshotDate: 1 }, { expireAfterSeconds: 7776000 });
 
-const Model = mongoose.models.PlatformMetricSnapshot || mongoose.model('PlatformMetricSnapshot', platformMetricSnapshotSchema);
+const Model =
+  mongoose.models.PlatformMetricSnapshot ||
+  mongoose.model('PlatformMetricSnapshot', platformMetricSnapshotSchema);
 if (!mongoose.models.PlatformMetricsSnapshot) {
   mongoose.model('PlatformMetricsSnapshot', platformMetricSnapshotSchema);
 }

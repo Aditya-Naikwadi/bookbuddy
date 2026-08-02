@@ -172,7 +172,7 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
         const argon2 = require('argon2');
         this.password = await argon2.hash(candidatePassword, { type: argon2.argon2id });
         await this.save();
-      } catch (_err) {
+      } catch {
         // Fallback gracefully if auto-upgrade fails
       }
     }

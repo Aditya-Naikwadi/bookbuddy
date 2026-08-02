@@ -61,6 +61,7 @@ const searchBooks = async ({ search, language, topic, page }) => {
 
     return normalizedData;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(`[Gutendex Service] Error searching books: ${error.message}`);
     throw new UpstreamUnavailableError('Gutenberg catalog is temporarily unavailable');
   }
@@ -82,6 +83,7 @@ const getBookById = async (gutenbergId) => {
 
     return normalizedBook;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(`[Gutendex Service] Error fetching book ${gutenbergId}: ${error.message}`);
     throw new UpstreamUnavailableError('Gutenberg catalog is temporarily unavailable');
   }

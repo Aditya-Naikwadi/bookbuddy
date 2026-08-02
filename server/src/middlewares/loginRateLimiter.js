@@ -80,7 +80,7 @@ const consumeFailedLogin = async (req) => {
   const key = getClientKey(req);
   try {
     await limiterConsecutiveFails.consume(key);
-  } catch (_err) {
+  } catch {
     // Ignore rate limiter consumption error
   }
 };
@@ -90,7 +90,7 @@ const resetFailedLogins = async (req) => {
   const key = getClientKey(req);
   try {
     await limiterConsecutiveFails.delete(key);
-  } catch (_err) {
+  } catch {
     // Ignore rate limiter delete error
   }
 };

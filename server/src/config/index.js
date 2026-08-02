@@ -25,10 +25,12 @@ const missingEnv = requiredEnv.filter((key) => !process.env[key]);
 
 if (missingEnv.length > 0) {
   if (process.env.VERCEL) {
+    // eslint-disable-next-line no-console
     console.warn(
       `⚠️ Warning: Missing environment variables on serverless start: [${missingEnv.join(', ')}]. Using safe runtime fallbacks.`
     );
   } else if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
+    // eslint-disable-next-line no-console
     console.warn(
       `⚠️ Warning: Missing required environment variables: [${missingEnv.join(', ')}]. Using dev fallbacks.`
     );

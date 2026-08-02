@@ -19,6 +19,7 @@ async function connectDB() {
   if (!mongoUri) {
     const errorMsg =
       'MONGO_URI is not set — check Vercel environment variables (Production / Preview / Development) for this environment.';
+    // eslint-disable-next-line no-console
     console.error(`[Database Boot Failure] ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -31,6 +32,7 @@ async function connectDB() {
     };
 
     cached.promise = mongoose.connect(mongoUri, opts).then((mongooseInstance) => {
+      // eslint-disable-next-line no-console
       console.log('[Database] MongoDB connection established successfully.');
       return mongooseInstance;
     });
@@ -40,6 +42,7 @@ async function connectDB() {
     cached.conn = await cached.promise;
   } catch (err) {
     cached.promise = null; // Clear cached promise on failure to allow subsequent retries
+    // eslint-disable-next-line no-console
     console.error('[Database Connection Error]:', err.message);
     throw err;
   }

@@ -98,6 +98,7 @@ const searchBooks = async ({ search = 'programming', category, page = 1, limit =
     cache.set(cacheKey, result);
     return result;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(`[Google Books Service] Search Error:`, error.message);
     throw new Error(`Google Books API search failed: ${error.message}`);
   }
@@ -121,6 +122,7 @@ const getBookById = async (volumeId) => {
     cache.set(cacheKey, normalized);
     return normalized;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(`[Google Books Service] Volume Fetch Error (${volumeId}):`, error.message);
     throw new Error(`Google Books API fetch failed for ID ${volumeId}: ${error.message}`);
   }
@@ -129,35 +131,23 @@ const getBookById = async (volumeId) => {
 /**
  * Seed Google Books into the local database for a given collegeId
  */
-const seedBooksToDatabase = async (
-  topics = [
-    'Computer Science',
-    'Artificial Intelligence',
-    'Physics',
-    'Mathematics',
-    'Biology',
-    'Data Science',
-  ],
-  collegeId
-) => {
+const seedBooksToDatabase = async (collegeId, topics = ['computer science']) => {
   let seededCount = 0;
   let skippedCount = 0;
 
   for (const topic of topics) {
     try {
       const { books } = await searchBooks({ search: topic, limit: 10 });
-      for (const b of books) {
+      for (const bookData of books) {
         const existing = await Book.findOne({
-          $or: [{ isbn: b.isbn }, { title: b.title, author: b.author }],
+          collegeId,
+          isbn: bookData.isbn,
         });
 
-        if (!existing) {
+        if (!existing && bookData.isbn) {
           await Book.create({
-            collegeId: collegeId || null,
-            isbn: b.isbn,
-            title: b.title,
-            author: b.author,
-            category: b.category || topic,
+            ...bookData,
+            collegeId,
             format: 'digital',
             copiesTotal: 5,
             copiesAvailable: 5,

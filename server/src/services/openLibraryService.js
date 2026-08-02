@@ -58,6 +58,7 @@ class OpenLibraryService {
 
       if (isRetryable && retryCount < this.maxRetries) {
         const backoffDelay = Math.pow(2, retryCount) * 1000 + Math.random() * 200;
+        // eslint-disable-next-line no-console
         console.warn(
           `[OpenLibraryService] Request failed (${error.message}). Retrying in ${Math.round(backoffDelay)}ms (Attempt ${retryCount + 1}/${this.maxRetries})...`
         );
@@ -65,6 +66,7 @@ class OpenLibraryService {
         return this._executeRequest(endpoint, params, retryCount + 1);
       }
 
+      // eslint-disable-next-line no-console
       console.error(`[OpenLibraryService] API Call Error (${endpoint}):`, error.message);
       throw error;
     }

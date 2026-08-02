@@ -22,7 +22,7 @@ async function ensureIndex(db, collectionName, keySpec, options = {}) {
   let existingIndexes;
   try {
     existingIndexes = await collection.indexes();
-  } catch (err) {
+  } catch {
     // Collection doesn't exist yet — indexes() throws "ns does not exist".
     // createIndex below will auto-create the collection.
     existingIndexes = [];

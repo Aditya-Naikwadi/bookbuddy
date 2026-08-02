@@ -32,7 +32,7 @@ function requireFeature(requiredFeatureId) {
         if (cachedData) {
           enabledFeatures = JSON.parse(cachedData);
         }
-      } catch (cacheErr) {
+      } catch {
         // Log cache miss/error silently and fallback to DB
       }
 
@@ -57,7 +57,7 @@ function requireFeature(requiredFeatureId) {
 
         try {
           await redisClient.setex(cacheKey, 3600, JSON.stringify(enabledFeatures));
-        } catch (setCacheErr) {
+        } catch {
           // Ignore cache set error
         }
       }

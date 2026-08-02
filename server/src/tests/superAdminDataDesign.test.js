@@ -16,7 +16,12 @@ describe('Super Admin Portal Data Layer Implementation Tests', () => {
         activeStudents: 1200,
         activeAdmins: 15,
         featureAdoptionBreakdown: [{ featureKey: 'digital_library', collegeCount: 8 }],
-        eResourceMetrics: { totalUploaded: 250, pendingModeration: 12, approvedCount: 220, rejectedCount: 18 },
+        eResourceMetrics: {
+          totalUploaded: 250,
+          pendingModeration: 12,
+          approvedCount: 220,
+          rejectedCount: 18,
+        },
       });
 
       expect(snapshot.totalColleges).toBe(10);
@@ -59,7 +64,9 @@ describe('Super Admin Portal Data Layer Implementation Tests', () => {
         consumedAt: now,
       });
 
-      expect(setup.hashedSetupToken).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+      expect(setup.hashedSetupToken).toBe(
+        'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      );
       expect(setup.consumed).toBe(true);
       expect(setup.consumedAt).toBe(now);
     });

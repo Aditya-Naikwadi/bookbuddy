@@ -1,7 +1,6 @@
 const College = require('../models/College');
 const CollegeFeatureConfig = require('../models/CollegeFeatureConfig');
 const FeatureCatalog = require('../models/FeatureCatalog');
-const redisClient = require('../utils/redisCache');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
 

@@ -44,6 +44,7 @@ const auditLog = (actionName) => {
           });
         } catch (err) {
           // Log errors to process stdout/logs, do not interrupt request flow
+          // eslint-disable-next-line no-console
           console.error(`Audit logging failed for action ${actionName}:`, err);
         }
       }

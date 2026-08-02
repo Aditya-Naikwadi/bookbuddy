@@ -1,6 +1,5 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const argon2 = require('argon2');
 const bcrypt = require('bcrypt');
 const speakeasy = require('speakeasy');
 
@@ -20,7 +19,6 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
 
   let studentToken;
   let collegeAdminToken;
-  let superAdminToken;
 
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {
@@ -285,6 +283,7 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
       });
 
       if (successLoginRes.status !== 200) {
+        // eslint-disable-next-line no-console
         console.log('Test 4.3 Failure Body:', successLoginRes.status, successLoginRes.body);
       }
 
