@@ -9,7 +9,7 @@ import { ThemeProvider } from "./context/ThemeContext.tsx";
 
 const googleClientId =
   import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-  "dummy-google-client-id.apps.googleusercontent.com";
+  "404307478076-2oun4gi0qop5pgnc6ndua8auaiqbhf0a.apps.googleusercontent.com";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

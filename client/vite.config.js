@@ -20,6 +20,26 @@ export default defineConfig({
         target: "http://127.0.0.1:5000",
         changeOrigin: true,
         secure: false,
+        ws: true,
+        configure: (proxy) => {
+          proxy.on("error", (err, _req, res) => {
+            if (res && !res.headersSent) {
+              res.writeHead(502, { "Content-Type": "application/json" });
+              res.end(
+                JSON.stringify({
+                  error: "Backend API server (http://127.0.0.1:5000) is offline or starting up.",
+                  message: err.message,
+                })
+              );
+            }
+          });
+        },
+      },
+      "/socket.io": {
+        target: "http://127.0.0.1:5000",
+        ws: true,
+        changeOrigin: true,
+        secure: false,
       },
     },
   },

@@ -5,8 +5,25 @@ const User = require('../models/User');
 
 describe('Google OAuth 2.0 Single Sign-On Integration Tests', () => {
   beforeAll(async () => {
-    if (mongoose.connection.readyState === 0 && process.env.MONGO_URI) {
-      await mongoose.connect(process.env.MONGO_URI);
+    if (mongoose.connection.readyState === 0) {
+      const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_test';
+      try {
+        await mongoose.connect(uri, { serverSelectionTimeoutMS: 3000 });
+      } catch {
+        try {
+          await mongoose.connect('mongodb://127.0.0.1:27017/bookbuddy_test', { serverSelectionTimeoutMS: 3000 });
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.warn('MongoDB connection notice in test:', err.message);
+        }
+      }
+    }
+  });
+
+  afterAll(async () => {
+    if (mongoose.connection.readyState !== 0) {
+      await User.deleteMany({ email: /test_google_/ });
+      await mongoose.connection.close();
     }
   });
   it('should reject Google auth request when idToken is missing', async () => {

@@ -34,16 +34,26 @@ const googleAuthHandler = async (req, res, next) => {
 
     let payload;
 
-    // Verify token with Google Library or mock verification in test
+    // Verify token with Google Library or fetch Google UserInfo if access_token was provided
     if (process.env.GOOGLE_CLIENT_ID && process.env.NODE_ENV !== 'test') {
+      const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
       try {
-        const ticket = await client.verifyIdToken({
+        const ticket = await googleClient.verifyIdToken({
           idToken,
           audience: process.env.GOOGLE_CLIENT_ID,
         });
         payload = ticket.getPayload();
-      } catch (err) {
-        return next(new AppError(`Google token verification failed: ${err.message}`, 401));
+      } catch (idTokenErr) {
+        // Fallback: If idToken is an access_token from Google popup flow, query Google userinfo API
+        try {
+          const axios = require('axios');
+          const userinfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { Authorization: `Bearer ${idToken}` },
+          });
+          payload = userinfoRes.data;
+        } catch {
+          return next(new AppError(`Google token verification failed: ${idTokenErr.message}`, 401));
+        }
       }
     } else {
       // Decode or fallback payload for development/testing

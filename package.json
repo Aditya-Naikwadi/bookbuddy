@@ -8,7 +8,9 @@
   },
   "scripts": {
     "build": "npm install --prefix server --legacy-peer-deps && npm install --prefix client --legacy-peer-deps && npm run build --prefix client",
-    "start": "node server/src/server.js"
+    "start": "node server/src/server.js",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client"
   },
   "dependencies": {
     "@sentry/node": "^8.55.2",
