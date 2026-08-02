@@ -15,7 +15,6 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
   let college;
   let studentUser;
   let collegeAdminUser;
-  let superAdminUser;
 
   let studentToken;
   let collegeAdminToken;
@@ -63,18 +62,8 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
       isActive: true,
     });
 
-    superAdminUser = await User.create({
-      studentId: `SUP_${Date.now()}`,
-      name: 'Super Admin User',
-      email: `super_${Date.now()}@test.com`,
-      password: 'SuperPassword123!',
-      role: 'super-admin',
-      isActive: true,
-    });
-
     studentToken = generateTokenPair(studentUser).accessToken;
     collegeAdminToken = generateTokenPair(collegeAdminUser).accessToken;
-    superAdminToken = generateTokenPair(superAdminUser).accessToken;
   });
 
   describe('1. Backend Security Boundary — requireAuth & requireRole Enforcements', () => {

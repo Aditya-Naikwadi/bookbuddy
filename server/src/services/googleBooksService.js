@@ -159,6 +159,7 @@ const seedBooksToDatabase = async (collegeId, topics = ['computer science']) => 
         }
       }
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(`[Google Books Service] Seed error for topic "${topic}":`, err.message);
     }
   }
