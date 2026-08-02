@@ -117,7 +117,9 @@ collegeSchema.pre('save', function (next) {
   } else if (this.creationPath && !this.createdVia) {
     this.createdVia = this.creationPath;
   }
-  next();
+  if (typeof next === 'function') {
+    next();
+  }
 });
 
 // Text search index for full-text search across tenant names and codes

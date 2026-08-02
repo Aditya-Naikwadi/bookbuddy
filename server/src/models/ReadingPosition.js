@@ -46,12 +46,18 @@ readingPositionSchema.pre('validate', function (next) {
   const hasPage = this.page !== undefined && this.page !== null;
 
   if (hasCfi && hasPage) {
-    return next(new Error('ReadingPosition cannot specify both cfi and page simultaneously.'));
+    const err = new Error('ReadingPosition cannot specify both cfi and page simultaneously.');
+    if (typeof next === 'function') return next(err);
+    throw err;
   }
   if (!hasCfi && !hasPage && !this.position) {
-    return next(new Error('ReadingPosition requires at least cfi, page, or position payload.'));
+    const err = new Error('ReadingPosition requires at least cfi, page, or position payload.');
+    if (typeof next === 'function') return next(err);
+    throw err;
   }
-  next();
+  if (typeof next === 'function') {
+    next();
+  }
 });
 
 // Compound unique index to track exactly one position per student per book

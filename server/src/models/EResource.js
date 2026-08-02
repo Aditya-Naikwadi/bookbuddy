@@ -162,8 +162,8 @@ const eResourceSchema = new mongoose.Schema(
   }
 );
 
-// Pre-save synchronization hook between legacy and new field names
-eResourceSchema.pre('save', function (next) {
+// Pre-save & validation synchronization hook between legacy and new field names
+eResourceSchema.pre(['save', 'validate'], function (next) {
   if (this.uploadedBy && !this.submittedBy) {
     this.submittedBy = this.uploadedBy;
   } else if (this.submittedBy && !this.uploadedBy) {
@@ -193,7 +193,9 @@ eResourceSchema.pre('save', function (next) {
     if (!this.publishedAt) this.publishedAt = new Date();
   }
 
-  next();
+  if (typeof next === 'function') {
+    next();
+  }
 });
 
 /* -------------------------------------------------------------------------- */

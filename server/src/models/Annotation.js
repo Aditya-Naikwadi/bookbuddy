@@ -57,12 +57,18 @@ annotationSchema.index({ text: 'text', tags: 'text' }, { name: 'annotation_text_
 // One-of-cfiRange-or-page validation pre-save hook matching ReadingPosition pattern
 annotationSchema.pre('validate', function (next) {
   if (this.cfiRange && this.page !== undefined && this.page !== null) {
-    return next(new Error('Annotation cannot specify both cfiRange and page simultaneously.'));
+    const err = new Error('Annotation cannot specify both cfiRange and page simultaneously.');
+    if (typeof next === 'function') return next(err);
+    throw err;
   }
   if (!this.cfiRange && (this.page === undefined || this.page === null)) {
-    return next(new Error('Annotation requires at least cfiRange (EPUB) or page (PDF).'));
+    const err = new Error('Annotation requires at least cfiRange (EPUB) or page (PDF).');
+    if (typeof next === 'function') return next(err);
+    throw err;
   }
-  next();
+  if (typeof next === 'function') {
+    next();
+  }
 });
 
 module.exports = mongoose.model('Annotation', annotationSchema);

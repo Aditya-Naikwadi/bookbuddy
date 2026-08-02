@@ -125,7 +125,13 @@ describe('Super Admin Portal Data Layer Implementation Tests', () => {
       // Trigger pre-save sync logic manually for validation testing
       const nextFn = jest.fn();
       auditLog.isNew = true;
-      auditLog.schema.s.hooks.exec('pre', 'save', auditLog, [nextFn]);
+      if (auditLog.schema.s?.hooks?.execPre) {
+        auditLog.schema.s.hooks.execPre('save', auditLog, [nextFn]);
+      } else if (auditLog.schema.s?.hooks?.exec) {
+        auditLog.schema.s.hooks.exec('pre', 'save', auditLog, [nextFn]);
+      } else {
+        await auditLog.validate().catch(() => {});
+      }
 
       expect(auditLog.actionType).toBe('tenant.created');
       expect(auditLog.actor.userId.toString()).toBe(dummyActorId.toString());
@@ -134,7 +140,7 @@ describe('Super Admin Portal Data Layer Implementation Tests', () => {
       expect(auditLog.target.targetType).toBe('College');
     });
 
-    it('7. should enforce immutability on non-new AuditLog instance save', () => {
+    it('7. should enforce immutability on non-new AuditLog instance save', async () => {
       const auditLog = new AuditLog({
         action: 'tenant.created',
         ipAddress: '127.0.0.1',
@@ -143,7 +149,17 @@ describe('Super Admin Portal Data Layer Implementation Tests', () => {
       auditLog.isNew = false;
       const nextFn = jest.fn();
 
-      auditLog.schema.s.hooks.exec('pre', 'save', auditLog, [nextFn]);
+      try {
+        if (auditLog.schema.s?.hooks?.execPre) {
+          auditLog.schema.s.hooks.execPre('save', auditLog, [nextFn]);
+        } else if (auditLog.schema.s?.hooks?.exec) {
+          auditLog.schema.s.hooks.exec('pre', 'save', auditLog, [nextFn]);
+        } else {
+          await auditLog.validate();
+        }
+      } catch (err) {
+        nextFn(err);
+      }
       expect(nextFn).toHaveBeenCalledWith(expect.any(Error));
       expect(nextFn.mock.calls[0][0].message).toContain('immutable');
     });

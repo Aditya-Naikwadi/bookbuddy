@@ -73,9 +73,11 @@ const auditLogSchema = new mongoose.Schema(
 );
 
 // Synchronization hook for actor, target, and action/actionType fields
-auditLogSchema.pre('save', function (next) {
+auditLogSchema.pre(['save', 'validate'], function (next) {
   if (!this.isNew) {
-    return next(new Error('Audit log entries are immutable and cannot be updated.'));
+    const err = new Error('Audit log entries are immutable and cannot be updated.');
+    if (typeof next === 'function') return next(err);
+    throw err;
   }
 
   if (this.action && !this.actionType) {
@@ -102,7 +104,9 @@ auditLogSchema.pre('save', function (next) {
     if (this.target.targetType) this.targetType = this.target.targetType;
   }
 
-  next();
+  if (typeof next === 'function') {
+    next();
+  }
 });
 
 // Hardened Immutability: Block update/delete queries at schema middleware layer
