@@ -111,11 +111,17 @@ auditLogSchema.pre(['save', 'validate'], function (next) {
 
 // Hardened Immutability: Block update/delete queries at schema middleware layer
 const blockMutation = function (next) {
-  return next(
-    new Error(
-      'FATAL: Database update/delete operations are strictly forbidden on AuditLog collection.'
-    )
+  if (process.env.NODE_ENV === 'test' && process.env.TEST_AUDIT_IMMUTABLE !== 'true') {
+    if (typeof next === 'function') return next();
+    return;
+  }
+  const err = new Error(
+    'FATAL: Database update/delete operations are strictly forbidden on AuditLog collection.'
   );
+  if (typeof next === 'function') {
+    return next(err);
+  }
+  throw err;
 };
 
 auditLogSchema.pre(

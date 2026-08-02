@@ -11,15 +11,16 @@ function requireFeature(requiredFeatureId) {
   return async (req, res, next) => {
     try {
       // Allow SuperAdmin bypass
-      if (req.user && req.user.role === 'superadmin') {
+      const userRole = req.user?.role;
+      if (userRole === 'superadmin' || userRole === 'super-admin' || userRole === 'super_admin') {
         return next();
       }
 
       const tenantId = req.tenantId || req.user?.collegeId;
       if (!tenantId) {
-        return res.status(404).json({
+        return res.status(403).json({
           success: false,
-          message: 'Resource not found',
+          message: 'Feature is not licensed or enabled for institution',
         });
       }
 
@@ -39,21 +40,37 @@ function requireFeature(requiredFeatureId) {
       // 2. Fallback to Database if cache miss
       if (!enabledFeatures) {
         const configDoc = await CollegeFeatureConfig.findOne({ collegeId: tenantId }).lean();
-        enabledFeatures = configDoc
-          ? configDoc.enabledFeatures || []
-          : [
-              'catalog',
-              'loans',
-              'fines',
-              'patron-card',
-              'e-resources',
-              'reading-lists',
-              'recommendations',
-              'saved',
-              'facilities',
-              'support',
-              'gamification',
-            ];
+        if (configDoc && configDoc.enabledFeatures?.length) {
+          enabledFeatures = configDoc.enabledFeatures;
+        } else {
+          const College = require('../models/College');
+          const collegeDoc = await College.findById(tenantId).lean();
+          if (collegeDoc) {
+            enabledFeatures = collegeDoc.enabledFeatures?.length
+              ? collegeDoc.enabledFeatures
+              : collegeDoc.selectedServices?.length
+              ? collegeDoc.selectedServices
+              : null;
+          }
+        }
+
+        if (!enabledFeatures) {
+          enabledFeatures = [
+            'catalog',
+            'catalog_management',
+            'loans',
+            'fines',
+            'patron-card',
+            'e-resources',
+            'reading-lists',
+            'recommendations',
+            'saved',
+            'facilities',
+            'facilities_booking',
+            'support',
+            'gamification',
+          ];
+        }
 
         try {
           await redisClient.setex(cacheKey, 3600, JSON.stringify(enabledFeatures));
@@ -64,9 +81,9 @@ function requireFeature(requiredFeatureId) {
 
       // 3. Evaluate Activation State
       if (!enabledFeatures.includes(requiredFeatureId)) {
-        return res.status(404).json({
+        return res.status(403).json({
           success: false,
-          message: 'Resource not found or disabled for institution',
+          message: 'Feature is not licensed or enabled for institution',
         });
       }
 
