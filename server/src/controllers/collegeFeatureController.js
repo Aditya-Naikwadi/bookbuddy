@@ -1,7 +1,7 @@
 const College = require('../models/College');
 const CollegeFeatureConfig = require('../models/CollegeFeatureConfig');
 const FeatureCatalog = require('../models/FeatureCatalog');
-const catchAsync = require('../utils/catchAsync');
+const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
 
 // Default full list of features if configuration is absent
@@ -24,7 +24,7 @@ const DEFAULT_STUDENT_FEATURES = [
  * @route   GET /api/colleges/my-config
  * @access  Private (CollegeAdmin)
  */
-const getMyCollegeConfig = catchAsync(async (req, res, next) => {
+const getMyCollegeConfig = asyncHandler(async (req, res, next) => {
   const collegeId = req.tenantId || req.user.collegeId;
 
   const college = await College.findById(collegeId)
@@ -69,7 +69,7 @@ const getMyCollegeConfig = catchAsync(async (req, res, next) => {
  * @route   POST /api/colleges/features/enable
  * @access  Private (CollegeAdmin)
  */
-const enableOrRequestFeature = catchAsync(async (req, res, next) => {
+const enableOrRequestFeature = asyncHandler(async (req, res, next) => {
   const collegeId = req.tenantId || req.user.collegeId;
   const { featureId, enabledFeatures: bulkFeatures, reason } = req.body;
 
@@ -163,7 +163,7 @@ const enableOrRequestFeature = catchAsync(async (req, res, next) => {
  * @route   GET /api/colleges/public/:slug
  * @access  Public
  */
-const getPublicCollegeBySlug = catchAsync(async (req, res, next) => {
+const getPublicCollegeBySlug = asyncHandler(async (req, res, next) => {
   const { slug } = req.params;
   const normalizedSlug = slug.toLowerCase().trim();
 
@@ -209,7 +209,7 @@ const getPublicCollegeBySlug = catchAsync(async (req, res, next) => {
  * @route   GET /api/colleges/slug-check
  * @access  Public
  */
-const checkSlugAvailability = catchAsync(async (req, res, next) => {
+const checkSlugAvailability = asyncHandler(async (req, res, next) => {
   const { slug } = req.query;
   if (!slug) {
     return next(new AppError('Slug query parameter is required', 400));
