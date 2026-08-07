@@ -24,7 +24,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "ci:check": "npm run lint && npm run format:check && npm test",
-    "test": "jest src/tests --runInBand --detectOpenHandles --forceExit"
+    "test": "jest src/tests --runInBand --detectOpenHandles --forceExit",
+    "audit": "npm audit"
   },
   "keywords": [],
   "author": "",

@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "format:check": "npx prettier --check .",
     "ci:check": "npm run lint && npm run format:check && npm run build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "audit": "npm audit"
   },
   "dependencies": {
     "@fontsource-variable/plus-jakarta-sans": "^5.2.8",
