@@ -588,7 +588,7 @@ graph TD
 
 ---
 
-## ⏰ Background Scheduled Cron Jobs
+## ⏰ Background Scheduled Cron Jobs & Disconnection Safety
 
 Executed automatically via `node-cron` inside `server/src/services/cronService.js` and `server/src/services/aggregationCronWorker.js`:
 
@@ -599,6 +599,10 @@ Executed automatically via `node-cron` inside `server/src/services/cronService.j
 | **Due Date Reminders** | `0 9 * * *` (9 AM Daily) | Dispatches WebSocket & in-app notifications for loans due within 24–48 hours. |
 | **Streak Expiry & Reminders** | `0 * * * *` (Hourly) | Resets active reading streaks if no check-in occurred within the user's timezone day (or consumes a streak freeze). Sends reminder notifications 3 hours before midnight to users at risk. |
 | **External Catalog Ingestion** | `0 3 * * *` (3 AM Daily) | Dispatches `aggregationCronWorker` to sync metadata, covers, and subjects from Open Library & Google Books APIs. |
+
+### Cron Disconnection Safety & Isolation
+- **Connection Guard**: `runJob` inspects `mongoose.connection.readyState === 1` before invoking any cron task, skipping database queries when disconnected to avoid query buffering timeouts.
+- **Silent Log Error Catch**: `CronRunLog.create(...).catch(() => {})` safely catches log writing errors during database connection interruptions, preventing unhandled promise rejections.
 
 ---
 
