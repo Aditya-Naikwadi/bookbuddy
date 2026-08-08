@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+.env
+.env.local
+.env.*.local
+.git
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.yml
+coverage
+uploads
+.prettierrc
+eslint.config.js
+cookies.txt
+backups

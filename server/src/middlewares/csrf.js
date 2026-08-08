@@ -53,11 +53,13 @@ const validateCsrf = (req, res, next) => {
     '/api/auth/register',
     '/api/auth/refresh',
     '/api/auth/google',
+    '/api/auth/logout',
     '/api/registration',
     '/api/v1/auth/login',
     '/api/v1/auth/register',
     '/api/v1/auth/refresh',
     '/api/v1/auth/google',
+    '/api/v1/auth/logout',
     '/api/v1/registration',
   ];
   const isExempt = exemptPaths.some(

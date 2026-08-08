@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: function () {
-        return this.authProvider !== 'google';
+        return !['google', 'github'].includes(this.authProvider);
       },
       select: false,
     },
@@ -30,9 +30,14 @@ const userSchema = new mongoose.Schema(
       sparse: true,
       unique: true,
     },
+    githubId: {
+      type: String,
+      sparse: true,
+      unique: true,
+    },
     authProvider: {
       type: String,
-      enum: ['local', 'google'],
+      enum: ['local', 'google', 'github'],
       default: 'local',
     },
     avatar: {

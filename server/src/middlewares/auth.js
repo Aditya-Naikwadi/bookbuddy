@@ -118,6 +118,7 @@ const optionalAuth = async (req, res, next) => {
 
 module.exports = {
   protect,
+  authMiddleware: protect,
   requireAuth: protect,
   requireRole,
   optionalAuth,

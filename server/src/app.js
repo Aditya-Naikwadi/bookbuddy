@@ -105,6 +105,10 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // HTTP Parameter Pollution Protection
 app.use(hpp());
 
+// Passport OAuth Middleware Initialization
+const passport = require('./config/passport');
+app.use(passport.initialize());
+
 // Custom Cookie Parser Middleware
 app.use((req, res, next) => {
   req.cookies = {};
