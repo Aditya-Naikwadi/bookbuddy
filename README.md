@@ -930,6 +930,12 @@ BookBuddy utilizes a GitHub Actions workflow with three automated pipeline jobs:
    - Builds multi-stage Docker image via Docker Buildx (`server/Dockerfile`).
    - Pushes tagged Docker image (`ghcr.io/<repo>/bookbuddy-server:latest` and `:commit-sha`) to GitHub Container Registry (`ghcr.io`).
 
+### 5. Render Free-Tier Keep-Alive Ping Subsystem (`.github/workflows/keep-alive.yml`)
+- **Purpose**: Render's free tier spins down backend services after 15 minutes of inactivity, introducing a ~30–60s cold-start latency for subsequent requests. To keep the process warm, an automated GitHub Actions workflow pings the lightweight `GET /ping` endpoint every 12 minutes (`*/12 * * * *`).
+- **Zero-Overhead `/ping` Endpoint**: The `/ping` route returns `200 OK` immediately without touching MongoDB or Redis, ensuring near-instant process warming.
+- **Instance Hour Cap & Guardrails**: Render provides 750 free instance-hours per month. A single service running 24/7 consumes ~720–744 hours/month ($31 \text{ days} \times 24 \text{ hours} = 744 \text{ hours}$), remaining safely within the free monthly allowance.
+- **Maintenance Note**: This is a temporary workaround for free-tier hosting. When upgrading to a paid Render instance ($7/mo Starter tier which never sleeps), disable or remove `.github/workflows/keep-alive.yml`.
+
 ---
 
 ## 🏗️ Architectural Deep-Dives

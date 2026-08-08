@@ -133,9 +133,20 @@ app.use(
   })
 );
 
-const { redisClient } = require('./middlewares/rateLimiters');
+// Lightweight Ping Handler for Keep-Alive & Process Warming (Zero DB / Redis overhead)
+const pingController = (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+  });
+};
 
-// Unified Health Check Handler
+// Zero-overhead ping routes (process warming)
+app.get('/ping', pingController);
+app.get('/api/ping', pingController);
+app.get('/api/v1/ping', pingController);
+
+// Unified Detailed Health Check Handler
 const getHealthStatus = async () => {
   const readyState = mongoose.connection.readyState;
   const dbStatus = readyState === 1 ? 'connected' : 'disconnected';
@@ -174,7 +185,7 @@ const healthCheckController = async (req, res) => {
   res.status(health.statusCode).json(health.payload);
 };
 
-// Health Check Routes
+// Full Health Check Routes
 app.get('/health', healthCheckController);
 app.get('/api/health', healthCheckController);
 app.get('/api/v1/health', healthCheckController);
