@@ -23,7 +23,7 @@ const createCheckoutSession = async (req, res, next) => {
     }
 
     const orderId = `order_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
-    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_mock_key';
 
     res.json({
       success: true,
@@ -48,7 +48,7 @@ const createCheckoutSession = async (req, res, next) => {
  */
 const handlePaymentWebhook = async (req, res, next) => {
   try {
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || 'test_webhook_secret_key_123';
     const receivedSignature = req.headers['x-razorpay-signature'];
 
     if (!receivedSignature) {

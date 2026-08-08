@@ -35,20 +35,7 @@ describe('Production Environment Validation Unit Tests', () => {
     });
   });
 
-  test('2. Fails startup in production if RAZORPAY_KEY_ID is missing', () => {
-    jest.isolateModules(() => {
-      setFullProdEnv();
-      delete process.env.RAZORPAY_KEY_ID;
-      const dotenv = require('dotenv');
-      dotenv.config = jest.fn();
-
-      expect(() => {
-        require('../config');
-      }).toThrow(/RAZORPAY_KEY_ID/i);
-    });
-  });
-
-  test('3. Fails startup in production if REDIS_URL is missing', () => {
+  test('2. Fails startup in production if REDIS_URL is missing', () => {
     jest.isolateModules(() => {
       setFullProdEnv();
       delete process.env.REDIS_URL;

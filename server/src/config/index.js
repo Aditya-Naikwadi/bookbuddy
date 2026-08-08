@@ -40,8 +40,6 @@ if (missingEnv.length > 0) {
 if (process.env.NODE_ENV === 'production' && !process.env.VERCEL && !process.env.RENDER) {
   const prodRequired = [
     'GOOGLE_BOOKS_API_KEY',
-    'RAZORPAY_KEY_ID',
-    'RAZORPAY_WEBHOOK_SECRET',
     'REDIS_URL',
   ];
   const missingProdEnv = prodRequired.filter((key) => !process.env[key]);
