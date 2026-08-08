@@ -77,6 +77,10 @@ jobs:
     needs: ci
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
     steps:
       - name: Checkout Repository
@@ -90,7 +94,7 @@ jobs:
       - name: Check Vercel Credentials
         id: check_vercel
         run: |
-          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
+          if [ -z "$VERCEL_TOKEN" ]; then
             echo "has_token=false" >> $GITHUB_OUTPUT
             echo "::warning::VERCEL_TOKEN secret is not set in GitHub Repository Secrets. Skipping Vercel automated CLI deployment."
           else
@@ -104,26 +108,14 @@ jobs:
       - name: Pull Vercel Environment Information
         if: steps.check_vercel.outputs.has_token == 'true'
         run: vercel pull --yes --environment=production
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Build Project Artifacts
         if: steps.check_vercel.outputs.has_token == 'true'
         run: vercel build --prod
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Deploy to Vercel Production
         if: steps.check_vercel.outputs.has_token == 'true'
         run: vercel deploy --prebuilt --prod
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
   deploy-docker:
     name: Build & Push Production Docker Image
@@ -138,9 +130,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Lowercase Repository Name
-        run: |
-          echo "REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/bookbuddy-server
+          tags: |
+            type=raw,value=latest
+            type=sha,format=long
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -158,8 +155,7 @@ jobs:
           context: ./server
           file: ./server/Dockerfile
           push: true
-          tags: |
-            ghcr.io/${{ env.REPO_LOWER }}/bookbuddy-server:latest
-            ghcr.io/${{ env.REPO_LOWER }}/bookbuddy-server:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
