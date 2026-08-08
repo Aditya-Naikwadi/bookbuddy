@@ -38,10 +38,7 @@ if (missingEnv.length > 0) {
 }
 
 if (process.env.NODE_ENV === 'production' && !process.env.VERCEL && !process.env.RENDER) {
-  const prodRequired = [
-    'GOOGLE_BOOKS_API_KEY',
-    'REDIS_URL',
-  ];
+  const prodRequired = ['GOOGLE_BOOKS_API_KEY', 'REDIS_URL'];
   const missingProdEnv = prodRequired.filter((key) => !process.env[key]);
   if (missingProdEnv.length > 0) {
     throw new Error(
