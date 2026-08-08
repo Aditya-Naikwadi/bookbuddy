@@ -14,6 +14,9 @@ const mongoose = require('mongoose');
 const app = express();
 const crypto = require('crypto');
 
+// Enable Trust Proxy for Render / Vercel reverse proxies (required for HTTPS secure cookies & client IP detection)
+app.set('trust proxy', 1);
+
 // Assign Request ID
 app.use((req, res, next) => {
   req.id = req.headers['x-request-id'] || crypto.randomUUID();
@@ -66,6 +69,7 @@ app.use((req, res, next) => {
 // CORS Configuration supporting multi-origin dev setups & Vercel preview deployment URLs
 const allowedOrigins = [
   config.clientOrigin,
+  'https://book-buddy-eight-rosy.vercel.app',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:3000',
