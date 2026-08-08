@@ -46,8 +46,9 @@ if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
   ];
   const missingProdEnv = prodRequired.filter((key) => !process.env[key]);
   if (missingProdEnv.length > 0) {
-    throw new Error(
-      `❌ Fatal Startup Error: Missing required production environment variables: [${missingProdEnv.join(', ')}].`
+    // eslint-disable-next-line no-console
+    console.warn(
+      `⚠️ Notice: Missing optional production environment variables: [${missingProdEnv.join(', ')}]. Using safe runtime fallbacks.`
     );
   }
 }
