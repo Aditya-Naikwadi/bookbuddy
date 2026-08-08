@@ -1,4 +1,4 @@
-const redisClient = require('../utils/redisCache');
+const { getCache, setCache } = require('../utils/redisCache');
 const CollegeFeatureConfig = require('../models/CollegeFeatureConfig');
 
 /**
@@ -29,39 +29,41 @@ function requireFeature(requiredFeatureId) {
 
       // 1. Try Redis Cache Lookup
       try {
-        const cachedData = await redisClient.get(cacheKey);
-        if (cachedData) {
-          enabledFeatures = JSON.parse(cachedData);
+        const cachedData = await getCache(cacheKey);
+        if (cachedData && Array.isArray(cachedData)) {
+          enabledFeatures = cachedData;
         }
       } catch {
-        // Log cache miss/error silently and fallback to DB
+        enabledFeatures = null;
       }
 
-      // 2. Fallback to Database if cache miss
+      // 2. Fetch from DB if Cache Miss
       if (!enabledFeatures) {
-        const configDoc = await CollegeFeatureConfig.findOne({ collegeId: tenantId }).lean();
-        if (configDoc && configDoc.enabledFeatures?.length) {
-          enabledFeatures = configDoc.enabledFeatures;
+        const doc = await CollegeFeatureConfig.findOne({ collegeId: tenantId }).lean();
+        if (doc && doc.enabledFeatures) {
+          enabledFeatures = doc.enabledFeatures;
         } else {
-          const College = require('../models/College');
-          const collegeDoc = await College.findById(tenantId).lean();
-          if (collegeDoc) {
-            enabledFeatures = collegeDoc.enabledFeatures?.length
-              ? collegeDoc.enabledFeatures
-              : collegeDoc.selectedServices?.length
-                ? collegeDoc.selectedServices
-                : null;
-          }
-        }
-
-        if (!enabledFeatures) {
+          // Default fallbacks if no explicit config exists
           enabledFeatures = [
             'catalog',
-            'catalog_management',
-            'loans',
-            'fines',
-            'patron-card',
+            'borrowing',
+            'digital-library',
             'e-resources',
+            'study-rooms',
+            'book-clubs',
+            'discussions',
+            'bulletin-board',
+            'donor-wall',
+            'reading-goals',
+            'streaks',
+            'faculty-publications',
+            'group-study',
+            'lab-seats',
+            'inter-library-loan',
+            'isbn-scan',
+            'analytics',
+            'audit-logs',
+            'services',
             'reading-lists',
             'recommendations',
             'saved',
@@ -73,7 +75,7 @@ function requireFeature(requiredFeatureId) {
         }
 
         try {
-          await redisClient.setex(cacheKey, 3600, JSON.stringify(enabledFeatures));
+          await setCache(cacheKey, enabledFeatures, 3600);
         } catch {
           // Ignore cache set error
         }
