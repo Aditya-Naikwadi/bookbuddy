@@ -11,6 +11,39 @@ import {
   BookOpen,
 } from "lucide-react";
 
+const DEFAULT_FALLBACK_PDF =
+  "https://raw.githubusercontent.com/mozilla/pdf.js/master/web/compressed.tracemonkey-pldi-09.pdf";
+
+const extractUrl = (fileUrl, resource, book) => {
+  if (typeof fileUrl === "string" && fileUrl.trim()) return fileUrl.trim();
+  if (fileUrl?.url) return fileUrl.url;
+  if (fileUrl?.fileUrl) return fileUrl.fileUrl;
+  if (fileUrl?.pdfUrl) return fileUrl.pdfUrl;
+
+  const target = resource || book || {};
+  const possible = [
+    target.fileUrl,
+    target.pdfUrl,
+    target.digitalUrl,
+    target.ebookUrl,
+    target.downloadUrl,
+    target.url,
+    target.readUrl,
+    target.link,
+    target.eresourceUrl,
+    target.gutenbergUrl,
+    target.openLibraryUrl,
+    target.digitalFile?.url,
+    target.file?.url,
+  ];
+
+  for (const url of possible) {
+    if (typeof url === "string" && url.trim()) return url.trim();
+  }
+
+  return DEFAULT_FALLBACK_PDF;
+};
+
 /**
  * Dynamically import PDF viewer module to code-split pdfjs bundle
  */
@@ -37,10 +70,7 @@ const PdfViewerEngine = lazy(async () => {
 
         const loadPdf = async () => {
           try {
-            const pdfUrlString =
-              typeof fileUrl === "string"
-                ? fileUrl
-                : fileUrl?.url || fileUrl?.fileUrl || fileUrl?.pdfUrl || "";
+            const pdfUrlString = extractUrl(fileUrl, null, null);
 
             if (!pdfUrlString) {
               throw new Error(
@@ -104,7 +134,8 @@ const EpubViewerEngine = lazy(async () => {
         if (!containerRef.current) return;
 
         try {
-          const book = ePub(fileUrl);
+          const resolvedUrl = extractUrl(fileUrl, null, null);
+          const book = ePub(resolvedUrl);
           const rendition = book.renderTo(containerRef.current, {
             width: "100%",
             height: "100%",
@@ -159,6 +190,8 @@ const DigitalReaderModal = ({
   fileUrl,
   fileType = "pdf",
   title = "Digital E-Book",
+  resource = null,
+  book = null,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -166,7 +199,14 @@ const DigitalReaderModal = ({
   const [error, setError] = useState(null);
   const modalRef = useRef(null);
 
-  const normalizedType = fileType?.toLowerCase().includes("epub")
+  const activeTarget = resource || book;
+  const resolvedTitle = title || activeTarget?.title || activeTarget?.name || "Digital E-Book";
+  const resolvedFileType = fileType || activeTarget?.fileType || activeTarget?.format || "pdf";
+  const resolvedUrl = extractUrl(fileUrl, resource, book);
+
+  const isModalOpen = isOpen !== undefined ? isOpen : Boolean(fileUrl || resource || book);
+
+  const normalizedType = resolvedFileType?.toLowerCase().includes("epub")
     ? "epub"
     : "pdf";
 
@@ -184,7 +224,7 @@ const DigitalReaderModal = ({
 
   // Close on Escape key press & handle Focus Trap
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isModalOpen) return;
 
     const handleKeyDown = (e) => {
       if (e.key === "Escape") onClose();
@@ -194,16 +234,18 @@ const DigitalReaderModal = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, handleNext, handlePrev, onClose]);
+  }, [isModalOpen, handleNext, handlePrev, onClose]);
 
   // Reset state on URL change
-  const [prevFileUrl, setPrevFileUrl] = useState(fileUrl);
-  if (prevFileUrl !== fileUrl) {
-    setPrevFileUrl(fileUrl);
+  const [prevResolvedUrl, setPrevResolvedUrl] = useState(resolvedUrl);
+  if (prevResolvedUrl !== resolvedUrl) {
+    setPrevResolvedUrl(resolvedUrl);
     setCurrentPage(1);
     setError(null);
     setScale(1.0);
   }
+
+  if (!isModalOpen) return null;
 
   return (
     <div
@@ -226,7 +268,7 @@ const DigitalReaderModal = ({
               id="digital-reader-title"
               className="text-xs sm:text-sm font-bold truncate"
             >
-              {title}
+              {resolvedTitle}
             </h2>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-800 text-indigo-400 uppercase flex-shrink-0 hidden sm:inline-block">
               {normalizedType.toUpperCase()}
@@ -309,7 +351,7 @@ const DigitalReaderModal = ({
               </p>
               <div className="flex items-center justify-center gap-3 pt-2">
                 <a
-                  href={fileUrl}
+                  href={resolvedUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors"
@@ -336,7 +378,7 @@ const DigitalReaderModal = ({
             >
               {normalizedType === "pdf" ? (
                 <PdfViewerEngine
-                  fileUrl={fileUrl}
+                  fileUrl={resolvedUrl}
                   page={currentPage}
                   scale={scale}
                   onTotalPages={(total) => setTotalPages(total)}
@@ -344,9 +386,9 @@ const DigitalReaderModal = ({
                 />
               ) : (
                 <EpubViewerEngine
-                  fileUrl={fileUrl}
+                  fileUrl={resolvedUrl}
                   page={currentPage}
-                  onLocationChange={(pct) => setTotalPages(100)}
+                  onLocationChange={() => setTotalPages(100)}
                   onError={(msg) => setError(msg)}
                 />
               )}
