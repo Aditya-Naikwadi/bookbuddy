@@ -47,29 +47,36 @@ const startServer = async () => {
   // Initialize Sentry SDK
   initSentry();
 
-  // Create HTTP Server
-  const server = http.createServer(app);
+  // 1. Connect to Database FIRST before serving traffic or running cron tasks
+  try {
+    await connectDB();
+  } catch (err) {
+    logger.error(`FATAL: Database connection failed on startup: ${err.message}`, {
+      stack: err.stack,
+    });
+    captureException(err, { context: 'serverStartup' });
+    process.exit(1);
+  }
 
-  // Setup Socket.io
+  // 2. Create HTTP Server & Setup Socket.io
+  const server = http.createServer(app);
   const io = initSockets(server);
   app.set('io', io);
 
-  // Initialize background Cron Tasks
-  initCronJobs();
-
+  // 3. Start listening for HTTP traffic
   serverInstance = server.listen(config.port, () => {
     logger.info(`Server running in ${config.nodeEnv} mode on port ${config.port}`);
   });
 
-  // Connect to DB asynchronously without blocking HTTP server startup
-  connectDB().catch((err) => {
-    logger.warn(`Background MongoDB connection notice: ${err.message}`);
-  });
+  // 4. Initialize background Cron Tasks AFTER database connection is confirmed
+  initCronJobs();
 
-  // Handle unhandled promise rejections
+  // Handle unhandled promise rejections as safety net
   process.on('unhandledRejection', (err) => {
-    logger.error(`UNHANDLED REJECTION: ${err.message}`, { stack: err.stack });
-    // Keep server running in dev mode
+    logger.error(`UNHANDLED REJECTION: ${err ? err.message || err : 'Unknown rejection'}`, {
+      stack: err ? err.stack : undefined,
+    });
+    captureException(err, { context: 'unhandledRejection' });
   });
 };
 

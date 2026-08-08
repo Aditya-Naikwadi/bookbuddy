@@ -149,7 +149,8 @@ app.get('/api/v1/ping', pingController);
 // Unified Detailed Health Check Handler
 const getHealthStatus = async () => {
   const readyState = mongoose.connection.readyState;
-  const dbStatus = readyState === 1 ? 'connected' : 'disconnected';
+  const dbStatus =
+    readyState === 1 ? 'connected' : readyState === 2 ? 'connecting' : 'disconnected';
 
   let redisStatus = 'disabled';
   try {
@@ -168,8 +169,11 @@ const getHealthStatus = async () => {
     isHealthy,
     statusCode: isHealthy ? 200 : 503,
     payload: {
-      status: isHealthy ? 'ok' : 'degraded',
+      status: isHealthy ? 'ok' : 'unhealthy',
       success: isHealthy,
+      message: isHealthy
+        ? 'Service operating normally.'
+        : `Database connection not ready (Mongoose readyState: ${readyState} [${dbStatus}]).`,
       dbState: dbStatus,
       dbConnection: dbStatus,
       dbReadyState: readyState,

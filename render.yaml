@@ -5,5 +5,5 @@ services:
     rootDir: server
     buildCommand: npm install
     startCommand: node src/server.js
-    healthCheckPath: /ping
+    healthCheckPath: /health
     autoDeploy: true
