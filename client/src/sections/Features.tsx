@@ -1,15 +1,10 @@
-import React, { useRef } from "react";
+import React from "react";
 import {
   Search,
   Sparkles,
   Bookmark,
-  Book,
-  Clock,
   CheckCircle,
   RotateCcw,
-  AlertTriangle,
-  List,
-  Bell,
   CreditCard,
   Mail,
   User,
@@ -18,7 +13,6 @@ import {
   FileText,
 } from "lucide-react";
 import { SectionLabel } from "../components/ui/SectionLabel";
-import { motion, useScroll, useTransform } from "framer-motion";
 
 const bentoBlocks = [
   {
@@ -116,43 +110,29 @@ const bentoBlocks = [
 ];
 
 export const Features = () => {
-  const containerRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start end", "end start"],
-  });
-  const glowY = useTransform(scrollYProgress, [0, 1], [-200, 200]);
-
   return (
     <section
-      ref={containerRef}
       id="features"
       className="bg-void py-16 md:py-24 relative overflow-hidden"
     >
       {/* Decorative background glow */}
-      <motion.div
-        style={{ y: glowY }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-indigo-500/5 to-fuchsia-500/5 rounded-full blur-[120px] pointer-events-none"
-      />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-indigo-500/5 to-fuchsia-500/5 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-6 md:px-12 xl:px-24">
-        <div className="text-center mb-12 md:mb-16">
+        <div className="text-center mb-12 md:mb-16 reveal-fade-up">
           <SectionLabel className="mx-auto">Everything you need</SectionLabel>
           <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-ink mt-4">
             The complete library experience.
           </h2>
         </div>
 
-        {/* Masonry Layout (Pinterest Style) */}
+        {/* Masonry Layout */}
         <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-4 md:gap-6 space-y-4 md:space-y-6">
           {bentoBlocks.map((block, i) => (
-            <motion.div
+            <div
               key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className={`break-inside-avoid glass-panel glass-panel-hover rounded-3xl p-6 md:p-8 flex flex-col group ${block.bgGradient} ${block.borderColor} relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 mb-4 md:mb-6 h-auto min-h-[220px]`}
+              className={`reveal-fade-up break-inside-avoid glass-panel glass-panel-hover rounded-3xl p-6 md:p-8 flex flex-col group ${block.bgGradient} ${block.borderColor} relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 mb-4 md:mb-6 h-auto min-h-[220px]`}
+              style={{ transitionDelay: `${i * 0.05}s` }}
             >
               {/* Colored radial gradient on hover */}
               <div
@@ -180,7 +160,7 @@ export const Features = () => {
                   {block.desc}
                 </p>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

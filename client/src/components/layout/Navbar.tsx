@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, BookOpen, Sun, Moon } from "lucide-react";
 import { Button } from "../ui/Button";
 import { cn } from "../../utils/cn";
-import { useLenisContext } from "../../context/LenisContext";
 import { useTheme } from "../../context/ThemeContext";
 
 const NAV_ITEMS = [
@@ -16,21 +15,19 @@ const NAV_ITEMS = [
 export const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const lenisRef = useLenisContext();
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 80);
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const scrollTo = (target: string) => {
-    lenisRef?.current?.scrollTo(target, {
-      offset: -80,
-      duration: 1.2,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    });
+    const element = document.querySelector(target);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   return (

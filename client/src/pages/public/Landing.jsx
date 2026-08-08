@@ -15,13 +15,11 @@ import { Testimonials } from "../../sections/Testimonials";
 import { CTA } from "../../sections/CTA";
 import { FAQ } from "../../sections/FAQ";
 import { LiveFeed } from "../../components/ui/LiveFeed";
-
-import { useLenis } from "../../hooks/useLenis";
-import { LenisContext } from "../../context/LenisContext";
+import useScrollObserver from "../../hooks/useScrollObserver";
 
 const Landing = () => {
   const containerRef = useRef(null);
-  const lenisRef = useLenis(containerRef);
+  useScrollObserver(containerRef);
   const { isAuthenticated, user } = useAuthStore();
   const navigate = useNavigate();
 
@@ -43,27 +41,25 @@ const Landing = () => {
   }, []);
 
   return (
-    <LenisContext.Provider value={lenisRef}>
-      <main
-        ref={containerRef}
-        className="bg-void text-ink font-sans selection:bg-ember/30 selection:text-ember-100 relative"
-      >
-        <ScrollProgress />
-        <Navbar />
-        <Hero />
-        <TrustBar />
-        <Features />
-        <EResources />
-        <StreakShowcase />
-        <HowItWorks />
-        <PatronCardSection />
-        <Testimonials />
-        <FAQ />
-        <CTA />
-        <Footer />
-        <LiveFeed />
-      </main>
-    </LenisContext.Provider>
+    <main
+      ref={containerRef}
+      className="bg-void text-ink font-sans selection:bg-ember/30 selection:text-ember-100 relative"
+    >
+      <ScrollProgress />
+      <Navbar />
+      <Hero />
+      <TrustBar />
+      <Features />
+      <EResources />
+      <StreakShowcase />
+      <HowItWorks />
+      <PatronCardSection />
+      <Testimonials />
+      <FAQ />
+      <CTA />
+      <Footer />
+      <LiveFeed />
+    </main>
   );
 };
 export default Landing;

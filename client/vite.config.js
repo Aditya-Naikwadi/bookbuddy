@@ -45,6 +45,8 @@ export default defineConfig({
   },
   build: {
     target: "esnext",
+    cssCodeSplit: true,
+    cssMinify: true,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
@@ -59,9 +61,6 @@ export default defineConfig({
             if (id.includes("lucide-react")) {
               return "vendor-lucide";
             }
-            if (id.includes("three") || id.includes("@react-three")) {
-              return "vendor-three";
-            }
             if (id.includes("react") || id.includes("react-dom")) {
               return "vendor-react";
             }
@@ -70,9 +69,6 @@ export default defineConfig({
             }
             if (id.includes("@tanstack")) {
               return "vendor-tanstack";
-            }
-            if (id.includes("gsap")) {
-              return "vendor-gsap";
             }
             if (id.includes("framer-motion")) {
               return "vendor-framer";
