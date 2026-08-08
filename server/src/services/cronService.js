@@ -1,4 +1,5 @@
 const cron = require('node-cron');
+const mongoose = require('mongoose');
 const CronRunLog = require('../models/CronRunLog');
 const Loan = require('../models/Loan');
 const Fine = require('../models/Fine');
@@ -20,6 +21,10 @@ const { captureException } = require('../utils/sentry');
  * Single job runner wrapper for observability and failure isolation.
  */
 const runJob = async (jobName, jobFn) => {
+  if (mongoose.connection.readyState !== 1) {
+    logger.warn(`Skipping cron job ${jobName}: Database is disconnected.`);
+    return;
+  }
   const startedAt = new Date();
   let affectedCount;
   try {
@@ -30,7 +35,7 @@ const runJob = async (jobName, jobFn) => {
       finishedAt: new Date(),
       status: 'success',
       affectedCount,
-    });
+    }).catch(() => {});
   } catch (err) {
     logger.error(`Cron job ${jobName} failed: ${err.message}`, err);
     captureException(err, { context: 'cronJob', jobName });
@@ -40,7 +45,7 @@ const runJob = async (jobName, jobFn) => {
       finishedAt: new Date(),
       status: 'failed',
       errorMessage: err.message,
-    });
+    }).catch(() => {});
   }
 };
 
