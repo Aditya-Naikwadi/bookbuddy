@@ -37,7 +37,7 @@ if (missingEnv.length > 0) {
   }
 }
 
-if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
+if (process.env.NODE_ENV === 'production' && !process.env.VERCEL && !process.env.RENDER) {
   const prodRequired = [
     'GOOGLE_BOOKS_API_KEY',
     'RAZORPAY_KEY_ID',
@@ -46,9 +46,8 @@ if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
   ];
   const missingProdEnv = prodRequired.filter((key) => !process.env[key]);
   if (missingProdEnv.length > 0) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `⚠️ Notice: Missing optional production environment variables: [${missingProdEnv.join(', ')}]. Using safe runtime fallbacks.`
+    throw new Error(
+      `❌ Fatal Startup Error: Missing required production environment variables: [${missingProdEnv.join(', ')}].`
     );
   }
 }
