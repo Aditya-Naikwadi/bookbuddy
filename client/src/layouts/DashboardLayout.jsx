@@ -280,7 +280,7 @@ const DashboardLayout = () => {
 
       {/* Mobile/Tablet Backdrop Overlay */}
       <div
-        className={cn("nav-drawer-overlay", mobileMenuOpen && "is-open")}
+        className={cn("nav-drawer-overlay md:hidden", mobileMenuOpen && "is-open")}
         onClick={closeMenu}
         aria-hidden="true"
       />
@@ -289,7 +289,7 @@ const DashboardLayout = () => {
       <aside
         id="dashboard-mobile-drawer"
         className={cn(
-          "nav-drawer-panel !bg-white !text-slate-900 border-l border-slate-200 shadow-2xl",
+          "nav-drawer-panel md:hidden !bg-white !text-slate-900 border-l border-slate-200 shadow-2xl",
           mobileMenuOpen && "is-open"
         )}
         aria-label="Dashboard navigation menu"

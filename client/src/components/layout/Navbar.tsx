@@ -152,7 +152,7 @@ export const Navbar = () => {
 
       {/* Mobile/Tablet Backdrop Overlay */}
       <div
-        className={cn("nav-drawer-overlay", mobileOpen && "is-open")}
+        className={cn("nav-drawer-overlay lg:hidden", mobileOpen && "is-open")}
         onClick={closeMenu}
         aria-hidden="true"
       />
@@ -160,7 +160,7 @@ export const Navbar = () => {
       {/* Mobile/Tablet Slide-In Panel Drawer */}
       <aside
         id="responsive-nav-drawer"
-        className={cn("nav-drawer-panel", mobileOpen && "is-open")}
+        className={cn("nav-drawer-panel lg:hidden", mobileOpen && "is-open")}
         aria-label="Mobile and tablet navigation drawer"
       >
         <nav className="flex flex-col gap-5 mt-4">

@@ -84,7 +84,9 @@
 
 @layer components {
   .glass-panel {
-    @apply bg-surface/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)];
+    @apply bg-surface/40 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)];
+    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
   }
 
   .glass-panel-hover {
@@ -113,180 +115,94 @@
   .text-gradient-accent {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-ember to-ember-glow;
   }
-}
 
-/* ==========================================================================
-   Hardware-Accelerated CSS Scroll Reveals & Motion Controls
-   ========================================================================== */
-
-.reveal-fade-up {
-  opacity: 0;
-  transform: translate3d(0, 24px, 0);
-  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
-}
-
-.reveal-fade-up.in-view {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-}
-
-.reveal-fade-in {
-  opacity: 0;
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity;
-}
-
-.reveal-fade-in.in-view {
-  opacity: 1;
-}
-
-.reveal-scale {
-  opacity: 0;
-  transform: scale(0.96);
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
-}
-
-.reveal-scale.in-view {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* Shimmer Loading Skeleton */
-@keyframes skeleton-shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.animate-shimmer {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.03) 25%,
-    rgba(255, 255, 255, 0.09) 37%,
-    rgba(255, 255, 255, 0.03) 63%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.8s infinite ease-in-out;
-}
-
-/* Accessibility: Respect prefers-reduced-motion */
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto !important;
+  /* Responsive Hamburger Icon & Navigation Drawer Panel */
+  .hamburger-button {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 12px;
+    z-index: 105;
+    transition: background-color 0.2s ease;
   }
 
-  .reveal-fade-up,
-  .reveal-fade-in,
-  .reveal-scale,
-  .hamburger-line,
-  .nav-drawer-overlay,
+  .hamburger-button:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .hamburger-line {
+    width: 22px;
+    height: 2px;
+    background-color: var(--text-ink, #f8f9fa);
+    border-radius: 2px;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: center;
+    will-change: transform, opacity;
+  }
+
+  /* CSS-Only Hamburger (☰) to Close (✕) Morph Animation */
+  .hamburger-button[aria-expanded="true"] .hamburger-line-1 {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .hamburger-button[aria-expanded="true"] .hamburger-line-2 {
+    opacity: 0;
+  }
+
+  .hamburger-button[aria-expanded="true"] .hamburger-line-3 {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  /* Navigation Drawer Backdrop Overlay */
+  .nav-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 8, 13, 0.75);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    z-index: 90;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity;
+  }
+
+  .nav-drawer-overlay.is-open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Navigation Drawer Slide-In Panel */
   .nav-drawer-panel {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
-    will-change: auto !important;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 85vw;
+    max-width: 360px;
+    background-color: var(--bg-surface, #151a26);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 95;
+    display: flex;
+    flex-direction: column;
+    padding: 5.5rem 1.5rem 2rem 1.5rem;
+    transform: translate3d(100%, 0, 0);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+    box-shadow: -12px 0 40px rgba(0, 0, 0, 0.6);
   }
 
-  .animate-shimmer {
-    animation: none !important;
+  .nav-drawer-panel.is-open {
+    transform: translate3d(0, 0, 0);
   }
-}
-
-/* ==========================================================================
-   Responsive Hamburger Icon & Navigation Drawer Panel (CSS-Only Animations)
-   ========================================================================== */
-
-.hamburger-button {
-  display: inline-flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
-  width: 40px;
-  height: 40px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 12px;
-  z-index: 105;
-  transition: background-color 0.2s ease;
-}
-
-.hamburger-button:hover {
-  background-color: rgba(255, 255, 255, 0.08);
-}
-
-.hamburger-line {
-  width: 22px;
-  height: 2px;
-  background-color: var(--text-ink, #f8f9fa);
-  border-radius: 2px;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  transform-origin: center;
-  will-change: transform, opacity;
-}
-
-/* CSS-Only Hamburger (☰) to Close (✕) Morph Animation */
-.hamburger-button[aria-expanded="true"] .hamburger-line-1 {
-  transform: translateY(7px) rotate(45deg);
-}
-
-.hamburger-button[aria-expanded="true"] .hamburger-line-2 {
-  opacity: 0;
-}
-
-.hamburger-button[aria-expanded="true"] .hamburger-line-3 {
-  transform: translateY(-7px) rotate(-45deg);
-}
-
-/* Navigation Drawer Backdrop Overlay */
-.nav-drawer-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(6, 8, 13, 0.75);
-  backdrop-filter: blur(8px);
-  z-index: 90;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              visibility 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity;
-}
-
-.nav-drawer-overlay.is-open {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Navigation Drawer Slide-In Panel */
-.nav-drawer-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 85vw;
-  max-width: 360px;
-  background-color: var(--bg-surface, #151a26);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 95;
-  display: flex;
-  flex-direction: column;
-  padding: 5.5rem 1.5rem 2rem 1.5rem;
-  transform: translate3d(100%, 0, 0);
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
-  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.6);
-}
-
-.nav-drawer-panel.is-open {
-  transform: translate3d(0, 0, 0);
 }
