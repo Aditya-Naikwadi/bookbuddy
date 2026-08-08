@@ -1,6 +1,8 @@
 describe('Production Environment Validation Unit Tests', () => {
   const setFullProdEnv = () => {
     process.env.NODE_ENV = 'production';
+    delete process.env.VERCEL;
+    delete process.env.RENDER;
     process.env.PORT = '5000';
     process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/prod_test';
     process.env.JWT_SECRET = 'a_very_strong_prod_jwt_secret_key_12345';
@@ -24,7 +26,8 @@ describe('Production Environment Validation Unit Tests', () => {
     jest.isolateModules(() => {
       setFullProdEnv();
       delete process.env.GOOGLE_BOOKS_API_KEY;
-      jest.spyOn(require('dotenv'), 'config').mockImplementation(() => {});
+      const dotenv = require('dotenv');
+      dotenv.config = jest.fn();
 
       expect(() => {
         require('../config');
@@ -36,7 +39,8 @@ describe('Production Environment Validation Unit Tests', () => {
     jest.isolateModules(() => {
       setFullProdEnv();
       delete process.env.RAZORPAY_KEY_ID;
-      jest.spyOn(require('dotenv'), 'config').mockImplementation(() => {});
+      const dotenv = require('dotenv');
+      dotenv.config = jest.fn();
 
       expect(() => {
         require('../config');
@@ -48,7 +52,8 @@ describe('Production Environment Validation Unit Tests', () => {
     jest.isolateModules(() => {
       setFullProdEnv();
       delete process.env.REDIS_URL;
-      jest.spyOn(require('dotenv'), 'config').mockImplementation(() => {});
+      const dotenv = require('dotenv');
+      dotenv.config = jest.fn();
 
       expect(() => {
         require('../config');
