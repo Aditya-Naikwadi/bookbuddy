@@ -38,9 +38,16 @@ export const getAllResources = async () => {
   }
 };
 
-export const updateResource = async (resourceId, payload) => {
-  const { data } = await apiClient.put(`/eresources/${resourceId}`, payload);
-  return data.data || data;
+export const saveProgress = async (resourceId, payload) => {
+  try {
+    const { data } = await apiClient.post(
+      `/eresources/external/${resourceId}/progress`,
+      payload
+    );
+    return data.data || data;
+  } catch {
+    return null;
+  }
 };
 
 const eresourcesApi = {

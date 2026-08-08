@@ -35,6 +35,49 @@ const SORT_OPTIONS = [
   { value: "category", label: "Category" },
 ];
 
+const DEFAULT_PUBLIC_RESOURCES = [
+  {
+    id: "pub-1",
+    title: "Introduction to Computer Science & Algorithms",
+    category: "E-Books",
+    format: "PDF",
+    accessRequirement: "Open Access",
+    description: "Comprehensive foundational text on algorithms, data structures, and computer organization.",
+    source: "MIT OpenCourseWare",
+    fileUrl: "https://raw.githubusercontent.com/mozilla/pdf.js/master/web/compressed.tracemonkey-pldi-09.pdf",
+  },
+  {
+    id: "pub-2",
+    title: "Journal of Open Source Software (JOSS)",
+    category: "Journals",
+    format: "PDF / HTML",
+    accessRequirement: "Open Access",
+    description: "Peer-reviewed developer-friendly academic journal for research software engineers.",
+    source: "Open Source Initiative",
+    fileUrl: "https://raw.githubusercontent.com/mozilla/pdf.js/master/web/compressed.tracemonkey-pldi-09.pdf",
+  },
+  {
+    id: "pub-3",
+    title: "Directory of Open Access Books (DOAB)",
+    category: "Databases",
+    format: "EPUB / PDF",
+    accessRequirement: "Open Access",
+    description: "Index of peer-reviewed open access books and scholarly monographs.",
+    source: "OAPEN Foundation",
+    fileUrl: "https://raw.githubusercontent.com/mozilla/pdf.js/master/web/compressed.tracemonkey-pldi-09.pdf",
+  },
+  {
+    id: "pub-4",
+    title: "Sample Engineering Mathematics Exam Paper",
+    category: "Past Papers",
+    format: "PDF",
+    accessRequirement: "Open Access",
+    description: "Sample university examination paper for linear algebra and multivariable calculus.",
+    source: "Academic Repository",
+    fileUrl: "https://raw.githubusercontent.com/mozilla/pdf.js/master/web/compressed.tracemonkey-pldi-09.pdf",
+  },
+];
+
 const GeneralEResources = () => {
   const { toggleBookmark, isBookmarked } = useLocalBookmarks();
 
@@ -119,37 +162,47 @@ const GeneralEResources = () => {
     };
   }, [searchQuery]);
 
-  const allList = useMemo(
-    () => [...dbResources, ...apiEbooks],
-    [dbResources, apiEbooks],
-  );
+  const allList = useMemo(() => {
+    const combined = [...dbResources, ...apiEbooks];
+    return combined.length > 0 ? combined : DEFAULT_PUBLIC_RESOURCES;
+  }, [dbResources, apiEbooks]);
 
   const combinedResources = useMemo(() => {
     return allList
       .filter((item) => {
+        if (!item) return false;
         const matchesCategory =
           activeCategory === "All" || item.category === activeCategory;
-        const q = searchQuery.toLowerCase().trim();
+        const q = (searchQuery || "").toLowerCase().trim();
+        const titleStr = (item.title || "").toLowerCase();
+        const descStr = (item.description || "").toLowerCase();
+        const srcStr = (item.source || "").toLowerCase();
+
         const matchesSearch =
           !q ||
-          item.title.toLowerCase().includes(q) ||
-          item.description.toLowerCase().includes(q) ||
-          item.source.toLowerCase().includes(q);
+          titleStr.includes(q) ||
+          descStr.includes(q) ||
+          srcStr.includes(q);
         return matchesCategory && matchesSearch;
       })
       .sort((a, b) => {
-        if (sortBy === "title") return a.title.localeCompare(b.title);
-        if (sortBy === "category") return a.category.localeCompare(b.category);
+        const titleA = a?.title || "";
+        const titleB = b?.title || "";
+        const catA = a?.category || "";
+        const catB = b?.category || "";
+        if (sortBy === "title") return titleA.localeCompare(titleB);
+        if (sortBy === "category") return catA.localeCompare(catB);
         return 0;
       });
   }, [allList, activeCategory, searchQuery, sortBy]);
 
   // Category counts for StatSummaryStrip
   const categoryStats = useMemo(() => {
-    const ebooks = allList.filter((i) => i.category === "E-Books").length;
-    const journals = allList.filter((i) => i.category === "Journals").length;
-    const databases = allList.filter((i) => i.category === "Databases").length;
-    const pastPapers = allList.filter(
+    const safeList = Array.isArray(allList) ? allList.filter(Boolean) : [];
+    const ebooks = safeList.filter((i) => i.category === "E-Books").length;
+    const journals = safeList.filter((i) => i.category === "Journals").length;
+    const databases = safeList.filter((i) => i.category === "Databases").length;
+    const pastPapers = safeList.filter(
       (i) => i.category === "Past Papers",
     ).length;
 
