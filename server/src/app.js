@@ -147,6 +147,8 @@ app.get('/api/ping', pingController);
 app.get('/api/v1/ping', pingController);
 
 // Unified Detailed Health Check Handler
+const { redisClient } = require('./middlewares/rateLimiters');
+
 const getHealthStatus = async () => {
   const readyState = mongoose.connection.readyState;
   const dbStatus = readyState === 1 ? 'connected' : 'disconnected';
