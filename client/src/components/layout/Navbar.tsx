@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, BookOpen, Sun, Moon } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { Sun, Moon } from "lucide-react";
 import { Button } from "../ui/Button";
 import { cn } from "../../utils/cn";
 import { useTheme } from "../../context/ThemeContext";
@@ -10,6 +9,8 @@ const NAV_ITEMS = [
   { label: "E-Books", target: "#e-books" },
   { label: "Streaks", target: "#streak" },
   { label: "How It Works", target: "#how-it-works" },
+  { label: "E-Resources", target: "/general-dashboard/e-resources" },
+  { label: "Catalog Search", target: "/general-dashboard/search" },
 ];
 
 export const Navbar = () => {
@@ -17,16 +18,47 @@ export const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
+  // Handle sticky header scroll threshold
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 80);
+    const handleScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollTo = (target: string) => {
-    const element = document.querySelector(target);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+  // Lock body scroll when mobile/tablet navigation drawer is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
+  const closeMenu = useCallback(() => setMobileOpen(false), []);
+
+  // Close drawer on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && mobileOpen) {
+        closeMenu();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileOpen, closeMenu]);
+
+  const handleNavClick = (target: string) => {
+    closeMenu();
+    if (target.startsWith("#")) {
+      const element = document.querySelector(target);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    } else {
+      window.location.href = target;
     }
   };
 
@@ -34,42 +66,48 @@ export const Navbar = () => {
     <header
       className={cn(
         "fixed top-0 w-full z-[100] transition-all duration-300",
-        scrolled ? "glass-panel py-3" : "bg-transparent py-5",
+        scrolled ? "glass-panel py-3 shadow-lg" : "bg-transparent py-5",
       )}
       role="navigation"
       aria-label="Main navigation"
     >
-      <div className="max-w-7xl mx-auto px-6 md:px-12 xl:px-24 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full overflow-hidden bg-[#FAF6EC] border border-ember/20 flex items-center justify-center relative shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between">
+        {/* Brand Logo */}
+        <div
+          onClick={() => handleNavClick("#")}
+          className="flex items-center gap-2.5 cursor-pointer select-none"
+        >
+          <div className="w-9 h-9 rounded-full overflow-hidden bg-[#FAF6EC] border border-ember/20 flex items-center justify-center relative shadow-sm">
             <img
               src="/favicon.png"
               alt="BookBuddy Mascot"
               className="w-full h-full object-cover"
             />
           </div>
-          <span className="font-serif text-2xl text-ink">
+          <span className="font-serif text-2xl font-bold text-ink">
             Book<span className="text-ember">Buddy</span>
           </span>
         </div>
 
-        <nav className="hidden md:flex items-center gap-8">
+        {/* Desktop Navigation Links (Visible on >= 1024px) */}
+        <nav className="hidden lg:flex items-center gap-7">
           {NAV_ITEMS.map(({ label, target }) => (
             <button
               key={target}
-              onClick={() => scrollTo(target)}
+              onClick={() => handleNavClick(target)}
               className="text-sm font-semibold text-muted hover:text-ember transition-all duration-200 hover:-translate-y-0.5"
-              aria-label={`Scroll to ${label} section`}
+              aria-label={`Navigate to ${label}`}
             >
               {label}
             </button>
           ))}
         </nav>
 
-        <div className="hidden md:flex items-center gap-4">
+        {/* Desktop Actions (Visible on >= 1024px) */}
+        <div className="hidden lg:flex items-center gap-4">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full hover:bg-surface/60 text-muted hover:text-ember transition-colors"
+            className="p-2 rounded-xl hover:bg-surface/60 text-muted hover:text-ember transition-colors"
             aria-label="Toggle Theme"
           >
             {theme === "dark" ? (
@@ -83,10 +121,11 @@ export const Navbar = () => {
           </Button>
         </div>
 
-        <div className="md:hidden flex items-center gap-4">
+        {/* Mobile & Tablet Controls (Visible on < 1024px) */}
+        <div className="flex lg:hidden items-center gap-2 sm:gap-3">
           <button
             onClick={toggleTheme}
-            className="p-2 text-ink"
+            className="p-2 text-muted hover:text-ink transition-colors"
             aria-label="Toggle Theme"
           >
             {theme === "dark" ? (
@@ -95,59 +134,67 @@ export const Navbar = () => {
               <Moon className="w-5 h-5" />
             )}
           </button>
+
+          {/* CSS-Animated Hamburger Toggle Button */}
           <button
-            className="text-ink"
-            aria-label="Open mobile menu"
-            onClick={() => setMobileOpen(true)}
+            className="hamburger-button"
+            aria-expanded={mobileOpen}
+            aria-controls="responsive-nav-drawer"
+            aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+            onClick={() => setMobileOpen((prev) => !prev)}
           >
-            <Menu className="w-6 h-6" />
+            <span className="hamburger-line hamburger-line-1" />
+            <span className="hamburger-line hamburger-line-2" />
+            <span className="hamburger-line hamburger-line-3" />
           </button>
         </div>
       </div>
 
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 20 }}
-            className="fixed inset-0 bg-void z-50 flex flex-col p-6"
+      {/* Mobile/Tablet Backdrop Overlay */}
+      <div
+        className={cn("nav-drawer-overlay", mobileOpen && "is-open")}
+        onClick={closeMenu}
+        aria-hidden="true"
+      />
+
+      {/* Mobile/Tablet Slide-In Panel Drawer */}
+      <aside
+        id="responsive-nav-drawer"
+        className={cn("nav-drawer-panel", mobileOpen && "is-open")}
+        aria-label="Mobile and tablet navigation drawer"
+      >
+        <nav className="flex flex-col gap-5 mt-4">
+          <span className="text-xs font-bold uppercase tracking-widest text-ember mb-2">
+            Navigation Menu
+          </span>
+          {NAV_ITEMS.map(({ label, target }) => (
+            <button
+              key={target}
+              onClick={() => handleNavClick(target)}
+              className="text-left text-lg font-serif text-ink hover:text-ember transition-colors py-2 border-b border-white/5"
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="mt-auto pt-6 border-t border-white/10 flex flex-col gap-3">
+          <Button
+            className="w-full justify-center"
+            size="lg"
+            onClick={() => (window.location.href = "/auth/register")}
           >
-            <div className="flex justify-end">
-              <button
-                aria-label="Close mobile menu"
-                onClick={() => setMobileOpen(false)}
-              >
-                <X className="w-8 h-8 text-ink" />
-              </button>
-            </div>
-            <nav className="flex flex-col gap-6 mt-12 text-2xl font-serif">
-              {NAV_ITEMS.map(({ label, target }) => (
-                <button
-                  key={target}
-                  onClick={() => {
-                    setMobileOpen(false);
-                    scrollTo(target);
-                  }}
-                  className="text-left text-ink hover:text-ember transition-all duration-200 hover:translate-x-2 w-full"
-                >
-                  {label}
-                </button>
-              ))}
-            </nav>
-            <div className="mt-auto mb-12">
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={() => (window.location.href = "/auth/register")}
-              >
-                Start for Free
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            Start for Free
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full justify-center"
+            onClick={() => (window.location.href = "/auth/login")}
+          >
+            Sign In
+          </Button>
+        </div>
+      </aside>
     </header>
   );
 };

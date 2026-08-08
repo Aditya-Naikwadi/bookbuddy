@@ -184,7 +184,10 @@
 
   .reveal-fade-up,
   .reveal-fade-in,
-  .reveal-scale {
+  .reveal-scale,
+  .hamburger-line,
+  .nav-drawer-overlay,
+  .nav-drawer-panel {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
@@ -194,4 +197,96 @@
   .animate-shimmer {
     animation: none !important;
   }
+}
+
+/* ==========================================================================
+   Responsive Hamburger Icon & Navigation Drawer Panel (CSS-Only Animations)
+   ========================================================================== */
+
+.hamburger-button {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 12px;
+  z-index: 105;
+  transition: background-color 0.2s ease;
+}
+
+.hamburger-button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.hamburger-line {
+  width: 22px;
+  height: 2px;
+  background-color: var(--text-ink, #f8f9fa);
+  border-radius: 2px;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+/* CSS-Only Hamburger (☰) to Close (✕) Morph Animation */
+.hamburger-button[aria-expanded="true"] .hamburger-line-1 {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.hamburger-button[aria-expanded="true"] .hamburger-line-2 {
+  opacity: 0;
+}
+
+.hamburger-button[aria-expanded="true"] .hamburger-line-3 {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Navigation Drawer Backdrop Overlay */
+.nav-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 8, 13, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 90;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity;
+}
+
+.nav-drawer-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Navigation Drawer Slide-In Panel */
+.nav-drawer-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 85vw;
+  max-width: 360px;
+  background-color: var(--bg-surface, #151a26);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  padding: 5.5rem 1.5rem 2rem 1.5rem;
+  transform: translate3d(100%, 0, 0);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.6);
+}
+
+.nav-drawer-panel.is-open {
+  transform: translate3d(0, 0, 0);
 }
