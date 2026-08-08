@@ -37,33 +37,31 @@ function requireFeature(requiredFeatureId) {
         enabledFeatures = null;
       }
 
-      // 2. Fetch from DB if Cache Miss
+      // 2. Fallback to Database if cache miss
       if (!enabledFeatures) {
-        const doc = await CollegeFeatureConfig.findOne({ collegeId: tenantId }).lean();
-        if (doc && doc.enabledFeatures) {
-          enabledFeatures = doc.enabledFeatures;
+        const configDoc = await CollegeFeatureConfig.findOne({ collegeId: tenantId }).lean();
+        if (configDoc && configDoc.enabledFeatures?.length) {
+          enabledFeatures = configDoc.enabledFeatures;
         } else {
-          // Default fallbacks if no explicit config exists
+          const College = require('../models/College');
+          const collegeDoc = await College.findById(tenantId).lean();
+          if (collegeDoc) {
+            enabledFeatures = collegeDoc.enabledFeatures?.length
+              ? collegeDoc.enabledFeatures
+              : collegeDoc.selectedServices?.length
+                ? collegeDoc.selectedServices
+                : null;
+          }
+        }
+
+        if (!enabledFeatures) {
           enabledFeatures = [
             'catalog',
-            'borrowing',
-            'digital-library',
+            'catalog_management',
+            'loans',
+            'fines',
+            'patron-card',
             'e-resources',
-            'study-rooms',
-            'book-clubs',
-            'discussions',
-            'bulletin-board',
-            'donor-wall',
-            'reading-goals',
-            'streaks',
-            'faculty-publications',
-            'group-study',
-            'lab-seats',
-            'inter-library-loan',
-            'isbn-scan',
-            'analytics',
-            'audit-logs',
-            'services',
             'reading-lists',
             'recommendations',
             'saved',
