@@ -10,6 +10,7 @@ const logger = require('./utils/logger');
 const notFound = require('./middlewares/notFound');
 const errorHandler = require('./middlewares/errorHandler');
 const mongoose = require('mongoose');
+const AppError = require('./utils/AppError');
 
 const app = express();
 const crypto = require('crypto');
@@ -91,11 +92,14 @@ app.use(
       if (
         !origin ||
         allowedOrigins.includes(origin) ||
-        (origin.endsWith('.vercel.app') && origin.startsWith('https://'))
+        allowedOrigins.some((o) => origin === o) ||
+        (typeof origin === 'string' &&
+          origin.endsWith('.vercel.app') &&
+          origin.startsWith('https://'))
       ) {
         return callback(null, true);
       }
-      return callback(new Error('Not allowed by CORS'), false);
+      return callback(new AppError('Not allowed by CORS', 403), false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -128,9 +132,14 @@ app.use((req, res, next) => {
   if (req.headers.cookie) {
     req.headers.cookie.split(';').forEach((cookie) => {
       const parts = cookie.split('=');
+      if (parts.length < 2) return;
       const name = parts[0].trim();
-      const value = parts.slice(1).join('=').trim();
-      req.cookies[name] = decodeURIComponent(value);
+      const rawVal = parts.slice(1).join('=').trim();
+      try {
+        req.cookies[name] = decodeURIComponent(rawVal);
+      } catch {
+        req.cookies[name] = rawVal;
+      }
     });
   }
   next();

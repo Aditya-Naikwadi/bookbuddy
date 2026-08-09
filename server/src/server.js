@@ -47,29 +47,27 @@ const startServer = async () => {
   // Initialize Sentry SDK
   initSentry();
 
-  // 1. Connect to Database FIRST before serving traffic or running cron tasks
-  try {
-    await connectDB();
-  } catch (err) {
-    logger.error(`FATAL: Database connection failed on startup: ${err.message}`, {
-      stack: err.stack,
-    });
-    captureException(err, { context: 'serverStartup' });
-    process.exit(1);
-  }
-
-  // 2. Create HTTP Server & Setup Socket.io
+  // 1. Create HTTP Server & Setup Socket.io
   const server = http.createServer(app);
   const io = initSockets(server);
   app.set('io', io);
 
-  // 3. Start listening for HTTP traffic
+  // 2. Start listening for HTTP traffic immediately (enables Render health checks)
   serverInstance = server.listen(config.port, () => {
     logger.info(`Server running in ${config.nodeEnv} mode on port ${config.port}`);
   });
 
-  // 4. Initialize background Cron Tasks AFTER database connection is confirmed
-  initCronJobs();
+  // 3. Connect to Database asynchronously
+  try {
+    await connectDB();
+    // 4. Initialize background Cron Tasks AFTER database connection is confirmed
+    initCronJobs();
+  } catch (err) {
+    logger.error(`Database connection failed on startup: ${err.message}`, {
+      stack: err.stack,
+    });
+    captureException(err, { context: 'serverStartup' });
+  }
 
   // Handle unhandled promise rejections as safety net
   process.on('unhandledRejection', (err) => {

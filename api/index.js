@@ -5,14 +5,8 @@ module.exports = async (req, res) => {
   try {
     await connectDB();
   } catch (err) {
-    console.error('[Vercel Serverless DB Connection Error]:', err.message);
-    if (!res.headersSent) {
-      res.status(500).json({
-        success: false,
-        message: err.message || 'Database connection error on serverless startup.',
-      });
-      return;
-    }
+    // eslint-disable-next-line no-console
+    console.warn('[Vercel Serverless DB Connection Warning]:', err.message);
   }
 
   // Ensure request URL has valid /api prefix for Express router matching

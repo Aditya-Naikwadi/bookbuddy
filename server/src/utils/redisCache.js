@@ -8,7 +8,11 @@ let isConnected = false;
 const normalizeRedisUrl = (url) => {
   if (!url) return null;
   let trimmed = url.trim();
-  if (trimmed.startsWith('//')) {
+  if (trimmed.startsWith('https://')) {
+    trimmed = trimmed.replace('https://', 'rediss://');
+  } else if (trimmed.startsWith('http://')) {
+    trimmed = trimmed.replace('http://', 'redis://');
+  } else if (trimmed.startsWith('//')) {
     trimmed = `rediss:${trimmed}`;
   } else if (!trimmed.startsWith('redis://') && !trimmed.startsWith('rediss://')) {
     trimmed = `rediss://${trimmed}`;

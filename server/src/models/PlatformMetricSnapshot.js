@@ -11,7 +11,6 @@ const platformMetricSnapshotSchema = new mongoose.Schema(
     snapshotDate: {
       type: Date,
       default: Date.now,
-      index: true,
     },
     totalColleges: {
       type: Number,

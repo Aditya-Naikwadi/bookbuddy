@@ -22,6 +22,15 @@ const errorHandler = (err, req, res, _next) => {
     const field = Object.keys(err.keyValue || {})[0] || 'record';
     message = `A record with this ${field} already exists.`;
     err.isOperational = true;
+  } else if (
+    err.name === 'MongooseError' ||
+    err.name === 'MongooseServerSelectionError' ||
+    err.name === 'MongoNetworkError' ||
+    (err.message && err.message.includes('buffering timed out'))
+  ) {
+    statusCode = 503;
+    message = 'Database service unavailable. Please check MongoDB Atlas IP whitelist (0.0.0.0/0).';
+    err.isOperational = true;
   }
 
   const isProd = config.nodeEnv === 'production';

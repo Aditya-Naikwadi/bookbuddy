@@ -12,7 +12,11 @@ const isMock = RateLimiterRedis.name === 'MockRateLimiterRedis';
 const normalizeRedisUrl = (url) => {
   if (!url) return null;
   let trimmed = url.trim();
-  if (trimmed.startsWith('//')) {
+  if (trimmed.startsWith('https://')) {
+    trimmed = trimmed.replace('https://', 'rediss://');
+  } else if (trimmed.startsWith('http://')) {
+    trimmed = trimmed.replace('http://', 'redis://');
+  } else if (trimmed.startsWith('//')) {
     trimmed = `rediss:${trimmed}`;
   } else if (!trimmed.startsWith('redis://') && !trimmed.startsWith('rediss://')) {
     trimmed = `rediss://${trimmed}`;
@@ -253,7 +257,14 @@ const generalDashboardLimiter = async (req, res, next) => {
 };
 
 const handleRejection = (key, tierName, req, res, next, rej, userId = null) => {
-  const retryAfterSeconds = rej.msBeforeNext ? Math.ceil(rej.msBeforeNext / 1000) : 60;
+  if (rej instanceof Error) {
+    logger.warn(
+      `Rate limiter internal exception on ${tierName} tier: ${rej.message}. Failing open.`
+    );
+    return next();
+  }
+
+  const retryAfterSeconds = rej && rej.msBeforeNext ? Math.ceil(rej.msBeforeNext / 1000) : 60;
   res.setHeader('Retry-After', String(retryAfterSeconds));
 
   const clientIp = getClientIp(req);
@@ -264,7 +275,7 @@ const handleRejection = (key, tierName, req, res, next, rej, userId = null) => {
     `Rate limit exceeded. Tier: ${tierName}, Key: ${key}, IP: ${clientIp}, UserID: ${activeUserId || 'unauthenticated'}, Path: ${path}, Retry-After: ${retryAfterSeconds}s`
   );
 
-  res.status(429).json({
+  return res.status(429).json({
     success: false,
     message: `Too many requests on ${tierName} limiter. Please retry after ${retryAfterSeconds} seconds.`,
     code: 429,
