@@ -26,15 +26,12 @@ mongoose.connection.on('disconnected', () => {
 const connectDB = async () => {
   const options = {
     maxPoolSize: 10,
-    serverSelectionTimeoutMS: 10000,
-    tlsAllowInvalidCertificates: true,
+    serverSelectionTimeoutMS: 15000,
   };
 
   const isProd = config.nodeEnv === 'production' || !!process.env.RENDER;
   const primaryUri = config.mongoUri;
-  const fallbackUris = isProd
-    ? []
-    : ['mongodb://127.0.0.1:27017/bookbuddy', 'mongodb://localhost:27017/bookbuddy'];
+  const fallbackUris = isProd ? [] : ['mongodb://localhost:27017/bookbuddy'];
 
   const targetUris = Array.from(new Set([primaryUri, ...fallbackUris])).filter(Boolean);
 
@@ -54,8 +51,17 @@ const connectDB = async () => {
   }
 
   if (isProd) {
+    logger.error(
+      '------------------------------------------------------------------------------------\n' +
+        '❌ FATAL MONGODB CONNECTION ERROR ON RENDER DEPLOYMENT:\n' +
+        `Details: ${lastError ? lastError.message : 'Unknown error'}\n\n` +
+        'Required Troubleshooting Steps:\n' +
+        '1. MongoDB Atlas Network Access: Go to MongoDB Atlas -> Network Access -> Add IP Address -> Select "Allow Access from Anywhere" (0.0.0.0/0).\n' +
+        '2. Render Environment Variables: Verify MONGO_URI in your Render service environment settings has correct username/password and format (e.g. mongodb+srv://admin:pass@cluster.mongodb.net/dbname).\n' +
+        '------------------------------------------------------------------------------------'
+    );
     throw new Error(
-      `Fatal: Could not connect to MongoDB in production: ${lastError ? lastError.message : 'Unknown error'}`
+      `Fatal: Could not connect to MongoDB in production: ${lastError ? lastError.message : 'Unknown error'}. Check Atlas 0.0.0.0/0 IP whitelist and MONGO_URI environment variable.`
     );
   } else {
     logger.warn(

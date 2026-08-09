@@ -5,9 +5,24 @@ const logger = require('./logger');
 let redisClient = null;
 let isConnected = false;
 
-if (config.redisUrl || process.env.NODE_ENV !== 'test') {
+const normalizeRedisUrl = (url) => {
+  if (!url) return null;
+  let trimmed = url.trim();
+  if (trimmed.startsWith('//')) {
+    trimmed = `rediss:${trimmed}`;
+  } else if (!trimmed.startsWith('redis://') && !trimmed.startsWith('rediss://')) {
+    trimmed = `rediss://${trimmed}`;
+  }
+  return trimmed;
+};
+
+const rawRedisUrl =
+  config.redisUrl || (process.env.NODE_ENV !== 'test' ? 'redis://127.0.0.1:6379' : null);
+const targetRedisUrl = normalizeRedisUrl(rawRedisUrl);
+
+if (targetRedisUrl) {
   try {
-    redisClient = new Redis(config.redisUrl || 'redis://127.0.0.1:6379', {
+    redisClient = new Redis(targetRedisUrl, {
       maxRetriesPerRequest: 1,
       connectTimeout: 2000,
       retryStrategy: () => null,

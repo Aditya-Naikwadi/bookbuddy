@@ -9,11 +9,24 @@ let redisReady = false;
 const isTest = config.nodeEnv === 'test';
 const isMock = RateLimiterRedis.name === 'MockRateLimiterRedis';
 
+const normalizeRedisUrl = (url) => {
+  if (!url) return null;
+  let trimmed = url.trim();
+  if (trimmed.startsWith('//')) {
+    trimmed = `rediss:${trimmed}`;
+  } else if (!trimmed.startsWith('redis://') && !trimmed.startsWith('rediss://')) {
+    trimmed = `rediss://${trimmed}`;
+  }
+  return trimmed;
+};
+
+const sanitizedRedisUrl = normalizeRedisUrl(config.redisUrl);
+
 if (isTest && isMock) {
   redisReady = true;
-} else if (config.redisUrl) {
+} else if (sanitizedRedisUrl) {
   try {
-    redisClient = new Redis(config.redisUrl, {
+    redisClient = new Redis(sanitizedRedisUrl, {
       maxRetriesPerRequest: 1,
       connectTimeout: 2000,
       reconnectOnError: () => false,
