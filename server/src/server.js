@@ -76,6 +76,16 @@ const startServer = async () => {
     });
     captureException(err, { context: 'unhandledRejection' });
   });
+
+  // Periodic memory usage monitoring (enabled via ENABLE_MEMORY_LOGGING=true)
+  if (process.env.ENABLE_MEMORY_LOGGING === 'true') {
+    setInterval(() => {
+      const mem = process.memoryUsage();
+      logger.info(
+        `[Memory Monitor] RSS: ${(mem.rss / 1024 / 1024).toFixed(2)} MB | HeapUsed: ${(mem.heapUsed / 1024 / 1024).toFixed(2)} MB | HeapTotal: ${(mem.heapTotal / 1024 / 1024).toFixed(2)} MB`
+      );
+    }, 300000);
+  }
 };
 
 // Listen for termination signals
