@@ -13,8 +13,6 @@ import {
   Bookmark,
   FileText,
   X,
-  CreditCard,
-  UserCheck,
 } from "lucide-react";
 import NotificationCenter from "../components/student/NotificationCenter";
 import useAuthStore from "../store/authStore";
@@ -25,11 +23,20 @@ import {
 } from "../config/navigation";
 import { cn } from "../utils/cn";
 
-const DashboardLayout = () => {
+export default function DashboardLayout() {
   const { user, logout } = useAuthStore();
-  const { isFeatureEnabled } = useFeatureFlags();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [prevPath, setPrevPath] = useState(location.pathname);
+
+  if (prevPath !== location.pathname) {
+    setPrevPath(location.pathname);
+    if (mobileMenuOpen) {
+      setMobileMenuOpen(false);
+    }
+  }
+
+  const { isFeatureEnabled } = useFeatureFlags();
 
   const isAdminPortal = user?.role === "super-admin";
   const isCollegeAdmin = user?.role === "college-admin";
@@ -43,11 +50,6 @@ const DashboardLayout = () => {
   const visibleCollegeAdminItems = COLLEGE_ADMIN_NAV_ITEMS.filter(
     (item) => !item.feature || isFeatureEnabled(item.feature),
   );
-
-  // Close mobile drawer on route change
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location.pathname]);
 
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
@@ -467,5 +469,3 @@ const MobileNavItem = ({ to, icon, label }) => (
     <span>{label}</span>
   </Link>
 );
-
-export default DashboardLayout;

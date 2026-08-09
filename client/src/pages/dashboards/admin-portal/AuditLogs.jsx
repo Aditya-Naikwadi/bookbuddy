@@ -1,16 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
-  ShieldAlert,
-  Search,
   Filter,
-  RefreshCw,
-  Clock,
   User,
-  Building2,
   Terminal,
   FileCode,
-  Eye,
-  Download,
 } from "lucide-react";
 import adminApi from "../../../api/adminApi";
 import OpsHeader from "../../../components/ops/OpsHeader";
@@ -27,22 +20,29 @@ export default function AuditLogs() {
   const [actorRoleFilter, setActorRoleFilter] = useState("all");
   const [actionCategoryFilter, setActionCategoryFilter] = useState("all");
 
-  const fetchAuditLogs = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const data = await adminApi.getAuditLogs();
-      setLogs(data || []);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to fetch security audit logs.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  const fetchAuditLogs = useCallback(() => setReloadToken((t) => t + 1), []);
 
   useEffect(() => {
-    fetchAuditLogs();
-  }, [fetchAuditLogs]);
+    let ignore = false;
+    async function loadLogs() {
+      try {
+        setIsLoading(true);
+        const data = await adminApi.getAuditLogs();
+        if (!ignore) setLogs(data || []);
+      } catch (err) {
+        console.error(err);
+        if (!ignore) setError("Failed to fetch security audit logs.");
+      } finally {
+        if (!ignore) setIsLoading(false);
+      }
+    }
+    loadLogs();
+    return () => {
+      ignore = true;
+    };
+  }, [reloadToken]);
 
   // Filter logs by actor role & action category
   const filteredLogs = logs.filter((log) => {

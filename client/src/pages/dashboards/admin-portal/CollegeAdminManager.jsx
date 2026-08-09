@@ -2,21 +2,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   Building2,
   Plus,
-  Search,
   CheckCircle2,
-  AlertCircle,
-  XCircle,
   Copy,
-  Mail,
-  Lock,
-  Layers,
-  Eye,
-  Sliders,
-  ShieldCheck,
-  RefreshCw,
 } from "lucide-react";
 import adminApi from "../../../api/adminApi";
-import featureApi from "../../../api/featureApi";
 import OpsHeader from "../../../components/ops/OpsHeader";
 import OpsSeverityBadge from "../../../components/ops/OpsSeverityBadge";
 import OpsDataTable from "../../../components/ops/OpsDataTable";
@@ -49,22 +38,29 @@ export default function CollegeAdminManager() {
     "reading-lists",
   ]);
 
-  const fetchColleges = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const data = await adminApi.listColleges();
-      setColleges(data || []);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load college institution records.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  const fetchColleges = useCallback(() => setReloadToken((t) => t + 1), []);
 
   useEffect(() => {
-    fetchColleges();
-  }, [fetchColleges]);
+    let ignore = false;
+    async function loadColleges() {
+      try {
+        setIsLoading(true);
+        const data = await adminApi.listColleges();
+        if (!ignore) setColleges(data || []);
+      } catch (err) {
+        console.error(err);
+        if (!ignore) setError("Failed to load college institution records.");
+      } finally {
+        if (!ignore) setIsLoading(false);
+      }
+    }
+    loadColleges();
+    return () => {
+      ignore = true;
+    };
+  }, [reloadToken]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

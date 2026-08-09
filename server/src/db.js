@@ -1,15 +1,11 @@
 const mongoose = require('mongoose');
 
-let cached = global._mongooseConn;
-if (!cached) {
-  cached = global._mongooseConn = { conn: null, promise: null };
-}
-
-/**
- * Serverless-optimized database connection helper with promise caching.
- * Reuses connection across warm container invocations and enforces conservative pool size.
- */
 async function connectDB() {
+  if (!global._mongooseConn) {
+    global._mongooseConn = { conn: null, promise: null };
+  }
+  const cached = global._mongooseConn;
+
   if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
   }
@@ -22,6 +18,11 @@ async function connectDB() {
     // eslint-disable-next-line no-console
     console.error(`[Database Boot Failure] ${errorMsg}`);
     throw new Error(errorMsg);
+  }
+
+  if (mongoose.connection.readyState === 1) {
+    cached.conn = mongoose;
+    return cached.conn;
   }
 
   if (!cached.promise) {

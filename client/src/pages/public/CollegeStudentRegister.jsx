@@ -94,10 +94,12 @@ export default function CollegeStudentRegister() {
               {/* Name Fields */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                  <label htmlFor="student-first-name" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
                     First Name <span className="text-rose-400">*</span>
                   </label>
                   <input
+                    id="student-first-name"
+                    name="firstName"
                     type="text"
                     value={studentForm.firstName}
                     onChange={(e) =>
@@ -112,10 +114,12 @@ export default function CollegeStudentRegister() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                  <label htmlFor="student-last-name" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
                     Last Name <span className="text-rose-400">*</span>
                   </label>
                   <input
+                    id="student-last-name"
+                    name="lastName"
                     type="text"
                     value={studentForm.lastName}
                     onChange={(e) =>
@@ -134,10 +138,12 @@ export default function CollegeStudentRegister() {
               {/* Roll Number & Phone */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                  <label htmlFor="student-roll-number" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
                     Roll / Student ID <span className="text-rose-400">*</span>
                   </label>
                   <input
+                    id="student-roll-number"
+                    name="rollNumber"
                     type="text"
                     value={studentForm.rollNumber}
                     onChange={(e) =>
@@ -152,10 +158,12 @@ export default function CollegeStudentRegister() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                  <label htmlFor="student-phone" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
                     Phone Number
                   </label>
                   <input
+                    id="student-phone"
+                    name="phone"
                     type="tel"
                     value={studentForm.phone}
                     onChange={(e) =>
@@ -169,12 +177,14 @@ export default function CollegeStudentRegister() {
 
               {/* Email */}
               <div>
-                <label className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                <label htmlFor="student-email" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
                   Institutional Email <span className="text-rose-400">*</span>
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
                   <input
+                    id="student-email"
+                    name="email"
                     type="email"
                     value={studentForm.email}
                     onChange={(e) =>
@@ -189,10 +199,12 @@ export default function CollegeStudentRegister() {
 
               {/* Department */}
               <div>
-                <label className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                <label htmlFor="student-department" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
                   Department / Course
                 </label>
                 <select
+                  id="student-department"
+                  name="department"
                   value={studentForm.department}
                   onChange={(e) =>
                     setStudentForm({
@@ -214,10 +226,12 @@ export default function CollegeStudentRegister() {
               {/* Password & Confirm */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                  <label htmlFor="student-password" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
                     Password <span className="text-rose-400">*</span>
                   </label>
                   <input
+                    id="student-password"
+                    name="password"
                     type="password"
                     value={studentForm.password}
                     onChange={(e) =>
@@ -232,10 +246,12 @@ export default function CollegeStudentRegister() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                  <label htmlFor="student-confirm-password" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
                     Confirm Pass <span className="text-rose-400">*</span>
                   </label>
                   <input
+                    id="student-confirm-password"
+                    name="confirmPassword"
                     type="password"
                     value={studentForm.confirmPassword}
                     onChange={(e) =>

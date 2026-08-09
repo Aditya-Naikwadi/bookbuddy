@@ -14,14 +14,8 @@ const bindTenantContext = require('../middlewares/tenantScoping');
 router.get('/slug-check', checkSlugAvailability);
 router.get('/public/:slug', getPublicCollegeBySlug);
 
-// Authenticated College Admin endpoints
-router.get(
-  '/my-config',
-  protect,
-  restrictTo('collegeadmin', 'superadmin'),
-  bindTenantContext,
-  getMyCollegeConfig
-);
+// Authenticated endpoints for college feature configuration
+router.get('/my-config', protect, bindTenantContext, getMyCollegeConfig);
 router.post(
   '/features/enable',
   protect,

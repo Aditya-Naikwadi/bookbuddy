@@ -7,15 +7,12 @@ import {
   CheckCircle2,
   XCircle,
   ArrowLeft,
-  AlertTriangle,
-  Info,
   Check,
   RefreshCw,
 } from "lucide-react";
-import bulkUploadApi from "../../../api/bulkUploadApi";
 
 export default function StudentUploadPage() {
-  const [file, setFile] = useState(null);
+  const [, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [report, setReport] = useState(null);
   const [dragActive, setDragActive] = useState(false);

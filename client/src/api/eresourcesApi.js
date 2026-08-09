@@ -50,6 +50,11 @@ export const saveProgress = async (resourceId, payload) => {
   }
 };
 
+export const updateResource = async (resourceId, payload) => {
+  const { data } = await apiClient.put(`/eresources/${resourceId}`, payload);
+  return data.data || data;
+};
+
 const eresourcesApi = {
   searchEbooks,
   getEbookDetail,

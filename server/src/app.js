@@ -38,7 +38,14 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "'unsafe-eval'",
+          'blob:',
+          'https://accounts.google.com',
+          'https://apis.google.com',
+        ],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
         imgSrc: [
@@ -49,8 +56,10 @@ app.use(
           'https://books.google.com',
           'https://coverartarchive.org',
           'https://images.unsplash.com',
+          'https://*.googleusercontent.com',
         ],
         connectSrc: ["'self'", 'ws:', 'wss:', 'http:', 'https:'],
+        workerSrc: ["'self'", 'blob:'],
         frameAncestors: ["'none'"],
       },
     },

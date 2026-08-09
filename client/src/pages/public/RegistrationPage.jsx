@@ -278,12 +278,14 @@ export default function RegistrationPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {/* Question 1: College Name */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                <label htmlFor="reg-college-name" className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
                   1. College Name <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <Building2 className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
                   <input
+                    id="reg-college-name"
+                    name="collegeName"
                     type="text"
                     value={adminForm.collegeName}
                     onChange={(e) =>
@@ -301,12 +303,14 @@ export default function RegistrationPage() {
 
               {/* Question 2: College Email */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                <label htmlFor="reg-college-email" className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
                   2. College Email <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <Mail className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
                   <input
+                    id="reg-college-email"
+                    name="collegeEmail"
                     type="email"
                     value={adminForm.collegeEmail}
                     onChange={(e) =>
@@ -324,12 +328,14 @@ export default function RegistrationPage() {
 
               {/* Question 3: College Admin Name */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                <label htmlFor="reg-admin-name" className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
                   3. College Admin Name <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <User className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
                   <input
+                    id="reg-admin-name"
+                    name="adminName"
                     type="text"
                     value={adminForm.adminName}
                     onChange={(e) =>
@@ -344,13 +350,15 @@ export default function RegistrationPage() {
 
               {/* Question 4: College Admin Email */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                <label htmlFor="reg-admin-email" className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
                   4. College Admin Email{" "}
                   <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <Mail className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
                   <input
+                    id="reg-admin-email"
+                    name="adminEmail"
                     type="email"
                     value={adminForm.adminEmail}
                     onChange={(e) =>
@@ -370,12 +378,14 @@ export default function RegistrationPage() {
 
               {/* Question 5: Password */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                <label htmlFor="reg-admin-password" className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
                   5. Password <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <Lock className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
                   <input
+                    id="reg-admin-password"
+                    name="password"
                     type="password"
                     value={adminForm.password}
                     onChange={(e) =>
@@ -395,12 +405,14 @@ export default function RegistrationPage() {
 
               {/* Question 6: Confirm Password */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                <label htmlFor="reg-admin-confirm-password" className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
                   6. Confirm Password <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <Lock className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
                   <input
+                    id="reg-admin-confirm-password"
+                    name="confirmPassword"
                     type="password"
                     value={adminForm.confirmPassword}
                     onChange={(e) =>
@@ -422,6 +434,7 @@ export default function RegistrationPage() {
               <input
                 type="checkbox"
                 id="isAdminConfirmation"
+                name="isAdminConfirmation"
                 checked={adminForm.isCollegeAdminConfirmed}
                 onChange={(e) =>
                   setAdminForm({

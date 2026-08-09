@@ -158,11 +158,13 @@ const Login = () => {
         onSubmit={handleSubmit}
       >
         <motion.div variants={itemVariants} className="relative">
-          <label className="block text-xs font-medium text-muted mb-1.5 ml-1">
+          <label htmlFor="login-username" className="block text-xs font-medium text-muted mb-1.5 ml-1">
             Email or Student ID
           </label>
           <div className="relative">
             <input
+              id="login-username"
+              name="username"
               type="text"
               required
               disabled={isLoading}
@@ -193,7 +195,7 @@ const Login = () => {
 
         <motion.div variants={itemVariants}>
           <div className="flex items-center justify-between mb-1.5 mx-1">
-            <label className="block text-xs font-medium text-muted">
+            <label htmlFor="login-password" className="block text-xs font-medium text-muted">
               Password
             </label>
             <button
@@ -206,6 +208,8 @@ const Login = () => {
           </div>
           <div className="relative">
             <input
+              id="login-password"
+              name="password"
               type={showPassword ? "text" : "password"}
               required
               disabled={isLoading}

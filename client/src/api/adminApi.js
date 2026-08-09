@@ -72,6 +72,13 @@ export const adminApi = {
     );
     return data;
   },
+  moderateEResource: async (id, payload) => {
+    const { data } = await apiClient.put(
+      `/dashboards/admin-portal/moderation/${id}`,
+      payload,
+    );
+    return data;
+  },
   publishResource: async (id) => {
     const { data } = await apiClient.post(
       `/dashboards/admin-portal/moderation/${id}/publish`,

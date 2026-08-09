@@ -1,16 +1,13 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Activity,
   Building2,
   Users,
   Database,
-  ShieldAlert,
-  Server,
   Layers,
   CheckCircle2,
   AlertTriangle,
   Clock,
-  ExternalLink,
 } from "lucide-react";
 import adminApi from "../../../api/adminApi";
 import OpsHeader from "../../../components/ops/OpsHeader";
@@ -21,25 +18,33 @@ export default function SystemOverview() {
   const [colleges, setColleges] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reloadToken, setReloadToken] = useState(0);
 
-  const fetchOverviewData = useCallback(async () => {
-    try {
-      const statsData = await adminApi.getOverview();
-      setStats(statsData);
-
-      const collegesData = await adminApi.listColleges();
-      setColleges(collegesData || []);
-    } catch (err) {
-      console.error("Failed to fetch ops overview metrics:", err);
-      setError("Failed to fetch live platform health telemetry.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const fetchOverviewData = useCallback(() => setReloadToken((t) => t + 1), []);
 
   useEffect(() => {
-    fetchOverviewData();
-  }, [fetchOverviewData]);
+    let isMounted = true;
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const statsData = await adminApi.getOverview();
+        if (isMounted) setStats(statsData);
+
+        const collegesData = await adminApi.listColleges();
+        if (isMounted) setColleges(collegesData || []);
+      } catch (err) {
+        console.error("Failed to fetch ops overview metrics:", err);
+        if (isMounted) setError("Failed to fetch live platform health telemetry.");
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, [reloadToken]);
 
   const activeCollegesCount = colleges.filter((c) => c.status === "active" || c.isActive).length;
   const pendingCollegesCount = colleges.filter((c) => c.status === "pending" || c.status === "pending_review").length;

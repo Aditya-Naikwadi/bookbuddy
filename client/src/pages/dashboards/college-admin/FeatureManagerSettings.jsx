@@ -54,14 +54,16 @@ export default function FeatureManagerSettings() {
   const [enabledFeatures, setEnabledFeatures] = useState(
     () => new Set(getEnabledFeaturesList(collegeProfile.enabledFeatures)),
   );
+  const [prevConfigData, setPrevConfigData] = useState(configData);
 
-  useEffect(() => {
+  if (configData !== prevConfigData) {
+    setPrevConfigData(configData);
     if (configData?.enabledFeatures) {
       setEnabledFeatures(
         new Set(getEnabledFeaturesList(configData.enabledFeatures)),
       );
     }
-  }, [configData]);
+  }
 
   const [pendingApprovalSet, setPendingApprovalSet] = useState(
     new Set(["leaderboards"]),

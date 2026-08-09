@@ -138,10 +138,12 @@ const Register = () => {
       >
         <div className="flex flex-col sm:flex-row gap-3">
           <motion.div variants={itemVariants} className="w-full sm:w-1/2">
-            <label className="block text-xs font-medium text-muted mb-1.5 ml-1">
+            <label htmlFor="reg-name" className="block text-xs font-medium text-muted mb-1.5 ml-1">
               Full Name
             </label>
             <input
+              id="reg-name"
+              name="name"
               type="text"
               required
               disabled={isLoading}
@@ -156,11 +158,13 @@ const Register = () => {
           </motion.div>
 
           <motion.div variants={itemVariants} className="w-full sm:w-1/2">
-            <label className="block text-xs font-medium text-muted mb-1.5 ml-1">
+            <label htmlFor="reg-email" className="block text-xs font-medium text-muted mb-1.5 ml-1">
               Email
             </label>
             <div className="relative">
               <input
+                id="reg-email"
+                name="email"
                 type="email"
                 required
                 disabled={isLoading}
@@ -191,10 +195,12 @@ const Register = () => {
 
         <div className="flex flex-col sm:flex-row gap-3">
           <motion.div variants={itemVariants} className="w-full sm:w-1/2">
-            <label className="block text-xs font-medium text-muted mb-1.5 ml-1">
+            <label htmlFor="reg-student-id" className="block text-xs font-medium text-muted mb-1.5 ml-1">
               ID Number
             </label>
             <input
+              id="reg-student-id"
+              name="studentId"
               type="text"
               required
               disabled={isLoading}
@@ -207,10 +213,12 @@ const Register = () => {
           </motion.div>
 
           <motion.div variants={itemVariants} className="w-full sm:w-1/2">
-            <label className="block text-xs font-medium text-muted mb-1.5 ml-1">
+            <label htmlFor="reg-role" className="block text-xs font-medium text-muted mb-1.5 ml-1">
               Role
             </label>
             <select
+              id="reg-role"
+              name="role"
               value={role}
               disabled={isLoading}
               onChange={(e) => setRole(e.target.value)}
@@ -233,11 +241,13 @@ const Register = () => {
         </div>
 
         <motion.div variants={itemVariants}>
-          <label className="block text-xs font-medium text-muted mb-1.5 ml-1">
+          <label htmlFor="reg-password" className="block text-xs font-medium text-muted mb-1.5 ml-1">
             Password
           </label>
           <div className="relative">
             <input
+              id="reg-password"
+              name="password"
               type={showPassword ? "text" : "password"}
               required
               disabled={isLoading}

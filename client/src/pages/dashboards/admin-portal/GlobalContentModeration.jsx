@@ -1,18 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
-  FileText,
   CheckCircle2,
   XCircle,
-  Clock,
   Eye,
-  ExternalLink,
-  Filter,
-  RefreshCw,
-  MessageSquare,
-  ShieldCheck,
   Building2,
-  FileCheck,
-  ChevronRight,
 } from "lucide-react";
 import eresourcesApi from "../../../api/eresourcesApi";
 import adminApi from "../../../api/adminApi";
@@ -33,25 +24,34 @@ export default function GlobalContentModeration() {
   // Digital Reader Modal State
   const [readerModalItem, setReaderModalItem] = useState(null);
 
-  const fetchModerationQueue = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const data = await eresourcesApi.getAllResources();
-      setResources(data || []);
-    } catch (err) {
-      console.error(err);
-      setMessage({
-        type: "error",
-        text: "Failed to load e-resource moderation queue.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  const fetchModerationQueue = useCallback(() => setReloadToken((t) => t + 1), []);
 
   useEffect(() => {
-    fetchModerationQueue();
-  }, [fetchModerationQueue]);
+    let ignore = false;
+    async function loadQueue() {
+      try {
+        setIsLoading(true);
+        const data = await eresourcesApi.getAllResources();
+        if (!ignore) setResources(data || []);
+      } catch (err) {
+        console.error(err);
+        if (!ignore) {
+          setMessage({
+            type: "error",
+            text: "Failed to load e-resource moderation queue.",
+          });
+        }
+      } finally {
+        if (!ignore) setIsLoading(false);
+      }
+    }
+    loadQueue();
+    return () => {
+      ignore = true;
+    };
+  }, [reloadToken]);
 
   const pendingItems = resources.filter(
     (r) => r.moderationStatus === "pending" || r.status === "pending_review" || !r.moderationStatus
