@@ -11,9 +11,13 @@ import { ConfigProvider, useConfig } from "./context/ConfigContext.jsx";
 
 function DynamicGoogleOAuthProvider({ children }) {
   const { googleClientId } = useConfig();
-  // Provide clientId to GoogleOAuthProvider dynamically from backend config
+  // Provide clientId to GoogleOAuthProvider dynamically from backend config only when valid
+  if (!googleClientId || typeof googleClientId !== "string" || !googleClientId.trim()) {
+    return <>{children}</>;
+  }
+
   return (
-    <GoogleOAuthProvider clientId={googleClientId || ""}>
+    <GoogleOAuthProvider clientId={googleClientId.trim()}>
       {children}
     </GoogleOAuthProvider>
   );

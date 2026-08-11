@@ -112,7 +112,7 @@ const AuthRedirect = ({ children }) => {
   }
 
   if (isAuthenticated && user) {
-    if (user.role === "college-admin")
+    if (["college-admin", "college_admin", "admin", "librarian"].includes(user.role))
       return <Navigate to="/college-admin" replace />;
     if (user.role === "general")
       return <Navigate to="/general-dashboard" replace />;
@@ -172,6 +172,9 @@ function App() {
                   />
                   <Route path="/unauthorized" element={<Unauthorized />} />
 
+                  {/* Top-level Route Aliases & Fallbacks */}
+                  <Route path="/login" element={<Navigate to="/auth/login" replace />} />
+
                   {/* Auth Routes */}
                   <Route
                     path="/auth"
@@ -181,6 +184,7 @@ function App() {
                       </AuthRedirect>
                     }
                   >
+                    <Route index element={<Navigate to="/auth/login" replace />} />
                     <Route path="login" element={<Login />} />
                     <Route path="register" element={<Register />} />
                   </Route>
