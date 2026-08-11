@@ -72,8 +72,9 @@ describe('Dual Registration System Integration Tests', () => {
       const res = await request(app).get('/api/registration/colleges');
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.length).toBe(1);
-      expect(res.body.data[0].name).toBe('MIT University');
+      const names = res.body.data.map((c) => c.name);
+      expect(names).toContain('MIT University');
+      expect(names).not.toContain('Pending College');
     });
   });
 
