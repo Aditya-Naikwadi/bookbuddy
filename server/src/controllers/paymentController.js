@@ -73,9 +73,15 @@ const handlePaymentWebhook = async (req, res, next) => {
     }
 
     // Extract event details
-    const eventId = req.body.event_id || req.body.eventId || `evt_${Date.now()}`;
+    const eventId =
+      req.body.event_id ||
+      req.body.eventId ||
+      `evt_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
     const paymentEntity = req.body.payload?.payment?.entity || req.body;
-    const paymentId = paymentEntity.id || req.body.paymentId || `pay_${Date.now()}`;
+    const paymentId =
+      paymentEntity.id ||
+      req.body.paymentId ||
+      `pay_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
     const fineId = paymentEntity.notes?.fineId || req.body.fineId;
 
     if (!fineId) {

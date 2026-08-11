@@ -226,7 +226,7 @@ function App() {
                     {/* College Admin Routes */}
                     <Route
                       element={
-                        <ProtectedRoute allowedRoles={["college-admin"]} />
+                        <ProtectedRoute allowedRoles={["college-admin", "college_admin", "admin", "librarian"]} />
                       }
                     >
                       <Route

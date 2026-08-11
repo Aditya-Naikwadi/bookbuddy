@@ -16,16 +16,21 @@ const useAuthStore = create((set) => {
     token: null, // Virtual accessor for backwards-compatibility getters in hooks
     isAuthenticated: false,
     isLoading: true, // true by default to avoid flashing login on load
-    error: null,
+    mfaRequired: false,
 
-    login: async (email, password) => {
-      set({ isLoading: true, error: null });
+    login: async (identifier, password, totpCode = null) => {
+      set({ isLoading: true, error: null, mfaRequired: false });
       try {
         await fetchCsrfToken();
-        const { data } = await apiClient.post("/auth/login", {
-          email,
+        const payload = {
           password,
-        });
+          ...(identifier.includes("@")
+            ? { email: identifier.trim() }
+            : { studentId: identifier.trim(), email: identifier.trim() }),
+          ...(totpCode ? { totpCode: totpCode.trim() } : {}),
+        };
+
+        const { data } = await apiClient.post("/auth/login", payload);
         const accessToken = data.accessToken;
         setInMemoryToken(accessToken);
 
@@ -34,16 +39,20 @@ const useAuthStore = create((set) => {
           token: accessToken,
           isAuthenticated: true,
           isLoading: false,
+          mfaRequired: false,
         });
         return true;
       } catch (error) {
+        const responseData = error.response?.data;
+        const isMfaRequired = !!responseData?.mfaRequired;
         set({
+          mfaRequired: isMfaRequired,
           error:
-            error.response?.data?.message ||
+            responseData?.message ||
             "Login failed. Please verify your credentials or server connection.",
           isLoading: false,
         });
-        return false;
+        return isMfaRequired ? { mfaRequired: true } : false;
       }
     },
 
@@ -139,6 +148,7 @@ const useAuthStore = create((set) => {
         return true;
       } catch {
         setInMemoryToken(null);
+        broadcastLogout();
         set({
           user: null,
           token: null,

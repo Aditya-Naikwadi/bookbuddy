@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 
 const VirtualizedCardGrid = ({
   items = [],
@@ -7,7 +7,33 @@ const VirtualizedCardGrid = ({
   emptyState,
   viewMode = "grid",
   columns = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+  estimatedItemHeight = 220,
 }) => {
+  const containerRef = useRef(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(600);
+
+  const handleScroll = useCallback((e) => {
+    const target = e.target;
+    requestAnimationFrame(() => {
+      setScrollTop(target.scrollTop);
+    });
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    setContainerHeight(el.clientHeight || 600);
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerHeight(entry.contentRect.height || 600);
+      }
+    });
+    resizeObserver.observe(el);
+    return () => resizeObserver.disconnect();
+  }, []);
+
   if (loading) {
     return (
       <div className="flex-1 min-h-0 overflow-y-auto pr-1">
@@ -40,15 +66,45 @@ const VirtualizedCardGrid = ({
     );
   }
 
+  // Virtualization calculations for large lists (> 12 items)
+  const isLargeList = items.length > 12;
+  const numColumns = viewMode === "list" ? 1 : 3;
+  const totalRows = Math.ceil(items.length / numColumns);
+  const totalHeight = totalRows * estimatedItemHeight;
+
+  let visibleItems = items;
+  let paddingTop = 0;
+  let paddingBottom = 0;
+
+  if (isLargeList) {
+    const bufferRows = 2;
+    const startRow = Math.max(0, Math.floor(scrollTop / estimatedItemHeight) - bufferRows);
+    const visibleRowCount = Math.ceil(containerHeight / estimatedItemHeight) + bufferRows * 2;
+    const endRow = Math.min(totalRows, startRow + visibleRowCount);
+
+    const startIndex = startRow * numColumns;
+    const endIndex = Math.min(items.length, endRow * numColumns);
+
+    visibleItems = items.slice(startIndex, endIndex);
+    paddingTop = startRow * estimatedItemHeight;
+    paddingBottom = Math.max(0, (totalRows - endRow) * estimatedItemHeight);
+  }
+
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto pr-1.5 scrollbar-thin">
-      <div
-        className={`grid ${viewMode === "list" ? "grid-cols-1" : columns} gap-4 pb-4`}
-      >
-        {items.map((item, index) => renderItem(item, index))}
+    <div
+      ref={containerRef}
+      onScroll={isLargeList ? handleScroll : undefined}
+      className="flex-1 min-h-0 overflow-y-auto pr-1.5 scrollbar-thin"
+    >
+      <div style={{ paddingTop: `${paddingTop}px`, paddingBottom: `${paddingBottom}px` }}>
+        <div className={`grid ${viewMode === "list" ? "grid-cols-1" : columns} gap-4 pb-4`}>
+          {visibleItems.map((item, index) =>
+            renderItem(item, isLargeList ? Math.floor(scrollTop / estimatedItemHeight) * numColumns + index : index)
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-export default VirtualizedCardGrid;
+export default React.memo(VirtualizedCardGrid);

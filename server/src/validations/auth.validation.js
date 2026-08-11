@@ -20,7 +20,7 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   body: z
     .object({
-      email: z.string().email('Invalid email address').trim().optional(),
+      email: z.string().trim().optional(),
       studentId: z.string().trim().optional(),
       password: z.string().min(1, 'Password is required'),
       totpCode: z.string().optional(),

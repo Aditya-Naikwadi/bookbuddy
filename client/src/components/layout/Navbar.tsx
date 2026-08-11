@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Sun, Moon } from "lucide-react";
 import { Button } from "../ui/Button";
 import { cn } from "../../utils/cn";
-import { useTheme } from "../../context/ThemeContext";
+import { ThemeToggle } from "../common/ThemeToggle";
 
 const NAV_ITEMS = [
   { label: "Features", target: "#features" },
@@ -13,14 +12,29 @@ const NAV_ITEMS = [
   { label: "Catalog Search", target: "/general-dashboard/search" },
 ];
 
-export const Navbar = () => {
+const NavbarComponent = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme();
 
-  // Handle sticky header scroll threshold
+  // Handle sticky header scroll threshold with RAF throttling
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 40);
+    let ticking = false;
+    let isScrolled = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const nextScrolled = window.scrollY > 40;
+          if (nextScrolled !== isScrolled) {
+            isScrolled = nextScrolled;
+            setScrolled(nextScrolled);
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -105,17 +119,7 @@ export const Navbar = () => {
 
         {/* Desktop Actions (Visible on >= 1024px) */}
         <div className="hidden lg:flex items-center gap-4">
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-xl hover:bg-surface/60 text-muted hover:text-ember transition-colors"
-            aria-label="Toggle Theme"
-          >
-            {theme === "dark" ? (
-              <Sun className="w-5 h-5" />
-            ) : (
-              <Moon className="w-5 h-5" />
-            )}
-          </button>
+          <ThemeToggle />
           <Button onClick={() => (window.location.href = "/auth/register")}>
             Start for Free
           </Button>
@@ -123,17 +127,7 @@ export const Navbar = () => {
 
         {/* Mobile & Tablet Controls (Visible on < 1024px) */}
         <div className="flex lg:hidden items-center gap-2 sm:gap-3">
-          <button
-            onClick={toggleTheme}
-            className="p-2 text-muted hover:text-ink transition-colors"
-            aria-label="Toggle Theme"
-          >
-            {theme === "dark" ? (
-              <Sun className="w-5 h-5" />
-            ) : (
-              <Moon className="w-5 h-5" />
-            )}
-          </button>
+          <ThemeToggle />
 
           {/* CSS-Animated Hamburger Toggle Button */}
           <button
@@ -198,3 +192,7 @@ export const Navbar = () => {
     </header>
   );
 };
+
+export const Navbar = React.memo(NavbarComponent);
+
+

@@ -30,23 +30,29 @@ const GoogleIcon = () => (
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [totpCode, setTotpCode] = useState("");
+  const [showMfaField, setShowMfaField] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showRecoveryMsg, setShowRecoveryMsg] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, loginWithGoogle, isLoading, error } = useAuthStore();
+  const { login, loginWithGoogle, isLoading, error, mfaRequired } = useAuthStore();
 
   const [redirectingMsg, setRedirectingMsg] = useState(null);
 
   const handlePostAuthNavigate = () => {
     const user = useAuthStore.getState().user;
     let defaultRoute = "/student-dashboard";
-    let collegeName = user?.collegeName || "your institution";
+    let collegeName = user?.collegeId?.name || user?.collegeName || "your institution";
 
-    if (user?.role === "college-admin") defaultRoute = "/college-admin";
-    else if (user?.role === "general") defaultRoute = "/general-dashboard";
-    else if (user?.role === "super-admin") defaultRoute = "/admin-portal";
+    if (["college-admin", "college_admin", "admin", "librarian"].includes(user?.role)) {
+      defaultRoute = "/college-admin";
+    } else if (user?.role === "general") {
+      defaultRoute = "/general-dashboard";
+    } else if (user?.role === "super-admin") {
+      defaultRoute = "/admin-portal";
+    }
 
     const targetPath = location.state?.from?.pathname || defaultRoute;
 
@@ -59,9 +65,11 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = await login(email, password);
-    if (success) {
+    const result = await login(email, password, showMfaField || mfaRequired ? totpCode : null);
+    if (result === true) {
       handlePostAuthNavigate();
+    } else if (result?.mfaRequired) {
+      setShowMfaField(true);
     }
   };
 
@@ -156,6 +164,7 @@ const Login = () => {
         animate="visible"
         className="space-y-4"
         onSubmit={handleSubmit}
+        autoComplete="off"
       >
         <motion.div variants={itemVariants} className="relative">
           <label htmlFor="login-username" className="block text-xs font-medium text-muted mb-1.5 ml-1">
@@ -170,7 +179,7 @@ const Login = () => {
               disabled={isLoading}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              autoComplete="username"
+              autoComplete="off"
               autoCapitalize="none"
               autoCorrect="off"
               autoFocus
@@ -215,7 +224,7 @@ const Login = () => {
               disabled={isLoading}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
+              autoComplete="new-password"
               className="w-full p-3.5 pr-10 bg-surface/50 border border-edge rounded-xl text-ink focus:outline-none focus:ring-2 focus:ring-ember/50 placeholder-muted/50 transition-all shadow-sm disabled:opacity-50"
               placeholder="••••••••"
             />
@@ -233,6 +242,30 @@ const Login = () => {
             </button>
           </div>
         </motion.div>
+
+        {(showMfaField || mfaRequired) && (
+          <motion.div variants={itemVariants}>
+            <label htmlFor="login-mfa-code" className="block text-xs font-medium text-amber-400 mb-1.5 ml-1">
+              6-Digit Authenticator Code (MFA)
+            </label>
+            <input
+              id="login-mfa-code"
+              name="totpCode"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              required
+              disabled={isLoading}
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value)}
+              autoComplete="one-time-code"
+              autoFocus
+              className="w-full p-3.5 bg-surface/50 border border-amber-500/40 text-center font-mono tracking-widest text-lg rounded-xl text-ink focus:outline-none focus:ring-2 focus:ring-amber-500/50 placeholder-muted/50 transition-all shadow-sm disabled:opacity-50"
+              placeholder="123456"
+            />
+          </motion.div>
+        )}
 
         <motion.div variants={itemVariants} className="pt-2">
           <Button

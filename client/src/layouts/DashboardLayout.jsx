@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import NotificationCenter from "../components/student/NotificationCenter";
+import ThemeToggle from "../components/common/ThemeToggle";
 import useAuthStore from "../store/authStore";
 import { useFeatureFlags } from "../hooks/useFeatureFlags";
 import {
@@ -77,12 +78,12 @@ export default function DashboardLayout() {
   }, [mobileMenuOpen, closeMenu]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-slate-50 dark:bg-void text-slate-900 dark:text-ink flex flex-col md:flex-row transition-colors duration-200">
       {/* Desktop Sidebar (Visible on >= md) */}
-      <aside className="w-full md:w-64 bg-white border-r border-slate-200 flex-shrink-0 flex-col hidden md:flex md:h-screen md:sticky md:top-0 z-30">
-        <div className="p-6 border-b border-slate-100 flex items-center gap-2 flex-shrink-0">
-          <Book className="text-indigo-600 w-8 h-8" />
-          <span className="text-2xl font-serif font-bold text-slate-900">
+      <aside className="w-full md:w-64 bg-white dark:bg-surface border-r border-slate-200 dark:border-edge flex-shrink-0 flex-col hidden md:flex md:h-screen md:sticky md:top-0 z-30">
+        <div className="p-6 border-b border-slate-100 dark:border-edge flex items-center gap-2 flex-shrink-0">
+          <Book className="text-indigo-600 dark:text-ember w-8 h-8" />
+          <span className="text-2xl font-serif font-bold text-slate-900 dark:text-ink">
             BookBuddy
           </span>
         </div>
@@ -216,10 +217,10 @@ export default function DashboardLayout() {
             </>
           )}
         </nav>
-        <div className="p-4 border-t border-slate-200 flex-shrink-0 bg-white">
+        <div className="p-4 border-t border-slate-200 dark:border-edge flex-shrink-0 bg-white dark:bg-surface">
           <button
             onClick={() => logout()}
-            className="flex items-center gap-3 w-full p-2 text-slate-600 hover:text-indigo-600 transition-colors font-medium rounded-xl hover:bg-indigo-50/60"
+            className="flex items-center gap-3 w-full p-2 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-ember transition-colors font-medium rounded-xl hover:bg-indigo-50/60 dark:hover:bg-slate-800/60"
           >
             <LogOut size={20} />
             <span>Logout</span>
@@ -230,24 +231,24 @@ export default function DashboardLayout() {
       {/* Main Content & Topbar */}
       <main className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
         {/* Topbar */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-20">
+        <header className="h-16 bg-white dark:bg-surface border-b border-slate-200 dark:border-edge flex items-center justify-between px-4 sm:px-6 z-20 transition-colors duration-200">
           <div className="flex items-center gap-3">
             {/* Mobile/Tablet Hamburger Toggle */}
             <button
-              className="hamburger-button md:hidden hover:bg-slate-100"
+              className="hamburger-button md:hidden hover:bg-slate-100 dark:hover:bg-slate-800"
               aria-expanded={mobileMenuOpen}
               aria-controls="dashboard-mobile-drawer"
               aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
               onClick={() => setMobileMenuOpen((prev) => !prev)}
             >
-              <span className="hamburger-line hamburger-line-1 !bg-slate-700" />
-              <span className="hamburger-line hamburger-line-2 !bg-slate-700" />
-              <span className="hamburger-line hamburger-line-3 !bg-slate-700" />
+              <span className="hamburger-line hamburger-line-1 !bg-slate-700 dark:!bg-slate-200" />
+              <span className="hamburger-line hamburger-line-2 !bg-slate-700 dark:!bg-slate-200" />
+              <span className="hamburger-line hamburger-line-3 !bg-slate-700 dark:!bg-slate-200" />
             </button>
 
             <Link to="/" className="flex items-center gap-2 md:hidden">
-              <Book className="text-indigo-600 w-6 h-6" />
-              <span className="text-lg font-serif font-bold text-slate-900">
+              <Book className="text-indigo-600 dark:text-ember w-6 h-6" />
+              <span className="text-lg font-serif font-bold text-slate-900 dark:text-ink">
                 BookBuddy
               </span>
             </Link>
@@ -255,19 +256,20 @@ export default function DashboardLayout() {
 
           <div className="flex-1 max-w-xl hidden md:block mx-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search catalog..."
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 text-sm"
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-deep border border-slate-200 dark:border-edge rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-ember text-slate-900 dark:text-ink text-sm placeholder-slate-400 dark:placeholder-slate-500 transition-colors"
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4 ml-auto">
+          <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+            <ThemeToggle />
             <NotificationCenter />
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold uppercase text-xs">
+              <div className="w-8 h-8 bg-indigo-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-indigo-700 dark:text-ember font-bold uppercase text-xs">
                 {user?.name?.substring(0, 2) || "U"}
               </div>
             </div>

@@ -5,13 +5,11 @@ import { ScrollProgress } from "../../components/ui/ScrollProgress";
 import { Navbar } from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
 import { Hero } from "../../sections/Hero";
-import { TrustBar } from "../../sections/TrustBar";
 import { Features } from "../../sections/Features";
 import { EResources } from "../../sections/EResources";
 import { StreakShowcase } from "../../sections/StreakShowcase";
 import { HowItWorks } from "../../sections/HowItWorks";
 import { PatronCardSection } from "../../sections/PatronCard";
-import { Testimonials } from "../../sections/Testimonials";
 import { CTA } from "../../sections/CTA";
 import { FAQ } from "../../sections/FAQ";
 import { LiveFeed } from "../../components/ui/LiveFeed";
@@ -48,13 +46,11 @@ const Landing = () => {
       <ScrollProgress />
       <Navbar />
       <Hero />
-      <TrustBar />
       <Features />
       <EResources />
       <StreakShowcase />
       <HowItWorks />
       <PatronCardSection />
-      <Testimonials />
       <FAQ />
       <CTA />
       <Footer />

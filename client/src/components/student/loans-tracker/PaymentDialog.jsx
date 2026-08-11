@@ -9,6 +9,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Button } from "../../ui/Button";
+import { useConfig } from "../../../context/ConfigContext.jsx";
 
 // Helper script loader for Razorpay Checkout SDK (PCI compliant)
 const loadRazorpayScript = () => {
@@ -33,6 +34,7 @@ export const PaymentDialog = ({
   totalAmount,
   onConfirm,
 }) => {
+  const { razorpayKeyId } = useConfig();
   const dialogRef = useRef(null);
   const [step, setStep] = useState("confirm"); // 'confirm' | 'paying' | 'verifying_webhook' | 'success' | 'failed'
   const [paymentRef, setPaymentRef] = useState("");
@@ -105,7 +107,7 @@ export const PaymentDialog = ({
       const amountInPaise = Math.round(totalAmount * 100);
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_bookbuddy_demo",
+        key: razorpayKeyId || "rzp_test_bookbuddy_demo",
         amount: amountInPaise,
         currency: "INR",
         name: "BookBuddy Academic Library",

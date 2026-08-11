@@ -6,7 +6,7 @@ import { Button } from "../components/ui/Button";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 import { motion, useScroll, useTransform, Variants } from "framer-motion";
 
-export const Hero = () => {
+const HeroComponent = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
   const navigate = useNavigate();
@@ -117,12 +117,6 @@ export const Hero = () => {
             <Button variant="ghost" size="lg" className="w-full sm:w-auto">
               Watch Demo ▶
             </Button>
-          </motion.div>
-          <motion.div
-            variants={textItemVariants}
-            className="mt-8 md:mt-10 text-xs md:text-sm font-semibold text-muted"
-          >
-            Trusted by 12,000+ students at 40 institutions
           </motion.div>
         </motion.div>
 
@@ -238,3 +232,6 @@ export const Hero = () => {
     </section>
   );
 };
+
+export const Hero = React.memo(HeroComponent);
+

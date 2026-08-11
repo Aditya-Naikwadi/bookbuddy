@@ -53,8 +53,8 @@ const startServer = async () => {
   app.set('io', io);
 
   // 2. Start listening for HTTP traffic immediately (enables Render health checks)
-  serverInstance = server.listen(config.port, () => {
-    logger.info(`Server running in ${config.nodeEnv} mode on port ${config.port}`);
+  serverInstance = server.listen(config.port, config.host, () => {
+    logger.info(`Server running in ${config.nodeEnv} mode on http://${config.host}:${config.port}`);
   });
 
   // 3. Connect to Database asynchronously

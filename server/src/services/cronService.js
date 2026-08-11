@@ -188,7 +188,10 @@ const runDueReminders = async () => {
  */
 const runStreakExpirySweep = async (mockNow = null) => {
   const referenceTime = mockNow || new Date();
-  const streaks = await Streak.find({});
+  // Filter to streaks that have active streak count or available freezes to evaluate
+  const streaks = await Streak.find({
+    $or: [{ currentStreak: { $gt: 0 } }, { freezesAvailable: { $gt: 0 } }],
+  });
 
   let affected = 0;
   for (const streak of streaks) {
@@ -318,7 +321,84 @@ const runMetricsAggregation = async () => {
   const colleges = await College.find();
   const snapshotDate = new Date();
 
-  // Accumulate global totals
+  // Execute cross-college aggregation pipelines concurrently (4 queries total instead of 9N)
+  const [userStats, loanStats, fineStats, eResourceStats] = await Promise.all([
+    User.aggregate([
+      { $match: { role: { $in: ['student', 'college-admin'] }, isActive: true, collegeId: { $ne: null } } },
+      { $group: { _id: { collegeId: '$collegeId', role: '$role' }, count: { $sum: 1 } } },
+    ]),
+    Loan.aggregate([
+      { $match: { status: { $in: ['active', 'overdue'] }, collegeId: { $ne: null } } },
+      { $group: { _id: { collegeId: '$collegeId', status: '$status' }, count: { $sum: 1 } } },
+    ]),
+    Fine.aggregate([
+      { $match: { status: { $in: ['unpaid', 'paid'] }, collegeId: { $ne: null } } },
+      { $group: { _id: { collegeId: '$collegeId', status: '$status' }, total: { $sum: '$amount' } } },
+    ]),
+    EResource.aggregate([
+      { $match: { collegeId: { $ne: null } } },
+      {
+        $group: {
+          _id: { collegeId: '$collegeId', status: '$moderationStatus' },
+          count: { $sum: 1 },
+          bytes: { $sum: '$fileSizeBytes' },
+        },
+      },
+    ]),
+  ]);
+
+  // Index metrics by college ID string for O(1) lookup
+  const collegeMap = {};
+  for (const c of colleges) {
+    collegeMap[c._id.toString()] = {
+      activeStudents: 0,
+      activeAdmins: 0,
+      activeLoans: 0,
+      overdueLoans: 0,
+      totalFinesPending: 0,
+      totalFinesCollected: 0,
+      eResourcesCount: 0,
+      pendingModerationCount: 0,
+      storageUsageBytes: 0,
+    };
+  }
+
+  for (const item of userStats) {
+    const cid = item._id.collegeId ? item._id.collegeId.toString() : null;
+    if (cid && collegeMap[cid]) {
+      if (item._id.role === 'student') collegeMap[cid].activeStudents = item.count;
+      if (item._id.role === 'college-admin') collegeMap[cid].activeAdmins = item.count;
+    }
+  }
+
+  for (const item of loanStats) {
+    const cid = item._id.collegeId ? item._id.collegeId.toString() : null;
+    if (cid && collegeMap[cid]) {
+      if (item._id.status === 'active') collegeMap[cid].activeLoans = item.count;
+      if (item._id.status === 'overdue') collegeMap[cid].overdueLoans = item.count;
+    }
+  }
+
+  for (const item of fineStats) {
+    const cid = item._id.collegeId ? item._id.collegeId.toString() : null;
+    if (cid && collegeMap[cid]) {
+      if (item._id.status === 'unpaid') collegeMap[cid].totalFinesPending = item.total;
+      if (item._id.status === 'paid') collegeMap[cid].totalFinesCollected = item.total;
+    }
+  }
+
+  for (const item of eResourceStats) {
+    const cid = item._id.collegeId ? item._id.collegeId.toString() : null;
+    if (cid && collegeMap[cid]) {
+      if (item._id.status === 'published') collegeMap[cid].eResourcesCount += item.count;
+      if (['pending', 'pending_review'].includes(item._id.status)) {
+        collegeMap[cid].pendingModerationCount += item.count;
+      }
+      collegeMap[cid].storageUsageBytes += item.bytes || 0;
+    }
+  }
+
+  // Accumulate global totals and build bulk snapshot records
   let globalActiveStudents = 0;
   let globalActiveAdmins = 0;
   let globalActiveLoans = 0;
@@ -329,95 +409,31 @@ const runMetricsAggregation = async () => {
   let globalPendingModeration = 0;
   let globalStorageUsage = 0;
 
+  const snapshotsToCreate = [];
+
   for (const college of colleges) {
-    const collegeId = college._id;
+    const cid = college._id.toString();
+    const stats = collegeMap[cid];
 
-    // 1. Active students
-    const activeStudents = await User.countDocuments({
-      collegeId,
-      role: 'student',
-      isActive: true,
-    });
-    globalActiveStudents += activeStudents;
+    globalActiveStudents += stats.activeStudents;
+    globalActiveAdmins += stats.activeAdmins;
+    globalActiveLoans += stats.activeLoans;
+    globalOverdueLoans += stats.overdueLoans;
+    globalFinesPending += stats.totalFinesPending;
+    globalFinesCollected += stats.totalFinesCollected;
+    globalEResourcesCount += stats.eResourcesCount;
+    globalPendingModeration += stats.pendingModerationCount;
+    globalStorageUsage += stats.storageUsageBytes;
 
-    // 2. Active admins
-    const activeAdmins = await User.countDocuments({
-      collegeId,
-      role: 'college-admin',
-      isActive: true,
-    });
-    globalActiveAdmins += activeAdmins;
-
-    // 3. Active loans
-    const activeLoans = await Loan.countDocuments({
-      collegeId,
-      status: 'active',
-    });
-    globalActiveLoans += activeLoans;
-
-    // 4. Overdue loans
-    const overdueLoans = await Loan.countDocuments({
-      collegeId,
-      status: 'overdue',
-    });
-    globalOverdueLoans += overdueLoans;
-
-    // 5. Fines pending (unpaid)
-    const pendingFines = await Fine.aggregate([
-      { $match: { collegeId, status: 'unpaid' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } },
-    ]);
-    const totalFinesPending = pendingFines.length > 0 ? pendingFines[0].total : 0;
-    globalFinesPending += totalFinesPending;
-
-    // 6. Fines collected (paid)
-    const collectedFines = await Fine.aggregate([
-      { $match: { collegeId, status: 'paid' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } },
-    ]);
-    const totalFinesCollected = collectedFines.length > 0 ? collectedFines[0].total : 0;
-    globalFinesCollected += totalFinesCollected;
-
-    // 7. E-resources published (accessible to patrons)
-    const eResourcesCount = await EResource.countDocuments({
-      collegeId,
-      moderationStatus: 'published',
-    });
-    globalEResourcesCount += eResourcesCount;
-
-    // 8. Pending moderation resources
-    const pendingModerationCount = await EResource.countDocuments({
-      collegeId,
-      moderationStatus: { $in: ['pending', 'pending_review'] },
-    });
-    globalPendingModeration += pendingModerationCount;
-
-    // 9. Storage usage in bytes
-    const storageUsage = await EResource.aggregate([
-      { $match: { collegeId } },
-      { $group: { _id: null, total: { $sum: '$fileSizeBytes' } } },
-    ]);
-    const storageUsageBytes = storageUsage.length > 0 ? storageUsage[0].total : 0;
-    globalStorageUsage += storageUsageBytes;
-
-    // Create the snapshot record for this college
-    await PlatformMetricSnapshot.create({
-      collegeId,
+    snapshotsToCreate.push({
+      collegeId: college._id,
       snapshotDate,
-      activeStudents,
-      activeAdmins,
-      activeLoans,
-      overdueLoans,
-      totalFinesPending,
-      totalFinesCollected,
-      eResourcesCount,
-      pendingModerationCount,
-      storageUsageBytes,
+      ...stats,
     });
   }
 
-  // Create the global snapshot (collegeId = null)
-  await PlatformMetricSnapshot.create({
+  // Global aggregate record (collegeId = null)
+  snapshotsToCreate.push({
     collegeId: null,
     snapshotDate,
     activeStudents: globalActiveStudents,
@@ -430,6 +446,8 @@ const runMetricsAggregation = async () => {
     pendingModerationCount: globalPendingModeration,
     storageUsageBytes: globalStorageUsage,
   });
+
+  await PlatformMetricSnapshot.insertMany(snapshotsToCreate);
 
   // Cache the global rollup in Redis
   if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {

@@ -23,6 +23,21 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#0A0B10" />
     <link rel="canonical" href="https://bookbuddy.app" />
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("theme");
+          var theme =
+            saved === "light" || saved === "dark"
+              ? saved
+              : window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+          document.documentElement.classList.remove("light", "dark");
+          document.documentElement.classList.add(theme);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

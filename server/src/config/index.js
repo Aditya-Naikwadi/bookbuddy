@@ -49,6 +49,7 @@ if (process.env.NODE_ENV === 'production' && !process.env.VERCEL && !process.env
 
 const config = {
   port: parseInt(process.env.PORT, 10) || 5000,
+  host: process.env.HOST || '0.0.0.0',
   mongoUri:
     process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/bookbuddy',
   jwt: {

@@ -25,7 +25,7 @@ mongoose.connection.on('disconnected', () => {
 
 const connectDB = async () => {
   const options = {
-    maxPoolSize: 10,
+    maxPoolSize: parseInt(process.env.MONGO_MAX_POOL_SIZE, 10) || 25,
     serverSelectionTimeoutMS: 15000,
   };
 

@@ -26,7 +26,7 @@ export const openEbook = async (gutenbergId) => {
 };
 
 export const getContentUrl = (resourceId, format) => {
-  return `${import.meta.env.VITE_API_URL || "/api/v1"}/eresources/external/${resourceId}/content?format=${format}`;
+  return `/api/v1/eresources/external/${resourceId}/content?format=${format}`;
 };
 
 export const getAllResources = async () => {

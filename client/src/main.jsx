@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+import { StrictMode, useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { GoogleOAuthProvider } from "@react-oauth/google";
@@ -7,20 +7,43 @@ import { queryClient } from "./lib/reactQuery.js";
 import "./index.css";
 import App from "./App.jsx";
 import { ThemeProvider } from "./context/ThemeContext.tsx";
+import { ConfigProvider, useConfig } from "./context/ConfigContext.jsx";
 
-const googleClientId =
-  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-  "404307478076-2oun4gi0qop5pgnc6ndua8auaiqbhf0a.apps.googleusercontent.com";
+function DynamicGoogleOAuthProvider({ children }) {
+  const { googleClientId } = useConfig();
+  // Provide clientId to GoogleOAuthProvider dynamically from backend config
+  return (
+    <GoogleOAuthProvider clientId={googleClientId || ""}>
+      {children}
+    </GoogleOAuthProvider>
+  );
+}
+
+function DeferredAnalytics() {
+  const [shouldRender, setShouldRender] = useState(false);
+  useEffect(() => {
+    if ("requestIdleCallback" in window) {
+      const handle = requestIdleCallback(() => setShouldRender(true), { timeout: 3000 });
+      return () => cancelIdleCallback(handle);
+    } else {
+      const timer = setTimeout(() => setShouldRender(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+  return shouldRender ? <Analytics /> : null;
+}
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <GoogleOAuthProvider clientId={googleClientId}>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <App />
-          <Analytics />
-        </ThemeProvider>
-      </QueryClientProvider>
-    </GoogleOAuthProvider>
+    <ConfigProvider>
+      <DynamicGoogleOAuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <App />
+            <DeferredAnalytics />
+          </ThemeProvider>
+        </QueryClientProvider>
+      </DynamicGoogleOAuthProvider>
+    </ConfigProvider>
   </StrictMode>,
 );

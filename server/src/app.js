@@ -12,11 +12,16 @@ const errorHandler = require('./middlewares/errorHandler');
 const mongoose = require('mongoose');
 const AppError = require('./utils/AppError');
 
+const compression = require('compression');
+
 const app = express();
 const crypto = require('crypto');
 
 // Enable Trust Proxy for Render / Vercel reverse proxies (required for HTTPS secure cookies & client IP detection)
 app.set('trust proxy', 1);
+
+// Enable HTTP Response Compression
+app.use(compression());
 
 // Assign Request ID
 app.use((req, res, next) => {
@@ -265,6 +270,7 @@ app.use('/api/v1/college/:id/books', require('./routes/collegeBookRoutes'));
 app.use('/api/v1/catalog', require('./routes/catalogRoutes'));
 app.use('/api/v1/services', require('./routes/serviceRoutes'));
 app.use('/api/v1/college/:id', require('./routes/bulkUploadRoutes'));
+app.use('/api/v1/config', require('./routes/configRoutes'));
 app.use('/api/v1/auth', require('./routes/authRoutes'));
 app.use('/api/v1/registration', require('./routes/registrationRoutes'));
 app.use('/api/v1/books', require('./routes/bookRoutes'));

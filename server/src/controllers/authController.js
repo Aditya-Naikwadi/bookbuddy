@@ -241,7 +241,7 @@ const logoutUser = async (req, res, next) => {
 // @access  Private
 const getUserProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).populate('collegeId', 'name code logoUrl status isActive');
     if (!user) {
       return next(new AppError('User not found.', 404));
     }

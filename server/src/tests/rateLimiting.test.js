@@ -275,7 +275,7 @@ describe('API Rate Limiting & Input Validation Hardening Tests', () => {
       // Let's call /api/auth/login with unrecognized keys
       // Since loginSchema is not strict, it should pass validation but strip unrecognized keys
       const res = await request(app).post('/api/auth/login').send({
-        email: 'not-valid-email', // invalid email format triggers 400 validation error
+        // missing email and studentId triggers 400 validation error
         password: 'password123',
         maliciousKey: 'attack',
       });

@@ -2,7 +2,7 @@ import React from "react";
 import { useScrollProgress } from "../../hooks/useScrollProgress";
 import { useReducedMotion } from "../../hooks/useReducedMotion";
 
-export const ScrollProgress = () => {
+const ScrollProgressComponent = () => {
   const progress = useScrollProgress();
   const reducedMotion = useReducedMotion();
 
@@ -17,3 +17,6 @@ export const ScrollProgress = () => {
     </div>
   );
 };
+
+export const ScrollProgress = React.memo(ScrollProgressComponent);
+

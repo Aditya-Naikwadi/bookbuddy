@@ -9,6 +9,13 @@ const logger = require('../utils/logger');
 const { sendEmail } = require('./notificationService');
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_IN_MEMORY_ERRORS = 100;
+
+const pushErrorDetail = (job, errorObj) => {
+  if (job.errorDetails.length < MAX_IN_MEMORY_ERRORS) {
+    job.errorDetails.push(errorObj);
+  }
+};
 
 /**
  * Emits real-time Socket.io progress event to per-job room.
@@ -125,137 +132,158 @@ const processBulkUploadJob = async (jobId, filePath) => {
     const seenStudentIds = new Set();
     const seenEmails = new Set();
 
-    // Query existing DB records for this college
-    const existingUsers = await User.find({ collegeId: job.collegeId })
-      .select('studentId email')
-      .lean();
-    const dbStudentIds = new Set(existingUsers.map((u) => u.studentId));
-    const dbEmails = new Set(existingUsers.map((u) => u.email));
-
     const CHUNK_SIZE = 500;
     let chunk = [];
     const createdUsersForEmails = [];
 
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      const rowIndex = row._rowIndex || i + 2;
-      const name = row.name || row['full name'] || row['student name'] || '';
-      const email = (row.email || '').toLowerCase().trim();
-      const studentId = (row.studentid || row['student id'] || row.id || '').trim();
-      const department = row.department || row.major || '';
+    // Process rows in chunks of CHUNK_SIZE with batch DB duplicate validation
+    for (let batchStart = 0; batchStart < rows.length; batchStart += CHUNK_SIZE) {
+      const batchRows = rows.slice(batchStart, batchStart + CHUNK_SIZE);
 
-      // Validation 1: Required fields
-      if (!name || !email || !studentId) {
-        job.failedRows += 1;
-        job.errorDetails.push({
-          row: rowIndex,
-          studentId,
-          email,
-          reason: 'Missing required field (name, email, or studentId).',
-        });
-        job.processedRows += 1;
-        continue;
-      }
+      // Collect candidate studentIds and emails for current batch
+      const batchCandidateStudentIds = batchRows
+        .map((r) => (r.studentid || r['student id'] || r.id || '').trim())
+        .filter(Boolean);
+      const batchCandidateEmails = batchRows
+        .map((r) => (r.email || '').toLowerCase().trim())
+        .filter(Boolean);
 
-      // Validation 2: Email format
-      if (!emailRegex.test(email)) {
-        job.failedRows += 1;
-        job.errorDetails.push({
-          row: rowIndex,
-          studentId,
-          email,
-          reason: 'Invalid email address format.',
-        });
-        job.processedRows += 1;
-        continue;
-      }
-
-      // Validation 3: Duplicate within file
-      if (seenStudentIds.has(studentId) || seenEmails.has(email)) {
-        job.failedRows += 1;
-        job.errorDetails.push({
-          row: rowIndex,
-          studentId,
-          email,
-          reason: 'Duplicate studentId or email within uploaded file.',
-        });
-        job.processedRows += 1;
-        continue;
-      }
-
-      // Validation 4: Duplicate in DB
-      if (dbStudentIds.has(studentId) || dbEmails.has(email)) {
-        job.failedRows += 1;
-        job.errorDetails.push({
-          row: rowIndex,
-          studentId,
-          email,
-          reason: 'Student ID or email already registered for this institution.',
-        });
-        job.processedRows += 1;
-        continue;
-      }
-
-      seenStudentIds.add(studentId);
-      seenEmails.add(email);
-
-      const invitationToken = crypto.randomBytes(32).toString('hex');
-      const newUserDoc = {
+      // Chunk-scoped $in query: fetch only existing DB records matching this batch
+      const existingBatchUsers = await User.find({
         collegeId: job.collegeId,
-        name,
-        email,
-        studentId,
-        major: department,
-        password: defaultPasswordHash,
-        role: 'student',
-        status: 'invited',
-        invitedVia: 'bulk_upload',
-        invitationToken,
-        isEmailVerified: true,
-        membershipStatus: 'active',
-      };
+        $or: [
+          { studentId: { $in: batchCandidateStudentIds } },
+          { email: { $in: batchCandidateEmails } },
+        ],
+      })
+        .select('studentId email')
+        .lean();
 
-      chunk.push(newUserDoc);
-      createdUsersForEmails.push({ name, email, invitationToken });
+      const dbStudentIds = new Set(existingBatchUsers.map((u) => u.studentId));
+      const dbEmails = new Set(existingBatchUsers.map((u) => u.email));
 
-      // Write chunk if chunk size met or at end of file
-      if (chunk.length >= CHUNK_SIZE || i === rows.length - 1) {
-        if (chunk.length > 0) {
-          try {
-            const inserted = await User.insertMany(chunk, { ordered: false });
-            job.succeededRows += inserted.length;
-          } catch (insertErr) {
-            if (insertErr.insertedDocs) {
-              job.succeededRows += insertErr.insertedDocs.length;
-            }
-            if (insertErr.writeErrors) {
-              for (const we of insertErr.writeErrors) {
-                job.failedRows += 1;
-                job.errorDetails.push({
-                  row: rowIndex,
-                  studentId: we.err?.op?.studentId || '',
-                  email: we.err?.op?.email || '',
-                  reason: `Database constraint error: ${we.errmsg || 'Duplicate key'}`,
-                });
-              }
-            }
-          }
-          chunk = [];
+      for (let i = 0; i < batchRows.length; i++) {
+        const row = batchRows[i];
+        const globalRowIndex = batchStart + i;
+        const rowIndex = row._rowIndex || globalRowIndex + 2;
+        const name = row.name || row['full name'] || row['student name'] || '';
+        const email = (row.email || '').toLowerCase().trim();
+        const studentId = (row.studentid || row['student id'] || row.id || '').trim();
+        const department = row.department || row.major || '';
+
+        // Validation 1: Required fields
+        if (!name || !email || !studentId) {
+          job.failedRows += 1;
+          pushErrorDetail(job, {
+            row: rowIndex,
+            studentId,
+            email,
+            reason: 'Missing required field (name, email, or studentId).',
+          });
+          job.processedRows += 1;
+          continue;
         }
 
-        job.processedRows = i + 1;
-        job.lastCheckpointRow = i + 1;
-        await job.save();
+        // Validation 2: Email format
+        if (!emailRegex.test(email)) {
+          job.failedRows += 1;
+          pushErrorDetail(job, {
+            row: rowIndex,
+            studentId,
+            email,
+            reason: 'Invalid email address format.',
+          });
+          job.processedRows += 1;
+          continue;
+        }
 
-        const progressPct = Math.round((job.processedRows / job.totalRows) * 100);
-        emitProgressEvent(jobId, {
-          status: 'processing',
-          processedRows: job.processedRows,
-          totalRows: job.totalRows,
-          succeededRows: job.succeededRows,
-          failedRows: job.failedRows,
-          progress: progressPct,
-        });
+        // Validation 3: Duplicate within file
+        if (seenStudentIds.has(studentId) || seenEmails.has(email)) {
+          job.failedRows += 1;
+          pushErrorDetail(job, {
+            row: rowIndex,
+            studentId,
+            email,
+            reason: 'Duplicate studentId or email within uploaded file.',
+          });
+          job.processedRows += 1;
+          continue;
+        }
+
+        // Validation 4: Duplicate in DB
+        if (dbStudentIds.has(studentId) || dbEmails.has(email)) {
+          job.failedRows += 1;
+          pushErrorDetail(job, {
+            row: rowIndex,
+            studentId,
+            email,
+            reason: 'Student ID or email already registered for this institution.',
+          });
+          job.processedRows += 1;
+          continue;
+        }
+
+        seenStudentIds.add(studentId);
+        seenEmails.add(email);
+
+        const invitationToken = crypto.randomBytes(32).toString('hex');
+        const newUserDoc = {
+          collegeId: job.collegeId,
+          name,
+          email,
+          studentId,
+          major: department,
+          password: defaultPasswordHash,
+          role: 'student',
+          status: 'invited',
+          invitedVia: 'bulk_upload',
+          invitationToken,
+          isEmailVerified: true,
+          membershipStatus: 'active',
+        };
+
+        chunk.push(newUserDoc);
+        createdUsersForEmails.push({ name, email, invitationToken });
+
+        // Write chunk if chunk size met or at end of file
+        if (chunk.length >= CHUNK_SIZE || globalRowIndex === rows.length - 1) {
+          if (chunk.length > 0) {
+            try {
+              const inserted = await User.insertMany(chunk, { ordered: false });
+              job.succeededRows += inserted.length;
+            } catch (insertErr) {
+              if (insertErr.insertedDocs) {
+                job.succeededRows += insertErr.insertedDocs.length;
+              }
+              if (insertErr.writeErrors) {
+                for (const we of insertErr.writeErrors) {
+                  job.failedRows += 1;
+                  pushErrorDetail(job, {
+                    row: rowIndex,
+                    studentId: we.err?.op?.studentId || '',
+                    email: we.err?.op?.email || '',
+                    reason: `Database constraint error: ${we.errmsg || 'Duplicate key'}`,
+                  });
+                }
+              }
+            }
+            chunk = [];
+          }
+
+          job.processedRows = globalRowIndex + 1;
+          job.lastCheckpointRow = globalRowIndex + 1;
+          await job.save();
+
+          const progressPct = Math.round((job.processedRows / job.totalRows) * 100);
+          emitProgressEvent(jobId, {
+            status: 'processing',
+            processedRows: job.processedRows,
+            totalRows: job.totalRows,
+            succeededRows: job.succeededRows,
+            failedRows: job.failedRows,
+            progress: progressPct,
+          });
+        }
       }
     }
 

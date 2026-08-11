@@ -10,11 +10,10 @@
     "format:check": "npx prettier --check .",
     "ci:check": "npm run lint && npm run format:check && npm run build",
     "preview": "vite preview",
+    "test": "vitest run",
     "audit": "npm audit"
   },
   "dependencies": {
-    "@fontsource-variable/plus-jakarta-sans": "^5.2.8",
-    "@fontsource/dm-serif-display": "^5.2.8",
     "@hookform/resolvers": "^5.4.0",
     "@react-oauth/google": "^0.13.5",
     "@tanstack/react-query": "^5.101.0",
@@ -42,6 +41,8 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@tailwindcss/postcss": "^4.3.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
@@ -50,10 +51,12 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "jsdom": "^29.1.1",
     "postcss": "^8.5.15",
     "puppeteer": "^25.1.0",
     "tailwindcss": "^4.3.1",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "vitest": "^4.1.10"
   },
   "overrides": {
     "@xmldom/xmldom": "^0.9.7"

@@ -18,8 +18,7 @@
     "migrate:db": "node src/scripts/migrateIndicesAndDefaults.js",
     "migrate:hardening": "node src/scripts/migrateProductionHardening.js",
     "db:clear": "node src/scripts/clearDatabase.js",
-    "seed": "node src/seed.js",
-    "seed:dataset": "node src/scripts/seedMultiTenantDataset.js",
+    "db:restore": "node src/scripts/restoreDatabase.js",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -39,6 +38,7 @@
     "axios": "^1.18.0",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.10.0",
+    "compression": "^1.8.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -80,6 +80,6 @@
     "supertest": "^7.2.2"
   },
   "overrides": {
-    "brace-expansion": "^5.0.8"
+    "brace-expansion": "^5.0.9"
   }
 }

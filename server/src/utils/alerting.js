@@ -32,7 +32,7 @@ const sendAlert = async (err, req) => {
       ],
     };
     // Fire-and-forget request to avoid blocking the main thread or response
-    axios.post(webhookUrl, payload).catch((webErr) => {
+    axios.post(webhookUrl, payload, { timeout: 3000 }).catch((webErr) => {
       logger.error('Failed to send webhook alert', { error: webErr.message });
     });
   } catch (webhookErr) {

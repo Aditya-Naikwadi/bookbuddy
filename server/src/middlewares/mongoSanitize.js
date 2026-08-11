@@ -4,12 +4,20 @@
  */
 const sanitizeObject = (obj) => {
   if (obj && typeof obj === 'object') {
-    const keys = Object.keys(obj);
-    for (const key of keys) {
-      if (key.startsWith('$') || key.includes('.')) {
-        delete obj[key];
-      } else {
-        sanitizeObject(obj[key]);
+    if (Array.isArray(obj)) {
+      for (let i = 0; i < obj.length; i++) {
+        if (obj[i] && typeof obj[i] === 'object') {
+          sanitizeObject(obj[i]);
+        }
+      }
+    } else {
+      const keys = Object.keys(obj);
+      for (const key of keys) {
+        if (key.startsWith('$') || key.includes('.')) {
+          delete obj[key];
+        } else {
+          sanitizeObject(obj[key]);
+        }
       }
     }
   }
