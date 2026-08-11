@@ -137,11 +137,11 @@ const limiters = {
 
 // Helper to extract clean client IP
 const getClientIp = (req) => {
-  const forwardedFor = req.headers['x-forwarded-for'];
-  if (forwardedFor) {
+  const forwardedFor = req?.headers?.['x-forwarded-for'];
+  if (forwardedFor && typeof forwardedFor === 'string') {
     return forwardedFor.split(',')[0].trim();
   }
-  return req.socket.remoteAddress || 'unknown-ip';
+  return req?.ip || req?.socket?.remoteAddress || 'unknown-ip';
 };
 
 // Middlewares
