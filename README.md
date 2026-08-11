@@ -341,13 +341,14 @@ The College Admin Dashboard features an enterprise bulk student import engine de
 ## 🛡️ Security Architecture & Protection Suite
 
 1. **Authentication & Token Rotation**: Access Tokens (15 mins) and Refresh Tokens stored in MongoDB (`RefreshToken` model) with session invalidation capabilities.
-2. **CSRF Protection**: Optional double-submit CSRF cookie pattern validation (`csrf.js`).
-3. **Password Hashing**: Passwords secured using `bcrypt` with cost factor 10.
-4. **NoSQL Injection Defense**: `express-mongo-sanitize` strips `$` and `.` characters from incoming `req.body`, `req.query`, and `req.params`.
-5. **HTTP Header Hardening**: `helmet` sets X-Content-Type-Options, X-Frame-Options, Strict-Transport-Security, and Content Security Policies.
-6. **E-Resource Stored-XSS Sanitization**: EPUB archives are parsed server-side with `adm-zip` to strip `<script>` tags, inline event handlers (`onload`, `onerror`), and `javascript:` protocol links before storage.
-7. **Input Validation**: All request payloads are validated using strict `Zod` schemas prior to controller execution.
-8. **Multi-Tier Rate Limiting** (`express-rate-limit` / `rate-limiter-flexible` backed by Redis):
+2. **Dual Identifier Login & MFA (2FA)**: Authentication supports both Email addresses and Student/Admin IDs. Supports optional Multi-Factor Authentication (`mfaSecret` / `totpCode`) with 6-digit TOTP authenticator verification.
+3. **CSRF Protection**: Double-submit CSRF cookie pattern validation (`csrf.js`).
+4. **Password Hashing**: Passwords secured using `Argon2id` / `bcrypt` with transparent upgrade.
+5. **NoSQL Injection Defense**: `express-mongo-sanitize` strips `$` and `.` characters from incoming `req.body`, `req.query`, and `req.params`.
+6. **HTTP Header Hardening**: `helmet` sets X-Content-Type-Options, X-Frame-Options, Strict-Transport-Security, and Content Security Policies.
+7. **E-Resource Stored-XSS Sanitization**: EPUB archives are parsed server-side with `adm-zip` to strip `<script>` tags, inline event handlers (`onload`, `onerror`), and `javascript:` protocol links before storage.
+8. **Input Validation**: All request payloads are validated using strict `Zod` schemas prior to controller execution.
+9. **Multi-Tier Rate Limiting** (`express-rate-limit` / `rate-limiter-flexible` backed by Redis):
 
 | Tier | Window | Max Requests | Key / Identifier | Targeted Endpoints |
 | :--- | :--- | :--- | :--- | :--- |
@@ -725,12 +726,12 @@ RATE_LIMIT_EXPENSIVE_WINDOW_MS=60000
 
 | Role / Dashboard | Email / Identifier | Password | Target Dashboard Route |
 | :--- | :--- | :--- | :--- |
-| **Super Admin** | `SuperAdmin@bookbuddy.com` | `superadmin` | `/admin-portal` |
-| **College Admin** | `collegeadmin@bookbuddy.com` | `Demo@123` | `/college-admin` |
+| **Super Admin** | `SuperAdmin@bookbuddy.com` *(or `SUPER_01`)* | `superadmin` | `/admin-portal` |
+| **College Admin** | `collegeadmin@bookbuddy.com` *(or `ADM_001`)* | `Demo@123` | `/college-admin` |
 | **Student** | `student@bookbuddy.com` *(or `STU1001`)* | `Demo@123` | `/student-dashboard` |
 | **General User** | `general@bookbuddy.com` | `Demo@123` | `/general-dashboard` |
 
-*Note: All authentication is verified dynamically against MongoDB via Express API routes. Run `npm run seed:dataset` in `server/` to initialize or refresh these records.*
+*Note: Authentication supports both Email addresses and Student/Admin IDs, verified dynamically against MongoDB via Express API routes. Run `npm run seed:dataset` in `server/` to initialize or refresh these records.*
 
 ### Prerequisites
 - **Node.js**: `v20.x` or later (`node -v`)
