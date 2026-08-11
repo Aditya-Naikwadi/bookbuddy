@@ -324,7 +324,13 @@ const runMetricsAggregation = async () => {
   // Execute cross-college aggregation pipelines concurrently (4 queries total instead of 9N)
   const [userStats, loanStats, fineStats, eResourceStats] = await Promise.all([
     User.aggregate([
-      { $match: { role: { $in: ['student', 'college-admin'] }, isActive: true, collegeId: { $ne: null } } },
+      {
+        $match: {
+          role: { $in: ['student', 'college-admin'] },
+          isActive: true,
+          collegeId: { $ne: null },
+        },
+      },
       { $group: { _id: { collegeId: '$collegeId', role: '$role' }, count: { $sum: 1 } } },
     ]),
     Loan.aggregate([
@@ -333,7 +339,9 @@ const runMetricsAggregation = async () => {
     ]),
     Fine.aggregate([
       { $match: { status: { $in: ['unpaid', 'paid'] }, collegeId: { $ne: null } } },
-      { $group: { _id: { collegeId: '$collegeId', status: '$status' }, total: { $sum: '$amount' } } },
+      {
+        $group: { _id: { collegeId: '$collegeId', status: '$status' }, total: { $sum: '$amount' } },
+      },
     ]),
     EResource.aggregate([
       { $match: { collegeId: { $ne: null } } },

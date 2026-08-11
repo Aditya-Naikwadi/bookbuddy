@@ -5,7 +5,6 @@ const { backupDatabase } = require('../scripts/backupDatabase');
 
 describe('Streaming Backup Memory Safety Integration Tests', () => {
   jest.setTimeout(30000);
-  const _dbUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_backup_test';
   let tempBackupDir;
 
   beforeAll(async () => {
