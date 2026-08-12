@@ -1,7 +1,5 @@
 const request = require('supertest');
-const mongoose = require('mongoose');
 const app = require('../app');
-const { redisClient } = require('../middlewares/rateLimiters');
 
 describe('Post-Push Deployment Verification Automated Tests', () => {
   const originalEnv = { ...process.env };
@@ -9,22 +7,6 @@ describe('Post-Push Deployment Verification Automated Tests', () => {
   afterEach(() => {
     process.env = { ...originalEnv };
   });
-
-  afterAll(async () => {
-    try {
-      if (redisClient && typeof redisClient.quit === 'function') {
-        await redisClient.quit();
-      }
-      // eslint-disable-next-line no-empty
-    } catch {}
-    try {
-      if (mongoose.connection && mongoose.connection.readyState !== 0) {
-        await mongoose.connection.close();
-      }
-      // eslint-disable-next-line no-empty
-    } catch {}
-  });
-
   it('1. GET /version should return HTTP 200 with commitSha, version, and uptime', async () => {
     process.env.COMMIT_SHA = 'a1b2c3d4e5f6789012345678901234567890abcd';
     process.env.APP_VERSION = '2.5.0';
