@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Ping Keep-Alive Endpoint
         run: |
-          TARGET_URL="${{ secrets.RENDER_PING_URL }}"
+          TARGET_URL="${{ vars.RENDER_PING_URL }}"
           if [ -z "$TARGET_URL" ]; then
             TARGET_URL="https://bookbuddy-kcwl.onrender.com/health"
           fi

@@ -1,58 +1,62 @@
 # 📚 BookBuddy
 
-### A modern, multi-tenant campus library management, digital e-resource hosting, facility reservation, and student engagement platform featuring gamified reading streaks, inline EPUB & PDF reading with live annotations, real-time operations, external book catalog aggregation (Open Library & Google Books), and integrated fine payments.
+### A modern, multi-tenant campus library management, digital e-resource hosting, facility reservation, and student engagement platform featuring gamified reading streaks, inline EPUB & PDF reading with live annotations, real-time operations, external book catalog aggregation (Open Library & Google Books), integrated fine payments, and an automated deployment & monitoring suite.
 
 ---
 
 [![CI Pipeline](https://github.com/Aditya-Naikwadi/BookBuddy/actions/workflows/ci.yml/badge.svg)](https://github.com/Aditya-Naikwadi/BookBuddy/actions/workflows/ci.yml)
+[![Multi-Layer Verification](https://github.com/Aditya-Naikwadi/BookBuddy/actions/workflows/multi-layer-verification.yml/badge.svg)](https://github.com/Aditya-Naikwadi/BookBuddy/actions/workflows/multi-layer-verification.yml)
+[![Production Heartbeat](https://github.com/Aditya-Naikwadi/BookBuddy/actions/workflows/production-heartbeat.yml/badge.svg)](https://github.com/Aditya-Naikwadi/BookBuddy/actions/workflows/production-heartbeat.yml)
 ![Node.js](https://img.shields.io/badge/Node.js-20.x-339933?logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-5.x-000000?logo=express&logoColor=white)
 ![MongoDB Driver](https://img.shields.io/badge/MongoDB_Driver-6.x-47A248?logo=mongodb&logoColor=white)
 ![Mongoose](https://img.shields.io/badge/Mongoose-9.x-880000?logo=mongoose&logoColor=white)
 ![React](https://img.shields.io/badge/React-19.x-61DAFB?logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?logo=vite&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-06B6D4?logo=tailwindcss&logoColor=white)
 ![Socket.io](https://img.shields.io/badge/Socket.io-4.x-010101?logo=socketdotio&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-5.x-DC382D?logo=redis&logoColor=white)
 ![Zod](https://img.shields.io/badge/Zod-4.x-3E67B1?logo=zod&logoColor=white)
-![Open Library API](https://img.shields.io/badge/Open_Library-API_v1-006699?logo=openlibrary&logoColor=white)
+![Razorpay](https://img.shields.io/badge/Razorpay-2.x-0C2340?logo=razorpay&logoColor=white)
 ![License](https://img.shields.io/badge/License-ISC-blue.svg)
 
 ---
 
 ## 📋 Table of Contents
 
-- [📖 Overview & Key Differentiators](#-overview--key-differentiators)
+- [📖 Overview \& Key Differentiators](#-overview--key-differentiators)
 - [🏛️ System Architecture](#️-system-architecture)
-- [🎨 Frontend Architecture & State Flow](#-frontend-architecture--state-flow)
-- [⚙️ Backend Architecture & Pipeline](#️-backend-architecture--pipeline)
-- [🌐 External Book Catalog & Open Library Integration](#-external-book-catalog--open-library-integration)
-- [🔒 Multi-Tenancy & Data Isolation](#-multi-tenancy--data-isolation)
-- [🎛️ Tenant Service Selection & Feature-Gated Dashboards](#️-tenant-service-selection--feature-gated-dashboards)
-- [📥 Bulk Student Roster Upload & Web Worker Engine](#-bulk-student-roster-upload--web-worker-engine)
-- [🛡️ Security Architecture & Protection Suite](#️-security-architecture--protection-suite)
-- [🗄️ Database Architecture, ERD & Indexing](#️-database-architecture-erd--indexing)
-- [🗃️ Database Migrations, Backup & CLI Utilities](#️-database-migrations-backup--cli-utilities)
-- [⚡ Concurrency Integrity & Race Condition Protection](#-concurrency-integrity--race-condition-protection)
+- [🎨 Frontend Architecture \& State Flow](#-frontend-architecture--state-flow)
+- [⚙️ Backend Architecture \& Pipeline](#️-backend-architecture--pipeline)
+- [🌐 External Book Catalog \& Open Library Integration](#-external-book-catalog--open-library-integration)
+- [🔒 Multi-Tenancy \& Data Isolation](#-multi-tenancy--data-isolation)
+- [🎛️ Tenant Service Selection \& Feature-Gated Dashboards](#️-tenant-service-selection--feature-gated-dashboards)
+- [📥 Bulk Student Roster Upload \& Web Worker Engine](#-bulk-student-roster-upload--web-worker-engine)
+- [🛡️ Security Architecture \& Protection Suite](#️-security-architecture--protection-suite)
+- [🗄️ Database Architecture, ERD \& Indexing](#️-database-architecture-erd--indexing)
+- [🗃️ Database Migrations, Backup \& CLI Utilities](#️-database-migrations-backup--cli-utilities)
+- [🤖 Automated Monitoring, Verification \& CI/CD Pipelines](#-automated-monitoring-verification--cicd-pipelines)
+- [⚡ Concurrency Integrity \& Race Condition Protection](#-concurrency-integrity--race-condition-protection)
 - [✨ Portal Feature Matrix](#-portal-feature-matrix)
   - [🎓 Student Portal](#-student-portal)
   - [🏛️ College Admin Portal](#️-college-admin-portal)
-  - [🌐 Super Admin Portal](#-super-admin-portal)
-- [📖 Multi-Format E-Resource Reader & Annotation Engine](#-multi-format-e-resource-reader--annotation-engine)
-- [💳 Online Fine Payments & Webhook Subsystem](#-online-fine-payments--webhook-subsystem)
-- [🎮 Gamification & Engagement Subsystem](#-gamification--engagement-subsystem)
+  - [🌐 Super Admin Portal \& Control Plane](#-super-admin-portal--operations-control-plane)
+- [📖 Multi-Format E-Resource Reader \& Annotation Engine](#-multi-format-e-resource-reader--annotation-engine)
+- [💳 Online Fine Payments \& Webhook Subsystem](#-online-fine-payments--webhook-subsystem)
+- [🎮 Gamification \& Engagement Subsystem](#-gamification--engagement-subsystem)
 - [⏰ Background Scheduled Cron Jobs](#-background-scheduled-cron-jobs)
 - [🔌 Complete API Reference](#-complete-api-reference)
 - [⚙️ Environment Configuration Reference](#️-environment-configuration-reference)
-- [🚀 Quick Start & Installation Guide](#-quick-start--installation-guide)
+- [🚀 Quick Start \& Installation Guide](#-quick-start--installation-guide)
   - [🔑 Initial Accounts for Portal Testing](#-initial-accounts-for-portal-testing--management)
   - [Prerequisites](#prerequisites)
   - [Local Setup](#local-development-setup)
-  - [Database Management, Indexing & Seeding](#database-management-indexing--multi-tenant-seeding)
+  - [Database Management, Indexing \& Service Seeding](#database-management-indexing--service-seeding)
   - [Docker Compose Launch](#docker-compose-launch)
-  - [Testing & Coverage](#running-tests)
-- [🌐 Production Build & Deployment Guide](#-production-build--deployment-guide)
+  - [Testing \& Coverage](#running-tests)
+- [🌐 Production Build \& Deployment Guide](#-production-build--deployment-guide)
 - [📁 Repository Structure](#-repository-structure)
-- [📄 License & Maintenance](#-license--maintenance)
+- [📄 License \& Maintenance](#-license--maintenance)
 
 ---
 
@@ -65,9 +69,10 @@ BookBuddy bridges the gap between platform super-administrators, campus libraria
 2. **Computer Lab Workstation Reservations**: Real-time seat grid visualization and concurrency-locked time-slot bookings.
 3. **Digital E-Resource Repository, Reader & Annotations**: In-browser EPUB & PDF parsing, Stored-XSS injection scanning, HTTP range streaming, CFI/page position synchronization, and persistent text annotations & notes.
 4. **External Book Catalog Aggregation**: Automated metadata enrichment and search resolution across Open Library API, Google Books API, and Project Gutenberg.
-5. **Online Fine Payment Settlement**: Digital fine payment processing with transaction verification and idempotent payment webhook integration.
+5. **Online Fine Payment Settlement**: Digital fine payment processing via Razorpay with transaction verification and idempotent payment webhook integration.
 6. **Gamified Student Engagement**: Idempotent daily reading check-ins, streak calculations with freeze log buffers, and unlockable achievement stickers and milestone badges.
 7. **Real-Time Event & Notification Network**: Socket.io WebSocket alerts, in-app notification centers, and automated push device token tracking.
+8. **Automated Monitoring & Production Verification**: Integrated GitHub Actions heartbeat monitoring, multi-layer post-push deployment verifiers, AI automated code reviews, and automated remediation engines.
 
 ---
 
@@ -82,6 +87,7 @@ graph TD
         Zustand[Zustand v5 Client Session Store]
         Query[TanStack React Query v5 Data Cache]
         EpubPDF[Epub.js + PDF.js Reader Engine]
+        Worker[Web Worker CSV Parser]
     end
 
     subgraph Transport Layer
@@ -91,7 +97,7 @@ graph TD
 
     subgraph Application Server Layer
         Express[Express 5 API Server]
-        AuthGate[JWT Authentication & Refresh Token Rotation]
+        AuthGate[JWT Authentication & MFA TOTP]
         CSRFGate[CSRF Double-Submit Protection]
         RateLimit[Rate Limiter Flexible / Redis Rate Limiter]
         ZodGate[Zod Schema Request Validation]
@@ -101,13 +107,15 @@ graph TD
 
     subgraph Data & Caching Layer
         Redis[(Redis Store / Distributed Rate Limit & Cache)]
-        MongoDB[(MongoDB 9 Primary Database / Mongoose ODM)]
+        MongoDB[(MongoDB 6 Primary Database / Mongoose 9 ODM)]
     end
 
     subgraph External Services & APIs
         OL[Open Library API]
         GB[Google Books API]
         Gutenberg[Project Gutenberg / Gutendex]
+        Razorpay[Razorpay Payment Gateway]
+        Cloudinary[Cloudinary Media CDN]
     end
 
     SPA <-->|REST Calls| HTTP
@@ -128,6 +136,8 @@ graph TD
     Aggregator <-->|Rate-Limited & Backed Off| OL
     Aggregator <-->|Fallback Metadata| GB
     Aggregator <-->|Public E-Resource Catalog| Gutenberg
+    Express <-->|Payment Verification & Webhooks| Razorpay
+    Express <-->|Media Uploads| Cloudinary
 ```
 
 ---
@@ -139,7 +149,7 @@ graph TD
 - **Tailwind CSS v4 & PostCSS**: Utility-first styling utilizing CSS native variables and modern dark/light mode themes.
 - **Zustand v5 & TanStack React Query v5**: Zustand handles lightweight UI state and persisted session data (`auth-storage` in `localStorage`), while React Query handles server state caching, optimistic updates, and background re-fetching.
 - **Epub.js & PDF.js Worker**: Client-side document parsing and canvas rendering for EPUB and PDF e-resources without external plugins.
-- **Framer Motion & Canvas Confetti**: Micro-interactions, page transitions, and streak check-in milestone celebrations.
+- **Lenis & Framer Motion**: Smooth scrolling behavior, micro-interactions, page transitions, and streak check-in celebrations with `canvas-confetti`.
 
 ### Authentication & Session Persistence Flow
 
@@ -341,7 +351,7 @@ The College Admin Dashboard features an enterprise bulk student import engine de
 ## 🛡️ Security Architecture & Protection Suite
 
 1. **Authentication & Token Rotation**: Access Tokens (15 mins) and Refresh Tokens stored in MongoDB (`RefreshToken` model) with session invalidation capabilities.
-2. **Dual Identifier Login & MFA (2FA)**: Authentication supports both Email addresses and Student/Admin IDs. Supports optional Multi-Factor Authentication (`mfaSecret` / `totpCode`) with 6-digit TOTP authenticator verification.
+2. **Dual Identifier Login & MFA (2FA)**: Authentication supports both Email addresses and Student/Admin IDs. Supports optional Multi-Factor Authentication (`mfaSecret` / `totpCode`) with 6-digit TOTP authenticator verification (`speakeasy`).
 3. **CSRF Protection**: Double-submit CSRF cookie pattern validation (`csrf.js`).
 4. **Password Hashing**: Passwords secured using `Argon2id` / `bcrypt` with transparent upgrade.
 5. **NoSQL Injection Defense**: `express-mongo-sanitize` strips `$` and `.` characters from incoming `req.body`, `req.query`, and `req.params`.
@@ -456,8 +466,37 @@ BookBuddy provides a comprehensive suite of migration and maintenance scripts un
 | `node src/scripts/restoreDatabase.js` | `server/src/scripts/restoreDatabase.js` | Restores MongoDB collections from target backup archive folders. |
 | `npm run db:clear` | `server/src/scripts/clearDatabase.js` | Safely purges sample documents while retaining index definitions and system configuration. |
 | `node src/scripts/purgeMockData.js` | `server/src/scripts/purgeMockData.js` | Selectively deletes test patrons and mock circulation records. |
+| `node src/scripts/seedServices.js` | `server/src/scripts/seedServices.js` | Populates default system service modules into MongoDB. |
 | `node src/scripts/openLibraryCron.js` | `server/src/scripts/openLibraryCron.js` | Triggers manual CLI execution of the Open Library external catalog ingestion worker. |
 | `node src/scripts/parseOpenLibraryDump.js` | `server/src/scripts/parseOpenLibraryDump.js` | Parses compressed Open Library `.json.gz` bulk data dumps in `O(1)` memory. |
+
+---
+
+## 🤖 Automated Monitoring, Verification & CI/CD Pipelines
+
+BookBuddy features an enterprise-grade automated deployment, health monitoring, and test verification engine located in `scripts/` and integrated with GitHub Actions workflows:
+
+### Monitoring & Automation Tools
+| Script File | Target Purpose & Functionality |
+| :--- | :--- |
+| `scripts/verify-deployment.js` | **Post-Push Deployment Verification**: Confirms live production commit SHA alignment, polls health endpoints (`/health`, `/api/health/db`), verifies endpoint status, posts GitHub Step Summaries, and sends Slack webhook alerts. |
+| `scripts/render-monitor.js` | **Render Service Heartbeat Monitor**: Periodically verifies Render deployment status via Render REST API, captures memory usage, checks cold-start response latency, and logs heartbeat history. |
+| `scripts/multi-layer-verifier.js` | **Multi-Layer Verification Engine**: Executes a 4-tier health suite (Network Ping, Database Ping, JWT Auth Verification, and Route Contract Checks) to validate system sanity post-deployment. |
+| `scripts/ai-code-review.js` | **Automated AI Code Reviewer**: Performs automated static analysis on git diffs, inspecting security vulnerabilities, performance bottlenecks, and style compliance. |
+| `scripts/auto-remediator.js` | **Automated Remediation Engine**: Detects broken build artifacts or failing health checks and executes pre-configured recovery routines. |
+| `scripts/test-verification-automation.js` | **Test Verification Automation**: Runs and parses Jest and Vitest test execution outputs, compiling visual GitHub summaries. |
+| `scripts/send-alert.js` | **Unified Alert Dispatcher**: Formats and dispatches incident alerts to Slack webhooks and GitHub Action summaries. |
+
+### GitHub Actions Workflows (`.github/workflows/`)
+- `ci.yml`: Full Continuous Integration pipeline (Linting, Backend Jest tests, Frontend Vitest tests, Build validation).
+- `multi-layer-verification.yml`: Automated post-push multi-layer verification checks.
+- `production-heartbeat.yml`: Continuous production service monitoring and health reporting.
+- `render-heartbeat.yml`: Automated Render deployment heartbeat monitor.
+- `nightly-analysis.yml`: Automated nightly code quality & security review.
+- `auto-remediation.yml`: Autonomous build & deployment remediation execution.
+- `owasp-zap.yml`: Dynamic Web Application Security Testing (DAST) via OWASP ZAP scanner.
+- `codeql.yml`: Static Application Security Testing (SAST) via GitHub CodeQL.
+- `keep-alive.yml`: Automated ping engine preventing free-tier server cold starts.
 
 ---
 
@@ -499,7 +538,7 @@ BookBuddy provides a comprehensive suite of migration and maintenance scripts un
 - **Digital Patron Card**: Interactive virtual card with barcode & QR code generation for library circulation.
 - **Inline EPUB & PDF Reader**: Read digital ebooks with dark/light mode, typography settings, Table of Contents navigation, and CFI/page autosync.
 - **Highlights & Notes**: Create, edit, highlight, and filter text annotations directly inside e-resources.
-- **Digital Fine Payment Settlement**: Pay overdue library fines online securely with instant digital receipts.
+- **Digital Fine Payment Settlement**: Pay overdue library fines online securely via Razorpay with instant digital receipts.
 - **Gamification Suite**: Daily check-ins, streak counts, streak freeze protection, and unlockable achievement badges & stickers.
 - **Computer Lab Reservations**: View live workstation maps and reserve computer lab timeslots.
 - **Support & Purchase Suggestions**: Submit book purchase recommendations, file complaints, and track status resolutions.
@@ -508,6 +547,7 @@ BookBuddy provides a comprehensive suite of migration and maintenance scripts un
 - **Circulation Desk**: Atomic book checkouts, check-ins, renewals, and fine collection.
 - **Catalog Management**: Add, update, archive, or remove physical books and digital e-resources.
 - **Patron Management**: Manage student & faculty accounts, modify access statuses, and review activity history.
+- **Bulk Roster Import**: Web Worker-powered CSV upload engine with 60 FPS virtualized data grid and inline error correction.
 - **E-Resource Uploader**: Upload EPUB & PDF files with built-in Stored-XSS scanning and moderation options.
 - **Lab Workstation Management**: Define lab layouts, add workstation seats, and monitor bookings.
 - **Financial & Analytics Hub**: Monitor circulation metrics, popular titles, and revenue collections.
@@ -516,7 +556,7 @@ BookBuddy provides a comprehensive suite of migration and maintenance scripts un
 - **Platform System Overview**: Monitor real-time platform metrics, active college tenant counters, patron volumes, digital resource storage stats, and historical metric snapshot trends (`PlatformMetricSnapshot`).
 - **College Tenant & Admin Manager**: Onboard new college institutions, configure feature-gated service modules, issue single-use secure setup links (`PendingAdminSetup`), and provision college admin access credentials.
 - **Global Content Moderation**: Review, approve, or reject public e-resource submissions (`EResourceSubmission`) with automated Stored-XSS scanning, status badges, and platform-wide distribution controls.
-- **Centralized Security Audit Logs**: Operational data tables (`OpsDataTable`, `OpsSeverityBadge`, `OpsHeader`) with immutable audit trails (`AuditLog`), category/severity filtering, and IP tracing for system mutations and security events.
+- **Centralized Security Audit Logs**: Operational data tables with immutable audit trails (`AuditLog`), category/severity filtering, and IP tracing for system mutations and security events.
 
 ---
 
@@ -553,8 +593,8 @@ The fine payment module enables digital settlement of library fines:
 ```mermaid
 graph TD
     Student[Student UI] --> InitPay[POST /api/payments/checkout-session]
-    InitPay --> Gateway[Payment Gateway API]
-    Gateway -->> Student: Return Payment Gateway URL / Token
+    InitPay --> Gateway[Razorpay Gateway API]
+    Gateway -->> Student: Return Payment Order ID / Session
     Student ->> Gateway: Complete Payment
     Gateway --> Webhook[POST /api/payments/webhook]
     Webhook --> Verify[Verify Signature & Transaction ID]
@@ -617,6 +657,8 @@ Executed automatically via `node-cron` inside `server/src/services/cronService.j
 | `POST` | `/api/auth/login` | No | Public | Authenticate credentials & return JWT access/refresh tokens |
 | `POST` | `/api/auth/refresh` | No | Public | Issue new Access Token using valid Refresh Token |
 | `POST` | `/api/auth/logout` | Yes | All Roles | Revoke current user session & refresh token |
+| `POST` | `/api/auth/mfa/setup` | Yes | All Roles | Generate TOTP MFA secret and QR code |
+| `POST` | `/api/auth/mfa/verify` | Yes | All Roles | Verify TOTP code and enable 2FA |
 
 ### 📚 Physical Books & Catalog (`/api/books`, `/api/catalog`)
 
@@ -705,6 +747,16 @@ OPEN_LIBRARY_USER_AGENT=BookBuddy/1.0 (dev@bookbuddy.com)
 OPEN_LIBRARY_BASE_URL=https://openlibrary.org
 GOOGLE_BOOKS_API_KEY=your_google_books_api_key_optional
 
+# Payment Gateway Configuration (Razorpay)
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+RAZORPAY_WEBHOOK_SECRET=your_razorpay_webhook_secret
+
+# Cloudinary Configuration (Media & PDF Hosting)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
 # Rate Limiting Parameters
 RATE_LIMIT_GLOBAL_MAX=100
 RATE_LIMIT_GLOBAL_WINDOW_MS=60000
@@ -731,7 +783,7 @@ RATE_LIMIT_EXPENSIVE_WINDOW_MS=60000
 | **Student** | `student@bookbuddy.com` *(or `STU1001`)* | `Demo@123` | `/student-dashboard` |
 | **General User** | `general@bookbuddy.com` | `Demo@123` | `/general-dashboard` |
 
-*Note: Authentication supports both Email addresses and Student/Admin IDs, verified dynamically against MongoDB via Express API routes. Run `npm run seed:dataset` in `server/` to initialize or refresh these records.*
+*Note: Authentication supports both Email addresses and Student/Admin IDs, verified dynamically against MongoDB via Express API routes.*
 
 ### Prerequisites
 - **Node.js**: `v20.x` or later (`node -v`)
@@ -746,24 +798,29 @@ RATE_LIMIT_EXPENSIVE_WINDOW_MS=60000
    cd BookBuddy
    ```
 
-2. **Install Server Dependencies**:
+2. **Install Root Dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Install Server Dependencies**:
    ```bash
    cd server
    npm install
    ```
 
-3. **Install Client Dependencies**:
+4. **Install Client Dependencies**:
    ```bash
    cd ../client
    npm install
    ```
 
-4. **Configure Environment Variables**:
+5. **Configure Environment Variables**:
    Create `server/.env` with your settings (see [Environment Configuration](#️-environment-configuration-reference)).
 
-### Database Management, Indexing & Multi-Tenant Seeding
+### Database Management, Indexing & Service Seeding
 
-Run the following utility scripts in `server/` to manage database indexes and test data:
+Run the following utility scripts in `server/` to manage database indexes and system service defaults:
 
 ```bash
 cd server
@@ -777,28 +834,28 @@ npm run migrate:up
 # 3. Apply production hardening indexes
 npm run migrate:hardening
 
-# 4. Seed production-ready multi-tenant dataset (3 Colleges, 21 Role Accounts)
-npm run seed:dataset
+# 4. Seed default system service modules into MongoDB
+node src/scripts/seedServices.js
 
 # 5. Purge mock data and reset clean state
 npm run db:clear
 ```
 
-5. **Start the API Server**:
+6. **Start the API Server**:
    ```bash
    cd server
    npm run dev
    ```
    *The Express API will listen at `http://localhost:5000`.*
 
-6. **Start the React Frontend**:
+7. **Start the React Frontend**:
    ```bash
    cd client
    npm run dev
    ```
    *Open `http://localhost:5173` in your browser.*
 
-### Docker Container Launch
+### Docker Compose Launch
 
 Boot MongoDB, Redis, and the multi-stage Node.js server container:
 
@@ -811,10 +868,17 @@ docker-compose up --build
 
 ### Running Tests
 
-Execute Jest unit, integration, and security test suites:
+Execute Jest unit, integration, and security test suites in `server/`:
 
 ```bash
 cd server
+npm test
+```
+
+Execute Vitest UI component test suites in `client/`:
+
+```bash
+cd client
 npm test
 ```
 
@@ -825,18 +889,26 @@ npm test
 ```
 BookBuddy/
 ├── .github/
-│   └── workflows/
-│       └── ci.yml              # GitHub Actions CI/CD Pipeline
+│   └── workflows/              # GitHub Actions CI/CD & Automated Verification Workflows
+│       ├── auto-remediation.yml
+│       ├── ci.yml
+│       ├── codeql.yml
+│       ├── keep-alive.yml
+│       ├── multi-layer-verification.yml
+│       ├── nightly-analysis.yml
+│       ├── owasp-zap.yml
+│       ├── production-heartbeat.yml
+│       └── render-heartbeat.yml
 ├── client/                     # React 19 Frontend Application (Vite 8 / Tailwind v4)
 │   ├── public/                 # Static assets & PDF.js worker (pdf.worker.min.mjs)
 │   ├── src/
 │   │   ├── api/                # Axios API client connection & interceptors
-│   │   ├── components/         # Shared UI components & layout elements
-│   │   │   └── student/        # Patron card, ebook reader, support, analytics, streak
-│   │   ├── features/           # Specialized feature modals (milestone celebrations)
+│   │   ├── components/         # Shared UI components, student components & admin views
+│   │   ├── features/           # Feature modals & milestone celebration engines
 │   │   ├── hooks/              # Custom React hooks (socket, reader, checkin, support)
 │   │   ├── pages/              # Main view routes & dashboards (Student, College Admin, Super Admin)
-│   │   └── store/              # Zustand global state stores (authStore)
+│   │   ├── store/              # Zustand global state stores (authStore)
+│   │   └── workers/            # Web Worker background scripts (csvParser.worker.js)
 │   ├── package.json
 │   └── vite.config.js
 ├── docs/                       # Architectural Specifications & Deep-Dives
@@ -844,21 +916,31 @@ BookBuddy/
 │       ├── frontend-design.md  # Client-side routing, state, and rendering details
 │       ├── backend-design.md   # Express middleware, handlers, and job scheduling
 │       └── database-design.md  # Mongoose schemas, indexes, and concurrency locks
+├── scripts/                    # Post-Push Verification, AI Review & Health Monitors
+│   ├── ai-code-review.js
+│   ├── auto-remediator.js
+│   ├── multi-layer-verifier.js
+│   ├── pre-commit.sh
+│   ├── render-monitor.js
+│   ├── send-alert.js
+│   ├── test-verification-automation.js
+│   └── verify-deployment.js
 ├── server/                     # Express Backend Application (CommonJS / Node 20)
 │   ├── migrations/             # migrate-mongo migration files
 │   ├── src/
 │   │   ├── controllers/        # Express request handlers & business rules
 │   │   │   └── dashboards/     # Student, College Admin, Super Admin dashboard controllers
 │   │   ├── middlewares/        # Auth, CSRF, scoping, Zod validation, rate limiters
-│   │   ├── models/             # 28+ Mongoose models and database index definitions
+│   │   ├── models/             # 48 Mongoose models and database index definitions
 │   │   ├── routes/             # REST API routing definitions
 │   │   ├── scripts/            # Migration, backup, restore, & Open Library scripts
 │   │   ├── services/           # Decoupled domain business logic, external API clients, & cron worker
 │   │   ├── sockets/            # Real-time WebSocket connection handling
-│   │   └── tests/              # Jest integration, audit, & security test suites
+│   │   └── tests/              # Jest integration, audit, & security test suites (44 files)
 │   ├── docker-compose.yml
 │   ├── package.json
 │   └── server.js
+├── render.yaml                 # Render infrastructure deployment spec
 ├── vercel.json                 # Vercel deployment configuration
 ├── .gitignore
 └── README.md
@@ -912,34 +994,29 @@ For client-side single page application routing (`react-router-dom`), serverless
 ### 3. Production Environment Checklist
 - Set `NODE_ENV=production` on the API server.
 - Configure production MongoDB Atlas connection string (`MONGODB_URI`) with replica set support.
-- Configure Redis host (`REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`) for rate limiting and cache storage.
-- Provide strong random JWT secret strings (`JWT_SECRET`, `REFRESH_TOKEN_SECRET`) with 64+ characters.
+- Configure Redis host (`REDIS_URL`) for rate limiting and cache storage.
+- Provide strong random JWT secret strings (`JWT_SECRET`, `JWT_REFRESH_SECRET`) with 64+ characters.
 - Configure `OPEN_LIBRARY_USER_AGENT` with valid platform contact details.
-- Ensure CORS origin (`CLIENT_URL`) matches your production frontend domain.
+- Ensure CORS origin (`CLIENT_ORIGIN`) matches your production frontend domain.
 
-### 4. GitHub Actions Automated CI/CD Pipeline (`.github/workflows/ci.yml`)
-BookBuddy utilizes a GitHub Actions workflow with three automated pipeline jobs:
-1. **Continuous Integration (`ci`)**:
+### 4. GitHub Actions Automated CI/CD Pipelines
+BookBuddy utilizes GitHub Actions workflows for continuous integration and continuous deployment:
+1. **Continuous Integration (`ci.yml`)**:
    - Spawns a `mongo:6.0` service container on `localhost:27017`.
    - Installs server dependencies and verifies Linter compliance (`npm run lint`).
    - Validates environment variables (`MONGO_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CLIENT_ORIGIN`).
    - Executes Jest integration, security, and schema test suites (`npm test`).
    - Verifies production Vite bundle compilation (`npm run build`).
-2. **Automated Vercel Deployment (`deploy-vercel`)**:
-   - Triggers on push to `main`/`master` branches.
-   - Detects `VERCEL_TOKEN` repository secret availability.
-   - Pulls production environment variables, prebuilds deployment artifacts, and deploys to Vercel Production (`vercel deploy --prebuilt --prod`).
-3. **GitHub Container Registry Deployment (`deploy-docker`)**:
-   - Triggers on push to `main`/`master` branches.
-   - Converts repository name to lowercase (`REPO_LOWER`).
-   - Builds multi-stage Docker image via Docker Buildx (`server/Dockerfile`).
-   - Pushes tagged Docker image (`ghcr.io/<repo>/bookbuddy-server:latest` and `:commit-sha`) to GitHub Container Registry (`ghcr.io`).
+2. **Post-Push Verification (`multi-layer-verification.yml`)**:
+   - Triggers `scripts/multi-layer-verifier.js` and `scripts/verify-deployment.js` post-deployment.
+   - Verifies system sanity across network, database, JWT auth, and key REST contract layers.
+3. **Render Heartbeat & Monitoring (`production-heartbeat.yml`)**:
+   - Runs `scripts/render-monitor.js` to ensure zero downtime and capture performance metrics.
 
 ### 5. Render Free-Tier Keep-Alive Ping Subsystem (`.github/workflows/keep-alive.yml`)
 - **Purpose**: Render's free tier spins down backend services after 15 minutes of inactivity, introducing a ~30–60s cold-start latency for subsequent requests. To keep the process warm, an automated GitHub Actions workflow pings the lightweight `GET /ping` endpoint every 12 minutes (`*/12 * * * *`).
 - **Zero-Overhead `/ping` Endpoint**: The `/ping` route returns `200 OK` immediately without touching MongoDB or Redis, ensuring near-instant process warming.
 - **Instance Hour Cap & Guardrails**: Render provides 750 free instance-hours per month. A single service running 24/7 consumes ~720–744 hours/month ($31 \text{ days} \times 24 \text{ hours} = 744 \text{ hours}$), remaining safely within the free monthly allowance.
-- **Maintenance Note**: This is a temporary workaround for free-tier hosting. When upgrading to a paid Render instance ($7/mo Starter tier which never sleeps), disable or remove `.github/workflows/keep-alive.yml`.
 
 ---
 
@@ -964,3 +1041,4 @@ For in-depth architectural specifications, refer to the dedicated documentation 
 ## 📄 License & Maintenance
 
 This repository is maintained by the college IT administration team under the **ISC License**. For deployment guidelines, enterprise onboarding, or security vulnerabilities, contact the platform maintainers.
+

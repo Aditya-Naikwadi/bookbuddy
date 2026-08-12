@@ -22,7 +22,7 @@ jobs:
 
       - name: Run Production Heartbeat Verification
         env:
-          APP_URL: ${{ secrets.PRODUCTION_APP_URL || 'https://book-buddy-adityas-projects-3ddb703f.vercel.app' }}
+          APP_URL: ${{ vars.PRODUCTION_APP_URL || 'https://book-buddy-adityas-projects-3ddb703f.vercel.app' }}
           TIMEOUT_SECONDS: 60
           POLL_INTERVAL_SECONDS: 10
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
