@@ -55,14 +55,16 @@ const makeRequest = (urlStr, options = {}, redirectCount = 0) => {
     };
 
     const req = client.request(reqOptions, (res) => {
-      // Follow HTTP redirects (301, 302, 307, 308) up to 5 times
+      // Follow HTTP redirects (301, 302, 307, 308) up to 5 times (same host only)
       if (
         [301, 302, 307, 308].includes(res.statusCode) &&
         res.headers.location &&
         redirectCount < 5
       ) {
-        const nextUrl = new URL(res.headers.location, urlStr).toString();
-        return makeRequest(nextUrl, options, redirectCount + 1).then(resolve);
+        const nextUrlObj = new URL(res.headers.location, urlStr);
+        if (nextUrlObj.hostname === urlObj.hostname) {
+          return makeRequest(nextUrlObj.toString(), options, redirectCount + 1).then(resolve);
+        }
       }
 
       let body = '';
