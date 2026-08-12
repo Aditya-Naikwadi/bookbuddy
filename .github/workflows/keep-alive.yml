@@ -15,7 +15,7 @@ jobs:
         run: |
           TARGET_URL="${{ secrets.RENDER_PING_URL }}"
           if [ -z "$TARGET_URL" ]; then
-            TARGET_URL="https://bookbuddy-kcwl.onrender.com/ping"
+            TARGET_URL="https://bookbuddy-kcwl.onrender.com/health"
           fi
           echo "Pinging backend keep-alive endpoint at: $TARGET_URL"
-          curl -sf -A "GitHubActions-KeepAlive/1.0" --max-time 15 "$TARGET_URL" || exit 1
+          curl -sf -A "GitHubActions-KeepAlive/1.0" --max-time 60 "$TARGET_URL" || exit 1

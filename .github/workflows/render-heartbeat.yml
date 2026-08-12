@@ -1,0 +1,37 @@
+name: Render Backend Live Monitoring & Heartbeat
+
+on:
+  schedule:
+    # Poll Render backend health every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  render-heartbeat:
+    name: Poll Render Backend Health & Deploy Status
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Execute Render Monitoring Script
+        env:
+          RENDER_SERVICE_ID: srv-d9rltltbedkc73c1khkg
+          RENDER_APP_URL: https://bookbuddy-kcwl.onrender.com
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: node scripts/render-monitor.js
+
+      - name: Upload Render Audit Log Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-monitoring-log
+          path: logs/render-monitoring.jsonl
+          retention-days: 90

@@ -12,10 +12,11 @@ const https = require('https');
 const path = require('path');
 
 // --- Configuration & Inputs ---
-const APP_URL = (process.env.APP_URL || process.argv[2] || 'http://localhost:5000').replace(/\/$/, '');
+const APP_URL = (process.env.APP_URL || process.argv[2] || 'https://bookbuddy-kcwl.onrender.com').replace(/\/$/, '');
 const EXPECTED_COMMIT_SHA = process.env.EXPECTED_COMMIT_SHA || process.argv[3] || process.env.GITHUB_SHA || '';
 const TIMEOUT_SECONDS = parseInt(process.env.TIMEOUT_SECONDS || process.argv[4] || '300', 10);
 const POLL_INTERVAL_SECONDS = parseInt(process.env.POLL_INTERVAL_SECONDS || process.argv[5] || '10', 10);
+const RENDER_SERVICE_ID = process.env.RENDER_SERVICE_ID || 'srv-d9rltltbedkc73c1khkg';
 const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL || '';
 const SUMMARY_FILE = process.env.GITHUB_STEP_SUMMARY || '';
 const TRIGGER_EVENT = process.env.GITHUB_EVENT_NAME || (process.argv[6] || 'manual');
