@@ -1,0 +1,41 @@
+name: Continuous Multi-Layer System Verification
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    # Run multi-layer verification every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  multi-layer-verify:
+    name: Execute 6-Layer System Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Multi-Layer Verification Orchestrator
+        env:
+          RENDER_APP_URL: https://bookbuddy-kcwl.onrender.com
+          FRONTEND_APP_URL: https://book-buddy-adityas-projects-3ddb703f.vercel.app
+          RENDER_SERVICE_ID: srv-d9rltltbedkc73c1khkg
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          EXPECTED_COMMIT_SHA: ${{ github.sha }}
+        run: node scripts/multi-layer-verifier.js
+
+      - name: Upload Multi-Layer Audit Log Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: multi-layer-audit-log
+          path: logs/multi-layer-verification.jsonl
+          retention-days: 90

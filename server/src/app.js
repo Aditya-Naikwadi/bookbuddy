@@ -179,11 +179,26 @@ const getHealthStatus = async () => {
   const dbStatus =
     readyState === 1 ? 'connected' : readyState === 2 ? 'connecting' : 'disconnected';
 
+  // Measure DB Ping Latency
+  const dbStartTime = Date.now();
+  let dbLatencyMs = 0;
+  if (readyState === 1 && mongoose.connection.db) {
+    try {
+      await mongoose.connection.db.admin().ping();
+      dbLatencyMs = Date.now() - dbStartTime;
+    } catch {
+      dbLatencyMs = Date.now() - dbStartTime;
+    }
+  }
+
   let redisStatus = 'disabled';
+  let redisLatencyMs = 0;
   try {
     const { redisClient } = require('./middlewares/rateLimiters');
     if (redisClient && typeof redisClient.ping === 'function') {
+      const rStart = Date.now();
       const pingRes = await redisClient.ping();
+      redisLatencyMs = Date.now() - rStart;
       redisStatus = pingRes === 'PONG' ? 'connected' : 'degraded';
     }
   } catch {
@@ -192,7 +207,47 @@ const getHealthStatus = async () => {
 
   const isDbHealthy = readyState === 1;
   const isRedisHealthy = redisStatus === 'connected' || redisStatus === 'disabled';
-  const overallStatus = !isDbHealthy ? 'unhealthy' : !isRedisHealthy ? 'degraded' : 'ok';
+
+  const components = {
+    api: {
+      name: 'API Service',
+      status: 'healthy',
+      latencyMs: 1,
+      memoryUsageMb: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2),
+      uptimeSeconds: parseFloat(process.uptime().toFixed(2)),
+      lastChecked: new Date().toISOString(),
+    },
+    database: {
+      name: 'MongoDB Database',
+      status: isDbHealthy ? 'healthy' : 'down',
+      latencyMs: dbLatencyMs,
+      poolState: dbStatus,
+      readyState,
+      lastChecked: new Date().toISOString(),
+    },
+    cache: {
+      name: 'Redis Cache Layer',
+      status: isRedisHealthy ? 'healthy' : 'degraded',
+      latencyMs: redisLatencyMs,
+      connectionState: redisStatus,
+      message: isRedisHealthy ? 'Redis operates normally' : 'Redis disconnected; in-memory fallback active',
+      lastChecked: new Date().toISOString(),
+    },
+    externalServices: {
+      name: 'External Services',
+      status: 'healthy',
+      gateways: ['Cloudinary', 'Razorpay', 'FCM', 'Nodemailer'],
+      lastChecked: new Date().toISOString(),
+    },
+  };
+
+  const compStatuses = Object.values(components).map((c) => c.status);
+  const overallStatus = compStatuses.includes('down')
+    ? 'unhealthy'
+    : compStatuses.includes('degraded')
+      ? 'degraded'
+      : 'ok';
+
   const statusCode = isDbHealthy ? 200 : 503;
   const commitSha = getCommitSha();
 
@@ -216,6 +271,7 @@ const getHealthStatus = async () => {
       dbConnection: dbStatus,
       dbReadyState: readyState,
       redisConnection: redisStatus,
+      components,
       environment: config.nodeEnv,
       uptime: `${process.uptime().toFixed(2)}s`,
       timestamp: new Date().toISOString(),

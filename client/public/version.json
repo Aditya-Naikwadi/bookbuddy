@@ -1,0 +1,10 @@
+{
+  "status": "ok",
+  "success": true,
+  "app": "BookBuddy Frontend Client",
+  "commitSha": "local-dev",
+  "shortCommitSha": "local-d",
+  "version": "1.0.0",
+  "buildTime": "2026-08-12T09:06:26.315Z",
+  "environment": "production"
+}
