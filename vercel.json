@@ -16,6 +16,14 @@
       "destination": "/api"
     },
     {
+      "source": "/health",
+      "destination": "/api"
+    },
+    {
+      "source": "/version",
+      "destination": "/api"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

@@ -159,3 +159,27 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  verify-post-deploy:
+    name: Verify Post-Push Live Production Deployment
+    needs: [deploy-vercel, deploy-docker]
+    if: always() && github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && (needs.deploy-vercel.result == 'success' || needs.deploy-docker.result == 'success' || needs.deploy-vercel.result == 'skipped')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Post-Deploy Live Verification
+        env:
+          APP_URL: ${{ secrets.PRODUCTION_APP_URL || 'https://book-buddy-adityas-projects-3ddb703f.vercel.app' }}
+          EXPECTED_COMMIT_SHA: ${{ github.sha }}
+          TIMEOUT_SECONDS: 300
+          POLL_INTERVAL_SECONDS: 10
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: node scripts/verify-deployment.js

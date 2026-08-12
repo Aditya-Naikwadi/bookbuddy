@@ -191,6 +191,7 @@ const getHealthStatus = async () => {
   }
 
   const isHealthy = readyState === 1;
+  const commitSha = getCommitSha();
 
   return {
     isHealthy,
@@ -201,6 +202,9 @@ const getHealthStatus = async () => {
       message: isHealthy
         ? 'Service operating normally.'
         : `Database connection not ready (Mongoose readyState: ${readyState} [${dbStatus}]).`,
+      commitSha,
+      shortCommitSha: commitSha.length >= 7 ? commitSha.substring(0, 7) : commitSha,
+      version: process.env.APP_VERSION || process.env.npm_package_version || '1.0.0',
       dbState: dbStatus,
       dbConnection: dbStatus,
       dbReadyState: readyState,
@@ -212,15 +216,41 @@ const getHealthStatus = async () => {
   };
 };
 
+const getCommitSha = () =>
+  process.env.COMMIT_SHA ||
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.RENDER_GIT_COMMIT ||
+  process.env.GITHUB_SHA ||
+  process.env.BUILD_ID ||
+  'unknown';
+
 const healthCheckController = async (req, res) => {
   const health = await getHealthStatus();
   res.status(health.statusCode).json(health.payload);
 };
 
-// Full Health Check Routes
+const versionCheckController = (req, res) => {
+  const commitSha = getCommitSha();
+  res.status(200).json({
+    status: 'ok',
+    success: true,
+    version: process.env.APP_VERSION || process.env.npm_package_version || '1.0.0',
+    commitSha,
+    shortCommitSha: commitSha.length >= 7 ? commitSha.substring(0, 7) : commitSha,
+    environment: config.nodeEnv,
+    uptime: `${process.uptime().toFixed(2)}s`,
+    timestamp: new Date().toISOString(),
+  });
+};
+
+// Full Health Check & Lightweight Version Check Routes
 app.get('/health', healthCheckController);
 app.get('/api/health', healthCheckController);
 app.get('/api/v1/health', healthCheckController);
+
+app.get('/version', versionCheckController);
+app.get('/api/version', versionCheckController);
+app.get('/api/v1/version', versionCheckController);
 
 // Apply custom global rate limiter to all routes except health checks
 const { globalLimiter } = require('./middlewares/rateLimiters');
