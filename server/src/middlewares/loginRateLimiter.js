@@ -30,16 +30,17 @@ const createLimiter = () => {
 createLimiter();
 
 const getClientKey = (req) => {
-  const ip = req.ip || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-  const email = (req.body?.email || '').toLowerCase().trim();
+  const forwardedFor = req?.headers?.['x-forwarded-for'];
+  const ip =
+    (forwardedFor && typeof forwardedFor === 'string' ? forwardedFor.split(',')[0].trim() : null) ||
+    req.ip ||
+    req.socket?.remoteAddress ||
+    'unknown';
+  const email = (req.body?.email || req.body?.studentId || '').toLowerCase().trim();
   return `${ip}_${email}`;
 };
 
 const loginRateLimiter = async (req, res, next) => {
-  if (process.env.NODE_ENV === 'test') {
-    return next();
-  }
-
   if (!limiterConsecutiveFails) {
     createLimiter();
   }
@@ -52,28 +53,14 @@ const loginRateLimiter = async (req, res, next) => {
     if (resLimiter && resLimiter.consumedPoints >= maxConsecutiveFailsByRoute) {
       const retrySecs = Math.round(resLimiter.msBeforeNext / 1000) || durationInSeconds;
       res.set('Retry-After', String(retrySecs));
-      return next(
-        new AppError(
-          `Too many failed login attempts. Account/IP locked. Please try again in ${Math.ceil(
-            retrySecs / 60
-          )} minutes.`,
-          429
-        )
-      );
+      return next(new AppError('Too many failed login attempts, please try again later.', 429));
     }
     next();
   } catch (error) {
     if (error && error.msBeforeNext) {
       const retrySecs = Math.round(error.msBeforeNext / 1000) || durationInSeconds;
       res.set('Retry-After', String(retrySecs));
-      return next(
-        new AppError(
-          `Too many failed login attempts. Account/IP locked. Please try again in ${Math.ceil(
-            retrySecs / 60
-          )} minutes.`,
-          429
-        )
-      );
+      return next(new AppError('Too many failed login attempts, please try again later.', 429));
     }
     next();
   }

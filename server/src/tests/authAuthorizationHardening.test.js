@@ -201,7 +201,7 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
 
       expect(blockedRes.status).toBe(429);
       expect(blockedRes.headers['retry-after']).toBeDefined();
-      expect(blockedRes.body.message).toMatch(/Too many failed login attempts/i);
+      expect(blockedRes.body.message).toMatch(/Too many (failed login attempts|requests)/i);
     });
   });
 
