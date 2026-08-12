@@ -1,6 +1,7 @@
 const config = require('../config');
 const logger = require('../utils/logger');
 const { sendAlert } = require('../utils/alerting');
+const { captureException } = require('../utils/sentry');
 
 const errorHandler = (err, req, res, _next) => {
   let statusCode = err.statusCode || 500;
@@ -45,8 +46,9 @@ const errorHandler = (err, req, res, _next) => {
     logger.warn(`Operational Error [${statusCode}]: ${message}`, { requestId });
   } else {
     logger.error(`Unexpected Error [${statusCode}]: ${message}`, { stack: err.stack, requestId });
-    // Dispatch alert for non-operational errors
+    // Dispatch alert & capture Sentry exception for non-operational errors
     sendAlert(err, req);
+    captureException(err, { requestId });
   }
 
   const response = {

@@ -6,7 +6,7 @@ const logger = require('./logger');
  * Safe and acts as a no-op if ERROR_WEBHOOK_URL is not set.
  */
 const sendAlert = async (err, req) => {
-  const webhookUrl = process.env.ERROR_WEBHOOK_URL;
+  const webhookUrl = process.env.ERROR_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL;
   if (!webhookUrl) {
     return;
   }

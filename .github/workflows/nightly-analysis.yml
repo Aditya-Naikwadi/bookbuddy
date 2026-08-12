@@ -1,0 +1,74 @@
+name: Nightly Full-Codebase Analysis & Drift Scan
+
+on:
+  schedule:
+    # Run full codebase scan every night at 02:00 UTC to catch dependency/drift issues
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  nightly-scan:
+    name: Full Codebase Security & Quality Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Server Dependencies
+        run: |
+          cd server
+          npm install --legacy-peer-deps
+
+      - name: Install Client Dependencies
+        run: |
+          cd client
+          npm install --legacy-peer-deps
+
+      - name: Run Full Codebase Linter
+        run: |
+          cd server && npm run lint
+          cd ../client && npm run lint
+
+      - name: Run AI & AST Security Code Review
+        run: node scripts/ai-code-review.js
+
+      - name: Run Full Test Suite
+        env:
+          NODE_ENV: test
+          MONGO_URI: mongodb://localhost:27017/bookbuddy_test
+          JWT_SECRET: testjwtsecretkey999
+          JWT_REFRESH_SECRET: testjwtrefreshsecretkey999
+          CLIENT_ORIGIN: http://localhost:5173
+          PORT: 5000
+        run: |
+          cd server
+          npm test
+
+      - name: Upload AI Review Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-code-review-report
+          path: logs/ai-code-review-report.json
+          retention-days: 90
+
+      - name: Alert on Nightly Scan Failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          node -e "
+          const { dispatchAlert } = require('./scripts/send-alert.js');
+          dispatchAlert('ERROR_SPIKE', {
+            summary: 'Nightly Full-Codebase Scan FAILED!',
+            workflow: '${{ github.workflow }}',
+            runNumber: '${{ github.run_number }}',
+            actionRequired: 'Inspect AI review report and unit test logs'
+          });
+          "

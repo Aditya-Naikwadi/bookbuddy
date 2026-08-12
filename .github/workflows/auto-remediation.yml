@@ -1,0 +1,45 @@
+name: Automated Safe Code Remediation
+
+on:
+  schedule:
+    # Run daily auto-remediation scan at 03:00 UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  auto-remediate:
+    name: Run Safe-by-Design Auto-Remediator Engine
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: |
+          cd server && npm install --legacy-peer-deps
+          cd ../client && npm install --legacy-peer-deps
+
+      - name: Execute Safe Auto-Remediation Engine
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/auto-remediator.js
+
+      - name: Upload Remediation Audit Log Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-remediation-audit-log
+          path: logs/auto-remediation.jsonl
+          retention-days: 90
