@@ -40,8 +40,13 @@ const verifyAccessToken = (token) => {
   return jwt.verify(token, config.jwt.secret);
 };
 
+const generateAccessToken = (user) => {
+  return generateTokenPair(user).accessToken;
+};
+
 module.exports = {
   generateTokenPair,
+  generateAccessToken,
   hashToken,
   verifyAccessToken,
 };

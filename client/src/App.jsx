@@ -50,6 +50,16 @@ const AuditLogs = lazy(
 const SystemSettings = lazy(
   () => import("./pages/dashboards/admin-portal/SystemSettings"),
 );
+const UserManagement = lazy(
+  () => import("./pages/dashboards/admin-portal/UserManagement"),
+);
+const GlobalDataOversight = lazy(
+  () => import("./pages/dashboards/admin-portal/GlobalDataOversight"),
+);
+const GlobalSupportQueue = lazy(
+  () => import("./pages/dashboards/admin-portal/GlobalSupportQueue"),
+);
+
 
 // Lazy loaded College Admin Dashboard Features
 const CollegeAdminDashboardHome = lazy(
@@ -225,7 +235,20 @@ function App() {
                         path="admin-portal/settings"
                         element={<SystemSettings />}
                       />
+                      <Route
+                        path="admin-portal/users"
+                        element={<UserManagement />}
+                      />
+                      <Route
+                        path="admin-portal/data-oversight"
+                        element={<GlobalDataOversight />}
+                      />
+                      <Route
+                        path="admin-portal/support"
+                        element={<GlobalSupportQueue />}
+                      />
                     </Route>
+
 
                     {/* College Admin Routes */}
                     <Route

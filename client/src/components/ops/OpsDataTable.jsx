@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Search, ChevronDown, ChevronUp, ArrowUpDown, Filter, RefreshCw } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, ArrowUpDown, Filter, RefreshCw, Download } from "lucide-react";
 
 /**
  * OpsDataTable
@@ -15,6 +15,7 @@ export function OpsDataTable({
   actions = null,
   initialSortField = "",
   initialSortDirection = "asc",
+  exportFilename = "bookbuddy_export.csv",
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState(initialSortField);
@@ -65,6 +66,31 @@ export function OpsDataTable({
     return sortedData.slice(start, start + pageSize);
   }, [sortedData, currentPage, pageSize]);
 
+  const handleExportCsv = () => {
+    if (!sortedData.length) return;
+    const headerRow = columns.map((col) => `"${col.header.replace(/"/g, '""')}"`).join(",");
+    const bodyRows = sortedData.map((row) =>
+      columns
+        .map((col) => {
+          let val = row[col.key];
+          if (typeof val === "object" && val !== null) {
+            val = val.name || val.title || val.email || JSON.stringify(val);
+          }
+          return `"${String(val ?? "").replace(/"/g, '""')}"`;
+        })
+        .join(",")
+    );
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headerRow, ...bodyRows].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", exportFilename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl font-mono text-xs">
       {/* Top Filter & Toolbar Bar */}
@@ -85,6 +111,14 @@ export function OpsDataTable({
 
         <div className="flex items-center gap-3 ml-auto text-[11px] text-slate-400">
           {actions}
+          <button
+            onClick={handleExportCsv}
+            disabled={!sortedData.length}
+            className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-indigo-300 font-bold rounded flex items-center gap-1.5 transition-colors disabled:opacity-40"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>EXPORT CSV</span>
+          </button>
           <span className="text-slate-700">|</span>
           <span>
             SHOWING <strong className="text-slate-200">{paginatedData.length}</strong> OF{" "}
@@ -92,6 +126,7 @@ export function OpsDataTable({
           </span>
         </div>
       </div>
+
 
       {/* Main High-Density Table */}
       <div className="overflow-x-auto">

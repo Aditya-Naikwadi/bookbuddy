@@ -13,7 +13,12 @@ import {
   Bookmark,
   FileText,
   X,
+  Users,
+  Building,
+  HelpCircle,
+  Layers,
 } from "lucide-react";
+
 import NotificationCenter from "../components/student/NotificationCenter";
 import ThemeToggle from "../components/common/ThemeToggle";
 import useAuthStore from "../store/authStore";
@@ -130,14 +135,34 @@ export default function DashboardLayout() {
                 label="System Overview"
               />
               <NavItem
+                to="/admin-portal/users"
+                icon={<Users size={20} />}
+                label="User Directory"
+              />
+              <NavItem
                 to="/admin-portal/college-admins"
-                icon={<Shield size={20} />}
-                label="College Admins"
+                icon={<Building size={20} />}
+                label="College Tenants"
+              />
+              <NavItem
+                to="/admin-portal/registration-queue"
+                icon={<FileCheck size={20} />}
+                label="Onboarding Queue"
               />
               <NavItem
                 to="/admin-portal/moderation"
-                icon={<FileCheck size={20} />}
+                icon={<Shield size={20} />}
                 label="Content Moderation"
+              />
+              <NavItem
+                to="/admin-portal/data-oversight"
+                icon={<Layers size={20} />}
+                label="Data Oversight"
+              />
+              <NavItem
+                to="/admin-portal/support"
+                icon={<HelpCircle size={20} />}
+                label="Support Queue"
               />
               <NavItem
                 to="/admin-portal/audit-logs"
@@ -151,6 +176,7 @@ export default function DashboardLayout() {
               />
             </>
           )}
+
 
           {isCollegeAdmin && (
             <>
@@ -320,14 +346,18 @@ export default function DashboardLayout() {
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                 Super Admin
               </p>
-              <NavItem to="/admin-portal" icon={<LayoutDashboard size={20} />} label="Admin Dashboard" />
               <NavItem to="/admin-portal/overview" icon={<Globe size={20} />} label="System Overview" />
-              <NavItem to="/admin-portal/college-admins" icon={<Shield size={20} />} label="College Admins" />
-              <NavItem to="/admin-portal/moderation" icon={<FileCheck size={20} />} label="Content Moderation" />
+              <NavItem to="/admin-portal/users" icon={<Users size={20} />} label="User Directory" />
+              <NavItem to="/admin-portal/college-admins" icon={<Building size={20} />} label="College Tenants" />
+              <NavItem to="/admin-portal/registration-queue" icon={<FileCheck size={20} />} label="Onboarding Queue" />
+              <NavItem to="/admin-portal/moderation" icon={<Shield size={20} />} label="Content Moderation" />
+              <NavItem to="/admin-portal/data-oversight" icon={<Layers size={20} />} label="Data Oversight" />
+              <NavItem to="/admin-portal/support" icon={<HelpCircle size={20} />} label="Support Queue" />
               <NavItem to="/admin-portal/audit-logs" icon={<FileSearch size={20} />} label="Audit Logs" />
               <NavItem to="/admin-portal/settings" icon={<HardDrive size={20} />} label="System Settings" />
             </>
           )}
+
 
           {isCollegeAdmin && (
             <>

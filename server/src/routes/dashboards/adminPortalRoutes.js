@@ -16,6 +16,21 @@ const {
   getPendingOnboardings,
   approveTenantOnboarding,
   rejectTenantOnboarding,
+  getUsers,
+  updateUserStatus,
+  updateUserRole,
+  resetUserPassword,
+  impersonateUser,
+  getSystemHealth,
+  getCronLogs,
+  getGlobalLoans,
+  getGlobalFines,
+  getGlobalCatalog,
+  getGlobalComplaints,
+  updateComplaintStatus,
+  getSystemSettings,
+  updateSystemSettings,
+  triggerManualBackup,
 } = require('../../controllers/dashboards/adminPortalController');
 const { protect, requireRole } = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
@@ -59,5 +74,29 @@ router.route('/onboardings/:requestId/approve').post(approveTenantOnboarding);
 router
   .route('/onboardings/:requestId/reject')
   .post(validate(rejectOnboardingSchema), rejectTenantOnboarding);
+
+// Global User Management routes
+router.route('/users').get(getUsers);
+router.route('/users/:id/status').patch(validate(paramIdSchema), updateUserStatus);
+router.route('/users/:id/role').patch(validate(paramIdSchema), updateUserRole);
+router.route('/users/:id/reset-password').post(validate(paramIdSchema), resetUserPassword);
+router.route('/users/:id/impersonate').post(validate(paramIdSchema), impersonateUser);
+
+// Infrastructure Telemetry & Cron Job routes
+router.route('/system/health').get(getSystemHealth);
+router.route('/system/cron-logs').get(getCronLogs);
+
+// Data Oversight routes
+router.route('/data/loans').get(getGlobalLoans);
+router.route('/data/fines').get(getGlobalFines);
+router.route('/data/catalog').get(getGlobalCatalog);
+
+// Support & Complaints routes
+router.route('/support/complaints').get(getGlobalComplaints);
+router.route('/support/complaints/:id').patch(validate(paramIdSchema), updateComplaintStatus);
+
+// System Settings & Backup routes
+router.route('/settings').get(getSystemSettings).put(updateSystemSettings);
+router.route('/settings/trigger-backup').post(triggerManualBackup);
 
 module.exports = router;

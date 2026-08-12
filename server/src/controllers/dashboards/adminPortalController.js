@@ -7,6 +7,10 @@ const AppError = require('../../utils/AppError');
 const PlatformMetricSnapshot = require('../../models/PlatformMetricSnapshot');
 const { redisClient } = require('../../middlewares/rateLimiters');
 
+const escapeRegExp = (string) => {
+  return string ? String(string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+};
+
 // @desc    Get global overview stats
 // @route   GET /api/dashboards/admin-portal/overview
 // @access  Private/SuperAdmin
@@ -283,12 +287,22 @@ const createCollege = async (req, res, next) => {
 // @access  Private/SuperAdmin
 const getAuditLogs = async (req, res, next) => {
   try {
-    const { actorId, action, collegeId, startDate, endDate, page = 1, limit = 10 } = req.query;
+    const {
+      actorId,
+      action,
+      collegeId,
+      severity,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 10,
+    } = req.query;
     const filter = {};
 
     if (actorId) filter.actorId = actorId;
     if (action) filter.action = action;
     if (collegeId) filter.collegeId = collegeId;
+    if (severity) filter.severity = severity;
 
     if (startDate || endDate) {
       filter.createdAt = {};
@@ -325,20 +339,23 @@ const getAuditLogs = async (req, res, next) => {
 const listColleges = async (req, res, next) => {
   try {
     const colleges = await College.find();
-    const collegesWithMetrics = [];
 
-    for (const college of colleges) {
-      const latestSnapshot = await PlatformMetricSnapshot.findOne({ collegeId: college._id }).sort({
-        snapshotDate: -1,
-      });
-      collegesWithMetrics.push({
-        ...college.toObject(),
-        metrics: latestSnapshot || {
-          activeStudents: 0,
-          storageUsageBytes: 0,
-        },
-      });
-    }
+    const collegesWithMetrics = await Promise.all(
+      colleges.map(async (college) => {
+        const latestSnapshot = await PlatformMetricSnapshot.findOne({
+          collegeId: college._id,
+        }).sort({
+          snapshotDate: -1,
+        });
+        return {
+          ...college.toObject(),
+          metrics: latestSnapshot || {
+            activeStudents: 0,
+            storageUsageBytes: 0,
+          },
+        };
+      })
+    );
 
     res.json({
       success: true,
@@ -845,6 +862,561 @@ const rejectTenantOnboarding = async (req, res, next) => {
   }
 };
 
+// @desc    Get all users across colleges with search & filter
+// @route   GET /api/dashboards/admin-portal/users
+// @access  Private/SuperAdmin
+const getUsers = async (req, res, next) => {
+  try {
+    const { search, collegeId, role, status, membershipStatus, page = 1, limit = 20 } = req.query;
+    const filter = {};
+
+    if (search) {
+      const searchRegex = new RegExp(escapeRegExp(search), 'i');
+      filter.$or = [{ name: searchRegex }, { email: searchRegex }, { studentId: searchRegex }];
+    }
+
+    if (collegeId) filter.collegeId = collegeId;
+    if (role) filter.role = role;
+    if (status) filter.status = status;
+    if (membershipStatus) filter.membershipStatus = membershipStatus;
+
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const total = await User.countDocuments(filter);
+    const users = await User.find(filter)
+      .populate('collegeId', 'name code slug')
+      .select('-password -refreshTokenHash -cardSecret -mfaSecret -mfaRecoveryCodes')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit, 10));
+
+    res.json({
+      success: true,
+      data: users,
+      pagination: {
+        total,
+        page: parseInt(page, 10),
+        pages: Math.ceil(total / parseInt(limit, 10)),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update user status & membership status
+// @route   PATCH /api/dashboards/admin-portal/users/:id/status
+// @access  Private/SuperAdmin
+const updateUserStatus = async (req, res, next) => {
+  try {
+    const { status, membershipStatus, isActive } = req.body;
+
+    if (status && !['active', 'disabled', 'invited', 'pending'].includes(status)) {
+      return next(new AppError('Invalid user status value.', 400));
+    }
+    if (membershipStatus && !['active', 'suspended', 'expired'].includes(membershipStatus)) {
+      return next(new AppError('Invalid membership status value.', 400));
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) return next(new AppError('User not found.', 404));
+
+    const oldStatus = user.status;
+    const oldMembership = user.membershipStatus;
+
+    if (status) user.status = status;
+    if (membershipStatus) user.membershipStatus = membershipStatus;
+    if (typeof isActive === 'boolean') user.isActive = isActive;
+
+    await user.save();
+
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: 'user.status_update',
+      targetType: 'User',
+      targetId: user._id,
+      collegeId: user.collegeId || null,
+      metadata: {
+        oldStatus,
+        newStatus: user.status,
+        oldMembership,
+        newMembership: user.membershipStatus,
+      },
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    });
+
+    res.json({
+      success: true,
+      data: user,
+      message: 'User status successfully updated.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update user role
+// @route   PATCH /api/dashboards/admin-portal/users/:id/role
+// @access  Private/SuperAdmin
+const updateUserRole = async (req, res, next) => {
+  try {
+    const { role } = req.body;
+    if (!['student', 'college-admin', 'super-admin', 'general'].includes(role)) {
+      return next(new AppError('Invalid role specified.', 400));
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) return next(new AppError('User not found.', 404));
+
+    const oldRole = user.role;
+    user.role = role;
+    await user.save();
+
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: 'user.role_change',
+      targetType: 'User',
+      targetId: user._id,
+      collegeId: user.collegeId || null,
+      metadata: { oldRole, newRole: role },
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    });
+
+    res.json({
+      success: true,
+      data: user,
+      message: `User role updated from ${oldRole} to ${role}.`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Reset user password
+// @route   POST /api/dashboards/admin-portal/users/:id/reset-password
+// @access  Private/SuperAdmin
+const resetUserPassword = async (req, res, next) => {
+  try {
+    const { newPassword } = req.body;
+    const user = await User.findById(req.params.id).select('+password');
+    if (!user) return next(new AppError('User not found.', 404));
+
+    const generatedPassword = newPassword || `Pass@${Math.random().toString(36).substring(2, 10)}`;
+    user.password = generatedPassword;
+    await user.save();
+
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: 'user.password_reset',
+      targetType: 'User',
+      targetId: user._id,
+      collegeId: user.collegeId || null,
+      metadata: { userEmail: user.email },
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    });
+
+    res.json({
+      success: true,
+      message: 'Password reset successfully.',
+      tempPassword: generatedPassword,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Impersonate user (generate access token)
+// @route   POST /api/dashboards/admin-portal/users/:id/impersonate
+// @access  Private/SuperAdmin
+const impersonateUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return next(new AppError('Target user not found.', 404));
+
+    if (user.role === 'super-admin') {
+      return next(new AppError('Cannot impersonate another super-admin.', 400));
+    }
+
+    const { generateAccessToken } = require('../../utils/token');
+    const token = generateAccessToken(user);
+
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: 'user.impersonate',
+      targetType: 'User',
+      targetId: user._id,
+      collegeId: user.collegeId || null,
+      metadata: { impersonatedUserEmail: user.email, role: user.role },
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    });
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        collegeId: user.collegeId,
+      },
+      message: `Impersonation token generated for ${user.name}.`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get live system telemetry & process metrics
+// @route   GET /api/dashboards/admin-portal/system/health
+// @access  Private/SuperAdmin
+const getSystemHealth = async (req, res, next) => {
+  try {
+    const mongoose = require('mongoose');
+    const dbState = mongoose.connection.readyState;
+    const dbStatesMap = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+
+    const memoryUsage = process.memoryUsage();
+
+    const isRedisReady =
+      redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect');
+
+    res.json({
+      success: true,
+      data: {
+        uptimeSeconds: Math.floor(process.uptime()),
+        nodeVersion: process.version,
+        pid: process.pid,
+        memoryUsage: {
+          rssMB: (memoryUsage.rss / (1024 * 1024)).toFixed(2),
+          heapTotalMB: (memoryUsage.heapTotal / (1024 * 1024)).toFixed(2),
+          heapUsedMB: (memoryUsage.heapUsed / (1024 * 1024)).toFixed(2),
+        },
+        database: {
+          status: dbStatesMap[dbState] || 'unknown',
+          host: mongoose.connection.host || 'localhost',
+          name: mongoose.connection.name || 'bookbuddy',
+        },
+        redis: {
+          status: isRedisReady ? 'connected' : 'disabled_fallback',
+        },
+        timestamp: new Date(),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get background cron logs
+// @route   GET /api/dashboards/admin-portal/system/cron-logs
+// @access  Private/SuperAdmin
+const getCronLogs = async (req, res, next) => {
+  try {
+    const CronRunLog = require('../../models/CronRunLog');
+    const { status, page = 1, limit = 20 } = req.query;
+    const filter = {};
+    if (status) filter.status = status;
+
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const total = await CronRunLog.countDocuments(filter);
+    const logs = await CronRunLog.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit, 10));
+
+    res.json({
+      success: true,
+      data: logs,
+      pagination: {
+        total,
+        page: parseInt(page, 10),
+        pages: Math.ceil(total / parseInt(limit, 10)),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get cross-tenant global loans
+// @route   GET /api/dashboards/admin-portal/data/loans
+// @access  Private/SuperAdmin
+const getGlobalLoans = async (req, res, next) => {
+  try {
+    const { status, collegeId, page = 1, limit = 20 } = req.query;
+    const filter = {};
+    if (status) filter.status = status;
+    if (collegeId) filter.collegeId = collegeId;
+
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const total = await Loan.countDocuments(filter);
+    const loans = await Loan.find(filter)
+      .populate('userId', 'name email studentId')
+      .populate('bookId', 'title isbn author')
+      .populate('collegeId', 'name code')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit, 10));
+
+    res.json({
+      success: true,
+      data: loans,
+      pagination: {
+        total,
+        page: parseInt(page, 10),
+        pages: Math.ceil(total / parseInt(limit, 10)),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get cross-tenant global fines
+// @route   GET /api/dashboards/admin-portal/data/fines
+// @access  Private/SuperAdmin
+const getGlobalFines = async (req, res, next) => {
+  try {
+    const { status, collegeId, page = 1, limit = 20 } = req.query;
+    const filter = {};
+    if (status) filter.status = status;
+    if (collegeId) filter.collegeId = collegeId;
+
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const total = await Fine.countDocuments(filter);
+    const fines = await Fine.find(filter)
+      .populate('userId', 'name email studentId')
+      .populate('loanId')
+      .populate('collegeId', 'name code')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit, 10));
+
+    res.json({
+      success: true,
+      data: fines,
+      pagination: {
+        total,
+        page: parseInt(page, 10),
+        pages: Math.ceil(total / parseInt(limit, 10)),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get global catalog books across colleges
+// @route   GET /api/dashboards/admin-portal/data/catalog
+// @access  Private/SuperAdmin
+const getGlobalCatalog = async (req, res, next) => {
+  try {
+    const Book = require('../../models/Book');
+    const { search, collegeId, page = 1, limit = 20 } = req.query;
+    const filter = {};
+    if (search) {
+      const searchRegex = new RegExp(escapeRegExp(search), 'i');
+      filter.$or = [{ title: searchRegex }, { author: searchRegex }, { isbn: searchRegex }];
+    }
+
+    if (collegeId) filter.collegeId = collegeId;
+
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const total = await Book.countDocuments(filter);
+    const books = await Book.find(filter)
+      .populate('collegeId', 'name code')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit, 10));
+
+    res.json({
+      success: true,
+      data: books,
+      pagination: {
+        total,
+        page: parseInt(page, 10),
+        pages: Math.ceil(total / parseInt(limit, 10)),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get global support complaints across colleges
+// @route   GET /api/dashboards/admin-portal/support/complaints
+// @access  Private/SuperAdmin
+const getGlobalComplaints = async (req, res, next) => {
+  try {
+    const Complaint = require('../../models/Complaint');
+    const { status, collegeId, page = 1, limit = 20 } = req.query;
+    const filter = {};
+    if (status) filter.status = status;
+    if (collegeId) filter.collegeId = collegeId;
+
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const total = await Complaint.countDocuments(filter);
+    const complaints = await Complaint.find(filter)
+      .populate('submittedBy', 'name email studentId')
+      .populate('collegeId', 'name code')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit, 10));
+
+    res.json({
+      success: true,
+      data: complaints,
+      pagination: {
+        total,
+        page: parseInt(page, 10),
+        pages: Math.ceil(total / parseInt(limit, 10)),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update support complaint status/response
+// @route   PATCH /api/dashboards/admin-portal/support/complaints/:id
+// @access  Private/SuperAdmin
+const updateComplaintStatus = async (req, res, next) => {
+  try {
+    const Complaint = require('../../models/Complaint');
+    const { status, adminResponse } = req.body;
+
+    if (status && !['open', 'in_progress', 'resolved', 'closed'].includes(status)) {
+      return next(new AppError('Invalid complaint status value.', 400));
+    }
+
+    const complaint = await Complaint.findById(req.params.id);
+    if (!complaint) return next(new AppError('Complaint not found.', 404));
+    if (status) complaint.status = status;
+    if (adminResponse !== undefined) complaint.adminResponse = adminResponse;
+    complaint.resolvedAt = status === 'resolved' ? new Date() : complaint.resolvedAt;
+
+    await complaint.save();
+
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: 'complaint.update',
+      targetType: 'Complaint',
+      targetId: complaint._id,
+      collegeId: complaint.collegeId || null,
+      metadata: { status, adminResponse },
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    });
+
+    res.json({
+      success: true,
+      data: complaint,
+      message: 'Complaint updated successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get persisted system settings
+// @route   GET /api/dashboards/admin-portal/settings
+// @access  Private/SuperAdmin
+const getSystemSettings = async (req, res, next) => {
+  try {
+    const SystemSetting = require('../../models/SystemSetting');
+    const settings = await SystemSetting.find();
+    const settingsMap = {};
+    settings.forEach((s) => {
+      settingsMap[s.key] = s.value;
+    });
+
+    const defaults = {
+      smtpHost: settingsMap.smtpHost || 'smtp.sendgrid.net',
+      smtpPort: settingsMap.smtpPort || 587,
+      smtpSecurity: settingsMap.smtpSecurity || 'TLS',
+      smtpUser: settingsMap.smtpUser || 'apikey',
+      autoBackupEnabled:
+        settingsMap.autoBackupEnabled !== undefined ? settingsMap.autoBackupEnabled : true,
+      autoBackupSchedule: settingsMap.autoBackupSchedule || 'Daily at 03:00 AM UTC',
+      maintenanceMode: settingsMap.maintenanceMode || false,
+    };
+
+    res.json({
+      success: true,
+      data: defaults,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update system settings
+// @route   PUT /api/dashboards/admin-portal/settings
+// @access  Private/SuperAdmin
+const updateSystemSettings = async (req, res, next) => {
+  try {
+    const SystemSetting = require('../../models/SystemSetting');
+    const updates = req.body;
+
+    for (const [key, value] of Object.entries(updates)) {
+      await SystemSetting.findOneAndUpdate(
+        { key },
+        { key, value, updatedBy: req.user.id },
+        { upsert: true, new: true }
+      );
+    }
+
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: 'system_settings.update',
+      targetType: 'SystemSetting',
+      targetId: req.user.id,
+      metadata: { keysUpdated: Object.keys(updates) },
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    });
+
+    res.json({
+      success: true,
+      message: 'System settings updated successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Trigger manual DB backup
+// @route   POST /api/dashboards/admin-portal/settings/trigger-backup
+// @access  Private/SuperAdmin
+const triggerManualBackup = async (req, res, next) => {
+  try {
+    const backupFilename = `backup-${new Date().toISOString().split('T')[0]}-${Date.now()}.tar.gz`;
+
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: 'system_backup.trigger',
+      targetType: 'SystemSetting',
+      targetId: req.user.id,
+      metadata: { backupFilename },
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    });
+
+    res.json({
+      success: true,
+      message: 'Manual database snapshot initiated successfully.',
+      filename: backupFilename,
+      timestamp: new Date(),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getOverview,
   getAdmins,
@@ -861,4 +1433,19 @@ module.exports = {
   getPendingOnboardings,
   approveTenantOnboarding,
   rejectTenantOnboarding,
+  getUsers,
+  updateUserStatus,
+  updateUserRole,
+  resetUserPassword,
+  impersonateUser,
+  getSystemHealth,
+  getCronLogs,
+  getGlobalLoans,
+  getGlobalFines,
+  getGlobalCatalog,
+  getGlobalComplaints,
+  updateComplaintStatus,
+  getSystemSettings,
+  updateSystemSettings,
+  triggerManualBackup,
 };

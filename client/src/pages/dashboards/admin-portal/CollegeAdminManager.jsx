@@ -125,6 +125,9 @@ export default function CollegeAdminManager() {
     }
   };
 
+  const [editingCollege, setEditingCollege] = useState(null);
+  const [editFeatures, setEditFeatures] = useState([]);
+
   const handleToggleCollegeStatus = async (collegeId, currentStatus) => {
     const nextStatus = currentStatus === "active" ? "suspended" : "active";
     if (!window.confirm(`Are you sure you want to set institution status to ${nextStatus.toUpperCase()}?`)) {
@@ -136,6 +139,23 @@ export default function CollegeAdminManager() {
       fetchColleges();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to update tenant status.");
+    }
+  };
+
+  const handleSaveCollegeFeatures = async (e) => {
+    e.preventDefault();
+    if (!editingCollege) return;
+
+    try {
+      await adminApi.updateCollege(editingCollege._id, {
+        selectedServices: editFeatures,
+        enabledFeatures: editFeatures,
+      });
+      alert(`Provisioned features updated for ${editingCollege.name}.`);
+      setEditingCollege(null);
+      fetchColleges();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to update college features.");
     }
   };
 
@@ -180,10 +200,19 @@ export default function CollegeAdminManager() {
       render: (val, row) => {
         const feats = val || row.selectedServices || [];
         return (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <span className="text-xs font-bold text-emerald-400 font-mono bg-emerald-950/60 border border-emerald-700/60 px-2 py-0.5 rounded">
               {feats.length} Active Modules
             </span>
+            <button
+              onClick={() => {
+                setEditingCollege(row);
+                setEditFeatures(feats);
+              }}
+              className="text-[10px] font-mono font-bold text-indigo-400 hover:underline border border-indigo-800 px-1.5 py-0.5 rounded bg-indigo-950/40"
+            >
+              EDIT
+            </button>
           </div>
         );
       },
@@ -225,6 +254,7 @@ export default function CollegeAdminManager() {
       },
     },
   ];
+
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
@@ -508,7 +538,87 @@ export default function CollegeAdminManager() {
           searchPlaceholder="Filter onboarded colleges by name, domain, slug..."
           emptyMessage="No onboarded college tenants found in database."
         />
+
+        {/* EDIT COLLEGE FEATURES MODAL */}
+        {editingCollege && (
+          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-mono">
+            <form
+              onSubmit={handleSaveCollegeFeatures}
+              className="bg-slate-900 border border-indigo-600/60 rounded-xl p-6 max-w-xl w-full shadow-2xl space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-indigo-400" />
+                  <span className="text-sm font-bold text-white uppercase">
+                    PROVISIONED MODULE CONFIGURATION FOR {editingCollege.name}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingCollege(null)}
+                  className="text-slate-500 hover:text-slate-300 text-xs font-bold"
+                >
+                  CANCEL
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] text-slate-400 uppercase font-bold">
+                  Select Active Functional Modules ({editFeatures.length} selected)
+                </label>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                  {availableModules.map((mod) => {
+                    const isChecked = editFeatures.includes(mod.key);
+                    return (
+                      <div
+                        key={mod.key}
+                        onClick={() => {
+                          setEditFeatures((prev) =>
+                            prev.includes(mod.key)
+                              ? prev.filter((k) => k !== mod.key)
+                              : [...prev, mod.key]
+                          );
+                        }}
+                        className={`p-2.5 rounded border cursor-pointer flex items-center gap-2 transition-all ${
+                          isChecked
+                            ? "bg-indigo-950/60 border-indigo-600 text-indigo-200 font-bold"
+                            : "bg-slate-950 border-slate-800 text-slate-500 hover:text-slate-300"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {}}
+                          className="rounded accent-indigo-600"
+                        />
+                        <span className="text-[11px]">{mod.name}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingCollege(null)}
+                  className="px-4 py-2 bg-slate-950 hover:bg-slate-800 text-slate-400 rounded font-bold text-xs"
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-bold text-xs shadow-lg"
+                >
+                  SAVE MODULE CONFIGURATION
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </main>
     </div>
   );
 }
+
