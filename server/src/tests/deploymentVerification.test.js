@@ -1,11 +1,26 @@
 const request = require('supertest');
+const mongoose = require('mongoose');
 const app = require('../app');
+const { redisClient } = require('../middlewares/rateLimiters');
 
 describe('Post-Push Deployment Verification Automated Tests', () => {
   const originalEnv = { ...process.env };
 
   afterEach(() => {
     process.env = { ...originalEnv };
+  });
+
+  afterAll(async () => {
+    try {
+      if (redisClient && typeof redisClient.quit === 'function') {
+        await redisClient.quit();
+      }
+    } catch {}
+    try {
+      if (mongoose.connection && mongoose.connection.readyState !== 0) {
+        await mongoose.connection.close();
+      }
+    } catch {}
   });
 
   it('1. GET /version should return HTTP 200 with commitSha, version, and uptime', async () => {
