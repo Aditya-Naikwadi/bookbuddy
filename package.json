@@ -11,7 +11,26 @@
     "build:server": "cd server && npm install --legacy-peer-deps",
     "start": "node server/src/server.js",
     "dev:server": "npm run dev --prefix server",
-    "dev:client": "npm run dev --prefix client"
+    "dev:client": "npm run dev --prefix client",
+    "prepare": "husky",
+    "lint:server": "cd server && npm run lint",
+    "lint:client": "cd client && npm run lint",
+    "test:server": "cd server && npm test",
+    "prepush": "sh scripts/pre-commit.sh && npm run lint:server && npm run lint:client && npm run test:server"
+  },
+  "lint-staged": {
+    "server/**/*.js": [
+      "npx --prefix server eslint --fix",
+      "npx prettier --write"
+    ],
+    "client/src/**/*.{js,jsx}": [
+      "npx --prefix client eslint --fix",
+      "npx prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3"
   },
   "dependencies": {
     "@sentry/node": "^8.55.2",

@@ -1,0 +1,41 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh" 2>/dev/null || true
+
+echo "🛡️  RUNNING PRE-PUSH CODE QUALITY GATE..."
+echo "-----------------------------------------------------"
+
+# 1. Secret Scanning Hook
+echo "1/4 🔍 Secret Signature Scan..."
+sh scripts/pre-commit.sh
+if [ $? -ne 0 ]; then
+  echo "❌ Pre-push gate failed: Secret scanning error."
+  exit 1
+fi
+
+# 2. Server ESLint Check
+echo "2/4 🧹 Server ESLint Check..."
+npm run lint:server
+if [ $? -ne 0 ]; then
+  echo "❌ Pre-push gate failed: Server lint errors found."
+  exit 1
+fi
+
+# 3. Client ESLint Check
+echo "3/4 🧹 Client ESLint Check..."
+npm run lint:client
+if [ $? -ne 0 ]; then
+  echo "❌ Pre-push gate failed: Client lint errors found."
+  exit 1
+fi
+
+# 4. Server Jest Unit & Integration Test Suite
+echo "4/4 🧪 Server Unit & Integration Test Suite..."
+npm run test:server
+if [ $? -ne 0 ]; then
+  echo "❌ Pre-push gate failed: Automated tests failed!"
+  exit 1
+fi
+
+echo "-----------------------------------------------------"
+echo "✅ ALL PRE-PUSH CODE QUALITY GATES PASSED! Proceeding with push."
+exit 0

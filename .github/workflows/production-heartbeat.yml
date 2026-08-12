@@ -1,0 +1,75 @@
+name: Production Deployment Heartbeat & Drift Verification
+
+on:
+  schedule:
+    # Run every 15 minutes to verify live production health and catch silent drift
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  heartbeat-verify:
+    name: Verify Production Live Heartbeat & Version Lock
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Production Heartbeat Verification
+        env:
+          APP_URL: ${{ secrets.PRODUCTION_APP_URL || 'https://book-buddy-adityas-projects-3ddb703f.vercel.app' }}
+          TIMEOUT_SECONDS: 60
+          POLL_INTERVAL_SECONDS: 10
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_EVENT_NAME: heartbeat
+        run: node scripts/verify-deployment.js
+
+      - name: Upload Audit History Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-audit-log
+          path: logs/deployment-audit.jsonl
+          retention-days: 90
+
+      - name: Alert on Automation/Heartbeat Failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          node -e "
+          const https = require('https');
+          const webhook = process.env.SLACK_WEBHOOK_URL;
+          if (!webhook) {
+            console.log('No Slack webhook configured.');
+            process.exit(0);
+          }
+          const payload = JSON.stringify({
+            text: '🚨 *CRITICAL HEARTBEAT ALERT:* Production verification failed or automation crashed during 15-min scheduled check!',
+            attachments: [{
+              color: '#ff0000',
+              fields: [
+                { title: 'Workflow', value: '${{ github.workflow }}', short: true },
+                { title: 'Run Number', value: '${{ github.run_number }}', short: true },
+                { title: 'Trigger', value: '15-min Scheduled Cron', short: true },
+                { title: 'Repository', value: '${{ github.repository }}', short: true }
+              ],
+              ts: Math.floor(Date.now() / 1000)
+            }]
+          });
+          const urlObj = new URL(webhook);
+          const req = https.request({
+            hostname: urlObj.hostname,
+            port: 443,
+            path: urlObj.pathname + urlObj.search,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) }
+          });
+          req.write(payload);
+          req.end();
+          "

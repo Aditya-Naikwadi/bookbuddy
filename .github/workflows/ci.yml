@@ -183,3 +183,48 @@ jobs:
           POLL_INTERVAL_SECONDS: 10
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: node scripts/verify-deployment.js
+
+      - name: Upload Audit History Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-audit-log-${{ github.sha }}
+          path: logs/deployment-audit.jsonl
+          retention-days: 90
+
+      - name: Alert on Verification Automation Failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          node -e "
+          const https = require('https');
+          const webhook = process.env.SLACK_WEBHOOK_URL;
+          if (!webhook) {
+            console.log('No Slack webhook configured.');
+            process.exit(0);
+          }
+          const payload = JSON.stringify({
+            text: '🚨 *POST-DEPLOY VERIFICATION FAILED / CRASHED:* Post-push deployment verification did not pass!',
+            attachments: [{
+              color: '#a30200',
+              fields: [
+                { title: 'Commit SHA', value: '${{ github.sha }}', short: true },
+                { title: 'Workflow', value: '${{ github.workflow }}', short: true },
+                { title: 'Run Number', value: '${{ github.run_number }}', short: true },
+                { title: 'Action Required', value: 'Check deployment logs & consider rollback', short: true }
+              ],
+              ts: Math.floor(Date.now() / 1000)
+            }]
+          });
+          const urlObj = new URL(webhook);
+          const req = https.request({
+            hostname: urlObj.hostname,
+            port: 443,
+            path: urlObj.pathname + urlObj.search,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) }
+          });
+          req.write(payload);
+          req.end();
+          "

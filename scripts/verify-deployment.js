@@ -9,14 +9,16 @@
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
+const path = require('path');
 
 // --- Configuration & Inputs ---
 const APP_URL = (process.env.APP_URL || process.argv[2] || 'http://localhost:5000').replace(/\/$/, '');
 const EXPECTED_COMMIT_SHA = process.env.EXPECTED_COMMIT_SHA || process.argv[3] || process.env.GITHUB_SHA || '';
-const TIMEOUT_SECONDS = parseInt(process.env.TIMEOUT_SECONDS || '300', 10);
-const POLL_INTERVAL_SECONDS = parseInt(process.env.POLL_INTERVAL_SECONDS || '10', 10);
+const TIMEOUT_SECONDS = parseInt(process.env.TIMEOUT_SECONDS || process.argv[4] || '300', 10);
+const POLL_INTERVAL_SECONDS = parseInt(process.env.POLL_INTERVAL_SECONDS || process.argv[5] || '10', 10);
 const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL || '';
 const SUMMARY_FILE = process.env.GITHUB_STEP_SUMMARY || '';
+const TRIGGER_EVENT = process.env.GITHUB_EVENT_NAME || (process.argv[6] || 'manual');
 
 // HTTP Helper using native modules (no external npm dependencies required)
 const makeRequest = (urlStr, options = {}, redirectCount = 0) => {
@@ -114,6 +116,43 @@ const makeRequest = (urlStr, options = {}, redirectCount = 0) => {
   });
 };
 
+// Retry wrapper with Exponential Backoff for transient errors
+const makeRequestWithRetry = async (urlStr, options = {}, maxRetries = 3) => {
+  let attempt = 0;
+  while (attempt <= maxRetries) {
+    const res = await makeRequest(urlStr, options);
+    const isTransientError =
+      !res.ok && ([502, 503, 504, 408, 0].includes(res.status) || (res.error && !res.error.includes('Invalid URL')));
+
+    if (!isTransientError || attempt === maxRetries) {
+      return res;
+    }
+
+    attempt++;
+    const backoffMs = Math.pow(2, attempt - 1) * 1000;
+    console.log(
+      `   ⚠️ Transient error (${res.status || res.error}). Retrying in ${backoffMs}ms (Attempt ${attempt}/${maxRetries})...`
+    );
+    await new Promise((resolve) => setTimeout(resolve, backoffMs));
+  }
+};
+
+// Write persistent JSONL Audit Log Entry
+const writeAuditLog = (entry) => {
+  try {
+    const logDir = path.join(__dirname, '..', 'logs');
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
+    }
+    const logFile = path.join(logDir, 'deployment-audit.jsonl');
+    const logLine = JSON.stringify(entry) + '\n';
+    fs.appendFileSync(logFile, logLine, 'utf8');
+    console.log(`\n📜 Execution logged to persistent audit store (${logFile})`);
+  } catch (err) {
+    console.error('⚠️ Could not write deployment audit log:', err.message);
+  }
+};
+
 const sendSlackNotification = async (payload) => {
   if (!SLACK_WEBHOOK_URL) return;
   try {
@@ -169,11 +208,11 @@ const runVerification = async () => {
   let lastVersionResponse = null;
 
   // --- Step 1: Version/Commit Verification Loop ---
-  console.log('🔍 STEP 1: Polling /version endpoint for commit SHA alignment (with CDN cache-busting)...');
+  console.log('🔍 STEP 1: Polling /version endpoint for commit SHA alignment (with CDN cache-busting & exponential backoff retries)...');
   while (Date.now() < endTime) {
     pollAttempts++;
     const versionUrl = `${APP_URL}/version?_cb=${Date.now()}`;
-    const res = await makeRequest(versionUrl);
+    const res = await makeRequestWithRetry(versionUrl, {}, 3);
     lastVersionResponse = res;
 
     if (res.ok && res.json) {
@@ -207,7 +246,7 @@ const runVerification = async () => {
   const pollDurationSec = ((Date.now() - startTime) / 1000).toFixed(1);
 
   // --- Step 2: Critical Health Checks ---
-  console.log('\n🏥 STEP 2: Running critical route health checks...');
+  console.log('\n🏥 STEP 2: Running critical route health checks (with retry logic)...');
 
   const healthRoutes = [
     { path: '/health', expectedStatus: 200, name: 'System Health Check' },
@@ -221,7 +260,7 @@ const runVerification = async () => {
 
   for (const route of healthRoutes) {
     const fullUrl = `${APP_URL}${route.path}`;
-    const res = await makeRequest(fullUrl);
+    const res = await makeRequestWithRetry(fullUrl, {}, 2);
     const passed = res.status === route.expectedStatus;
 
     if (!passed) {
@@ -326,7 +365,23 @@ ${
     console.log('📲 Slack notification sent successfully.');
   }
 
-  // --- Step 5: Exit Code Enforcement ---
+  // --- Step 5: Persistent Audit Log Entry ---
+  writeAuditLog({
+    timestamp: new Date().toISOString(),
+    triggerEvent: TRIGGER_EVENT,
+    appUrl: APP_URL,
+    pushedSha: EXPECTED_COMMIT_SHA || 'N/A',
+    liveSha: liveCommitSha,
+    liveVersion,
+    overallSuccess,
+    versionMatched,
+    allHealthPassed,
+    pollAttempts,
+    durationSeconds: parseFloat(pollDurationSec),
+    healthResults,
+  });
+
+  // --- Step 6: Exit Code Enforcement ---
   if (!overallSuccess) {
     console.error('\n🚨 Verification process exiting with Code 1 due to failure.');
     process.exit(1);
@@ -336,7 +391,7 @@ ${
   }
 };
 
-module.exports = { makeRequest, runVerification, shasMatch };
+module.exports = { makeRequest, makeRequestWithRetry, writeAuditLog, runVerification, shasMatch };
 
 if (require.main === module) {
   runVerification().catch((err) => {
