@@ -190,18 +190,25 @@ const getHealthStatus = async () => {
     redisStatus = 'disconnected';
   }
 
-  const isHealthy = readyState === 1;
+  const isDbHealthy = readyState === 1;
+  const isRedisHealthy = redisStatus === 'connected' || redisStatus === 'disabled';
+  const overallStatus = !isDbHealthy ? 'unhealthy' : !isRedisHealthy ? 'degraded' : 'ok';
+  const statusCode = isDbHealthy ? 200 : 503;
   const commitSha = getCommitSha();
 
+  const message = !isDbHealthy
+    ? `Database connection not ready (Mongoose readyState: ${readyState} [${dbStatus}]).`
+    : !isRedisHealthy
+      ? 'Service operating in degraded state (Redis caching unavailable; DB healthy).'
+      : 'Service operating normally.';
+
   return {
-    isHealthy,
-    statusCode: isHealthy ? 200 : 503,
+    isHealthy: isDbHealthy,
+    statusCode,
     payload: {
-      status: isHealthy ? 'ok' : 'unhealthy',
-      success: isHealthy,
-      message: isHealthy
-        ? 'Service operating normally.'
-        : `Database connection not ready (Mongoose readyState: ${readyState} [${dbStatus}]).`,
+      status: overallStatus,
+      success: isDbHealthy,
+      message,
       commitSha,
       shortCommitSha: commitSha.length >= 7 ? commitSha.substring(0, 7) : commitSha,
       version: process.env.APP_VERSION || process.env.npm_package_version || '1.0.0',
