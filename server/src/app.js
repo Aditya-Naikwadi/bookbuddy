@@ -230,7 +230,9 @@ const getHealthStatus = async () => {
       status: isRedisHealthy ? 'healthy' : 'degraded',
       latencyMs: redisLatencyMs,
       connectionState: redisStatus,
-      message: isRedisHealthy ? 'Redis operates normally' : 'Redis disconnected; in-memory fallback active',
+      message: isRedisHealthy
+        ? 'Redis operates normally'
+        : 'Redis disconnected; in-memory fallback active',
       lastChecked: new Date().toISOString(),
     },
     externalServices: {

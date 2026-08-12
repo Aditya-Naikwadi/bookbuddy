@@ -15,16 +15,14 @@ describe('Post-Push Deployment Verification Automated Tests', () => {
       if (redisClient && typeof redisClient.quit === 'function') {
         await redisClient.quit();
       }
-    } catch (_err) {
-      // Ignore disconnect errors
-    }
+      // eslint-disable-next-line no-empty
+    } catch {}
     try {
       if (mongoose.connection && mongoose.connection.readyState !== 0) {
         await mongoose.connection.close();
       }
-    } catch (_err) {
-      // Ignore disconnect errors
-    }
+      // eslint-disable-next-line no-empty
+    } catch {}
   });
 
   it('1. GET /version should return HTTP 200 with commitSha, version, and uptime', async () => {
