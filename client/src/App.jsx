@@ -60,7 +60,6 @@ const GlobalSupportQueue = lazy(
   () => import("./pages/dashboards/admin-portal/GlobalSupportQueue"),
 );
 
-
 // Lazy loaded College Admin Dashboard Features
 const CollegeAdminDashboardHome = lazy(
   () => import("./pages/dashboards/college-admin/CollegeAdminDashboardHome"),
@@ -122,7 +121,11 @@ const AuthRedirect = ({ children }) => {
   }
 
   if (isAuthenticated && user) {
-    if (["college-admin", "college_admin", "admin", "librarian"].includes(user.role))
+    if (
+      ["college-admin", "college_admin", "admin", "librarian"].includes(
+        user.role,
+      )
+    )
       return <Navigate to="/college-admin" replace />;
     if (user.role === "general")
       return <Navigate to="/general-dashboard" replace />;
@@ -183,7 +186,10 @@ function App() {
                   <Route path="/unauthorized" element={<Unauthorized />} />
 
                   {/* Top-level Route Aliases & Fallbacks */}
-                  <Route path="/login" element={<Navigate to="/auth/login" replace />} />
+                  <Route
+                    path="/login"
+                    element={<Navigate to="/auth/login" replace />}
+                  />
 
                   {/* Auth Routes */}
                   <Route
@@ -194,7 +200,10 @@ function App() {
                       </AuthRedirect>
                     }
                   >
-                    <Route index element={<Navigate to="/auth/login" replace />} />
+                    <Route
+                      index
+                      element={<Navigate to="/auth/login" replace />}
+                    />
                     <Route path="login" element={<Login />} />
                     <Route path="register" element={<Register />} />
                   </Route>
@@ -249,11 +258,17 @@ function App() {
                       />
                     </Route>
 
-
                     {/* College Admin Routes */}
                     <Route
                       element={
-                        <ProtectedRoute allowedRoles={["college-admin", "college_admin", "admin", "librarian"]} />
+                        <ProtectedRoute
+                          allowedRoles={[
+                            "college-admin",
+                            "college_admin",
+                            "admin",
+                            "librarian",
+                          ]}
+                        />
                       }
                     >
                       <Route

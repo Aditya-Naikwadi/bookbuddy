@@ -85,6 +85,8 @@ const config = {
     expensiveMax: parseInt(process.env.RATE_LIMIT_EXPENSIVE_MAX, 10) || 10,
     expensiveWindowMs: parseInt(process.env.RATE_LIMIT_EXPENSIVE_WINDOW_MS, 10) || 60000,
   },
+  razorpayKeyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_TOm6pPV3QhF4Vr',
+  razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || 'e7CkAkfrsJzdLz3fTvAwg2MY',
 };
 
 module.exports = config;

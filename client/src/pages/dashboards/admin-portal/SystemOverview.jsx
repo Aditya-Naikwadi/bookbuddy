@@ -38,7 +38,8 @@ export default function SystemOverview() {
         if (isMounted) setHealth(healthData);
       } catch (err) {
         console.error("Failed to fetch ops overview metrics:", err);
-        if (isMounted) setError("Failed to fetch live platform health telemetry.");
+        if (isMounted)
+          setError("Failed to fetch live platform health telemetry.");
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -50,8 +51,12 @@ export default function SystemOverview() {
     };
   }, [reloadToken]);
 
-  const activeCollegesCount = colleges.filter((c) => c.status === "active" || c.isActive).length;
-  const pendingCollegesCount = colleges.filter((c) => c.status === "pending" || c.status === "pending_review").length;
+  const activeCollegesCount = colleges.filter(
+    (c) => c.status === "active" || c.isActive,
+  ).length;
+  const pendingCollegesCount = colleges.filter(
+    (c) => c.status === "pending" || c.status === "pending_review",
+  ).length;
 
   const featureList = [
     { key: "catalog", name: "Catalog & Discovery", core: true },
@@ -94,13 +99,19 @@ export default function SystemOverview() {
               <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
               <div>
                 <div className="flex items-center gap-2">
-                  <OpsSeverityBadge status="warning" label="ATTENTION REQUIRED" size="sm" />
+                  <OpsSeverityBadge
+                    status="warning"
+                    label="ATTENTION REQUIRED"
+                    size="sm"
+                  />
                   <span className="text-xs font-bold text-amber-200 uppercase">
-                    {pendingCollegesCount} Tenant Onboarding Request(s) Pending Approval Gate
+                    {pendingCollegesCount} Tenant Onboarding Request(s) Pending
+                    Approval Gate
                   </span>
                 </div>
                 <p className="text-[11px] text-amber-300/80 mt-0.5">
-                  Institutions have submitted legal verification documents and are waiting for Super Admin review.
+                  Institutions have submitted legal verification documents and
+                  are waiting for Super Admin review.
                 </p>
               </div>
             </div>
@@ -117,18 +128,27 @@ export default function SystemOverview() {
               <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
               <div>
                 <div className="flex items-center gap-2">
-                  <OpsSeverityBadge status="healthy" label="ALL SYSTEMS HEALTHY" size="sm" />
+                  <OpsSeverityBadge
+                    status="healthy"
+                    label="ALL SYSTEMS HEALTHY"
+                    size="sm"
+                  />
                   <span className="text-xs font-bold text-emerald-200 uppercase">
                     Zero Operational Bottlenecks or Pending Onboarding Gates
                   </span>
                 </div>
                 <p className="text-[11px] text-emerald-300/80 mt-0.5">
-                  Multi-tenant routing engines, Redis cache clusters, and database clusters are operating at nominal latency.
+                  Multi-tenant routing engines, Redis cache clusters, and
+                  database clusters are operating at nominal latency.
                 </p>
               </div>
             </div>
             <span className="text-xs text-emerald-400/80 font-mono">
-              UPTIME: {health?.uptimeSeconds ? `${Math.floor(health.uptimeSeconds / 60)}m` : "LIVE"} // PID: {health?.pid || "OK"}
+              UPTIME:{" "}
+              {health?.uptimeSeconds
+                ? `${Math.floor(health.uptimeSeconds / 60)}m`
+                : "LIVE"}{" "}
+              // PID: {health?.pid || "OK"}
             </span>
           </div>
         )}
@@ -137,7 +157,9 @@ export default function SystemOverview() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 font-mono space-y-2">
             <div className="flex items-center justify-between text-slate-400 text-xs">
-              <span className="uppercase font-bold tracking-wider">Active Colleges</span>
+              <span className="uppercase font-bold tracking-wider">
+                Active Colleges
+              </span>
               <Building2 className="w-4 h-4 text-indigo-400" />
             </div>
             <div className="text-2xl font-bold text-white tracking-tight">
@@ -154,11 +176,17 @@ export default function SystemOverview() {
 
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 font-mono space-y-2">
             <div className="flex items-center justify-between text-slate-400 text-xs">
-              <span className="uppercase font-bold tracking-wider">Active Students</span>
+              <span className="uppercase font-bold tracking-wider">
+                Active Students
+              </span>
               <Users className="w-4 h-4 text-emerald-400" />
             </div>
             <div className="text-2xl font-bold text-white tracking-tight">
-              {(stats?.totalUsers || stats?.userCountsByRole?.student || 0).toLocaleString()}
+              {(
+                stats?.totalUsers ||
+                stats?.userCountsByRole?.student ||
+                0
+              ).toLocaleString()}
             </div>
             <div className="text-[10px] text-slate-400 flex items-center gap-1.5 pt-1 border-t border-slate-800">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
@@ -168,26 +196,37 @@ export default function SystemOverview() {
 
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 font-mono space-y-2">
             <div className="flex items-center justify-between text-slate-400 text-xs">
-              <span className="uppercase font-bold tracking-wider">Server Memory (Heap)</span>
+              <span className="uppercase font-bold tracking-wider">
+                Server Memory (Heap)
+              </span>
               <Database className="w-4 h-4 text-cyan-400" />
             </div>
             <div className="text-2xl font-bold text-white tracking-tight">
-              {health?.memoryUsage ? `${health.memoryUsage.heapUsedMB} MB` : "48.2 MB"}
+              {health?.memoryUsage
+                ? `${health.memoryUsage.heapUsedMB} MB`
+                : "48.2 MB"}
             </div>
             <div className="text-[10px] text-slate-400 flex items-center gap-1.5 pt-1 border-t border-slate-800">
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-              <span>RSS: {health?.memoryUsage?.rssMB || "120"} MB // Node {health?.nodeVersion || "v20"}</span>
+              <span>
+                RSS: {health?.memoryUsage?.rssMB || "120"} MB // Node{" "}
+                {health?.nodeVersion || "v20"}
+              </span>
             </div>
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 font-mono space-y-2">
             <div className="flex items-center justify-between text-slate-400 text-xs">
-              <span className="uppercase font-bold tracking-wider">Pending Review Gate</span>
+              <span className="uppercase font-bold tracking-wider">
+                Pending Review Gate
+              </span>
               <Clock className="w-4 h-4 text-amber-400" />
             </div>
             <div className="text-2xl font-bold text-white tracking-tight">
               {pendingCollegesCount}
-              <span className="text-xs text-slate-500 ml-2 font-normal">Applications</span>
+              <span className="text-xs text-slate-500 ml-2 font-normal">
+                Applications
+              </span>
             </div>
             <div className="text-[10px] text-amber-400/90 flex items-center gap-1.5 pt-1 border-t border-slate-800">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
@@ -205,7 +244,8 @@ export default function SystemOverview() {
                 <span>Feature Module Adoption Matrix Across Institutions</span>
               </h2>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                Breakdown of active vs inactive functional modules provisioned across all registered campus tenants.
+                Breakdown of active vs inactive functional modules provisioned
+                across all registered campus tenants.
               </p>
             </div>
             <span className="text-xs text-slate-500 font-bold">
@@ -221,14 +261,18 @@ export default function SystemOverview() {
               >
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-200">{feat.name}</span>
+                    <span className="font-bold text-slate-200">
+                      {feat.name}
+                    </span>
                     {feat.core && (
                       <span className="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.2 rounded uppercase">
                         Core
                       </span>
                     )}
                   </div>
-                  <span className="text-indigo-400 font-bold">{feat.adoptionPct}%</span>
+                  <span className="text-indigo-400 font-bold">
+                    {feat.adoptionPct}%
+                  </span>
                 </div>
 
                 <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
@@ -267,33 +311,47 @@ export default function SystemOverview() {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <OpsSeverityBadge
-                    status={health?.database?.status === "connected" ? "healthy" : "warning"}
+                    status={
+                      health?.database?.status === "connected"
+                        ? "healthy"
+                        : "warning"
+                    }
                     label="MONGODB CLUSTER"
                     size="sm"
                   />
                   <span className="text-xs font-bold text-slate-200">
-                    Database Connection ({health?.database?.name || "bookbuddy"})
+                    Database Connection ({health?.database?.name || "bookbuddy"}
+                    )
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Host: {health?.database?.host || "localhost"}. State: {health?.database?.status || "connected"}. Replica connection pool healthy.
+                  Host: {health?.database?.host || "localhost"}. State:{" "}
+                  {health?.database?.status || "connected"}. Replica connection
+                  pool healthy.
                 </p>
               </div>
-              <span className="text-[10px] text-slate-500 shrink-0">STATE: {health?.database?.status?.toUpperCase() || "CONNECTED"}</span>
+              <span className="text-[10px] text-slate-500 shrink-0">
+                STATE: {health?.database?.status?.toUpperCase() || "CONNECTED"}
+              </span>
             </div>
 
             <div className="bg-slate-950 border border-slate-800 rounded-lg p-3 flex items-start justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <OpsSeverityBadge
-                    status={health?.redis?.status === "connected" ? "healthy" : "info"}
+                    status={
+                      health?.redis?.status === "connected" ? "healthy" : "info"
+                    }
                     label="REDIS CACHE"
                     size="sm"
                   />
-                  <span className="text-xs font-bold text-slate-200 font-mono">In-Memory Cache Layer</span>
+                  <span className="text-xs font-bold text-slate-200 font-mono">
+                    In-Memory Cache Layer
+                  </span>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Status: {health?.redis?.status || "connected"}. Rate-limiting telemetry & session caching nominal.
+                  Status: {health?.redis?.status || "connected"}. Rate-limiting
+                  telemetry & session caching nominal.
                 </p>
               </div>
               <span className="text-[10px] text-slate-500 shrink-0">
@@ -306,4 +364,3 @@ export default function SystemOverview() {
     </div>
   );
 }
-

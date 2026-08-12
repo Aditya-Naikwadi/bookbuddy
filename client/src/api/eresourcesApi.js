@@ -42,7 +42,7 @@ export const saveProgress = async (resourceId, payload) => {
   try {
     const { data } = await apiClient.post(
       `/eresources/external/${resourceId}/progress`,
-      payload
+      payload,
     );
     return data.data || data;
   } catch {

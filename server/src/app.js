@@ -325,6 +325,14 @@ app.use('/api/eresources', deprecationWarning, require('./routes/eresourceRoutes
 app.use('/api/reader', deprecationWarning, require('./routes/readerRoutes'));
 app.use('/api/notifications', deprecationWarning, require('./routes/notificationRoutes'));
 app.use('/api/payments', deprecationWarning, require('./routes/paymentRoutes'));
+app.use('/api/create-order', (req, res, next) => {
+  req.url = '/create-order';
+  require('./routes/paymentRoutes')(req, res, next);
+});
+app.use('/api/verify-payment', (req, res, next) => {
+  req.url = '/verify-payment';
+  require('./routes/paymentRoutes')(req, res, next);
+});
 app.use('/api/v1/uploads', require('./routes/uploadRoutes'));
 app.use('/api/uploads', deprecationWarning, require('./routes/uploadRoutes'));
 app.use('/api/annotations', deprecationWarning, require('./routes/annotationRoutes'));

@@ -234,4 +234,3 @@ const HeroComponent = () => {
 };
 
 export const Hero = React.memo(HeroComponent);
-

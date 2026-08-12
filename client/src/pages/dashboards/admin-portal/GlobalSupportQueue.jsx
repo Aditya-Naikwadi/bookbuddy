@@ -64,7 +64,9 @@ export default function GlobalSupportQueue() {
         if (isMounted) {
           setMessage({
             type: "error",
-            text: err.response?.data?.message || "Failed to load support complaint tickets.",
+            text:
+              err.response?.data?.message ||
+              "Failed to load support complaint tickets.",
           });
         }
       } finally {
@@ -99,7 +101,8 @@ export default function GlobalSupportQueue() {
     } catch (err) {
       setMessage({
         type: "error",
-        text: err.response?.data?.message || "Failed to update complaint ticket.",
+        text:
+          err.response?.data?.message || "Failed to update complaint ticket.",
       });
     } finally {
       setIsSubmitting(false);
@@ -146,7 +149,8 @@ export default function GlobalSupportQueue() {
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 font-mono space-y-3">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <span className="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
-              <Filter className="w-4 h-4 text-indigo-400" /> Filter Support Queue ({complaints.length})
+              <Filter className="w-4 h-4 text-indigo-400" /> Filter Support
+              Queue ({complaints.length})
             </span>
           </div>
 
@@ -189,7 +193,8 @@ export default function GlobalSupportQueue() {
               Zero Unresolved Escalated Tickets
             </h3>
             <p className="text-xs text-slate-500 mt-1">
-              All patron complaints have been handled or no records match the active filter criteria.
+              All patron complaints have been handled or no records match the
+              active filter criteria.
             </p>
           </div>
         ) : (
@@ -205,15 +210,25 @@ export default function GlobalSupportQueue() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <OpsSeverityBadge
-                          status={isRes ? "healthy" : c.status === "in_progress" ? "info" : "warning"}
+                          status={
+                            isRes
+                              ? "healthy"
+                              : c.status === "in_progress"
+                                ? "info"
+                                : "warning"
+                          }
                           label={(c.status || "open").toUpperCase()}
                           size="sm"
                         />
                         <span className="text-xs font-bold text-indigo-300">
-                          {c.collegeId?.name ? `${c.collegeId.name} (${c.collegeId.code})` : "Global Tenant"}
+                          {c.collegeId?.name
+                            ? `${c.collegeId.name} (${c.collegeId.code})`
+                            : "Global Tenant"}
                         </span>
                       </div>
-                      <h3 className="text-sm font-bold text-white">{c.subject || c.category || "Patron Complaint"}</h3>
+                      <h3 className="text-sm font-bold text-white">
+                        {c.subject || c.category || "Patron Complaint"}
+                      </h3>
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -225,7 +240,9 @@ export default function GlobalSupportQueue() {
                         onClick={() => {
                           setSelectedComplaint(c);
                           setAdminResponseText(c.adminResponse || "");
-                          setTargetStatus(c.status === "resolved" ? "resolved" : "resolved");
+                          setTargetStatus(
+                            c.status === "resolved" ? "resolved" : "resolved",
+                          );
                         }}
                         className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg transition-all"
                       >
@@ -237,16 +254,23 @@ export default function GlobalSupportQueue() {
                   <div className="space-y-2 text-xs">
                     <div className="text-slate-300 bg-slate-950 p-3 rounded-lg border border-slate-800/80">
                       <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">
-                        Patron Description ({c.submittedBy?.name || c.userId?.name || "Anonymous User"})
+                        Patron Description (
+                        {c.submittedBy?.name ||
+                          c.userId?.name ||
+                          "Anonymous User"}
+                        )
                       </div>
 
-                      <p className="whitespace-pre-wrap">{c.description || c.message || "No text provided."}</p>
+                      <p className="whitespace-pre-wrap">
+                        {c.description || c.message || "No text provided."}
+                      </p>
                     </div>
 
                     {c.adminResponse && (
                       <div className="text-indigo-200 bg-indigo-950/40 p-3 rounded-lg border border-indigo-700/50 space-y-1">
                         <div className="text-[10px] text-indigo-400 uppercase font-bold flex items-center gap-1.5">
-                          <MessageSquare className="w-3.5 h-3.5" /> Admin Official Response
+                          <MessageSquare className="w-3.5 h-3.5" /> Admin
+                          Official Response
                         </div>
                         <p className="whitespace-pre-wrap">{c.adminResponse}</p>
                       </div>
@@ -272,7 +296,9 @@ export default function GlobalSupportQueue() {
 
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="text-[10px] text-slate-400 uppercase font-bold">Ticket Status</label>
+                  <label className="text-[10px] text-slate-400 uppercase font-bold">
+                    Ticket Status
+                  </label>
                   <select
                     value={targetStatus}
                     onChange={(e) => setTargetStatus(e.target.value)}
@@ -285,7 +311,9 @@ export default function GlobalSupportQueue() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-slate-400 uppercase font-bold">Super Admin Response</label>
+                  <label className="text-[10px] text-slate-400 uppercase font-bold">
+                    Super Admin Response
+                  </label>
                   <textarea
                     rows={4}
                     value={adminResponseText}
@@ -310,7 +338,9 @@ export default function GlobalSupportQueue() {
                   className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-bold text-xs shadow-lg flex items-center gap-1.5"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>{isSubmitting ? "SAVING..." : "SUBMIT TICKET UPDATE"}</span>
+                  <span>
+                    {isSubmitting ? "SAVING..." : "SUBMIT TICKET UPDATE"}
+                  </span>
                 </button>
               </div>
             </form>

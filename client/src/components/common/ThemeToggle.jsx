@@ -15,7 +15,7 @@ export const ThemeToggle = ({ className = "" }) => {
       aria-pressed={isDark}
       className={cn(
         "p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-ember dark:hover:text-ember hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ember focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900",
-        className
+        className,
       )}
     >
       {isDark ? (

@@ -123,41 +123,58 @@ export const adminApi = {
 
   // Infrastructure Telemetry & Cron Logs APIs
   getSystemHealth: async () => {
-    const { data } = await apiClient.get("/dashboards/admin-portal/system/health");
+    const { data } = await apiClient.get(
+      "/dashboards/admin-portal/system/health",
+    );
     return data.data;
   },
   getCronLogs: async (params) => {
-    const { data } = await apiClient.get("/dashboards/admin-portal/system/cron-logs", {
-      params,
-    });
+    const { data } = await apiClient.get(
+      "/dashboards/admin-portal/system/cron-logs",
+      {
+        params,
+      },
+    );
     return data;
   },
 
   // Data Oversight APIs
   getGlobalLoans: async (params) => {
-    const { data } = await apiClient.get("/dashboards/admin-portal/data/loans", {
-      params,
-    });
+    const { data } = await apiClient.get(
+      "/dashboards/admin-portal/data/loans",
+      {
+        params,
+      },
+    );
     return data;
   },
   getGlobalFines: async (params) => {
-    const { data } = await apiClient.get("/dashboards/admin-portal/data/fines", {
-      params,
-    });
+    const { data } = await apiClient.get(
+      "/dashboards/admin-portal/data/fines",
+      {
+        params,
+      },
+    );
     return data;
   },
   getGlobalCatalog: async (params) => {
-    const { data } = await apiClient.get("/dashboards/admin-portal/data/catalog", {
-      params,
-    });
+    const { data } = await apiClient.get(
+      "/dashboards/admin-portal/data/catalog",
+      {
+        params,
+      },
+    );
     return data;
   },
 
   // Global Support & Complaints APIs
   getGlobalComplaints: async (params) => {
-    const { data } = await apiClient.get("/dashboards/admin-portal/support/complaints", {
-      params,
-    });
+    const { data } = await apiClient.get(
+      "/dashboards/admin-portal/support/complaints",
+      {
+        params,
+      },
+    );
     return data;
   },
   updateComplaintStatus: async (id, payload) => {
@@ -189,4 +206,3 @@ export const adminApi = {
 };
 
 export default adminApi;
-

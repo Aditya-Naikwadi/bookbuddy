@@ -19,4 +19,3 @@ const ScrollProgressComponent = () => {
 };
 
 export const ScrollProgress = React.memo(ScrollProgressComponent);
-

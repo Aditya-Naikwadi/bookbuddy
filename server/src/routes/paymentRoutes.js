@@ -2,10 +2,19 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middlewares/auth');
 const requireIdempotency = require('../middlewares/idempotency');
-const { createCheckoutSession, handlePaymentWebhook } = require('../controllers/paymentController');
+const {
+  createOrder,
+  verifyPayment,
+  createCheckoutSession,
+  handlePaymentWebhook,
+} = require('../controllers/paymentController');
 
 // Webhook endpoint (signature verified internally in controller)
 router.post('/webhook', handlePaymentWebhook);
+
+// Razorpay Order Creation & Payment Verification
+router.post('/create-order', protect, createOrder);
+router.post('/verify-payment', protect, verifyPayment);
 
 // Checkout session creation endpoints (enforce idempotency)
 router.post('/checkout-session', protect, requireIdempotency, createCheckoutSession);

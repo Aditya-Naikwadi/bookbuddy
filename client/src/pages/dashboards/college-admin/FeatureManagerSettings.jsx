@@ -31,8 +31,7 @@ export default function FeatureManagerSettings() {
     enabled: !!user,
   });
 
-  const rawFeatures =
-    configData?.enabledFeatures ||
+  const rawFeatures = configData?.enabledFeatures ||
     user?.collegeProfile?.enabledFeatures || [
       "catalog",
       "patrons",

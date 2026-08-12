@@ -1,10 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  Building2,
-  Plus,
-  CheckCircle2,
-  Copy,
-} from "lucide-react";
+import { Building2, Plus, CheckCircle2, Copy } from "lucide-react";
 import adminApi from "../../../api/adminApi";
 import OpsHeader from "../../../components/ops/OpsHeader";
 import OpsSeverityBadge from "../../../components/ops/OpsSeverityBadge";
@@ -75,13 +70,18 @@ export default function CollegeAdminManager() {
 
   const toggleService = (key) => {
     setSelectedServices((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
     );
   };
 
   const handleCreateTenant = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.domain || !formData.adminEmail || !formData.adminName) {
+    if (
+      !formData.name ||
+      !formData.domain ||
+      !formData.adminEmail ||
+      !formData.adminName
+    ) {
       alert("Please fill all required institution and admin contact fields.");
       return;
     }
@@ -89,13 +89,17 @@ export default function CollegeAdminManager() {
     setIsSubmitting(true);
     setError("");
     try {
-      const generatedPassword = formData.password || `Auth@${Math.random().toString(36).substring(2, 8)}`;
-      
+      const generatedPassword =
+        formData.password ||
+        `Auth@${Math.random().toString(36).substring(2, 8)}`;
+
       const payload = {
         name: formData.name,
         shortName: formData.shortName || formData.name,
         domain: formData.domain.toLowerCase().trim(),
-        slug: (formData.slug || formData.domain.split(".")[0]).toLowerCase().trim(),
+        slug: (formData.slug || formData.domain.split(".")[0])
+          .toLowerCase()
+          .trim(),
         code: (formData.slug || "TENANT").toUpperCase(),
         adminName: formData.adminName,
         adminEmail: formData.adminEmail.toLowerCase().trim(),
@@ -119,7 +123,10 @@ export default function CollegeAdminManager() {
       fetchColleges();
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || "Failed to direct-create college tenant.");
+      setError(
+        err.response?.data?.message ||
+          "Failed to direct-create college tenant.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -130,7 +137,11 @@ export default function CollegeAdminManager() {
 
   const handleToggleCollegeStatus = async (collegeId, currentStatus) => {
     const nextStatus = currentStatus === "active" ? "suspended" : "active";
-    if (!window.confirm(`Are you sure you want to set institution status to ${nextStatus.toUpperCase()}?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to set institution status to ${nextStatus.toUpperCase()}?`,
+      )
+    ) {
       return;
     }
 
@@ -155,7 +166,9 @@ export default function CollegeAdminManager() {
       setEditingCollege(null);
       fetchColleges();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to update college features.");
+      alert(
+        err.response?.data?.message || "Failed to update college features.",
+      );
     }
   };
 
@@ -240,7 +253,12 @@ export default function CollegeAdminManager() {
         return (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => handleToggleCollegeStatus(row._id, isAct ? "active" : "suspended")}
+              onClick={() =>
+                handleToggleCollegeStatus(
+                  row._id,
+                  isAct ? "active" : "suspended",
+                )
+              }
               className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold border transition-all ${
                 isAct
                   ? "bg-rose-950/60 border-rose-700/60 text-rose-300 hover:bg-rose-900"
@@ -254,7 +272,6 @@ export default function CollegeAdminManager() {
       },
     },
   ];
-
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
@@ -270,7 +287,10 @@ export default function CollegeAdminManager() {
         {error && (
           <div className="bg-rose-950/60 border border-rose-700/60 p-3 rounded-lg text-rose-300 font-mono text-xs flex items-center justify-between">
             <span>{error}</span>
-            <button onClick={() => setError("")} className="text-rose-400 font-bold hover:underline">
+            <button
+              onClick={() => setError("")}
+              className="text-rose-400 font-bold hover:underline"
+            >
               DISMISS
             </button>
           </div>
@@ -316,16 +336,26 @@ export default function CollegeAdminManager() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               <div className="bg-slate-950 border border-slate-800 p-3 rounded-lg space-y-1.5">
-                <span className="text-[10px] text-slate-500 uppercase font-bold">Institution Meta</span>
+                <span className="text-[10px] text-slate-500 uppercase font-bold">
+                  Institution Meta
+                </span>
                 <div>
-                  Name: <strong className="text-white">{createdReceipt.college.name}</strong>
+                  Name:{" "}
+                  <strong className="text-white">
+                    {createdReceipt.college.name}
+                  </strong>
                 </div>
                 <div>
                   Domain Whitelist:{" "}
-                  <strong className="text-indigo-300">@{createdReceipt.college.domain}</strong>
+                  <strong className="text-indigo-300">
+                    @{createdReceipt.college.domain}
+                  </strong>
                 </div>
                 <div>
-                  Tenant Slug: <strong className="text-slate-300">/{createdReceipt.college.slug}</strong>
+                  Tenant Slug:{" "}
+                  <strong className="text-slate-300">
+                    /{createdReceipt.college.slug}
+                  </strong>
                 </div>
               </div>
 
@@ -334,10 +364,16 @@ export default function CollegeAdminManager() {
                   Primary Admin Account
                 </span>
                 <div>
-                  Name: <strong className="text-white">{createdReceipt.adminUser.name}</strong>
+                  Name:{" "}
+                  <strong className="text-white">
+                    {createdReceipt.adminUser.name}
+                  </strong>
                 </div>
                 <div>
-                  Email: <strong className="text-indigo-300">{createdReceipt.adminUser.email}</strong>
+                  Email:{" "}
+                  <strong className="text-indigo-300">
+                    {createdReceipt.adminUser.email}
+                  </strong>
                 </div>
                 <div className="flex items-center gap-2">
                   Temporary Password:{" "}
@@ -350,8 +386,8 @@ export default function CollegeAdminManager() {
 
             <div className="bg-indigo-950/40 border border-indigo-700/50 p-3 rounded-lg flex items-center justify-between text-xs">
               <span className="text-indigo-200">
-                An invitation email with setup link has been automatically dispatched to{" "}
-                <strong>{createdReceipt.adminUser.email}</strong>.
+                An invitation email with setup link has been automatically
+                dispatched to <strong>{createdReceipt.adminUser.email}</strong>.
               </span>
               <button
                 onClick={() => {
@@ -482,7 +518,8 @@ export default function CollegeAdminManager() {
             {/* Feature Selection Grid */}
             <div className="space-y-2 pt-2 border-t border-slate-800">
               <label className="text-[10px] text-slate-400 uppercase font-bold">
-                Provisioned Module Configuration ({selectedServices.length} selected)
+                Provisioned Module Configuration ({selectedServices.length}{" "}
+                selected)
               </label>
 
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
@@ -524,7 +561,9 @@ export default function CollegeAdminManager() {
                 disabled={isSubmitting}
                 className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-bold text-xs shadow-lg"
               >
-                {isSubmitting ? "PROVISIONING..." : "PROVISION TENANT & DISPATCH INVITE"}
+                {isSubmitting
+                  ? "PROVISIONING..."
+                  : "PROVISION TENANT & DISPATCH INVITE"}
               </button>
             </div>
           </form>
@@ -564,7 +603,8 @@ export default function CollegeAdminManager() {
 
               <div className="space-y-2">
                 <label className="text-[10px] text-slate-400 uppercase font-bold">
-                  Select Active Functional Modules ({editFeatures.length} selected)
+                  Select Active Functional Modules ({editFeatures.length}{" "}
+                  selected)
                 </label>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
@@ -577,7 +617,7 @@ export default function CollegeAdminManager() {
                           setEditFeatures((prev) =>
                             prev.includes(mod.key)
                               ? prev.filter((k) => k !== mod.key)
-                              : [...prev, mod.key]
+                              : [...prev, mod.key],
                           );
                         }}
                         className={`p-2.5 rounded border cursor-pointer flex items-center gap-2 transition-all ${
@@ -621,4 +661,3 @@ export default function CollegeAdminManager() {
     </div>
   );
 }
-

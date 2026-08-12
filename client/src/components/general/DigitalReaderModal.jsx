@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useRef, lazy, Suspense, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  lazy,
+  Suspense,
+  useCallback,
+} from "react";
 import {
   X,
   ChevronLeft,
@@ -74,7 +81,7 @@ const PdfViewerEngine = lazy(async () => {
 
             if (!pdfUrlString) {
               throw new Error(
-                "No digital document URL provided for in-app viewing."
+                "No digital document URL provided for in-app viewing.",
               );
             }
 
@@ -200,11 +207,14 @@ const DigitalReaderModal = ({
   const modalRef = useRef(null);
 
   const activeTarget = resource || book;
-  const resolvedTitle = title || activeTarget?.title || activeTarget?.name || "Digital E-Book";
-  const resolvedFileType = fileType || activeTarget?.fileType || activeTarget?.format || "pdf";
+  const resolvedTitle =
+    title || activeTarget?.title || activeTarget?.name || "Digital E-Book";
+  const resolvedFileType =
+    fileType || activeTarget?.fileType || activeTarget?.format || "pdf";
   const resolvedUrl = extractUrl(fileUrl, resource, book);
 
-  const isModalOpen = isOpen !== undefined ? isOpen : Boolean(fileUrl || resource || book);
+  const isModalOpen =
+    isOpen !== undefined ? isOpen : Boolean(fileUrl || resource || book);
 
   const normalizedType = resolvedFileType?.toLowerCase().includes("epub")
     ? "epub"

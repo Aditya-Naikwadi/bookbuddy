@@ -64,7 +64,9 @@ export function OpsHeader({ title, subtitle, onRefresh, isRefreshing }) {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 font-bold text-slate-200">
             <Server className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="tracking-wider uppercase">BookBuddy Ops Plane</span>
+            <span className="tracking-wider uppercase">
+              BookBuddy Ops Plane
+            </span>
           </div>
           <span className="text-slate-600">|</span>
           <span className="text-slate-400 flex items-center gap-1">
@@ -76,7 +78,11 @@ export function OpsHeader({ title, subtitle, onRefresh, isRefreshing }) {
         </div>
 
         <div className="flex items-center gap-3 ml-auto">
-          <OpsSeverityBadge status="healthy" label="ALL SYSTEMS OPERATIONAL" size="sm" />
+          <OpsSeverityBadge
+            status="healthy"
+            label="ALL SYSTEMS OPERATIONAL"
+            size="sm"
+          />
           <span className="text-slate-600">|</span>
           <span className="text-slate-300 font-bold flex items-center gap-1">
             <Lock className="w-3 h-3 text-indigo-400" />
@@ -111,7 +117,9 @@ export function OpsHeader({ title, subtitle, onRefresh, isRefreshing }) {
               {title}
             </h1>
             {subtitle && (
-              <p className="text-xs font-mono text-slate-400 mt-0.5">{subtitle}</p>
+              <p className="text-xs font-mono text-slate-400 mt-0.5">
+                {subtitle}
+              </p>
             )}
           </div>
 
@@ -154,9 +162,13 @@ export function OpsHeader({ title, subtitle, onRefresh, isRefreshing }) {
                     : "bg-slate-950 text-slate-400 border-transparent hover:bg-slate-900 hover:text-slate-200 hover:border-slate-800"
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? "text-indigo-400" : "text-slate-500"}`} />
+                <Icon
+                  className={`w-4 h-4 ${isActive ? "text-indigo-400" : "text-slate-500"}`}
+                />
                 <span>{item.label}</span>
-                <span className="text-[9px] text-slate-600 font-mono">[{item.code}]</span>
+                <span className="text-[9px] text-slate-600 font-mono">
+                  [{item.code}]
+                </span>
               </Link>
             );
           })}

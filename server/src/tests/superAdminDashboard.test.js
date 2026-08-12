@@ -34,8 +34,11 @@ describe('Super Admin Dashboard Comprehensive Integration Test Suite', () => {
 
     // Clean up any lingering test records
     await College.deleteMany({ code: 'TESTUNIV' });
+    await User.deleteMany({ studentId: { $in: ['SA-001', 'CA-001', 'STU-001'] } });
     await User.deleteMany({
-      email: { $in: ['superadmin@bookbuddy.internal', 'admin@testuniv.edu', 'jane@testuniv.edu'] },
+      email: {
+        $in: ['superadmin@bookbuddy.internal', 'admin@testuniv.edu', 'jane@testuniv.edu'],
+      },
     });
 
     // Create test college tenant
@@ -87,14 +90,17 @@ describe('Super Admin Dashboard Comprehensive Integration Test Suite', () => {
   });
 
   afterAll(async () => {
-    if (superAdminUser && collegeAdminUser && studentUser) {
-      await User.deleteMany({
-        _id: { $in: [superAdminUser._id, collegeAdminUser._id, studentUser._id] },
-      });
-    }
-    if (testCollege) {
-      await College.deleteMany({ _id: testCollege._id });
-    }
+    await College.deleteMany({ code: 'TESTUNIV' });
+    await User.deleteMany({
+      $or: [
+        {
+          email: {
+            $in: ['superadmin@bookbuddy.internal', 'admin@testuniv.edu', 'jane@testuniv.edu'],
+          },
+        },
+        { studentId: { $in: ['SA-001', 'CA-001', 'STU-001'] } },
+      ],
+    });
   });
 
   describe('RBAC & Security Middleware Enforcements', () => {

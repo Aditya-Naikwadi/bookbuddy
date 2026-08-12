@@ -69,7 +69,8 @@ export default function SystemSettings() {
     } catch (err) {
       setMessage({
         type: "error",
-        text: err.response?.data?.message || "Failed to update system settings.",
+        text:
+          err.response?.data?.message || "Failed to update system settings.",
       });
     } finally {
       setIsSaving(false);
@@ -144,7 +145,9 @@ export default function SystemSettings() {
 
             <div className="bg-slate-950 border border-slate-800 p-4 rounded-lg flex items-center justify-between text-xs">
               <div>
-                <p className="font-bold text-slate-200 uppercase">Automated Daily Backups</p>
+                <p className="font-bold text-slate-200 uppercase">
+                  Automated Daily Backups
+                </p>
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   Schedule: {settings.autoBackupSchedule}
                 </p>
@@ -163,7 +166,9 @@ export default function SystemSettings() {
 
             <div className="bg-slate-950 border border-slate-800 p-4 rounded-lg flex items-center justify-between text-xs">
               <div>
-                <p className="font-bold text-amber-300 uppercase">Global System Maintenance Mode</p>
+                <p className="font-bold text-amber-300 uppercase">
+                  Global System Maintenance Mode
+                </p>
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   Locks non-super-admin routes during system upgrades
                 </p>
@@ -182,8 +187,12 @@ export default function SystemSettings() {
 
             {latestBackup && (
               <div className="bg-emerald-950/40 border border-emerald-700/50 p-3 rounded-lg text-xs space-y-1">
-                <div className="text-[10px] text-emerald-400 uppercase font-bold">Latest Snapshot Generated</div>
-                <div className="text-slate-200 font-mono text-[11px]">{latestBackup}</div>
+                <div className="text-[10px] text-emerald-400 uppercase font-bold">
+                  Latest Snapshot Generated
+                </div>
+                <div className="text-slate-200 font-mono text-[11px]">
+                  {latestBackup}
+                </div>
               </div>
             )}
 
@@ -192,8 +201,14 @@ export default function SystemSettings() {
               disabled={isBackingUp}
               className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg"
             >
-              <RefreshCw className={`w-4 h-4 ${isBackingUp ? "animate-spin" : ""}`} />
-              <span>{isBackingUp ? "EXECUTING SNAPSHOT DUMP..." : "FORCE MANUAL DATABASE SNAPSHOT"}</span>
+              <RefreshCw
+                className={`w-4 h-4 ${isBackingUp ? "animate-spin" : ""}`}
+              />
+              <span>
+                {isBackingUp
+                  ? "EXECUTING SNAPSHOT DUMP..."
+                  : "FORCE MANUAL DATABASE SNAPSHOT"}
+              </span>
             </button>
           </div>
 
@@ -210,7 +225,9 @@ export default function SystemSettings() {
 
             <form onSubmit={handleSaveSettings} className="space-y-3 text-xs">
               <div>
-                <label className="text-[10px] text-slate-400 uppercase font-bold">SMTP Host *</label>
+                <label className="text-[10px] text-slate-400 uppercase font-bold">
+                  SMTP Host *
+                </label>
                 <input
                   type="text"
                   name="smtpHost"
@@ -223,7 +240,9 @@ export default function SystemSettings() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 uppercase font-bold">Port *</label>
+                  <label className="text-[10px] text-slate-400 uppercase font-bold">
+                    Port *
+                  </label>
                   <input
                     type="number"
                     name="smtpPort"
@@ -234,7 +253,9 @@ export default function SystemSettings() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 uppercase font-bold">Security *</label>
+                  <label className="text-[10px] text-slate-400 uppercase font-bold">
+                    Security *
+                  </label>
                   <select
                     name="smtpSecurity"
                     value={settings.smtpSecurity}
@@ -249,7 +270,9 @@ export default function SystemSettings() {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 uppercase font-bold">API Key / SMTP Username</label>
+                <label className="text-[10px] text-slate-400 uppercase font-bold">
+                  API Key / SMTP Username
+                </label>
                 <input
                   type="text"
                   name="smtpUser"

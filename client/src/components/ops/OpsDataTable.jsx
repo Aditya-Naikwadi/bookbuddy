@@ -1,5 +1,13 @@
 import React, { useState, useMemo } from "react";
-import { Search, ChevronDown, ChevronUp, ArrowUpDown, Filter, RefreshCw, Download } from "lucide-react";
+import {
+  Search,
+  ChevronDown,
+  ChevronUp,
+  ArrowUpDown,
+  Filter,
+  RefreshCw,
+  Download,
+} from "lucide-react";
 
 /**
  * OpsDataTable
@@ -41,7 +49,7 @@ export function OpsDataTable({
         const val = row[col.key];
         if (val === null || val === undefined) return false;
         return String(val).toLowerCase().includes(term);
-      })
+      }),
     );
   }, [data, searchTerm, columns]);
 
@@ -68,7 +76,9 @@ export function OpsDataTable({
 
   const handleExportCsv = () => {
     if (!sortedData.length) return;
-    const headerRow = columns.map((col) => `"${col.header.replace(/"/g, '""')}"`).join(",");
+    const headerRow = columns
+      .map((col) => `"${col.header.replace(/"/g, '""')}"`)
+      .join(",");
     const bodyRows = sortedData.map((row) =>
       columns
         .map((col) => {
@@ -78,10 +88,11 @@ export function OpsDataTable({
           }
           return `"${String(val ?? "").replace(/"/g, '""')}"`;
         })
-        .join(",")
+        .join(","),
     );
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headerRow, ...bodyRows].join("\n");
+    const csvContent =
+      "data:text/csv;charset=utf-8," + [headerRow, ...bodyRows].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -121,12 +132,13 @@ export function OpsDataTable({
           </button>
           <span className="text-slate-700">|</span>
           <span>
-            SHOWING <strong className="text-slate-200">{paginatedData.length}</strong> OF{" "}
-            <strong className="text-slate-200">{sortedData.length}</strong> RECORDS
+            SHOWING{" "}
+            <strong className="text-slate-200">{paginatedData.length}</strong>{" "}
+            OF <strong className="text-slate-200">{sortedData.length}</strong>{" "}
+            RECORDS
           </span>
         </div>
       </div>
-
 
       {/* Main High-Density Table */}
       <div className="overflow-x-auto">
@@ -138,7 +150,9 @@ export function OpsDataTable({
                   key={col.key}
                   onClick={() => col.sortable !== false && handleSort(col.key)}
                   className={`px-3 py-2.5 border-r border-slate-800/50 last:border-r-0 ${
-                    col.sortable !== false ? "cursor-pointer hover:bg-slate-900/60 hover:text-slate-200" : ""
+                    col.sortable !== false
+                      ? "cursor-pointer hover:bg-slate-900/60 hover:text-slate-200"
+                      : ""
                   }`}
                 >
                   <div className="flex items-center gap-1.5">
@@ -164,7 +178,10 @@ export function OpsDataTable({
           <tbody className="divide-y divide-slate-800/60">
             {isLoading ? (
               <tr>
-                <td colSpan={columns.length} className="text-center py-12 text-slate-500">
+                <td
+                  colSpan={columns.length}
+                  className="text-center py-12 text-slate-500"
+                >
                   <div className="inline-flex items-center gap-2">
                     <RefreshCw className="w-4 h-4 animate-spin text-indigo-400" />
                     <span>QUERYING INTERNAL DATABASE RECORDS...</span>
@@ -173,7 +190,10 @@ export function OpsDataTable({
               </tr>
             ) : paginatedData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="text-center py-12 text-slate-500 font-mono">
+                <td
+                  colSpan={columns.length}
+                  className="text-center py-12 text-slate-500 font-mono"
+                >
                   {emptyMessage}
                 </td>
               </tr>
@@ -188,7 +208,9 @@ export function OpsDataTable({
                       key={col.key}
                       className="px-3 py-2 border-r border-slate-800/40 last:border-r-0 whitespace-nowrap align-middle"
                     >
-                      {col.render ? col.render(row[col.key], row) : row[col.key] ?? "—"}
+                      {col.render
+                        ? col.render(row[col.key], row)
+                        : (row[col.key] ?? "—")}
                     </td>
                   ))}
                 </tr>

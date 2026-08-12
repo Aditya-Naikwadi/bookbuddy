@@ -134,7 +134,9 @@ const NavbarComponent = () => {
             className="hamburger-button"
             aria-expanded={mobileOpen}
             aria-controls="responsive-nav-drawer"
-            aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-label={
+              mobileOpen ? "Close navigation menu" : "Open navigation menu"
+            }
             onClick={() => setMobileOpen((prev) => !prev)}
           >
             <span className="hamburger-line hamburger-line-1" />
@@ -194,5 +196,3 @@ const NavbarComponent = () => {
 };
 
 export const Navbar = React.memo(NavbarComponent);
-
-

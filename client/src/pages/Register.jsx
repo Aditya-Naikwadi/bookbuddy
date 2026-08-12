@@ -138,7 +138,10 @@ const Register = () => {
       >
         <div className="flex flex-col sm:flex-row gap-3">
           <motion.div variants={itemVariants} className="w-full sm:w-1/2">
-            <label htmlFor="reg-name" className="block text-xs font-medium text-muted mb-1.5 ml-1">
+            <label
+              htmlFor="reg-name"
+              className="block text-xs font-medium text-muted mb-1.5 ml-1"
+            >
               Full Name
             </label>
             <input
@@ -158,7 +161,10 @@ const Register = () => {
           </motion.div>
 
           <motion.div variants={itemVariants} className="w-full sm:w-1/2">
-            <label htmlFor="reg-email" className="block text-xs font-medium text-muted mb-1.5 ml-1">
+            <label
+              htmlFor="reg-email"
+              className="block text-xs font-medium text-muted mb-1.5 ml-1"
+            >
               Email
             </label>
             <div className="relative">
@@ -195,7 +201,10 @@ const Register = () => {
 
         <div className="flex flex-col sm:flex-row gap-3">
           <motion.div variants={itemVariants} className="w-full sm:w-1/2">
-            <label htmlFor="reg-student-id" className="block text-xs font-medium text-muted mb-1.5 ml-1">
+            <label
+              htmlFor="reg-student-id"
+              className="block text-xs font-medium text-muted mb-1.5 ml-1"
+            >
               ID Number
             </label>
             <input
@@ -213,7 +222,10 @@ const Register = () => {
           </motion.div>
 
           <motion.div variants={itemVariants} className="w-full sm:w-1/2">
-            <label htmlFor="reg-role" className="block text-xs font-medium text-muted mb-1.5 ml-1">
+            <label
+              htmlFor="reg-role"
+              className="block text-xs font-medium text-muted mb-1.5 ml-1"
+            >
               Role
             </label>
             <select
@@ -241,7 +253,10 @@ const Register = () => {
         </div>
 
         <motion.div variants={itemVariants}>
-          <label htmlFor="reg-password" className="block text-xs font-medium text-muted mb-1.5 ml-1">
+          <label
+            htmlFor="reg-password"
+            className="block text-xs font-medium text-muted mb-1.5 ml-1"
+          >
             Password
           </label>
           <div className="relative">

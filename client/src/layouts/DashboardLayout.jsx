@@ -177,7 +177,6 @@ export default function DashboardLayout() {
             </>
           )}
 
-
           {isCollegeAdmin && (
             <>
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
@@ -264,7 +263,11 @@ export default function DashboardLayout() {
               className="hamburger-button md:hidden hover:bg-slate-100 dark:hover:bg-slate-800"
               aria-expanded={mobileMenuOpen}
               aria-controls="dashboard-mobile-drawer"
-              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-label={
+                mobileMenuOpen
+                  ? "Close navigation menu"
+                  : "Open navigation menu"
+              }
               onClick={() => setMobileMenuOpen((prev) => !prev)}
             >
               <span className="hamburger-line hamburger-line-1 !bg-slate-700 dark:!bg-slate-200" />
@@ -310,7 +313,10 @@ export default function DashboardLayout() {
 
       {/* Mobile/Tablet Backdrop Overlay */}
       <div
-        className={cn("nav-drawer-overlay md:hidden", mobileMenuOpen && "is-open")}
+        className={cn(
+          "nav-drawer-overlay md:hidden",
+          mobileMenuOpen && "is-open",
+        )}
         onClick={closeMenu}
         aria-hidden="true"
       />
@@ -320,7 +326,7 @@ export default function DashboardLayout() {
         id="dashboard-mobile-drawer"
         className={cn(
           "nav-drawer-panel md:hidden !bg-white !text-slate-900 border-l border-slate-200 shadow-2xl",
-          mobileMenuOpen && "is-open"
+          mobileMenuOpen && "is-open",
         )}
         aria-label="Dashboard navigation menu"
       >
@@ -346,25 +352,64 @@ export default function DashboardLayout() {
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                 Super Admin
               </p>
-              <NavItem to="/admin-portal/overview" icon={<Globe size={20} />} label="System Overview" />
-              <NavItem to="/admin-portal/users" icon={<Users size={20} />} label="User Directory" />
-              <NavItem to="/admin-portal/college-admins" icon={<Building size={20} />} label="College Tenants" />
-              <NavItem to="/admin-portal/registration-queue" icon={<FileCheck size={20} />} label="Onboarding Queue" />
-              <NavItem to="/admin-portal/moderation" icon={<Shield size={20} />} label="Content Moderation" />
-              <NavItem to="/admin-portal/data-oversight" icon={<Layers size={20} />} label="Data Oversight" />
-              <NavItem to="/admin-portal/support" icon={<HelpCircle size={20} />} label="Support Queue" />
-              <NavItem to="/admin-portal/audit-logs" icon={<FileSearch size={20} />} label="Audit Logs" />
-              <NavItem to="/admin-portal/settings" icon={<HardDrive size={20} />} label="System Settings" />
+              <NavItem
+                to="/admin-portal/overview"
+                icon={<Globe size={20} />}
+                label="System Overview"
+              />
+              <NavItem
+                to="/admin-portal/users"
+                icon={<Users size={20} />}
+                label="User Directory"
+              />
+              <NavItem
+                to="/admin-portal/college-admins"
+                icon={<Building size={20} />}
+                label="College Tenants"
+              />
+              <NavItem
+                to="/admin-portal/registration-queue"
+                icon={<FileCheck size={20} />}
+                label="Onboarding Queue"
+              />
+              <NavItem
+                to="/admin-portal/moderation"
+                icon={<Shield size={20} />}
+                label="Content Moderation"
+              />
+              <NavItem
+                to="/admin-portal/data-oversight"
+                icon={<Layers size={20} />}
+                label="Data Oversight"
+              />
+              <NavItem
+                to="/admin-portal/support"
+                icon={<HelpCircle size={20} />}
+                label="Support Queue"
+              />
+              <NavItem
+                to="/admin-portal/audit-logs"
+                icon={<FileSearch size={20} />}
+                label="Audit Logs"
+              />
+              <NavItem
+                to="/admin-portal/settings"
+                icon={<HardDrive size={20} />}
+                label="System Settings"
+              />
             </>
           )}
-
 
           {isCollegeAdmin && (
             <>
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                 College Admin
               </p>
-              <NavItem to="/college-admin" icon={<LayoutDashboard size={20} />} label="Dashboard Home" />
+              <NavItem
+                to="/college-admin"
+                icon={<LayoutDashboard size={20} />}
+                label="Dashboard Home"
+              />
               {visibleCollegeAdminItems
                 .filter((item) => item.key !== "dashboard")
                 .map((item) => {
@@ -386,10 +431,26 @@ export default function DashboardLayout() {
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                 General Public Portal
               </p>
-              <NavItem to="/general-dashboard" icon={<LayoutDashboard size={20} />} label="Portal Overview" />
-              <NavItem to="/general-dashboard/search" icon={<Search size={20} />} label="Advanced Search" />
-              <NavItem to="/general-dashboard/e-resources" icon={<FileText size={20} />} label="Public E-Resources" />
-              <NavItem to="/general-dashboard/saved" icon={<Bookmark size={20} />} label="Saved Bookmarks" />
+              <NavItem
+                to="/general-dashboard"
+                icon={<LayoutDashboard size={20} />}
+                label="Portal Overview"
+              />
+              <NavItem
+                to="/general-dashboard/search"
+                icon={<Search size={20} />}
+                label="Advanced Search"
+              />
+              <NavItem
+                to="/general-dashboard/e-resources"
+                icon={<FileText size={20} />}
+                label="Public E-Resources"
+              />
+              <NavItem
+                to="/general-dashboard/saved"
+                icon={<Bookmark size={20} />}
+                label="Saved Bookmarks"
+              />
             </>
           )}
 
@@ -398,7 +459,11 @@ export default function DashboardLayout() {
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                 Student Features
               </p>
-              <NavItem to="/student-dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard Home" />
+              <NavItem
+                to="/student-dashboard"
+                icon={<LayoutDashboard size={20} />}
+                label="Dashboard Home"
+              />
               {visibleStudentItems
                 .filter((item) => item.key !== "dashboard")
                 .map((item) => {
@@ -434,14 +499,34 @@ export default function DashboardLayout() {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around p-2 z-40 shadow-lg">
         {isGeneralDashboard ? (
           <>
-            <MobileNavItem to="/general-dashboard" icon={<LayoutDashboard size={20} />} label="Home" />
-            <MobileNavItem to="/general-dashboard/search" icon={<Search size={20} />} label="Search" />
-            <MobileNavItem to="/general-dashboard/e-resources" icon={<FileText size={20} />} label="Resources" />
-            <MobileNavItem to="/general-dashboard/saved" icon={<Bookmark size={20} />} label="Saved" />
+            <MobileNavItem
+              to="/general-dashboard"
+              icon={<LayoutDashboard size={20} />}
+              label="Home"
+            />
+            <MobileNavItem
+              to="/general-dashboard/search"
+              icon={<Search size={20} />}
+              label="Search"
+            />
+            <MobileNavItem
+              to="/general-dashboard/e-resources"
+              icon={<FileText size={20} />}
+              label="Resources"
+            />
+            <MobileNavItem
+              to="/general-dashboard/saved"
+              icon={<Bookmark size={20} />}
+              label="Saved"
+            />
           </>
         ) : isStudent ? (
           <>
-            <MobileNavItem to="/student-dashboard" icon={<LayoutDashboard size={20} />} label="Home" />
+            <MobileNavItem
+              to="/student-dashboard"
+              icon={<LayoutDashboard size={20} />}
+              label="Home"
+            />
             {visibleStudentItems.slice(1, 4).map((item) => {
               const IconComp = item.icon;
               return (
@@ -456,7 +541,11 @@ export default function DashboardLayout() {
           </>
         ) : isCollegeAdmin ? (
           <>
-            <MobileNavItem to="/college-admin" icon={<LayoutDashboard size={20} />} label="Home" />
+            <MobileNavItem
+              to="/college-admin"
+              icon={<LayoutDashboard size={20} />}
+              label="Home"
+            />
             {visibleCollegeAdminItems.slice(1, 4).map((item) => {
               const IconComp = item.icon;
               return (
@@ -471,16 +560,32 @@ export default function DashboardLayout() {
           </>
         ) : (
           <>
-            <MobileNavItem to="/admin-portal" icon={<LayoutDashboard size={20} />} label="Home" />
-            <MobileNavItem to="/admin-portal/overview" icon={<Globe size={20} />} label="Overview" />
-            <MobileNavItem to="/admin-portal/moderation" icon={<FileCheck size={20} />} label="Moderation" />
-            <MobileNavItem to="/admin-portal/settings" icon={<HardDrive size={20} />} label="Settings" />
+            <MobileNavItem
+              to="/admin-portal"
+              icon={<LayoutDashboard size={20} />}
+              label="Home"
+            />
+            <MobileNavItem
+              to="/admin-portal/overview"
+              icon={<Globe size={20} />}
+              label="Overview"
+            />
+            <MobileNavItem
+              to="/admin-portal/moderation"
+              icon={<FileCheck size={20} />}
+              label="Moderation"
+            />
+            <MobileNavItem
+              to="/admin-portal/settings"
+              icon={<HardDrive size={20} />}
+              label="Settings"
+            />
           </>
         )}
       </nav>
     </div>
   );
-};
+}
 
 const NavItem = ({ to, icon, label }) => (
   <Link

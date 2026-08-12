@@ -1,10 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import {
-  CheckCircle2,
-  XCircle,
-  Eye,
-  Building2,
-} from "lucide-react";
+import { CheckCircle2, XCircle, Eye, Building2 } from "lucide-react";
 import eresourcesApi from "../../../api/eresourcesApi";
 import adminApi from "../../../api/adminApi";
 import OpsHeader from "../../../components/ops/OpsHeader";
@@ -26,7 +21,10 @@ export default function GlobalContentModeration() {
 
   const [reloadToken, setReloadToken] = useState(0);
 
-  const fetchModerationQueue = useCallback(() => setReloadToken((t) => t + 1), []);
+  const fetchModerationQueue = useCallback(
+    () => setReloadToken((t) => t + 1),
+    [],
+  );
 
   useEffect(() => {
     let ignore = false;
@@ -54,10 +52,14 @@ export default function GlobalContentModeration() {
   }, [reloadToken]);
 
   const pendingItems = resources.filter(
-    (r) => r.moderationStatus === "pending" || r.status === "pending_review" || !r.moderationStatus
+    (r) =>
+      r.moderationStatus === "pending" ||
+      r.status === "pending_review" ||
+      !r.moderationStatus,
   );
   const historyItems = resources.filter(
-    (r) => r.moderationStatus === "approved" || r.moderationStatus === "rejected"
+    (r) =>
+      r.moderationStatus === "approved" || r.moderationStatus === "rejected",
   );
 
   const displayedItems = activeTab === "pending" ? pendingItems : historyItems;
@@ -69,7 +71,8 @@ export default function GlobalContentModeration() {
       if (adminApi.moderateEResource) {
         await adminApi.moderateEResource(resourceId, {
           status: "approved",
-          reason: "Content verified and approved for platform-wide library access.",
+          reason:
+            "Content verified and approved for platform-wide library access.",
         });
       } else {
         await eresourcesApi.updateResource(resourceId, {
@@ -85,7 +88,9 @@ export default function GlobalContentModeration() {
 
       // Update local state
       setResources((prev) =>
-        prev.map((r) => (r._id === resourceId ? { ...r, moderationStatus: "approved" } : r))
+        prev.map((r) =>
+          r._id === resourceId ? { ...r, moderationStatus: "approved" } : r,
+        ),
       );
 
       // Auto Advance to next pending item if enabled
@@ -135,9 +140,13 @@ export default function GlobalContentModeration() {
       setResources((prev) =>
         prev.map((r) =>
           r._id === resourceId
-            ? { ...r, moderationStatus: "rejected", rejectionReason: rejectionReason.trim() }
-            : r
-        )
+            ? {
+                ...r,
+                moderationStatus: "rejected",
+                rejectionReason: rejectionReason.trim(),
+              }
+            : r,
+        ),
       );
 
       setRejectionReason("");
@@ -178,7 +187,10 @@ export default function GlobalContentModeration() {
             }`}
           >
             <span>{message.text}</span>
-            <button onClick={() => setMessage({ type: "", text: "" })} className="hover:underline">
+            <button
+              onClick={() => setMessage({ type: "", text: "" })}
+              className="hover:underline"
+            >
               DISMISS
             </button>
           </div>
@@ -196,7 +208,11 @@ export default function GlobalContentModeration() {
               }`}
             >
               <span>PENDING QUEUE</span>
-              <OpsSeverityBadge status="warning" label={String(pendingItems.length)} size="sm" />
+              <OpsSeverityBadge
+                status="warning"
+                label={String(pendingItems.length)}
+                size="sm"
+              />
             </button>
 
             <button
@@ -208,7 +224,9 @@ export default function GlobalContentModeration() {
               }`}
             >
               <span>MODERATION HISTORY</span>
-              <span className="text-[10px] text-slate-500 font-bold">({historyItems.length})</span>
+              <span className="text-[10px] text-slate-500 font-bold">
+                ({historyItems.length})
+              </span>
             </button>
           </div>
 
@@ -228,7 +246,9 @@ export default function GlobalContentModeration() {
           {/* Item Queue List */}
           <div className="lg:col-span-5 space-y-3">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              {activeTab === "pending" ? "Pending Items Review Queue" : "Historical Moderation Decisions"}
+              {activeTab === "pending"
+                ? "Pending Items Review Queue"
+                : "Historical Moderation Decisions"}
             </h3>
 
             <div className="space-y-2 max-h-[640px] overflow-y-auto pr-1">
@@ -285,30 +305,45 @@ export default function GlobalContentModeration() {
                       {selectedResource.title}
                     </h3>
                   </div>
-                  <OpsSeverityBadge status={selectedResource.moderationStatus || "pending"} />
+                  <OpsSeverityBadge
+                    status={selectedResource.moderationStatus || "pending"}
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div className="bg-slate-950 p-3 rounded border border-slate-800 space-y-1">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold">Category</span>
-                    <div className="text-slate-200">{selectedResource.category || "General Library"}</div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold">
+                      Category
+                    </span>
+                    <div className="text-slate-200">
+                      {selectedResource.category || "General Library"}
+                    </div>
                   </div>
                   <div className="bg-slate-950 p-3 rounded border border-slate-800 space-y-1">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold">Uploaded By</span>
-                    <div className="text-slate-200">{selectedResource.uploadedBy || "College Librarian"}</div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold">
+                      Uploaded By
+                    </span>
+                    <div className="text-slate-200">
+                      {selectedResource.uploadedBy || "College Librarian"}
+                    </div>
                   </div>
                 </div>
 
                 <div className="space-y-1 text-xs">
-                  <span className="text-[10px] text-slate-500 uppercase font-bold">Description</span>
+                  <span className="text-[10px] text-slate-500 uppercase font-bold">
+                    Description
+                  </span>
                   <p className="text-slate-300 bg-slate-950 p-3 rounded border border-slate-800 leading-relaxed text-[11px]">
-                    {selectedResource.description || "No description provided by uploader."}
+                    {selectedResource.description ||
+                      "No description provided by uploader."}
                   </p>
                 </div>
 
                 {/* Preview Trigger Button */}
                 <div className="bg-slate-950 p-3 rounded border border-slate-800 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">Content Preview Source</span>
+                  <span className="text-xs text-slate-400">
+                    Content Preview Source
+                  </span>
                   <button
                     onClick={() => setReaderModalItem(selectedResource)}
                     className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded text-xs flex items-center gap-1.5 transition-colors"
@@ -362,7 +397,8 @@ export default function GlobalContentModeration() {
               </div>
             ) : (
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center text-slate-500 text-xs font-mono">
-                Select an item from the queue list to inspect content and execute moderation decision.
+                Select an item from the queue list to inspect content and
+                execute moderation decision.
               </div>
             )}
           </div>

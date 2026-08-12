@@ -58,10 +58,13 @@ const Login = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, loginWithGoogle, isLoading, error, mfaRequired } = useAuthStore();
+  const { login, loginWithGoogle, isLoading, error, mfaRequired } =
+    useAuthStore();
   const { googleClientId } = useConfig();
   const isGoogleAuthAvailable = Boolean(
-    googleClientId && typeof googleClientId === "string" && googleClientId.trim()
+    googleClientId &&
+    typeof googleClientId === "string" &&
+    googleClientId.trim(),
   );
 
   const [redirectingMsg, setRedirectingMsg] = useState(null);
@@ -69,9 +72,14 @@ const Login = () => {
   const handlePostAuthNavigate = () => {
     const user = useAuthStore.getState().user;
     let defaultRoute = "/student-dashboard";
-    let collegeName = user?.collegeId?.name || user?.collegeName || "your institution";
+    let collegeName =
+      user?.collegeId?.name || user?.collegeName || "your institution";
 
-    if (["college-admin", "college_admin", "admin", "librarian"].includes(user?.role)) {
+    if (
+      ["college-admin", "college_admin", "admin", "librarian"].includes(
+        user?.role,
+      )
+    ) {
       defaultRoute = "/college-admin";
     } else if (user?.role === "general") {
       defaultRoute = "/general-dashboard";
@@ -90,7 +98,11 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await login(email, password, showMfaField || mfaRequired ? totpCode : null);
+    const result = await login(
+      email,
+      password,
+      showMfaField || mfaRequired ? totpCode : null,
+    );
     if (result === true) {
       handlePostAuthNavigate();
     } else if (result?.mfaRequired) {
@@ -187,7 +199,10 @@ const Login = () => {
         autoComplete="off"
       >
         <motion.div variants={itemVariants} className="relative">
-          <label htmlFor="login-username" className="block text-xs font-medium text-muted mb-1.5 ml-1">
+          <label
+            htmlFor="login-username"
+            className="block text-xs font-medium text-muted mb-1.5 ml-1"
+          >
             Email or Student ID
           </label>
           <div className="relative">
@@ -224,7 +239,10 @@ const Login = () => {
 
         <motion.div variants={itemVariants}>
           <div className="flex items-center justify-between mb-1.5 mx-1">
-            <label htmlFor="login-password" className="block text-xs font-medium text-muted">
+            <label
+              htmlFor="login-password"
+              className="block text-xs font-medium text-muted"
+            >
               Password
             </label>
             <button
@@ -265,7 +283,10 @@ const Login = () => {
 
         {(showMfaField || mfaRequired) && (
           <motion.div variants={itemVariants}>
-            <label htmlFor="login-mfa-code" className="block text-xs font-medium text-amber-400 mb-1.5 ml-1">
+            <label
+              htmlFor="login-mfa-code"
+              className="block text-xs font-medium text-amber-400 mb-1.5 ml-1"
+            >
               6-Digit Authenticator Code (MFA)
             </label>
             <input

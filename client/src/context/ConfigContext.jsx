@@ -30,7 +30,10 @@ export const ConfigProvider = ({ children }) => {
       })
       .catch((err) => {
         // eslint-disable-next-line no-console
-        console.warn("Could not fetch public config from backend:", err.message);
+        console.warn(
+          "Could not fetch public config from backend:",
+          err.message,
+        );
         if (isMounted) {
           setConfig((prev) => ({ ...prev, isLoading: false }));
         }
@@ -42,9 +45,7 @@ export const ConfigProvider = ({ children }) => {
   }, []);
 
   return (
-    <ConfigContext.Provider value={config}>
-      {children}
-    </ConfigContext.Provider>
+    <ConfigContext.Provider value={config}>{children}</ConfigContext.Provider>
   );
 };
 

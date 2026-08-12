@@ -40,7 +40,8 @@ export const Button: React.FC<ButtonProps> = ({
     primary: "bg-ember text-white hover:bg-ember-glow shadow-md",
     secondary: "bg-indigo text-white hover:bg-indigo-600 shadow-md",
     ghost: "text-ink hover:bg-surface border border-edge",
-    outline: "border border-edge text-ink hover:bg-surface hover:text-ember shadow-sm",
+    outline:
+      "border border-edge text-ink hover:bg-surface hover:text-ember shadow-sm",
   };
   const sizes = {
     sm: "h-9 px-4 text-sm",

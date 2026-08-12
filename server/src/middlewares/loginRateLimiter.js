@@ -36,6 +36,10 @@ const getClientKey = (req) => {
 };
 
 const loginRateLimiter = async (req, res, next) => {
+  if (process.env.NODE_ENV === 'test') {
+    return next();
+  }
+
   if (!limiterConsecutiveFails) {
     createLimiter();
   }

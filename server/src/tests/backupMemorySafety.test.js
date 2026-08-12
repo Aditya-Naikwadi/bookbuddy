@@ -40,7 +40,11 @@ describe('Streaming Backup Memory Safety Integration Tests', () => {
     await mongoose.disconnect();
 
     if (tempBackupDir && fs.existsSync(tempBackupDir)) {
-      fs.rmSync(tempBackupDir, { recursive: true, force: true });
+      try {
+        fs.rmSync(tempBackupDir, { recursive: true, force: true });
+      } catch {
+        // Ignore transient EBUSY locks during teardown
+      }
     }
   });
 

@@ -94,7 +94,10 @@ export default function CollegeStudentRegister() {
               {/* Name Fields */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="student-first-name" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                  <label
+                    htmlFor="student-first-name"
+                    className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1"
+                  >
                     First Name <span className="text-rose-400">*</span>
                   </label>
                   <input
@@ -114,7 +117,10 @@ export default function CollegeStudentRegister() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="student-last-name" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                  <label
+                    htmlFor="student-last-name"
+                    className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1"
+                  >
                     Last Name <span className="text-rose-400">*</span>
                   </label>
                   <input
@@ -138,7 +144,10 @@ export default function CollegeStudentRegister() {
               {/* Roll Number & Phone */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="student-roll-number" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                  <label
+                    htmlFor="student-roll-number"
+                    className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1"
+                  >
                     Roll / Student ID <span className="text-rose-400">*</span>
                   </label>
                   <input
@@ -158,7 +167,10 @@ export default function CollegeStudentRegister() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="student-phone" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                  <label
+                    htmlFor="student-phone"
+                    className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1"
+                  >
                     Phone Number
                   </label>
                   <input
@@ -177,7 +189,10 @@ export default function CollegeStudentRegister() {
 
               {/* Email */}
               <div>
-                <label htmlFor="student-email" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                <label
+                  htmlFor="student-email"
+                  className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1"
+                >
                   Institutional Email <span className="text-rose-400">*</span>
                 </label>
                 <div className="relative">
@@ -199,7 +214,10 @@ export default function CollegeStudentRegister() {
 
               {/* Department */}
               <div>
-                <label htmlFor="student-department" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                <label
+                  htmlFor="student-department"
+                  className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1"
+                >
                   Department / Course
                 </label>
                 <select
@@ -226,7 +244,10 @@ export default function CollegeStudentRegister() {
               {/* Password & Confirm */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="student-password" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                  <label
+                    htmlFor="student-password"
+                    className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1"
+                  >
                     Password <span className="text-rose-400">*</span>
                   </label>
                   <input
@@ -246,7 +267,10 @@ export default function CollegeStudentRegister() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="student-confirm-password" className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1">
+                  <label
+                    htmlFor="student-confirm-password"
+                    className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1"
+                  >
                     Confirm Pass <span className="text-rose-400">*</span>
                   </label>
                   <input

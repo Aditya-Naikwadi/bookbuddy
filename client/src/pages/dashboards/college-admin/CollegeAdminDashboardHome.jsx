@@ -40,8 +40,7 @@ export default function CollegeAdminDashboardHome() {
     enabled: !!user,
   });
 
-  const rawFeatures =
-    configData?.enabledFeatures ||
+  const rawFeatures = configData?.enabledFeatures ||
     user?.collegeProfile?.enabledFeatures ||
     user?.enabledFeatures || [
       "catalog",

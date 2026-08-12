@@ -76,10 +76,11 @@ export default function UserManagement() {
 
   const handleToggleUserStatus = async (user) => {
     const nextStatus = user.status === "active" ? "disabled" : "active";
-    const nextMembership = user.membershipStatus === "active" ? "suspended" : "active";
+    const nextMembership =
+      user.membershipStatus === "active" ? "suspended" : "active";
     if (
       !window.confirm(
-        `Are you sure you want to set status for ${user.name} to ${nextStatus.toUpperCase()} (${nextMembership})?`
+        `Are you sure you want to set status for ${user.name} to ${nextStatus.toUpperCase()} (${nextMembership})?`,
       )
     ) {
       return;
@@ -131,7 +132,7 @@ export default function UserManagement() {
   const handleResetPassword = async (user) => {
     if (
       !window.confirm(
-        `Generate a new temporary password for ${user.name} (${user.email})?`
+        `Generate a new temporary password for ${user.name} (${user.email})?`,
       )
     ) {
       return;
@@ -156,7 +157,7 @@ export default function UserManagement() {
   const handleImpersonate = async (user) => {
     if (
       !window.confirm(
-        `Perform Impersonation: You will log in as ${user.name} (${user.email}). Continue?`
+        `Perform Impersonation: You will log in as ${user.name} (${user.email}). Continue?`,
       )
     ) {
       return;
@@ -172,8 +173,8 @@ export default function UserManagement() {
           user.role === "college-admin"
             ? "/college-admin"
             : user.role === "general"
-            ? "/general-dashboard"
-            : "/student-dashboard";
+              ? "/general-dashboard"
+              : "/student-dashboard";
       }
     } catch (err) {
       alert(err.response?.data?.message || "Failed to impersonate user.");
@@ -231,7 +232,11 @@ export default function UserManagement() {
         return (
           <OpsSeverityBadge
             status={isAct ? "active" : "suspended"}
-            label={isAct ? "ACTIVE" : `${val.toUpperCase()} / ${row.membershipStatus}`}
+            label={
+              isAct
+                ? "ACTIVE"
+                : `${val.toUpperCase()} / ${row.membershipStatus}`
+            }
             size="sm"
           />
         );
@@ -242,7 +247,8 @@ export default function UserManagement() {
       key: "actions",
       sortable: false,
       render: (_, row) => {
-        const isAct = row.status === "active" && row.membershipStatus === "active";
+        const isAct =
+          row.status === "active" && row.membershipStatus === "active";
         return (
           <div className="flex items-center gap-1.5 font-mono">
             <button
@@ -266,7 +272,11 @@ export default function UserManagement() {
                   : "bg-emerald-950/50 border-emerald-800 text-emerald-300 hover:bg-emerald-900"
               }`}
             >
-              {isAct ? <UserX className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
+              {isAct ? (
+                <UserX className="w-3.5 h-3.5" />
+              ) : (
+                <UserCheck className="w-3.5 h-3.5" />
+              )}
             </button>
 
             <button
@@ -334,7 +344,8 @@ export default function UserManagement() {
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-amber-300 uppercase flex items-center gap-2">
                 <Key className="w-4 h-4 text-amber-400" />
-                TEMPORARY PASSWORD GENERATED FOR {selectedUser.name} ({selectedUser.email})
+                TEMPORARY PASSWORD GENERATED FOR {selectedUser.name} (
+                {selectedUser.email})
               </span>
               <button
                 onClick={() => {
@@ -367,7 +378,8 @@ export default function UserManagement() {
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 font-mono space-y-3">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <span className="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
-              <Filter className="w-4 h-4 text-indigo-400" /> Filter User Records ({users.length})
+              <Filter className="w-4 h-4 text-indigo-400" /> Filter User Records
+              ({users.length})
             </span>
           </div>
 
@@ -443,7 +455,10 @@ export default function UserManagement() {
                 <strong className="text-indigo-300">{selectedUser.role}</strong>
               </p>
 
-              <form onSubmit={handleRoleChangeSubmit} className="space-y-4 text-xs">
+              <form
+                onSubmit={handleRoleChangeSubmit}
+                className="space-y-4 text-xs"
+              >
                 <div>
                   <label className="text-[10px] text-slate-400 uppercase font-bold">
                     Target Access Role *
@@ -455,9 +470,15 @@ export default function UserManagement() {
                     required
                   >
                     <option value="student">student (College Scoped)</option>
-                    <option value="college-admin">college-admin (Tenant Admin)</option>
-                    <option value="super-admin">super-admin (Global System Admin)</option>
-                    <option value="general">general (Public Reader Access)</option>
+                    <option value="college-admin">
+                      college-admin (Tenant Admin)
+                    </option>
+                    <option value="super-admin">
+                      super-admin (Global System Admin)
+                    </option>
+                    <option value="general">
+                      general (Public Reader Access)
+                    </option>
                   </select>
                 </div>
 

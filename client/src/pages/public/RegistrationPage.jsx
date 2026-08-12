@@ -278,7 +278,10 @@ export default function RegistrationPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {/* Question 1: College Name */}
               <div>
-                <label htmlFor="reg-college-name" className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                <label
+                  htmlFor="reg-college-name"
+                  className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1"
+                >
                   1. College Name <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
@@ -303,7 +306,10 @@ export default function RegistrationPage() {
 
               {/* Question 2: College Email */}
               <div>
-                <label htmlFor="reg-college-email" className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                <label
+                  htmlFor="reg-college-email"
+                  className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1"
+                >
                   2. College Email <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
@@ -328,7 +334,10 @@ export default function RegistrationPage() {
 
               {/* Question 3: College Admin Name */}
               <div>
-                <label htmlFor="reg-admin-name" className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                <label
+                  htmlFor="reg-admin-name"
+                  className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1"
+                >
                   3. College Admin Name <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
@@ -350,7 +359,10 @@ export default function RegistrationPage() {
 
               {/* Question 4: College Admin Email */}
               <div>
-                <label htmlFor="reg-admin-email" className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                <label
+                  htmlFor="reg-admin-email"
+                  className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1"
+                >
                   4. College Admin Email{" "}
                   <span className="text-rose-500">*</span>
                 </label>
@@ -378,7 +390,10 @@ export default function RegistrationPage() {
 
               {/* Question 5: Password */}
               <div>
-                <label htmlFor="reg-admin-password" className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                <label
+                  htmlFor="reg-admin-password"
+                  className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1"
+                >
                   5. Password <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
@@ -405,7 +420,10 @@ export default function RegistrationPage() {
 
               {/* Question 6: Confirm Password */}
               <div>
-                <label htmlFor="reg-admin-confirm-password" className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                <label
+                  htmlFor="reg-admin-confirm-password"
+                  className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1"
+                >
                   6. Confirm Password <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
@@ -591,10 +609,13 @@ export default function RegistrationPage() {
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
                 Your onboarding request for{" "}
-                <strong>{adminForm.collegeName}</strong> has been submitted successfully and is currently under review by Super Admin.
+                <strong>{adminForm.collegeName}</strong> has been submitted
+                successfully and is currently under review by Super Admin.
               </p>
               <p className="text-[11px] text-indigo-500 dark:text-indigo-400 mt-2 font-medium">
-                Applications are typically reviewed within 24 hours. An approval email will be sent to <strong>{adminForm.adminEmail}</strong> upon activation.
+                Applications are typically reviewed within 24 hours. An approval
+                email will be sent to <strong>{adminForm.adminEmail}</strong>{" "}
+                upon activation.
               </p>
             </div>
 

@@ -63,6 +63,7 @@
     "passport-google-oauth20": "^2.0.0",
     "qrcode": "^1.5.4",
     "rate-limiter-flexible": "^11.2.0",
+    "razorpay": "^2.9.8",
     "socket.io": "^4.8.3",
     "speakeasy": "^2.0.0",
     "zod": "^4.4.3"

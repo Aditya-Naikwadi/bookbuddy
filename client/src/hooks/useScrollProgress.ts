@@ -20,8 +20,12 @@ export function useScrollProgress() {
     const handleScroll = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
-          const totalScroll = window.scrollY || document.documentElement.scrollTop;
-          const newProgress = Math.min(1, Math.max(0, totalScroll / windowHeightRef.current));
+          const totalScroll =
+            window.scrollY || document.documentElement.scrollTop;
+          const newProgress = Math.min(
+            1,
+            Math.max(0, totalScroll / windowHeightRef.current),
+          );
 
           // Prevent unnecessary state updates if change is minimal
           if (Math.abs(newProgress - lastProgressRef.current) > 0.002) {

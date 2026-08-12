@@ -8,12 +8,14 @@ describe("ThemeToggle Component", () => {
     render(
       <ThemeProvider>
         <ThemeToggle />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     const button = screen.getByRole("button");
     expect(button).toBeDefined();
-    expect(button.getAttribute("aria-label")).toMatch(/Switch to (light|dark) theme/i);
+    expect(button.getAttribute("aria-label")).toMatch(
+      /Switch to (light|dark) theme/i,
+    );
 
     const initialAriaPressed = button.getAttribute("aria-pressed");
 
@@ -26,6 +28,8 @@ describe("ThemeToggle Component", () => {
 
     // Verify document root class reflects light/dark theme
     const isDark = newAriaPressed === "true";
-    expect(document.documentElement.classList.contains(isDark ? "dark" : "light")).toBe(true);
+    expect(
+      document.documentElement.classList.contains(isDark ? "dark" : "light"),
+    ).toBe(true);
   });
 });

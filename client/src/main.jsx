@@ -12,7 +12,11 @@ import { ConfigProvider, useConfig } from "./context/ConfigContext.jsx";
 function DynamicGoogleOAuthProvider({ children }) {
   const { googleClientId } = useConfig();
   // Provide clientId to GoogleOAuthProvider dynamically from backend config only when valid
-  if (!googleClientId || typeof googleClientId !== "string" || !googleClientId.trim()) {
+  if (
+    !googleClientId ||
+    typeof googleClientId !== "string" ||
+    !googleClientId.trim()
+  ) {
     return <>{children}</>;
   }
 
@@ -27,7 +31,9 @@ function DeferredAnalytics() {
   const [shouldRender, setShouldRender] = useState(false);
   useEffect(() => {
     if ("requestIdleCallback" in window) {
-      const handle = requestIdleCallback(() => setShouldRender(true), { timeout: 3000 });
+      const handle = requestIdleCallback(() => setShouldRender(true), {
+        timeout: 3000,
+      });
       return () => cancelIdleCallback(handle);
     } else {
       const timer = setTimeout(() => setShouldRender(true), 2000);

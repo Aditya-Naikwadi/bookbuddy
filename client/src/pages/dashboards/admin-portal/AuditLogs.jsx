@@ -1,10 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import {
-  Filter,
-  User,
-  Terminal,
-  FileCode,
-} from "lucide-react";
+import { Filter, User, Terminal, FileCode } from "lucide-react";
 import adminApi from "../../../api/adminApi";
 import OpsHeader from "../../../components/ops/OpsHeader";
 import OpsSeverityBadge from "../../../components/ops/OpsSeverityBadge";
@@ -46,21 +41,52 @@ export default function AuditLogs() {
 
   // Filter logs by actor role & action category
   const filteredLogs = logs.filter((log) => {
-    if (actorRoleFilter !== "all" && log.actorRole !== actorRoleFilter) return false;
+    if (actorRoleFilter !== "all" && log.actorRole !== actorRoleFilter)
+      return false;
     if (actionCategoryFilter !== "all") {
       const action = (log.action || "").toLowerCase();
-      if (actionCategoryFilter === "auth" && !action.includes("auth") && !action.includes("login")) return false;
-      if (actionCategoryFilter === "tenant" && !action.includes("tenant") && !action.includes("registration") && !action.includes("college")) return false;
-      if (actionCategoryFilter === "security" && !action.includes("security") && !action.includes("mfa") && !action.includes("forbidden")) return false;
+      if (
+        actionCategoryFilter === "auth" &&
+        !action.includes("auth") &&
+        !action.includes("login")
+      )
+        return false;
+      if (
+        actionCategoryFilter === "tenant" &&
+        !action.includes("tenant") &&
+        !action.includes("registration") &&
+        !action.includes("college")
+      )
+        return false;
+      if (
+        actionCategoryFilter === "security" &&
+        !action.includes("security") &&
+        !action.includes("mfa") &&
+        !action.includes("forbidden")
+      )
+        return false;
     }
     return true;
   });
 
   const getActionSeverity = (action = "") => {
     const act = action.toLowerCase();
-    if (act.includes("reject") || act.includes("forbidden") || act.includes("failed") || act.includes("delete")) return "critical";
-    if (act.includes("approve") || act.includes("create") || act.includes("submit") || act.includes("onboarding")) return "warning";
-    if (act.includes("login") || act.includes("verify") || act.includes("auth")) return "healthy";
+    if (
+      act.includes("reject") ||
+      act.includes("forbidden") ||
+      act.includes("failed") ||
+      act.includes("delete")
+    )
+      return "critical";
+    if (
+      act.includes("approve") ||
+      act.includes("create") ||
+      act.includes("submit") ||
+      act.includes("onboarding")
+    )
+      return "warning";
+    if (act.includes("login") || act.includes("verify") || act.includes("auth"))
+      return "healthy";
     return "info";
   };
 
@@ -72,13 +98,17 @@ export default function AuditLogs() {
         const dateStr = val
           ? new Date(val).toISOString().replace("T", " ").substring(0, 19)
           : "2026-07-26 12:00:00";
-        return <span className="font-mono text-slate-300 text-xs">{dateStr}</span>;
+        return (
+          <span className="font-mono text-slate-300 text-xs">{dateStr}</span>
+        );
       },
     },
     {
       header: "Event Severity",
       key: "action",
-      render: (val) => <OpsSeverityBadge status={getActionSeverity(val)} size="sm" />,
+      render: (val) => (
+        <OpsSeverityBadge status={getActionSeverity(val)} size="sm" />
+      ),
     },
     {
       header: "Actor Identity",
@@ -90,7 +120,11 @@ export default function AuditLogs() {
             <span>{row.actorId || "SYSTEM_PROCESS"}</span>
           </div>
           <div className="text-[10px] text-slate-500 font-mono">
-            Role: <strong className="text-indigo-300 uppercase">{val || "system"}</strong> | IP: {row.ipAddress || "127.0.0.1"}
+            Role:{" "}
+            <strong className="text-indigo-300 uppercase">
+              {val || "system"}
+            </strong>{" "}
+            | IP: {row.ipAddress || "127.0.0.1"}
           </div>
         </div>
       ),
@@ -109,8 +143,12 @@ export default function AuditLogs() {
       key: "targetType",
       render: (val, row) => (
         <div className="text-xs">
-          <span className="text-slate-400 font-bold uppercase">{val || "GLOBAL"}</span>
-          <div className="text-[10px] text-slate-500 font-mono">ID: {row.targetId || "N/A"}</div>
+          <span className="text-slate-400 font-bold uppercase">
+            {val || "GLOBAL"}
+          </span>
+          <div className="text-[10px] text-slate-500 font-mono">
+            ID: {row.targetId || "N/A"}
+          </div>
         </div>
       ),
     },
@@ -155,7 +193,9 @@ export default function AuditLogs() {
           <div className="flex flex-wrap items-center gap-3 text-xs">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-indigo-400" />
-              <span className="font-bold text-slate-300 uppercase">Actor Role:</span>
+              <span className="font-bold text-slate-300 uppercase">
+                Actor Role:
+              </span>
               <select
                 value={actorRoleFilter}
                 onChange={(e) => setActorRoleFilter(e.target.value)}
@@ -170,7 +210,9 @@ export default function AuditLogs() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-300 uppercase">Event Category:</span>
+              <span className="font-bold text-slate-300 uppercase">
+                Event Category:
+              </span>
               <select
                 value={actionCategoryFilter}
                 onChange={(e) => setActionCategoryFilter(e.target.value)}
@@ -185,7 +227,9 @@ export default function AuditLogs() {
           </div>
 
           <div className="text-xs text-slate-500 font-bold">
-            AUDIT STREAM: <strong className="text-indigo-400">{filteredLogs.length}</strong> EVENTS LOADED
+            AUDIT STREAM:{" "}
+            <strong className="text-indigo-400">{filteredLogs.length}</strong>{" "}
+            EVENTS LOADED
           </div>
         </div>
 

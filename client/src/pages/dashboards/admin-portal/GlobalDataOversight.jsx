@@ -92,7 +92,9 @@ export default function GlobalDataOversight() {
       key: "userId",
       render: (val) => (
         <div>
-          <div className="font-bold text-white text-xs">{val?.name || "Unknown User"}</div>
+          <div className="font-bold text-white text-xs">
+            {val?.name || "Unknown User"}
+          </div>
           <div className="text-[10px] text-slate-400 font-mono">
             {val?.studentId || "N/A"} | {val?.email}
           </div>
@@ -104,8 +106,12 @@ export default function GlobalDataOversight() {
       key: "bookId",
       render: (val) => (
         <div>
-          <div className="font-bold text-indigo-300 text-xs">{val?.title || "Book Record"}</div>
-          <div className="text-[10px] text-slate-500 font-mono">ISBN: {val?.isbn || "N/A"}</div>
+          <div className="font-bold text-indigo-300 text-xs">
+            {val?.title || "Book Record"}
+          </div>
+          <div className="text-[10px] text-slate-500 font-mono">
+            ISBN: {val?.isbn || "N/A"}
+          </div>
         </div>
       ),
     },
@@ -123,8 +129,18 @@ export default function GlobalDataOversight() {
       key: "issueDate",
       render: (_, row) => (
         <div className="text-[10px] font-mono text-slate-400">
-          <div>Issued: {row.issueDate ? new Date(row.issueDate).toLocaleDateString() : "N/A"}</div>
-          <div>Due: <strong className="text-amber-300">{row.dueDate ? new Date(row.dueDate).toLocaleDateString() : "N/A"}</strong></div>
+          <div>
+            Issued:{" "}
+            {row.issueDate
+              ? new Date(row.issueDate).toLocaleDateString()
+              : "N/A"}
+          </div>
+          <div>
+            Due:{" "}
+            <strong className="text-amber-300">
+              {row.dueDate ? new Date(row.dueDate).toLocaleDateString() : "N/A"}
+            </strong>
+          </div>
         </div>
       ),
     },
@@ -133,7 +149,13 @@ export default function GlobalDataOversight() {
       key: "status",
       render: (val) => (
         <OpsSeverityBadge
-          status={val === "overdue" ? "critical" : val === "active" ? "active" : "healthy"}
+          status={
+            val === "overdue"
+              ? "critical"
+              : val === "active"
+                ? "active"
+                : "healthy"
+          }
           label={(val || "active").toUpperCase()}
           size="sm"
         />
@@ -147,7 +169,9 @@ export default function GlobalDataOversight() {
       key: "userId",
       render: (val) => (
         <div>
-          <div className="font-bold text-white text-xs">{val?.name || "Unknown User"}</div>
+          <div className="font-bold text-white text-xs">
+            {val?.name || "Unknown User"}
+          </div>
           <div className="text-[10px] text-slate-400 font-mono">
             {val?.studentId || "N/A"} | {val?.email}
           </div>
@@ -178,7 +202,9 @@ export default function GlobalDataOversight() {
       render: (val, row) => (
         <div className="text-[10px] font-mono text-slate-400">
           <div>{val || "Overdue Book Return"}</div>
-          <div className="text-slate-500">Date: {new Date(row.createdAt).toLocaleDateString()}</div>
+          <div className="text-slate-500">
+            Date: {new Date(row.createdAt).toLocaleDateString()}
+          </div>
         </div>
       ),
     },
@@ -361,8 +387,8 @@ export default function GlobalDataOversight() {
             activeTab === "loans"
               ? loanColumns
               : activeTab === "fines"
-              ? fineColumns
-              : catalogColumns
+                ? fineColumns
+                : catalogColumns
           }
           data={data}
           isLoading={isLoading}

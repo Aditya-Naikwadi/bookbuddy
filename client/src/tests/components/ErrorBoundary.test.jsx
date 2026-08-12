@@ -12,7 +12,7 @@ describe("ErrorBoundary component", () => {
     render(
       <ErrorBoundary>
         <div>Normal Content</div>
-      </ErrorBoundary>
+      </ErrorBoundary>,
     );
     expect(screen.getByText("Normal Content")).toBeInTheDocument();
   });
@@ -22,10 +22,12 @@ describe("ErrorBoundary component", () => {
     render(
       <ErrorBoundary>
         <ProblemChild />
-      </ErrorBoundary>
+      </ErrorBoundary>,
     );
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /reload page/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /reload page/i }),
+    ).toBeInTheDocument();
     consoleSpy.mockRestore();
   });
 
@@ -34,7 +36,7 @@ describe("ErrorBoundary component", () => {
     render(
       <ErrorBoundary fallback={<div>Custom Error UI</div>}>
         <ProblemChild />
-      </ErrorBoundary>
+      </ErrorBoundary>,
     );
     expect(screen.getByText("Custom Error UI")).toBeInTheDocument();
     consoleSpy.mockRestore();

@@ -37,8 +37,17 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
     }
 
     // Clean database before starting
-    await College.deleteMany({});
-    await User.deleteMany({});
+    await College.deleteMany({ code: { $in: ['TCA', 'TCB'] } });
+    await User.deleteMany({
+      email: {
+        $in: [
+          'student.a@test.com',
+          'student.b@test.com',
+          'public.student@test.com',
+          'admin.injection@test.com',
+        ],
+      },
+    });
 
     // Seed Colleges
     collegeA = await College.create({ name: 'Test College A', code: 'TCA' });

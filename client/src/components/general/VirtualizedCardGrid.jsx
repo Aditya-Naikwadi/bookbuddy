@@ -78,8 +78,12 @@ const VirtualizedCardGrid = ({
 
   if (isLargeList) {
     const bufferRows = 2;
-    const startRow = Math.max(0, Math.floor(scrollTop / estimatedItemHeight) - bufferRows);
-    const visibleRowCount = Math.ceil(containerHeight / estimatedItemHeight) + bufferRows * 2;
+    const startRow = Math.max(
+      0,
+      Math.floor(scrollTop / estimatedItemHeight) - bufferRows,
+    );
+    const visibleRowCount =
+      Math.ceil(containerHeight / estimatedItemHeight) + bufferRows * 2;
     const endRow = Math.min(totalRows, startRow + visibleRowCount);
 
     const startIndex = startRow * numColumns;
@@ -96,10 +100,23 @@ const VirtualizedCardGrid = ({
       onScroll={isLargeList ? handleScroll : undefined}
       className="flex-1 min-h-0 overflow-y-auto pr-1.5 scrollbar-thin"
     >
-      <div style={{ paddingTop: `${paddingTop}px`, paddingBottom: `${paddingBottom}px` }}>
-        <div className={`grid ${viewMode === "list" ? "grid-cols-1" : columns} gap-4 pb-4`}>
+      <div
+        style={{
+          paddingTop: `${paddingTop}px`,
+          paddingBottom: `${paddingBottom}px`,
+        }}
+      >
+        <div
+          className={`grid ${viewMode === "list" ? "grid-cols-1" : columns} gap-4 pb-4`}
+        >
           {visibleItems.map((item, index) =>
-            renderItem(item, isLargeList ? Math.floor(scrollTop / estimatedItemHeight) * numColumns + index : index)
+            renderItem(
+              item,
+              isLargeList
+                ? Math.floor(scrollTop / estimatedItemHeight) * numColumns +
+                    index
+                : index,
+            ),
           )}
         </div>
       </div>

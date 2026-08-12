@@ -45,6 +45,8 @@ describe('Backend Audit Fixes Unit Tests (Items 1 - 3)', () => {
     college = await College.create({
       name: 'Audit Test University',
       code: 'ATU999',
+      status: 'active',
+      isActive: true,
       selectedServices: ['facilities_booking', 'catalog_management'],
       enabledFeatures: ['facilities_booking', 'catalog_management'],
     });
@@ -60,12 +62,8 @@ describe('Backend Audit Fixes Unit Tests (Items 1 - 3)', () => {
       membershipStatus: 'active',
     });
 
-    // Generate test JWT auth token
-    studentToken = jwt.sign(
-      { sub: studentUser._id, role: studentUser.role, collegeId: college._id },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '1h' }
-    );
+    const { generateAccessToken } = require('../utils/token');
+    studentToken = generateAccessToken(studentUser);
   });
 
   // ==========================================================

@@ -10,6 +10,10 @@ import {
 } from "lucide-react";
 import { Button } from "../../ui/Button";
 import { useConfig } from "../../../context/ConfigContext.jsx";
+import {
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+} from "../../../api/paymentApi";
 
 // Helper script loader for Razorpay Checkout SDK (PCI compliant)
 const loadRazorpayScript = () => {
@@ -103,37 +107,60 @@ export const PaymentDialog = ({
     }
 
     try {
-      // Amount in paise for INR currency (Razorpay standard)
-      const amountInPaise = Math.round(totalAmount * 100);
+      const amountInPaise = Math.max(100, Math.round(totalAmount * 100));
 
-      const options = {
-        key: razorpayKeyId || "rzp_test_bookbuddy_demo",
+      // STEP 1: Call backend create-order endpoint to generate Razorpay Order ID
+      const orderData = await createRazorpayOrder({
         amount: amountInPaise,
         currency: "INR",
+        fineId: fineItem?._id,
+      });
+
+      const keyToUse =
+        import.meta.env.VITE_RAZORPAY_KEY_ID ||
+        orderData.key_id ||
+        razorpayKeyId ||
+        "rzp_test_TOm6pPV3QhF4Vr";
+
+      // STEP 2: Configure Razorpay modal options with order_id
+      const options = {
+        key: keyToUse,
+        amount: orderData.amount || amountInPaise,
+        currency: orderData.currency || "INR",
         name: "BookBuddy Academic Library",
         description: fineItem
           ? `Fine payment for overdue item`
           : `Bulk library fine settlement`,
+        order_id: orderData.order_id || orderData.id,
         image: "https://cdn-icons-png.flaticon.com/512/3145/3145765.png",
         handler: async function (response) {
-          // Received Client Payment ID - Now enter Webhook Verification state
           setStep("verifying_webhook");
           setPaymentRef(response.razorpay_payment_id || `PAY-${Date.now()}`);
 
           try {
-            // Confirm with backend webhook reconciliation endpoint
-            await onConfirm({
+            // STEP 3: Verify payment signature with backend verify-payment endpoint
+            await verifyRazorpayPayment({
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_signature: response.razorpay_signature,
               fineId: fineItem?._id,
             });
+
+            if (typeof onConfirm === "function") {
+              await onConfirm({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                fineId: fineItem?._id,
+              });
+            }
+
             setStep("success");
           } catch (verifyErr) {
             console.error("Payment verification failed:", verifyErr);
             setErrorMessage(
               verifyErr?.response?.data?.message ||
-                "Payment received, but webhook verification failed.",
+                "Payment received, but signature verification failed.",
             );
             setStep("failed");
           }
@@ -147,9 +174,7 @@ export const PaymentDialog = ({
         },
         modal: {
           ondismiss: function () {
-            if (step === "paying") {
-              setStep("confirm");
-            }
+            setStep("confirm");
           },
         },
       };
@@ -164,7 +189,12 @@ export const PaymentDialog = ({
       });
       rzp.open();
     } catch (err) {
-      setErrorMessage(err.message || "Payment processing error.");
+      console.error("Razorpay order creation error:", err);
+      setErrorMessage(
+        err?.response?.data?.message ||
+          err.message ||
+          "Payment processing error.",
+      );
       setStep("failed");
     }
   };
