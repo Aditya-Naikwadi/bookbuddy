@@ -1,0 +1,4 @@
+dist
+coverage
+public/version.json
+node_modules
