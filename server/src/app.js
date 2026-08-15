@@ -281,9 +281,9 @@ const getHealthStatus = async () => {
 };
 
 const getCommitSha = () =>
-  process.env.COMMIT_SHA ||
-  process.env.VERCEL_GIT_COMMIT_SHA ||
   process.env.RENDER_GIT_COMMIT ||
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.COMMIT_SHA ||
   process.env.GITHUB_SHA ||
   process.env.BUILD_ID ||
   'unknown';
