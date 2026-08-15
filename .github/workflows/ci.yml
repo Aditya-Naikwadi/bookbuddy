@@ -175,9 +175,17 @@ jobs:
         with:
           node-version: 20
 
+      - name: Print & Verify Target Production URL
+        env:
+          RESOLVED_APP_URL: ${{ vars.PRODUCTION_APP_URL || 'https://bookbuddy-kcwl.onrender.com' }}
+        run: |
+          echo "====================================================="
+          echo "🌐 RESOLVED PRODUCTION_APP_URL: ${RESOLVED_APP_URL}"
+          echo "====================================================="
+
       - name: Run Post-Deploy Live Verification
         env:
-          APP_URL: ${{ vars.PRODUCTION_APP_URL || 'https://book-buddy-adityas-projects-3ddb703f.vercel.app' }}
+          APP_URL: ${{ vars.PRODUCTION_APP_URL || 'https://bookbuddy-kcwl.onrender.com' }}
           EXPECTED_COMMIT_SHA: ${{ github.sha }}
           TIMEOUT_SECONDS: 300
           POLL_INTERVAL_SECONDS: 10
