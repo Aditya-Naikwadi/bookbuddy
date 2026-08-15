@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  Users,
   Search,
   Shield,
   UserCheck,
@@ -10,8 +10,6 @@ import {
   Filter,
   CheckCircle2,
   AlertTriangle,
-  RefreshCw,
-  Building,
 } from "lucide-react";
 import adminApi from "../../../api/adminApi";
 import OpsHeader from "../../../components/ops/OpsHeader";
@@ -20,6 +18,7 @@ import OpsDataTable from "../../../components/ops/OpsDataTable";
 import useAuthStore from "../../../store/authStore";
 
 export default function UserManagement() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [colleges, setColleges] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +39,7 @@ export default function UserManagement() {
   const [tempPassword, setTempPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { setToken, checkAuth } = useAuthStore();
+  const { startImpersonating } = useAuthStore();
 
   const fetchUsers = useCallback(() => setReloadToken((t) => t + 1), []);
 
@@ -165,16 +164,19 @@ export default function UserManagement() {
 
     try {
       const res = await adminApi.impersonateUser(user._id);
-      if (res.token) {
-        localStorage.setItem("token", res.token);
-        setToken(res.token);
-        await checkAuth();
-        window.location.href =
-          user.role === "college-admin"
+      const impersonationToken = res.token || res.accessToken;
+      const impersonatedUser = res.user || user;
+
+      if (impersonationToken) {
+        await startImpersonating(impersonationToken, impersonatedUser);
+        const targetPath =
+          user.role === "college-admin" || user.role === "college_admin"
             ? "/college-admin"
             : user.role === "general"
               ? "/general-dashboard"
               : "/student-dashboard";
+
+        navigate(targetPath, { replace: true });
       }
     } catch (err) {
       alert(err.response?.data?.message || "Failed to impersonate user.");

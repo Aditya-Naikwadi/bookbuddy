@@ -104,11 +104,38 @@ const collegeSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
+    subscriptionPlan: {
+      type: String,
+      default: 'standard',
+    },
+    adminUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    allowedFeatures: {
+      eReaderEnabled: { type: Boolean, default: true },
+      labBookingEnabled: { type: Boolean, default: true },
+      aiRecommendationsEnabled: { type: Boolean, default: true },
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Virtual Aliases for Blueprint Spec Compatibility
+collegeSchema
+  .virtual('tier')
+  .get(function () {
+    return this.subscriptionPlan;
+  })
+  .set(function (v) {
+    this.subscriptionPlan = v;
+  });
+
+collegeSchema.set('toJSON', { virtuals: true });
+collegeSchema.set('toObject', { virtuals: true });
 
 // Keep creationPath and createdVia synchronized
 collegeSchema.pre('save', function (next) {
@@ -125,7 +152,8 @@ collegeSchema.pre('save', function (next) {
 // Text search index for full-text search across tenant names and codes
 collegeSchema.index({ name: 'text', code: 'text' });
 
-// Compound index for listing active/pending tenant list (status + newest first)
+// Compound indexes for directory filtering and sorting
 collegeSchema.index({ status: 1, createdAt: -1 });
+collegeSchema.index({ status: 1, subscriptionPlan: 1 });
 
 module.exports = mongoose.model('College', collegeSchema);

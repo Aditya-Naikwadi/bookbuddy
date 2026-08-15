@@ -11,6 +11,14 @@ const escapeRegExp = (string) => {
   return string ? String(string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
 };
 
+const getActorId = (req) => {
+  return req && req.user && req.user.isImpersonated && req.user.originalSuperAdminId
+    ? req.user.originalSuperAdminId
+    : req && req.user
+      ? req.user.id || req.user._id
+      : null;
+};
+
 // @desc    Get global overview stats
 // @route   GET /api/dashboards/admin-portal/overview
 // @access  Private/SuperAdmin
@@ -930,8 +938,8 @@ const updateUserStatus = async (req, res, next) => {
     await user.save();
 
     await AuditLog.create({
-      actorId: req.user.id,
-      actorRole: req.user.role,
+      actorId: getActorId(req),
+      actorRole: req.user.isImpersonated ? 'super-admin' : req.user.role,
       action: 'user.status_update',
       targetType: 'User',
       targetId: user._id,
@@ -941,6 +949,8 @@ const updateUserStatus = async (req, res, next) => {
         newStatus: user.status,
         oldMembership,
         newMembership: user.membershipStatus,
+        isImpersonated: req.user.isImpersonated || false,
+        impersonatedUserId: req.user.isImpersonated ? req.user.id : undefined,
       },
       ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
     });
@@ -973,9 +983,9 @@ const updateUserRole = async (req, res, next) => {
     await user.save();
 
     await AuditLog.create({
-      actorId: req.user.id,
-      actorRole: req.user.role,
-      action: 'user.role_change',
+      actorId: getActorId(req),
+      actorRole: req.user.isImpersonated ? 'super-admin' : req.user.role,
+      action: 'user.role_update',
       targetType: 'User',
       targetId: user._id,
       collegeId: user.collegeId || null,
@@ -1007,9 +1017,9 @@ const resetUserPassword = async (req, res, next) => {
     await user.save();
 
     await AuditLog.create({
-      actorId: req.user.id,
-      actorRole: req.user.role,
-      action: 'user.password_reset',
+      actorId: getActorId(req),
+      actorRole: req.user.isImpersonated ? 'super-admin' : req.user.role,
+      action: 'user.reset_password',
       targetType: 'User',
       targetId: user._id,
       collegeId: user.collegeId || null,
@@ -1032,6 +1042,15 @@ const resetUserPassword = async (req, res, next) => {
 // @access  Private/SuperAdmin
 const impersonateUser = async (req, res, next) => {
   try {
+    if (req.user && req.user.isImpersonated) {
+      return next(
+        new AppError(
+          'Cannot perform nested impersonation while already in an impersonated session.',
+          403
+        )
+      );
+    }
+
     const user = await User.findById(req.params.id);
     if (!user) return next(new AppError('Target user not found.', 404));
 
@@ -1040,10 +1059,13 @@ const impersonateUser = async (req, res, next) => {
     }
 
     const { generateAccessToken } = require('../../utils/token');
-    const token = generateAccessToken(user);
+    const token = generateAccessToken(user, {
+      isImpersonated: true,
+      originalSuperAdminId: req.user.id,
+    });
 
     await AuditLog.create({
-      actorId: req.user.id,
+      actorId: getActorId(req),
       actorRole: req.user.role,
       action: 'user.impersonate',
       targetType: 'User',

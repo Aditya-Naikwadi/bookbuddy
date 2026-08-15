@@ -124,21 +124,59 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    mfaRecoveryCodes: [
-      {
-        type: String,
-        select: false,
-      },
-    ],
+    lastLogin: {
+      type: Date,
+      default: null,
+    },
+    impersonatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
 
+// Virtual Aliases for Blueprint Spec Compatibility
+userSchema
+  .virtual('fullName')
+  .get(function () {
+    return this.name;
+  })
+  .set(function (v) {
+    this.name = v;
+  });
+
+userSchema
+  .virtual('isTwoFactorEnabled')
+  .get(function () {
+    return this.isMfaEnabled;
+  })
+  .set(function (v) {
+    this.isMfaEnabled = v;
+  });
+
+userSchema
+  .virtual('twoFactorSecret')
+  .get(function () {
+    return this.mfaSecret;
+  })
+  .set(function (v) {
+    this.mfaSecret = v;
+  });
+
+userSchema.set('toJSON', { virtuals: true });
+userSchema.set('toObject', { virtuals: true });
+
 // Compound unique indexes scoped to collegeId
 userSchema.index({ collegeId: 1, studentId: 1 }, { unique: true, sparse: true });
 userSchema.index({ collegeId: 1, email: 1 }, { unique: true, sparse: true });
+
+// Super Admin Directory & Query Optimization Indexes
+userSchema.index({ role: 1, collegeId: 1, status: 1 });
+userSchema.index({ name: 'text', email: 'text' });
 
 // Hash password and generate cardSecret before saving
 userSchema.pre('save', async function () {

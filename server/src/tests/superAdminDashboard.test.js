@@ -188,7 +188,7 @@ describe('Super Admin Dashboard Comprehensive Integration Test Suite', () => {
       expect(res.body.tempPassword).toBeDefined();
 
       const log = await AuditLog.findOne({
-        action: 'user.password_reset',
+        action: 'user.reset_password',
         targetId: studentUser._id,
       });
       expect(log).not.toBeNull();

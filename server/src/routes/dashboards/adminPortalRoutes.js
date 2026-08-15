@@ -58,45 +58,72 @@ router
 router
   .route('/colleges/:id')
   .get(validate(paramIdSchema), getCollegeDetails)
-  .put(validate(paramIdSchema), updateCollege);
-router.route('/colleges/:id/status').patch(validate(paramIdSchema), patchCollegeStatus);
+  .put(validate(paramIdSchema), auditLog('college.update'), updateCollege);
+router
+  .route('/colleges/:id/status')
+  .patch(validate(paramIdSchema), auditLog('college.status_patch'), patchCollegeStatus);
 
 router.route('/audit-logs').get(expensiveRouteLimiter, getAuditLogs);
 
 // Global content moderation routes
 router.route('/moderation/pending').get(getGlobalPendingEResources);
-router.route('/moderation/:id').put(validate(paramIdSchema), moderateEResourceGlobal);
-router.route('/moderation/:id/publish').post(validate(paramIdSchema), publishEResourceGlobal);
+router
+  .route('/moderation/:id')
+  .put(validate(paramIdSchema), auditLog('eresource.moderate'), moderateEResourceGlobal);
+router
+  .route('/moderation/:id/publish')
+  .post(validate(paramIdSchema), auditLog('eresource.publish_global'), publishEResourceGlobal);
 
 // Tenant onboarding review routes
 router.route('/onboardings/pending').get(getPendingOnboardings);
-router.route('/onboardings/:requestId/approve').post(approveTenantOnboarding);
+router
+  .route('/onboardings/:requestId/approve')
+  .post(auditLog('tenant_onboarding.approve'), approveTenantOnboarding);
 router
   .route('/onboardings/:requestId/reject')
-  .post(validate(rejectOnboardingSchema), rejectTenantOnboarding);
+  .post(
+    validate(rejectOnboardingSchema),
+    auditLog('tenant_onboarding.reject'),
+    rejectTenantOnboarding
+  );
 
 // Global User Management routes
 router.route('/users').get(getUsers);
-router.route('/users/:id/status').patch(validate(paramIdSchema), updateUserStatus);
-router.route('/users/:id/role').patch(validate(paramIdSchema), updateUserRole);
-router.route('/users/:id/reset-password').post(validate(paramIdSchema), resetUserPassword);
-router.route('/users/:id/impersonate').post(validate(paramIdSchema), impersonateUser);
+router
+  .route('/users/:id/status')
+  .patch(validate(paramIdSchema), auditLog('user.status_update'), updateUserStatus);
+router
+  .route('/users/:id/role')
+  .patch(validate(paramIdSchema), auditLog('user.role_update'), updateUserRole);
+router
+  .route('/users/:id/reset-password')
+  .post(validate(paramIdSchema), auditLog('user.reset_password'), resetUserPassword);
+router
+  .route('/users/:id/impersonate')
+  .post(validate(paramIdSchema), auditLog('user.impersonate'), impersonateUser);
 
 // Infrastructure Telemetry & Cron Job routes
 router.route('/system/health').get(getSystemHealth);
 router.route('/system/cron-logs').get(getCronLogs);
 
 // Data Oversight routes
-router.route('/data/loans').get(getGlobalLoans);
-router.route('/data/fines').get(getGlobalFines);
-router.route('/data/catalog').get(getGlobalCatalog);
+router.route('/data/loans').get(expensiveRouteLimiter, getGlobalLoans);
+router.route('/data/fines').get(expensiveRouteLimiter, getGlobalFines);
+router.route('/data/catalog').get(expensiveRouteLimiter, getGlobalCatalog);
 
 // Support & Complaints routes
 router.route('/support/complaints').get(getGlobalComplaints);
-router.route('/support/complaints/:id').patch(validate(paramIdSchema), updateComplaintStatus);
+router
+  .route('/support/complaints/:id')
+  .patch(validate(paramIdSchema), auditLog('complaint.resolve'), updateComplaintStatus);
 
 // System Settings & Backup routes
-router.route('/settings').get(getSystemSettings).put(updateSystemSettings);
-router.route('/settings/trigger-backup').post(triggerManualBackup);
+router
+  .route('/settings')
+  .get(getSystemSettings)
+  .put(auditLog('system_settings.update'), updateSystemSettings);
+router
+  .route('/settings/trigger-backup')
+  .post(auditLog('system_backup.trigger'), triggerManualBackup);
 
 module.exports = router;

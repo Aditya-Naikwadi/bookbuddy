@@ -19,6 +19,7 @@
     "migrate:hardening": "node src/scripts/migrateProductionHardening.js",
     "db:clear": "node src/scripts/clearDatabase.js",
     "db:restore": "node src/scripts/restoreDatabase.js",
+    "seed:superadmin": "node src/scripts/seedSuperAdmin.js",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

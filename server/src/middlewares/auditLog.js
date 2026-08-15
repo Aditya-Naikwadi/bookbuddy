@@ -31,10 +31,21 @@ const auditLog = (actionName) => {
             });
           }
 
+          // Anti-falsification: If action is taken while impersonating, actorId MUST be the original super admin ID
+          const actorId =
+            req.user.isImpersonated && req.user.originalSuperAdminId
+              ? req.user.originalSuperAdminId
+              : req.user.id || req.user._id;
+
+          if (req.user.isImpersonated) {
+            cleanedMetadata.isImpersonated = true;
+            cleanedMetadata.impersonatedUserId = req.user.id || req.user._id;
+          }
+
           // Write to DB
           await AuditLog.create({
-            actorId: req.user.id || req.user._id,
-            actorRole: req.user.role,
+            actorId,
+            actorRole: req.user.isImpersonated ? 'super-admin' : req.user.role,
             action: actionName,
             targetType,
             targetId,

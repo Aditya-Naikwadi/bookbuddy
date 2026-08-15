@@ -11,6 +11,7 @@ import { AnimatePresence } from "framer-motion";
 import { SplashScreen } from "./components/ui/SplashScreen";
 
 import ProtectedRoute from "./components/ProtectedRoute";
+import ImpersonationBanner from "./components/ImpersonationBanner";
 
 // Lazy loaded public pages
 const Landing = lazy(() => import("./pages/public/Landing"));
@@ -173,6 +174,7 @@ function App() {
             {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
           </AnimatePresence>
           <Router>
+            <ImpersonationBanner />
             <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
                 <Routes>

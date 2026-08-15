@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { Filter, User, Terminal, FileCode } from "lucide-react";
+import { Filter, User, Terminal, FileCode, Download } from "lucide-react";
 import adminApi from "../../../api/adminApi";
 import OpsHeader from "../../../components/ops/OpsHeader";
 import OpsSeverityBadge from "../../../components/ops/OpsSeverityBadge";
 import OpsDataTable from "../../../components/ops/OpsDataTable";
+import { exportToCSV } from "../../../utils/csvExporter";
 
 export default function AuditLogs() {
   const [logs, setLogs] = useState([]);
@@ -226,10 +227,24 @@ export default function AuditLogs() {
             </div>
           </div>
 
-          <div className="text-xs text-slate-500 font-bold">
-            AUDIT STREAM:{" "}
-            <strong className="text-indigo-400">{filteredLogs.length}</strong>{" "}
-            EVENTS LOADED
+          <div className="flex items-center gap-3 text-xs">
+            <span className="text-slate-500 font-bold">
+              AUDIT STREAM:{" "}
+              <strong className="text-indigo-400">{filteredLogs.length}</strong>{" "}
+              EVENTS LOADED
+            </span>
+            <button
+              onClick={() =>
+                exportToCSV(
+                  filteredLogs,
+                  `audit-logs-${new Date().toISOString().split("T")[0]}.csv`,
+                )
+              }
+              className="px-3 py-1 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700 text-indigo-300 font-bold rounded flex items-center gap-1.5 transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>EXPORT CSV</span>
+            </button>
           </div>
         </div>
 

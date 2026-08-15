@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import apiClient, {
+  getInMemoryToken,
   setInMemoryToken,
   fetchCsrfToken,
   setOnUnauthorizedCallback,
@@ -12,11 +13,60 @@ const useAuthStore = create((set) => {
   });
 
   return {
-    user: null,
-    token: null, // Virtual accessor for backwards-compatibility getters in hooks
-    isAuthenticated: false,
-    isLoading: true, // true by default to avoid flashing login on load
-    mfaRequired: false,
+    isImpersonated: !!localStorage.getItem("originalSuperAdminToken"),
+    originalSuperAdminToken:
+      localStorage.getItem("originalSuperAdminToken") || null,
+
+    startImpersonating: async (targetToken, targetUser) => {
+      const currentToken = localStorage.getItem("token") || getInMemoryToken();
+      if (currentToken) {
+        localStorage.setItem("originalSuperAdminToken", currentToken);
+      }
+      localStorage.setItem("token", targetToken);
+      setInMemoryToken(targetToken);
+      set({
+        token: targetToken,
+        user: targetUser,
+        isImpersonated: true,
+        originalSuperAdminToken: currentToken,
+      });
+    },
+
+    stopImpersonating: async () => {
+      const origToken =
+        localStorage.getItem("originalSuperAdminToken") ||
+        useAuthStore.getState().originalSuperAdminToken;
+
+      if (!origToken) return false;
+
+      localStorage.setItem("token", origToken);
+      localStorage.removeItem("originalSuperAdminToken");
+      setInMemoryToken(origToken);
+
+      try {
+        const profileRes = await apiClient.get("/auth/profile");
+        set({
+          user: profileRes.data.data,
+          token: origToken,
+          isImpersonated: false,
+          originalSuperAdminToken: null,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+        return true;
+      } catch (err) {
+        console.error("Failed to restore super admin profile:", err);
+        setInMemoryToken(origToken);
+        set({
+          token: origToken,
+          isImpersonated: false,
+          originalSuperAdminToken: null,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+        return true;
+      }
+    },
 
     login: async (identifier, password, totpCode = null) => {
       set({ isLoading: true, error: null, mfaRequired: false });
@@ -33,6 +83,7 @@ const useAuthStore = create((set) => {
         const { data } = await apiClient.post("/auth/login", payload);
         const accessToken = data.accessToken;
         setInMemoryToken(accessToken);
+        localStorage.setItem("token", accessToken);
 
         set({
           user: data.user,
@@ -40,6 +91,8 @@ const useAuthStore = create((set) => {
           isAuthenticated: true,
           isLoading: false,
           mfaRequired: false,
+          isImpersonated: false,
+          originalSuperAdminToken: null,
         });
         return true;
       } catch (error) {
@@ -63,6 +116,7 @@ const useAuthStore = create((set) => {
         const { data } = await apiClient.post("/auth/google", { idToken });
         const accessToken = data.accessToken;
         setInMemoryToken(accessToken);
+        localStorage.setItem("token", accessToken);
 
         set({
           user: data.user,
@@ -95,6 +149,7 @@ const useAuthStore = create((set) => {
         });
         const accessToken = data.accessToken;
         setInMemoryToken(accessToken);
+        localStorage.setItem("token", accessToken);
 
         set({
           user: data.user,
@@ -119,12 +174,16 @@ const useAuthStore = create((set) => {
         console.error("Logout failed on server", err);
       } finally {
         setInMemoryToken(null);
+        localStorage.removeItem("token");
+        localStorage.removeItem("originalSuperAdminToken");
         broadcastLogout();
         set({
           user: null,
           token: null,
           isAuthenticated: false,
           isLoading: false,
+          isImpersonated: false,
+          originalSuperAdminToken: null,
         });
       }
     },
@@ -133,27 +192,68 @@ const useAuthStore = create((set) => {
       try {
         await fetchCsrfToken();
 
-        // Silent token refresh using httpOnly cookie
-        const { data } = await apiClient.post("/auth/refresh");
-        const newToken = data.accessToken;
-        setInMemoryToken(newToken);
+        const storedToken = localStorage.getItem("token");
+        if (storedToken) {
+          setInMemoryToken(storedToken);
+        }
+
+        // Silent token refresh using httpOnly cookie if no storedToken
+        if (!storedToken) {
+          const { data } = await apiClient.post("/auth/refresh");
+          const newToken = data.accessToken;
+          setInMemoryToken(newToken);
+          localStorage.setItem("token", newToken);
+        }
 
         const profileRes = await apiClient.get("/auth/profile");
+        const hasOriginalToken = !!localStorage.getItem(
+          "originalSuperAdminToken",
+        );
+
         set({
           user: profileRes.data.data,
-          token: newToken,
+          token: getInMemoryToken(),
           isAuthenticated: true,
           isLoading: false,
+          isImpersonated: hasOriginalToken,
+          originalSuperAdminToken:
+            localStorage.getItem("originalSuperAdminToken") || null,
         });
         return true;
       } catch {
+        // If stored token or refresh failed but originalSuperAdminToken exists, attempt to restore super admin
+        const origToken = localStorage.getItem("originalSuperAdminToken");
+        if (origToken) {
+          setInMemoryToken(origToken);
+          localStorage.setItem("token", origToken);
+          localStorage.removeItem("originalSuperAdminToken");
+          try {
+            const profileRes = await apiClient.get("/auth/profile");
+            set({
+              user: profileRes.data.data,
+              token: origToken,
+              isAuthenticated: true,
+              isLoading: false,
+              isImpersonated: false,
+              originalSuperAdminToken: null,
+            });
+            return true;
+          } catch {
+            // Fall through to logout
+          }
+        }
+
         setInMemoryToken(null);
+        localStorage.removeItem("token");
+        localStorage.removeItem("originalSuperAdminToken");
         broadcastLogout();
         set({
           user: null,
           token: null,
           isAuthenticated: false,
           isLoading: false,
+          isImpersonated: false,
+          originalSuperAdminToken: null,
         });
         return false;
       }

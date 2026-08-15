@@ -2,19 +2,25 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const config = require('../config');
-const generateTokenPair = (user) => {
-  const expiry = user.role === 'super-admin' ? '5m' : config.jwt.accessExpiry;
+const generateTokenPair = (user, impersonationOptions = null) => {
+  const expiry =
+    user.role === 'super-admin' || (impersonationOptions && impersonationOptions.isImpersonated)
+      ? '5m'
+      : config.jwt.accessExpiry;
+
+  const payload = {
+    sub: user._id,
+    role: user.role,
+    collegeId: user.collegeId,
+  };
+
+  if (impersonationOptions && impersonationOptions.isImpersonated) {
+    payload.isImpersonated = true;
+    payload.originalSuperAdminId = impersonationOptions.originalSuperAdminId;
+  }
 
   // Access Token payload includes userId (sub), role, and collegeId
-  const accessToken = jwt.sign(
-    {
-      sub: user._id,
-      role: user.role,
-      collegeId: user.collegeId,
-    },
-    config.jwt.secret,
-    { expiresIn: expiry }
-  );
+  const accessToken = jwt.sign(payload, config.jwt.secret, { expiresIn: expiry });
 
   // Refresh Token payload contains minimal info (userId) plus a unique identifier to prevent identical token generation in quick succession
   const refreshToken = jwt.sign(
@@ -40,8 +46,8 @@ const verifyAccessToken = (token) => {
   return jwt.verify(token, config.jwt.secret);
 };
 
-const generateAccessToken = (user) => {
-  return generateTokenPair(user).accessToken;
+const generateAccessToken = (user, impersonationOptions = null) => {
+  return generateTokenPair(user, impersonationOptions).accessToken;
 };
 
 module.exports = {

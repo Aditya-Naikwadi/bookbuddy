@@ -129,6 +129,36 @@ auditLogSchema.pre(
   blockMutation
 );
 
+// Virtual Aliases for Blueprint Spec Compatibility
+auditLogSchema
+  .virtual('performedBy')
+  .get(function () {
+    return this.actorId;
+  })
+  .set(function (v) {
+    this.actorId = v;
+  });
+
+auditLogSchema.virtual('targetUser').get(function () {
+  return this.targetType === 'User' ? this.targetId : null;
+});
+
+auditLogSchema
+  .virtual('targetCollege')
+  .get(function () {
+    return this.collegeId;
+  })
+  .set(function (v) {
+    this.collegeId = v;
+  });
+
+auditLogSchema.virtual('timestamp').get(function () {
+  return this.createdAt;
+});
+
+auditLogSchema.set('toJSON', { virtuals: true });
+auditLogSchema.set('toObject', { virtuals: true });
+
 /* -------------------------------------------------------------------------- */
 /*                                INDEXES                                     */
 /* -------------------------------------------------------------------------- */
@@ -139,14 +169,14 @@ auditLogSchema.index({ action: 1, createdAt: -1 });
 auditLogSchema.index({ severity: 1, createdAt: -1 });
 
 // Super Admin & Security Operations Compound Indexes
+auditLogSchema.index({ actorId: 1, createdAt: -1 });
 auditLogSchema.index({ 'actor.userId': 1, createdAt: -1 });
 auditLogSchema.index({ actionType: 1, createdAt: -1 });
 auditLogSchema.index({ 'target.targetId': 1, createdAt: -1 });
 auditLogSchema.index({ collegeId: 1, createdAt: -1 });
 auditLogSchema.index({ severity: 1, actionType: 1, createdAt: -1 });
 
-// Institutional Compliance Retention: 365 days TTL
-auditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 31536000 });
+// Audit trails default to indefinite retention for compliance (No TTL Index)
 
 const AuditLog = mongoose.models.AuditLog || mongoose.model('AuditLog', auditLogSchema);
 if (!mongoose.models.AuditLogEntry) {
