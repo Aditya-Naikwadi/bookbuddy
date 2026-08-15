@@ -259,10 +259,10 @@ describe('Backend Audit Fixes Unit Tests (Items 1 - 3)', () => {
       );
     });
 
-    test('POST /api/lab/bookings rejects cross-seat double booking for same student in overlapping slot', async () => {
+    test('POST /api/v1/lab/bookings rejects cross-seat double booking for same student in overlapping slot', async () => {
       // 1. Book Seat A
       const res1 = await request(app)
-        .post('/api/lab/bookings')
+        .post('/api/v1/lab/bookings')
         .set('Authorization', `Bearer ${studentToken}`)
         .send({
           seatId: seatA._id,
@@ -275,7 +275,7 @@ describe('Backend Audit Fixes Unit Tests (Items 1 - 3)', () => {
 
       // 2. Attempt to book Seat B for the SAME student in the SAME overlapping time slot
       const res2 = await request(app)
-        .post('/api/lab/bookings')
+        .post('/api/v1/lab/bookings')
         .set('Authorization', `Bearer ${studentToken}`)
         .send({
           seatId: seatB._id,

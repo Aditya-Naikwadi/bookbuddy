@@ -176,7 +176,8 @@ auditLogSchema.index({ 'target.targetId': 1, createdAt: -1 });
 auditLogSchema.index({ collegeId: 1, createdAt: -1 });
 auditLogSchema.index({ severity: 1, actionType: 1, createdAt: -1 });
 
-// Audit trails default to indefinite retention for compliance (No TTL Index)
+// Audit trails 365-day retention compliance TTL index
+auditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 31536000 });
 
 const AuditLog = mongoose.models.AuditLog || mongoose.model('AuditLog', auditLogSchema);
 if (!mongoose.models.AuditLogEntry) {
