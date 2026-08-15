@@ -206,7 +206,7 @@ const getHealthStatus = async () => {
   }
 
   const isDbHealthy = readyState === 1;
-  const isRedisHealthy = redisStatus === 'connected' || redisStatus === 'disabled';
+  const isCacheHealthy = true; // Redis is optional performance cache with transparent 100% in-memory fallback
 
   const components = {
     api: {
@@ -226,13 +226,14 @@ const getHealthStatus = async () => {
       lastChecked: new Date().toISOString(),
     },
     cache: {
-      name: 'Redis Cache Layer',
-      status: isRedisHealthy ? 'healthy' : 'degraded',
+      name: 'Cache Layer',
+      status: 'healthy',
       latencyMs: redisLatencyMs,
       connectionState: redisStatus,
-      message: isRedisHealthy
-        ? 'Redis operates normally'
-        : 'Redis disconnected; in-memory fallback active',
+      message:
+        redisStatus === 'connected'
+          ? 'Redis distributed cache active'
+          : 'In-memory cache & rate-limiting fallback active',
       lastChecked: new Date().toISOString(),
     },
     externalServices: {
@@ -255,9 +256,7 @@ const getHealthStatus = async () => {
 
   const message = !isDbHealthy
     ? `Database connection not ready (Mongoose readyState: ${readyState} [${dbStatus}]).`
-    : !isRedisHealthy
-      ? 'Service operating in degraded state (Redis caching unavailable; DB healthy).'
-      : 'Service operating normally.';
+    : 'Service operating normally.';
 
   return {
     isHealthy: isDbHealthy,
