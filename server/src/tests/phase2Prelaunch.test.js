@@ -33,14 +33,13 @@ describe('Phase 2 Pre-Launch Checklist Integration Tests', () => {
     expect(res.body.redisConnection).toBeDefined();
   });
 
-  test('2. AuditLog has 365-day compliance TTL index and NotificationLog has 90-day TTL index', async () => {
+  test('2. AuditLog retains audit trails indefinitely for compliance and NotificationLog has 90-day TTL index', async () => {
     await AuditLog.syncIndexes();
     await NotificationLog.syncIndexes();
 
     const auditIndexes = await AuditLog.collection.indexes();
     const ttlAudit = auditIndexes.find((idx) => idx.expireAfterSeconds !== undefined);
-    expect(ttlAudit).toBeDefined();
-    expect(ttlAudit.expireAfterSeconds).toBe(31536000); // 365 days
+    expect(ttlAudit).toBeUndefined(); // Indefinite retention compliance
 
     const notifIndexes = await NotificationLog.collection.indexes();
     const ttlNotif = notifIndexes.find((idx) => idx.expireAfterSeconds !== undefined);

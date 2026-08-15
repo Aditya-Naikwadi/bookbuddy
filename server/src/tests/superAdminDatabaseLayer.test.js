@@ -16,6 +16,12 @@ describe('Super Admin Database Layer Verification Test Suite', () => {
       const config = require('../config');
       await mongoose.connect(config.mongoUri);
     }
+    await User.syncIndexes();
+    await College.syncIndexes();
+    await AuditLog.syncIndexes();
+    await PlatformMetricSnapshot.syncIndexes();
+    await CronRunLog.syncIndexes();
+    await Loan.syncIndexes();
   });
 
   describe('STAGE 1 & 2: Schema & Index Verification', () => {
