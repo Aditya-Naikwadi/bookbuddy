@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import {
   FileText,
-  ExternalLink,
   BookOpen,
   Globe,
   Database,

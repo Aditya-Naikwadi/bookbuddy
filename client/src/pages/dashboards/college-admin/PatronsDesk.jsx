@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, UserPlus, Mail, Shield, Loader2 } from "lucide-react";
+import { UserPlus, Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
 

@@ -1,4 +1,3 @@
-import React from "react";
 import { Search, X, LayoutGrid, List, SlidersHorizontal } from "lucide-react";
 
 const StickyControlBar = ({

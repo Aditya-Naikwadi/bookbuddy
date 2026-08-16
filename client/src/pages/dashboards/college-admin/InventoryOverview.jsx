@@ -1,11 +1,4 @@
-import {
-  Building2,
-  Layers,
-  CheckCircle2,
-  AlertTriangle,
-  Package,
-  Loader2,
-} from "lucide-react";
+import { Building2, Layers, AlertTriangle, Package } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
 

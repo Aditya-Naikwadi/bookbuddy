@@ -1,16 +1,13 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Sliders,
   Check,
   Lock,
-  Sparkles,
   ArrowLeft,
   Clock,
   Plus,
-  ShieldCheck,
   CheckCircle2,
-  AlertCircle,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import useAuthStore from "../../../store/authStore";
@@ -23,7 +20,6 @@ import {
 
 export default function FeatureManagerSettings() {
   const { user, updateUser } = useAuthStore();
-  const navigate = useNavigate();
 
   const { data: configData, refetch } = useQuery({
     queryKey: ["myCollegeConfig", user?.collegeId],

@@ -1,4 +1,4 @@
-import { Monitor, Calendar, Loader2 } from "lucide-react";
+import { Monitor, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
 

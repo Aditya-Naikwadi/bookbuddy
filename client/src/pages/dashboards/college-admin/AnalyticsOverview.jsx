@@ -3,7 +3,6 @@ import {
   TrendingUp,
   Users,
   BookOpen,
-  Clock,
   Activity,
   Loader2,
 } from "lucide-react";
@@ -19,7 +18,7 @@ export default function AnalyticsOverview() {
   const stats = summaryData?.data || summaryData || {};
   const topBooks = stats.topBooks || [];
   const deptUtil = stats.departmentUtilization || [];
-  const trends = stats.circulationTrends || [];
+  const _trends = stats.circulationTrends || [];
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 py-6 text-slate-100 font-mono">

@@ -1,4 +1,4 @@
-import React, {
+import {
   useState,
   useEffect,
   useRef,
@@ -111,7 +111,7 @@ const PdfViewerEngine = lazy(async () => {
         return () => {
           isMounted = false;
         };
-      }, [fileUrl, page, scale]);
+      }, [fileUrl, page, scale, onError, onTotalPages]);
 
       return (
         <div className="flex justify-center items-center overflow-auto p-4 max-h-full">
@@ -174,7 +174,7 @@ const EpubViewerEngine = lazy(async () => {
             }
           }
         };
-      }, [fileUrl]);
+      }, [fileUrl, onError, onLocationChange]);
 
       useEffect(() => {
         if (renditionRef.current && page) {

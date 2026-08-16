@@ -1,5 +1,3 @@
-import React from "react";
-
 export const SkeletonCard = ({ count = 3, className = "" }) => {
   return (
     <>

@@ -70,7 +70,7 @@ const VirtualizedCardGrid = ({
   const isLargeList = items.length > 12;
   const numColumns = viewMode === "list" ? 1 : 3;
   const totalRows = Math.ceil(items.length / numColumns);
-  const totalHeight = totalRows * estimatedItemHeight;
+  const _totalHeight = totalRows * estimatedItemHeight;
 
   let visibleItems = items;
   let paddingTop = 0;

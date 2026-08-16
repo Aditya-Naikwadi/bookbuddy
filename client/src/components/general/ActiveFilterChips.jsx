@@ -1,4 +1,3 @@
-import React from "react";
 import { X, RotateCcw } from "lucide-react";
 
 const ActiveFilterChips = ({ chips = [], onRemoveChip, onResetAll }) => {

@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-  BookOpen,
-  CheckCircle,
-  ArrowRightLeft,
-  UserCheck,
-  Loader2,
-  Plus,
-} from "lucide-react";
+import { ArrowRightLeft, UserCheck, Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
 

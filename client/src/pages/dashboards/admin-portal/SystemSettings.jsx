@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Mail as MailIcon,
   HardDrive,
   RefreshCw,
   CheckCircle2,
   AlertTriangle,
-  Shield,
 } from "lucide-react";
 import adminApi from "../../../api/adminApi";
 import OpsHeader from "../../../components/ops/OpsHeader";
@@ -21,7 +20,7 @@ export default function SystemSettings() {
     maintenanceMode: false,
   });
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [_isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });

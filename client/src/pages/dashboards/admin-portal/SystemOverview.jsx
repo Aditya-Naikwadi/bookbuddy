@@ -24,7 +24,7 @@ export default function SystemOverview() {
   const [colleges, setColleges] = useState([]);
   const [health, setHealth] = useState(null);
   const [isLoadingOther, setIsLoadingOther] = useState(true);
-  const [error, setError] = useState("");
+  const [_error, setError] = useState("");
 
   const isLoading = isOverviewLoading || isLoadingOther;
 

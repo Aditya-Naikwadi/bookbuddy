@@ -11,15 +11,8 @@ import {
   Bookmark,
   Monitor,
   MessageSquare,
-  Users,
-  ArrowRightLeft,
-  BookPlus,
   UploadCloud,
-  PackageSearch,
   Settings2,
-  DoorOpen,
-  Ticket,
-  LineChart,
 } from "lucide-react";
 
 export const STUDENT_NAV_ITEMS = [

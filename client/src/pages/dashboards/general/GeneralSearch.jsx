@@ -33,7 +33,6 @@ const GENRES = [
   "Environmental Science",
   "Physics",
 ];
-const FORMAT_OPTIONS = ["All", "physical", "digital", "Hardcover", "Paperback"];
 const AVAILABILITY_OPTIONS = ["All", "available", "checked_out", "on_hold"];
 
 const SORT_OPTIONS = [
@@ -87,7 +86,10 @@ const GeneralSearch = () => {
     limit: 50,
   });
 
-  const catalogBooks = searchData?.books || [];
+  const catalogBooks = useMemo(
+    () => searchData?.books || [],
+    [searchData?.books],
+  );
 
   // Compute stat summary metrics
   const stats = useMemo(() => {

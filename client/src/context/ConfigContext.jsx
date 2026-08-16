@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 
 const ConfigContext = createContext({
@@ -29,7 +30,6 @@ export const ConfigProvider = ({ children }) => {
         }
       })
       .catch((err) => {
-        // eslint-disable-next-line no-console
         console.warn(
           "Could not fetch public config from backend:",
           err.message,

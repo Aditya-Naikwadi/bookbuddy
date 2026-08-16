@@ -22,7 +22,7 @@ export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [colleges, setColleges] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [_error, setError] = useState("");
   const [message, setMessage] = useState({ type: "", text: "" });
 
   // Filters State

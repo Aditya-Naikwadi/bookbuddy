@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Clock,
@@ -21,7 +21,6 @@ import useLocalBookmarks from "../../../hooks/useLocalBookmarks";
 import useAuthStore from "../../../store/authStore";
 import SparklineChart from "../../../components/general/SparklineChart";
 import DonutChart from "../../../components/general/DonutChart";
-import AnnouncementTicker from "../../../components/general/AnnouncementTicker";
 import { useGeneralDashboard } from "../../../hooks/useBookData";
 import BookDataState from "../../../components/common/BookDataState";
 import BookCoverImage from "../../../components/common/BookCoverImage";
@@ -49,7 +48,7 @@ const GeneralDashboardHome = () => {
     data: dashboardPayload,
     isLoading,
     isError,
-    error,
+    error: _error,
     refetch: handleRefresh,
   } = useGeneralDashboard(collegeId);
 

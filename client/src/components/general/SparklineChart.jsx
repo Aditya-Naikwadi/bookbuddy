@@ -1,5 +1,3 @@
-import React from "react";
-
 const SparklineChart = ({
   data = [12, 18, 25, 22, 30, 42, 55, 68, 75, 90],
   color = "#4F46E5",

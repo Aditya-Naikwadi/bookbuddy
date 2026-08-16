@@ -3,16 +3,12 @@ import {
   Users,
   Library,
   Receipt,
-  CreditCard,
   FileText,
   ListPlus,
   Award,
-  Bookmark,
   Monitor,
-  MessageSquare,
   Sparkles,
   BarChart3,
-  Bell,
   HelpCircle,
 } from "lucide-react";
 

@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Type, Check, Volume2, VolumeX, Eye } from "lucide-react";
 
 export const ReaderThemeControls = ({

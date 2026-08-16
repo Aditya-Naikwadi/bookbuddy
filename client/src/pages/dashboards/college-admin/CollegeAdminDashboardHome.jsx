@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   UploadCloud,
   Sliders,
@@ -14,21 +14,16 @@ import {
   ArrowRight,
   Package,
   ShieldCheck,
-  CheckCircle2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import useAuthStore from "../../../store/authStore";
 import featureApi from "../../../api/featureApi";
 import collegeAdminApi from "../../../api/collegeAdminApi";
-import {
-  FEATURE_REGISTRY,
-  getEnabledFeaturesList,
-} from "../../../config/featureRegistry";
+import { getEnabledFeaturesList } from "../../../config/featureRegistry";
 import CollegeAdminOnboardingWizard from "../../../components/admin/CollegeAdminOnboardingWizard";
 
 export default function CollegeAdminDashboardHome() {
   const { user, updateUser } = useAuthStore();
-  const navigate = useNavigate();
 
   // Fetch Feature Config
   const { data: configData } = useQuery({

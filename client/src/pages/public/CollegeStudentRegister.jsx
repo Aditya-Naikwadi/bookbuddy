@@ -1,24 +1,18 @@
-import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useParams, Link } from "react-router-dom";
 import {
-  Building2,
-  UserCheck,
   Mail,
-  Lock,
-  Phone,
   ArrowRight,
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
   BookOpen,
 } from "lucide-react";
-import registrationApi from "../../api/registrationApi";
 
 export default function CollegeStudentRegister() {
   const { collegeSlug } = useParams();
-  const navigate = useNavigate();
 
-  const [collegeData, setCollegeData] = useState({
+  const [collegeData, _setCollegeData] = useState({
     name: "Stanford University",
     slug: collegeSlug || "stanford-univ",
     domain: "stanford.edu",

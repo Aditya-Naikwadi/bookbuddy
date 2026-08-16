@@ -24,7 +24,7 @@ export const useBookRealtimeSync = (collegeIdParam) => {
   useEffect(() => {
     if (!socket || !collegeId) return;
 
-    const handleBookChange = (payload) => {
+    const handleBookChange = (_payload) => {
       // Invalidate all book queries for this college
       queryClient.invalidateQueries({ queryKey: ["books", collegeId] });
       queryClient.invalidateQueries({ queryKey: ["bookStats", collegeId] });

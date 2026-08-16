@@ -1,5 +1,3 @@
-import React from "react";
-
 /**
  * OpsSeverityBadge
  * Signature status/severity indicator system for BookBuddy Super Admin Portal.

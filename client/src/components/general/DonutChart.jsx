@@ -1,5 +1,3 @@
-import React from "react";
-
 const DonutChart = ({
   data = [
     { label: "Computer Science", value: 35, color: "#4F46E5" },

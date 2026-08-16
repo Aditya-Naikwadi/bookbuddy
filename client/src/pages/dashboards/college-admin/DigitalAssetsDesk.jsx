@@ -1,4 +1,4 @@
-import { FileText, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
 

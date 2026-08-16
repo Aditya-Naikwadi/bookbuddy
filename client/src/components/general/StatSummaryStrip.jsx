@@ -1,5 +1,3 @@
-import React from "react";
-
 const StatSummaryStrip = ({ items = [] }) => {
   if (!items || items.length === 0) return null;
 

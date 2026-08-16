@@ -1,10 +1,9 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   Search,
   ChevronDown,
   ChevronUp,
   ArrowUpDown,
-  Filter,
   RefreshCw,
   Download,
 } from "lucide-react";

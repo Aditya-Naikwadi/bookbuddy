@@ -6,14 +6,10 @@ import {
   ArrowRight,
   ArrowLeft,
   Sparkles,
-  ShieldCheck,
   Globe,
   Phone,
-  BookOpen,
   School,
   GraduationCap,
-  Award,
-  Crown,
   Laptop,
 } from "lucide-react";
 

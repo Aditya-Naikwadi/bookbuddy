@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BookPlus, BookOpen, Loader2 } from "lucide-react";
+import { BookPlus, Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
 
@@ -10,7 +10,7 @@ export default function CatalogingDesk() {
   const [isbn, setIsbn] = useState("");
   const [category, setCategory] = useState("");
   const [totalCopies, setTotalCopies] = useState(1);
-  const [publishedYear, setPublishedYear] = useState(new Date().getFullYear());
+  const [publishedYear, _setPublishedYear] = useState(new Date().getFullYear());
 
   const addBookMutation = useMutation({
     mutationFn: (payload) => collegeAdminApi.addCatalogBook(payload),

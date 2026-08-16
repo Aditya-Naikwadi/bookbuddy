@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import {
   Copy,
   Check,
@@ -17,7 +17,6 @@ export default function ShareableRegistrationUrlModal({
 }) {
   const [copied, setCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
-  const qrCanvasRef = useRef(null);
 
   if (!isOpen) return null;
 

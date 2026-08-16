@@ -10,7 +10,6 @@ import {
   FileSearch,
   HardDrive,
   ArrowRight,
-  Activity,
   AlertTriangle,
   CheckCircle2,
 } from "lucide-react";
@@ -19,7 +18,12 @@ import OpsSeverityBadge from "../../../components/ops/OpsSeverityBadge";
 import { useAdminOverview } from "../../../hooks/useAdminOverview";
 
 export default function AdminDashboardHome() {
-  const { overview, isLoading, isError, refetch } = useAdminOverview();
+  const {
+    overview,
+    isLoading,
+    isError: _isError,
+    refetch,
+  } = useAdminOverview();
 
   const pendingOnboardings = overview?.pendingOnboardingCount || 0;
   const pendingModerations = overview?.pendingModerationCount || 0;
