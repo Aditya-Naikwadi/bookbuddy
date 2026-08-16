@@ -124,6 +124,7 @@ router
 router.route('/feedback').get(getFeedback);
 
 // Analytics
+router.route('/analytics').get(expensiveRouteLimiter, getAnalyticsSummary);
 router.route('/analytics/summary').get(expensiveRouteLimiter, getAnalyticsSummary);
 
 module.exports = router;

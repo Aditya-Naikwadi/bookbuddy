@@ -53,12 +53,17 @@ router.route('/overview').get(expensiveRouteLimiter, getOverview);
 router
   .route('/admins')
   .get(getAdmins)
-  .post(validate(createAdminSchema), auditLog('admin.create'), createAdmin);
+  .post(validate(createAdminSchema), auditLog('college_admin.create'), createAdmin);
+
 router
   .route('/colleges')
   .get(listColleges)
   .post(validate(createCollegeSchema), auditLog('college.create'), createCollege);
-router.route('/colleges/:id').get(validate(paramIdSchema), getCollegeDetails);
+
+router
+  .route('/colleges/:id')
+  .get(validate(paramIdSchema), getCollegeDetails)
+  .put(validate(paramIdSchema), auditLog('college.update'), updateCollege);
 
 router
   .route('/colleges/:id/tier')
@@ -66,7 +71,7 @@ router
 
 router
   .route('/colleges/:id/status')
-  .patch(validate(paramIdSchema), auditLog('college.patch_status'), patchCollegeStatus);
+  .patch(validate(paramIdSchema), auditLog('college.status_patch'), patchCollegeStatus);
 
 router.route('/audit-logs').get(expensiveRouteLimiter, getAuditLogs);
 
@@ -77,19 +82,18 @@ router
   .put(validate(paramIdSchema), auditLog('eresource.moderate'), moderateEResourceGlobal);
 router
   .route('/moderation/:id/publish')
-  .post(validate(paramIdSchema), auditLog('eresource.publish'), publishEResourceGlobal);
+  .post(validate(paramIdSchema), auditLog('eresource.publish_global'), publishEResourceGlobal);
 
 // Tenant onboarding review routes
 router.route('/onboardings/pending').get(getPendingOnboardings);
 router
-  .route('/onboardings/:id/approve')
-  .post(validate(paramIdSchema), auditLog('onboarding.approve'), approveTenantOnboarding);
+  .route('/onboardings/:requestId/approve')
+  .post(auditLog('tenant_onboarding.approve'), approveTenantOnboarding);
 router
-  .route('/onboardings/:id/reject')
+  .route('/onboardings/:requestId/reject')
   .post(
-    validate(paramIdSchema),
     validate(rejectOnboardingSchema),
-    auditLog('onboarding.reject'),
+    auditLog('tenant_onboarding.reject'),
     rejectTenantOnboarding
   );
 
@@ -97,10 +101,10 @@ router
 router.route('/users').get(getUsers);
 router
   .route('/users/:id/status')
-  .patch(validate(paramIdSchema), auditLog('user.patch_status'), updateUserStatus);
+  .patch(validate(paramIdSchema), auditLog('user.status_update'), updateUserStatus);
 router
   .route('/users/:id/role')
-  .patch(validate(paramIdSchema), auditLog('user.patch_role'), updateUserRole);
+  .patch(validate(paramIdSchema), auditLog('user.role_update'), updateUserRole);
 router
   .route('/users/:id/reset-password')
   .post(validate(paramIdSchema), auditLog('user.reset_password'), resetUserPassword);
