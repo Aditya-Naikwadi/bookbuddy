@@ -8,6 +8,7 @@ on:
 
 jobs:
   ci:
+    name: Continuous Integration (Lint, Test, Build)
     runs-on: ubuntu-latest
 
     services:
@@ -15,6 +16,11 @@ jobs:
         image: mongo:6.0
         ports:
           - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout Repository
@@ -24,13 +30,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: Install Server Dependencies
         run: |
           cd server
           npm install --legacy-peer-deps
 
-      - name: Run Linter
+      - name: Run Server Linter
         run: |
           cd server
           npm run lint
@@ -47,15 +54,15 @@ jobs:
             console.log('CI Environment variables validation passed.');
           "
         env:
-          MONGO_URI: mongodb://localhost:27017/bookbuddy_test
+          MONGO_URI: mongodb://127.0.0.1:27017/bookbuddy_test
           JWT_SECRET: testjwtsecretkey999
           JWT_REFRESH_SECRET: testjwtrefreshsecretkey999
           CLIENT_ORIGIN: http://localhost:5173
 
-      - name: Run Tests
+      - name: Run Server Tests
         env:
           NODE_ENV: test
-          MONGO_URI: mongodb://localhost:27017/bookbuddy_test
+          MONGO_URI: mongodb://127.0.0.1:27017/bookbuddy_test
           JWT_SECRET: testjwtsecretkey999
           JWT_REFRESH_SECRET: testjwtrefreshsecretkey999
           JWT_ACCESS_EXPIRY: 15m
@@ -66,10 +73,20 @@ jobs:
           cd server
           npm test
 
-      - name: Install Client & Build Check
+      - name: Install Client Dependencies
         run: |
           cd client
-          npm install --legacy-peer-deps
+          npm install --legacy-peer-deps --include=dev
+
+      - name: Run Client Linter & Tests
+        run: |
+          cd client
+          npm run lint
+          npm test
+
+      - name: Build Client Production Bundle
+        run: |
+          cd client
           npm run build
 
   deploy-vercel:
@@ -107,15 +124,15 @@ jobs:
 
       - name: Pull Vercel Environment Information
         if: steps.check_vercel.outputs.has_token == 'true'
-        run: vercel pull --yes --environment=production
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build Project Artifacts
         if: steps.check_vercel.outputs.has_token == 'true'
-        run: vercel build --prod
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel Production
         if: steps.check_vercel.outputs.has_token == 'true'
-        run: vercel deploy --prebuilt --prod
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
 
   deploy-docker:
     name: Build & Push Production Docker Image
@@ -199,6 +216,7 @@ jobs:
           name: deployment-audit-log-${{ github.sha }}
           path: logs/deployment-audit.jsonl
           retention-days: 90
+          if-no-files-found: ignore
 
       - name: Alert on Verification Automation Failure
         if: failure()
