@@ -108,7 +108,8 @@ export default function CollegeAdminDashboardHome() {
       path: "/college-admin/features",
       icon: <Sliders className="w-6 h-6 text-indigo-400" />,
       badge: `${enabledIds.length} Active Modules`,
-      description: "Enable or disable functional modules, adjust borrow duration policies, max limits, and fine rates.",
+      description:
+        "Enable or disable functional modules, adjust borrow duration policies, max limits, and fine rates.",
     },
     {
       id: "patrons",
@@ -116,7 +117,8 @@ export default function CollegeAdminDashboardHome() {
       path: "/college-admin/patrons",
       icon: <Users className="w-6 h-6 text-emerald-400" />,
       badge: `${(metrics.totalStudents || 0).toLocaleString()} Patrons`,
-      description: "Student and faculty account management, single enrollment, and borrowing privileges.",
+      description:
+        "Student and faculty account management, single enrollment, and borrowing privileges.",
     },
     {
       id: "bulk-upload",
@@ -124,7 +126,8 @@ export default function CollegeAdminDashboardHome() {
       path: "/college-admin/bulk-upload",
       icon: <UploadCloud className="w-6 h-6 text-emerald-400" />,
       badge: "ROSTER INGESTION",
-      description: "Batch import student rosters using CSV/Excel templates with header validation and preview flow.",
+      description:
+        "Batch import student rosters using CSV/Excel templates with header validation and preview flow.",
     },
     {
       id: "circulation",
@@ -132,7 +135,8 @@ export default function CollegeAdminDashboardHome() {
       path: "/college-admin/circulation",
       icon: <BookOpen className="w-6 h-6 text-blue-400" />,
       badge: `${metrics.activeLoans || 0} Loans Active`,
-      description: "Counter checkouts, returns processing with automatic fine calculation, and reservation hold queues.",
+      description:
+        "Counter checkouts, returns processing with automatic fine calculation, and reservation hold queues.",
     },
     {
       id: "cataloging",
@@ -140,7 +144,8 @@ export default function CollegeAdminDashboardHome() {
       path: "/college-admin/cataloging",
       icon: <Package className="w-6 h-6 text-amber-400" />,
       badge: `${(metrics.catalogSize || 0).toLocaleString()} Titles`,
-      description: "Add new books via ISBN Google Books auto-fill or manual entry, and manage total/available copy counts.",
+      description:
+        "Add new books via ISBN Google Books auto-fill or manual entry, and manage total/available copy counts.",
     },
     {
       id: "inventory",
@@ -148,7 +153,8 @@ export default function CollegeAdminDashboardHome() {
       path: "/college-admin/inventory",
       icon: <Layers className="w-6 h-6 text-cyan-400" />,
       badge: `${metrics.stockAlerts?.length || 0} Stock Alerts`,
-      description: "Physical stock distribution, low-stock warnings, and subject categorization metrics.",
+      description:
+        "Physical stock distribution, low-stock warnings, and subject categorization metrics.",
     },
     {
       id: "digital-assets",
@@ -156,7 +162,8 @@ export default function CollegeAdminDashboardHome() {
       path: "/college-admin/digital-assets",
       icon: <FileText className="w-6 h-6 text-purple-400" />,
       badge: `${metrics.digitalResourceCount || 0} E-Resources`,
-      description: "Upload campus digital assets, e-books, research PDFs, and moderate student upload submissions.",
+      description:
+        "Upload campus digital assets, e-books, research PDFs, and moderate student upload submissions.",
     },
     {
       id: "finances",
@@ -164,7 +171,8 @@ export default function CollegeAdminDashboardHome() {
       path: "/college-admin/finances",
       icon: <Receipt className="w-6 h-6 text-rose-400" />,
       badge: `₹${metrics.unpaidFinesTotal || 0} Unpaid`,
-      description: "Track overdue fines, log manual cash settlements at counter, and record fee waivers with audit logs.",
+      description:
+        "Track overdue fines, log manual cash settlements at counter, and record fee waivers with audit logs.",
     },
     {
       id: "facilities",
@@ -172,7 +180,8 @@ export default function CollegeAdminDashboardHome() {
       path: "/college-admin/facilities",
       icon: <Monitor className="w-6 h-6 text-teal-400" />,
       badge: `${Math.round((metrics.labUtilizationRate || 0) * 100)}% Utilization`,
-      description: "Configure study lab seats, manage computer hardware specs, and monitor patron seat reservations.",
+      description:
+        "Configure study lab seats, manage computer hardware specs, and monitor patron seat reservations.",
     },
     {
       id: "helpdesk",
@@ -180,7 +189,8 @@ export default function CollegeAdminDashboardHome() {
       path: "/college-admin/helpdesk",
       icon: <HelpCircle className="w-6 h-6 text-rose-400" />,
       badge: "HELPDESK & FEEDBACK",
-      description: "Resolve patron support complaints, review student book purchase recommendations, and track feedback logs.",
+      description:
+        "Resolve patron support complaints, review student book purchase recommendations, and track feedback logs.",
     },
     {
       id: "analytics",
@@ -188,7 +198,8 @@ export default function CollegeAdminDashboardHome() {
       path: "/college-admin/analytics",
       icon: <BarChart3 className="w-6 h-6 text-indigo-400" />,
       badge: "ANALYTICS & REPORTS",
-      description: "Circulation volume trends, top borrowed books leaderboard, and department utilization metrics.",
+      description:
+        "Circulation volume trends, top borrowed books leaderboard, and department utilization metrics.",
     },
   ];
 
@@ -210,7 +221,11 @@ export default function CollegeAdminDashboardHome() {
             {collegeProfile.name}
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 max-w-xl font-sans">
-            Tenant Management Portal — <span className="font-mono text-indigo-300 font-bold">{enabledIds.length}</span> active functional modules provisioned
+            Tenant Management Portal —{" "}
+            <span className="font-mono text-indigo-300 font-bold">
+              {enabledIds.length}
+            </span>{" "}
+            active functional modules provisioned
           </p>
         </div>
 
@@ -228,35 +243,55 @@ export default function CollegeAdminDashboardHome() {
       {/* Metric Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-          <div className="text-[11px] text-slate-400 uppercase font-bold">Enrolled Students</div>
-          <div className="text-2xl font-extrabold text-white mt-1">
-            {isSummaryLoading ? "..." : (metrics.totalStudents || 0).toLocaleString()}
+          <div className="text-[11px] text-slate-400 uppercase font-bold">
+            Enrolled Students
           </div>
-          <div className="text-[10px] text-emerald-400 mt-1">Active Patron Accounts</div>
+          <div className="text-2xl font-extrabold text-white mt-1">
+            {isSummaryLoading
+              ? "..."
+              : (metrics.totalStudents || 0).toLocaleString()}
+          </div>
+          <div className="text-[10px] text-emerald-400 mt-1">
+            Active Patron Accounts
+          </div>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-          <div className="text-[11px] text-slate-400 uppercase font-bold">Catalog Holdings</div>
-          <div className="text-2xl font-extrabold text-white mt-1">
-            {isSummaryLoading ? "..." : (metrics.catalogSize || 0).toLocaleString()}
+          <div className="text-[11px] text-slate-400 uppercase font-bold">
+            Catalog Holdings
           </div>
-          <div className="text-[10px] text-indigo-400 mt-1">Physical Shelf Titles</div>
+          <div className="text-2xl font-extrabold text-white mt-1">
+            {isSummaryLoading
+              ? "..."
+              : (metrics.catalogSize || 0).toLocaleString()}
+          </div>
+          <div className="text-[10px] text-indigo-400 mt-1">
+            Physical Shelf Titles
+          </div>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-          <div className="text-[11px] text-slate-400 uppercase font-bold">Active Circulation</div>
+          <div className="text-[11px] text-slate-400 uppercase font-bold">
+            Active Circulation
+          </div>
           <div className="text-2xl font-extrabold text-amber-400 mt-1">
             {isSummaryLoading ? "..." : metrics.activeLoans || 0}
           </div>
-          <div className="text-[10px] text-amber-400/80 mt-1">Books Checked Out</div>
+          <div className="text-[10px] text-amber-400/80 mt-1">
+            Books Checked Out
+          </div>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-          <div className="text-[11px] text-slate-400 uppercase font-bold">Outstanding Fines</div>
+          <div className="text-[11px] text-slate-400 uppercase font-bold">
+            Outstanding Fines
+          </div>
           <div className="text-2xl font-extrabold text-rose-400 mt-1">
             ₹{isSummaryLoading ? "..." : metrics.unpaidFinesTotal || 0}
           </div>
-          <div className="text-[10px] text-rose-400/80 mt-1">Pending Fine Ledger</div>
+          <div className="text-[10px] text-rose-400/80 mt-1">
+            Pending Fine Ledger
+          </div>
         </div>
       </div>
 

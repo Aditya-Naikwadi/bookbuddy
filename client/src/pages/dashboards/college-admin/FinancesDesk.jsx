@@ -11,7 +11,11 @@ export default function FinancesDesk() {
   });
 
   const payMutation = useMutation({
-    mutationFn: ({ id, amount }) => collegeAdminApi.payCollegeFine(id, { amountPaid: amount, paymentMethod: "cash" }),
+    mutationFn: ({ id, amount }) =>
+      collegeAdminApi.payCollegeFine(id, {
+        amountPaid: amount,
+        paymentMethod: "cash",
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collegeFines"] });
     },
@@ -29,13 +33,15 @@ export default function FinancesDesk() {
           Fine Collections & Overdue Ledger
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          Audit overdue library fines, process cash settlements at counter, and view fee collection logs.
+          Audit overdue library fines, process cash settlements at counter, and
+          view fee collection logs.
         </p>
       </div>
 
       {isLoading ? (
         <div className="py-12 text-center text-slate-400 flex items-center justify-center gap-2">
-          <Loader2 className="animate-spin text-indigo-400" size={20} /> Loading fine ledger...
+          <Loader2 className="animate-spin text-indigo-400" size={20} /> Loading
+          fine ledger...
         </div>
       ) : fines.length === 0 ? (
         <div className="py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">
@@ -59,7 +65,9 @@ export default function FinancesDesk() {
                   <td className="p-3.5 font-bold text-white">
                     {fine.userId?.name || "Student"} ({fine.userId?.email})
                   </td>
-                  <td className="p-3.5">{fine.reason || "Overdue Book Return"}</td>
+                  <td className="p-3.5">
+                    {fine.reason || "Overdue Book Return"}
+                  </td>
                   <td className="p-3.5 font-mono text-emerald-400 font-bold">
                     ₹{fine.amount}
                   </td>
@@ -77,7 +85,12 @@ export default function FinancesDesk() {
                   <td className="p-3.5">
                     {fine.status !== "paid" && (
                       <button
-                        onClick={() => payMutation.mutate({ id: fine._id, amount: fine.amount })}
+                        onClick={() =>
+                          payMutation.mutate({
+                            id: fine._id,
+                            amount: fine.amount,
+                          })
+                        }
                         disabled={payMutation.isPending}
                         className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 font-medium text-white rounded-lg text-[11px]"
                       >

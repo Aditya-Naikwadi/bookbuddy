@@ -110,7 +110,8 @@ const ReadingLists = () => {
             Curated Reading Lists
           </h1>
           <p className="text-sm text-muted mt-1">
-            Discover and manage academic reading collections curated by students and faculty.
+            Discover and manage academic reading collections curated by students
+            and faculty.
           </p>
         </div>
 
@@ -127,11 +128,14 @@ const ReadingLists = () => {
       {isLoadingLists ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted">
           <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mb-3" />
-          <p className="text-sm font-medium">Loading reading lists from catalog...</p>
+          <p className="text-sm font-medium">
+            Loading reading lists from catalog...
+          </p>
         </div>
       ) : isListsError ? (
         <div className="p-6 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-300 text-sm">
-          Failed to load reading lists: {listsError?.message || "Server connection error"}
+          Failed to load reading lists:{" "}
+          {listsError?.message || "Server connection error"}
         </div>
       ) : lists.length === 0 ? (
         /* Empty State */
@@ -140,9 +144,12 @@ const ReadingLists = () => {
             <BookOpen className="w-8 h-8" />
           </div>
           <div className="max-w-md">
-            <h3 className="text-lg font-bold text-ink">No Reading Lists Found</h3>
+            <h3 className="text-lg font-bold text-ink">
+              No Reading Lists Found
+            </h3>
             <p className="text-sm text-muted mt-1">
-              You don&apos;t have any reading lists yet, and no public campus lists have been published. Create your first list to get started!
+              You don&apos;t have any reading lists yet, and no public campus
+              lists have been published. Create your first list to get started!
             </p>
           </div>
           <button
@@ -186,9 +193,7 @@ const ReadingLists = () => {
 
                     {isOwner && (
                       <button
-                        onClick={() =>
-                          deleteMutation.mutate(list._id)
-                        }
+                        onClick={() => deleteMutation.mutate(list._id)}
                         title="Delete list"
                         className="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg bg-black/30 backdrop-blur-md transition-colors"
                       >
@@ -212,12 +217,14 @@ const ReadingLists = () => {
                 {/* Body & Meta */}
                 <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                   <p className="text-xs text-muted line-clamp-2 min-h-[2rem]">
-                    {list.description || "No description provided for this collection."}
+                    {list.description ||
+                      "No description provided for this collection."}
                   </p>
 
                   <div className="flex items-center justify-between pt-3 border-t border-edge/20 text-xs">
                     <span className="text-slate-400 font-mono font-medium">
-                      {list.items?.length || 0} Resource{list.items?.length === 1 ? "" : "s"}
+                      {list.items?.length || 0} Resource
+                      {list.items?.length === 1 ? "" : "s"}
                     </span>
 
                     <div className="flex items-center gap-2">
@@ -228,7 +235,8 @@ const ReadingLists = () => {
                       >
                         {copiedId === list._id ? (
                           <>
-                            <Check size={12} className="text-emerald-400" /> Copied
+                            <Check size={12} className="text-emerald-400" />{" "}
+                            Copied
                           </>
                         ) : (
                           <>
@@ -254,7 +262,9 @@ const ReadingLists = () => {
                           className="px-2 py-1 rounded-lg border border-edge/30 hover:bg-slate-800 text-slate-300 transition-colors text-[11px] flex items-center gap-1"
                         >
                           <Edit2 size={11} />
-                          {list.visibility === "public" ? "Make Private" : "Make Public"}
+                          {list.visibility === "public"
+                            ? "Make Private"
+                            : "Make Public"}
                         </button>
                       )}
                     </div>
@@ -275,14 +285,16 @@ const ReadingLists = () => {
           <div>
             <h2 className="text-xl font-bold text-ink">My Saved Bookmarks</h2>
             <p className="text-xs text-muted">
-              Your personal reading location markers across e-resources ({bookmarks.length} saved).
+              Your personal reading location markers across e-resources (
+              {bookmarks.length} saved).
             </p>
           </div>
         </div>
 
         {bookmarks.length === 0 ? (
           <div className="p-6 rounded-2xl bg-surface/40 border border-edge/20 text-center text-xs text-muted">
-            No bookmarks created yet. Open any EPUB or PDF e-resource in the reader to drop persistent bookmarks.
+            No bookmarks created yet. Open any EPUB or PDF e-resource in the
+            reader to drop persistent bookmarks.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -297,7 +309,11 @@ const ReadingLists = () => {
                 <div className="text-slate-400 font-mono text-[11px]">
                   Ref: {b.locationRef}
                 </div>
-                {b.note && <div className="text-slate-300 italic">&ldquo;{b.note}&rdquo;</div>}
+                {b.note && (
+                  <div className="text-slate-300 italic">
+                    &ldquo;{b.note}&rdquo;
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -365,8 +381,12 @@ const ReadingLists = () => {
                   >
                     <Lock size={16} />
                     <div>
-                      <div className="text-xs font-bold text-white">Private</div>
-                      <div className="text-[10px] text-slate-400">Only visible to me</div>
+                      <div className="text-xs font-bold text-white">
+                        Private
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        Only visible to me
+                      </div>
                     </div>
                   </button>
 
@@ -382,7 +402,9 @@ const ReadingLists = () => {
                     <Globe size={16} />
                     <div>
                       <div className="text-xs font-bold text-white">Public</div>
-                      <div className="text-[10px] text-slate-400">Visible to campus</div>
+                      <div className="text-[10px] text-slate-400">
+                        Visible to campus
+                      </div>
                     </div>
                   </button>
                 </div>
@@ -401,7 +423,9 @@ const ReadingLists = () => {
                   disabled={createMutation.isPending || !newTitle.trim()}
                   className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-all disabled:opacity-50 flex items-center gap-2"
                 >
-                  {createMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {createMutation.isPending && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
                   Create Collection
                 </button>
               </div>

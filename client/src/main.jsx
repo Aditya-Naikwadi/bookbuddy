@@ -44,7 +44,9 @@ function DeferredAnalytics() {
     if ("serviceWorker" in navigator && import.meta.env.MODE === "production") {
       navigator.serviceWorker
         .register("/sw.js")
-        .then((reg) => console.log("[PWA SW] Registered successfully:", reg.scope))
+        .then((reg) =>
+          console.log("[PWA SW] Registered successfully:", reg.scope),
+        )
         .catch((err) => console.warn("[PWA SW] Registration failed:", err));
     }
   }, []);

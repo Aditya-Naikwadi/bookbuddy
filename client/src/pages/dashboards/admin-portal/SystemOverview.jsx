@@ -16,7 +16,11 @@ import OpsSeverityBadge from "../../../components/ops/OpsSeverityBadge";
 import { useAdminOverview } from "../../../hooks/useAdminOverview";
 
 export default function SystemOverview() {
-  const { overview: stats, isLoading: isOverviewLoading, refetch: refetchOverview } = useAdminOverview();
+  const {
+    overview: stats,
+    isLoading: isOverviewLoading,
+    refetch: refetchOverview,
+  } = useAdminOverview();
   const [colleges, setColleges] = useState([]);
   const [health, setHealth] = useState(null);
   const [isLoadingOther, setIsLoadingOther] = useState(true);

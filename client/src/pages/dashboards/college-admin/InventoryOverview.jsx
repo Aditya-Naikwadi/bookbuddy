@@ -1,4 +1,11 @@
-import { Building2, Layers, CheckCircle2, AlertTriangle, Package, Loader2 } from "lucide-react";
+import {
+  Building2,
+  Layers,
+  CheckCircle2,
+  AlertTriangle,
+  Package,
+  Loader2,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
 
@@ -31,7 +38,8 @@ export default function InventoryOverview() {
             Physical Stock & Holdings Overview
           </h1>
           <p className="text-xs font-sans text-slate-400 mt-1">
-            Real-time physical copy inventory, category distribution, active holds, and low-stock alerts.
+            Real-time physical copy inventory, category distribution, active
+            holds, and low-stock alerts.
           </p>
         </div>
       </div>
@@ -44,9 +52,13 @@ export default function InventoryOverview() {
             <Package size={18} className="text-indigo-400" />
           </div>
           <div className="text-3xl font-extrabold text-white">
-            {isSummaryLoading ? "..." : (stats.catalogSize || 0).toLocaleString()}
+            {isSummaryLoading
+              ? "..."
+              : (stats.catalogSize || 0).toLocaleString()}
           </div>
-          <div className="text-[11px] text-slate-500">Unique shelf catalog entries</div>
+          <div className="text-[11px] text-slate-500">
+            Unique shelf catalog entries
+          </div>
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
@@ -57,7 +69,9 @@ export default function InventoryOverview() {
           <div className="text-3xl font-extrabold text-amber-400">
             {stats.activeLoans || activeLoans.length || 0}
           </div>
-          <div className="text-[11px] text-slate-500">Currently checked out</div>
+          <div className="text-[11px] text-slate-500">
+            Currently checked out
+          </div>
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
@@ -65,8 +79,12 @@ export default function InventoryOverview() {
             <span className="uppercase font-bold">Pending Holds</span>
             <Building2 size={18} className="text-cyan-400" />
           </div>
-          <div className="text-3xl font-extrabold text-cyan-400">{reservations.length}</div>
-          <div className="text-[11px] text-slate-500">Awaiting counter pickup</div>
+          <div className="text-3xl font-extrabold text-cyan-400">
+            {reservations.length}
+          </div>
+          <div className="text-[11px] text-slate-500">
+            Awaiting counter pickup
+          </div>
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
@@ -74,8 +92,12 @@ export default function InventoryOverview() {
             <span className="uppercase font-bold">Low-Stock Alerts</span>
             <AlertTriangle size={18} className="text-rose-400" />
           </div>
-          <div className="text-3xl font-extrabold text-rose-400">{stockAlerts.length}</div>
-          <div className="text-[11px] text-slate-500 font-sans">Titles with ≤ 2 copies available</div>
+          <div className="text-3xl font-extrabold text-rose-400">
+            {stockAlerts.length}
+          </div>
+          <div className="text-[11px] text-slate-500 font-sans">
+            Titles with ≤ 2 copies available
+          </div>
         </div>
       </div>
 
@@ -103,7 +125,9 @@ export default function InventoryOverview() {
                   <tr key={item._id} className="hover:bg-slate-800/40">
                     <td className="p-3 font-bold text-white">{item.title}</td>
                     <td className="p-3">{item.author}</td>
-                    <td className="p-3 font-mono text-slate-400">{item.isbn || "N/A"}</td>
+                    <td className="p-3 font-mono text-slate-400">
+                      {item.isbn || "N/A"}
+                    </td>
                     <td className="p-3">
                       <span className="px-2 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 font-bold rounded">
                         {item.availableCopies} Left
@@ -132,13 +156,23 @@ export default function InventoryOverview() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {categoryBreakdown.map((cat, i) => (
-              <div key={i} className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2">
+              <div
+                key={i}
+                className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2"
+              >
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-slate-200">{cat.category}</span>
-                  <span className="text-indigo-400 font-bold">{cat.count} Titles</span>
+                  <span className="font-bold text-slate-200">
+                    {cat.category}
+                  </span>
+                  <span className="text-indigo-400 font-bold">
+                    {cat.count} Titles
+                  </span>
                 </div>
                 <div className="text-[11px] text-slate-400">
-                  Total Physical Stock Copies: <span className="text-white font-bold">{cat.totalCopies}</span>
+                  Total Physical Stock Copies:{" "}
+                  <span className="text-white font-bold">
+                    {cat.totalCopies}
+                  </span>
                 </div>
               </div>
             ))}

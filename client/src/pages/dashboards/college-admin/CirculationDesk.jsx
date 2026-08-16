@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { BookOpen, CheckCircle, ArrowRightLeft, UserCheck, Loader2, Plus } from "lucide-react";
+import {
+  BookOpen,
+  CheckCircle,
+  ArrowRightLeft,
+  UserCheck,
+  Loader2,
+  Plus,
+} from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
 
@@ -47,7 +54,8 @@ export default function CirculationDesk() {
             Physical Book Circulation Desk
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Manage student checkouts, counter returns, and active reservation hold queues.
+            Manage student checkouts, counter returns, and active reservation
+            hold queues.
           </p>
         </div>
       </div>
@@ -103,7 +111,9 @@ export default function CirculationDesk() {
               disabled={checkoutMutation.isPending}
               className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-semibold text-xs text-white transition-colors flex items-center justify-center gap-2"
             >
-              {checkoutMutation.isPending && <Loader2 size={14} className="animate-spin" />}
+              {checkoutMutation.isPending && (
+                <Loader2 size={14} className="animate-spin" />
+              )}
               Issue Loan to Student
             </button>
           </form>
@@ -143,7 +153,9 @@ export default function CirculationDesk() {
                 disabled={returnMutation.isPending}
                 className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-semibold text-xs text-white transition-colors flex items-center justify-center gap-2"
               >
-                {returnMutation.isPending && <Loader2 size={14} className="animate-spin" />}
+                {returnMutation.isPending && (
+                  <Loader2 size={14} className="animate-spin" />
+                )}
                 Process Return & Restock
               </button>
             </div>
@@ -178,7 +190,8 @@ export default function CirculationDesk() {
 
         {isLoading ? (
           <div className="py-12 text-center text-slate-400 flex items-center justify-center gap-2">
-            <Loader2 className="animate-spin text-indigo-400" size={20} /> Loading circulation data...
+            <Loader2 className="animate-spin text-indigo-400" size={20} />{" "}
+            Loading circulation data...
           </div>
         ) : activeTab === "loans" ? (
           loans.length === 0 ? (
@@ -203,7 +216,9 @@ export default function CirculationDesk() {
                       <td className="p-3.5 font-medium text-white">
                         {loan.userId?.name || "Student"} ({loan.userId?.email})
                       </td>
-                      <td className="p-3.5">{loan.bookId?.title || "Physical Book"}</td>
+                      <td className="p-3.5">
+                        {loan.bookId?.title || "Physical Book"}
+                      </td>
                       <td className="p-3.5 font-mono">
                         {new Date(loan.issuedAt).toLocaleDateString()}
                       </td>
@@ -221,43 +236,41 @@ export default function CirculationDesk() {
               </table>
             </div>
           )
+        ) : reservations.length === 0 ? (
+          <div className="py-10 text-center text-slate-500 text-sm border border-dashed border-slate-800 rounded-2xl">
+            No pending reservations in hold queue.
+          </div>
         ) : (
-          reservations.length === 0 ? (
-            <div className="py-10 text-center text-slate-500 text-sm border border-dashed border-slate-800 rounded-2xl">
-              No pending reservations in hold queue.
-            </div>
-          ) : (
-            <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-950 text-slate-400 font-mono uppercase">
-                  <tr>
-                    <th className="p-3.5">Student</th>
-                    <th className="p-3.5">Book Title</th>
-                    <th className="p-3.5">Reservation Date</th>
-                    <th className="p-3.5">Status</th>
+          <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-950 text-slate-400 font-mono uppercase">
+                <tr>
+                  <th className="p-3.5">Student</th>
+                  <th className="p-3.5">Book Title</th>
+                  <th className="p-3.5">Reservation Date</th>
+                  <th className="p-3.5">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800 text-slate-300">
+                {reservations.map((res) => (
+                  <tr key={res._id}>
+                    <td className="p-3.5 font-medium text-white">
+                      {res.userId?.name || "Student"}
+                    </td>
+                    <td className="p-3.5">{res.bookId?.title || "Book"}</td>
+                    <td className="p-3.5 font-mono">
+                      {new Date(res.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="p-3.5">
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        {res.status}
+                      </span>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800 text-slate-300">
-                  {reservations.map((res) => (
-                    <tr key={res._id}>
-                      <td className="p-3.5 font-medium text-white">
-                        {res.userId?.name || "Student"}
-                      </td>
-                      <td className="p-3.5">{res.bookId?.title || "Book"}</td>
-                      <td className="p-3.5 font-mono">
-                        {new Date(res.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="p-3.5">
-                        <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                          {res.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

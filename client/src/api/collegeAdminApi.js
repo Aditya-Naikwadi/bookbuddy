@@ -1,17 +1,25 @@
 import apiClient from "./client";
 
 export const getCirculationQueue = async () => {
-  const { data } = await apiClient.get("/dashboards/college-admin/circulation/queue");
+  const { data } = await apiClient.get(
+    "/dashboards/college-admin/circulation/queue",
+  );
   return data;
 };
 
 export const checkoutBook = async (payload) => {
-  const { data } = await apiClient.post("/dashboards/college-admin/circulation/checkout", payload);
+  const { data } = await apiClient.post(
+    "/dashboards/college-admin/circulation/checkout",
+    payload,
+  );
   return data;
 };
 
 export const returnBook = async (payload) => {
-  const { data } = await apiClient.post("/dashboards/college-admin/circulation/return", payload);
+  const { data } = await apiClient.post(
+    "/dashboards/college-admin/circulation/return",
+    payload,
+  );
   return data;
 };
 
@@ -21,12 +29,18 @@ export const getAllPatrons = async () => {
 };
 
 export const createStudentPatron = async (payload) => {
-  const { data } = await apiClient.post("/dashboards/college-admin/patrons", payload);
+  const { data } = await apiClient.post(
+    "/dashboards/college-admin/patrons",
+    payload,
+  );
   return data;
 };
 
 export const addCatalogBook = async (payload) => {
-  const { data } = await apiClient.post("/dashboards/college-admin/catalog", payload);
+  const { data } = await apiClient.post(
+    "/dashboards/college-admin/catalog",
+    payload,
+  );
   return data;
 };
 
@@ -36,17 +50,25 @@ export const getCollegeFines = async () => {
 };
 
 export const payCollegeFine = async (fineId, payload) => {
-  const { data } = await apiClient.post(`/dashboards/college-admin/fines/${fineId}/pay`, payload);
+  const { data } = await apiClient.post(
+    `/dashboards/college-admin/fines/${fineId}/pay`,
+    payload,
+  );
   return data;
 };
 
 export const getPendingEResources = async () => {
-  const { data } = await apiClient.get("/dashboards/college-admin/eresources/pending");
+  const { data } = await apiClient.get(
+    "/dashboards/college-admin/eresources/pending",
+  );
   return data;
 };
 
 export const moderateEResource = async (id, payload) => {
-  const { data } = await apiClient.put(`/dashboards/college-admin/eresources/${id}/moderate`, payload);
+  const { data } = await apiClient.put(
+    `/dashboards/college-admin/eresources/${id}/moderate`,
+    payload,
+  );
   return data;
 };
 
@@ -56,7 +78,9 @@ export const getLabSeats = async () => {
 };
 
 export const getLabBookings = async () => {
-  const { data } = await apiClient.get("/dashboards/college-admin/lab-bookings");
+  const { data } = await apiClient.get(
+    "/dashboards/college-admin/lab-bookings",
+  );
   return data;
 };
 
@@ -66,12 +90,17 @@ export const getHelpdeskTickets = async () => {
 };
 
 export const resolveHelpdeskTicket = async (id, payload) => {
-  const { data } = await apiClient.put(`/dashboards/college-admin/helpdesk/${id}/resolve`, payload);
+  const { data } = await apiClient.put(
+    `/dashboards/college-admin/helpdesk/${id}/resolve`,
+    payload,
+  );
   return data;
 };
 
 export const getAnalyticsSummary = async () => {
-  const { data } = await apiClient.get("/dashboards/college-admin/analytics/summary");
+  const { data } = await apiClient.get(
+    "/dashboards/college-admin/analytics/summary",
+  );
   return data;
 };
 

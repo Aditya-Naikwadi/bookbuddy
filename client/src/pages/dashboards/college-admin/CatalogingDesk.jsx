@@ -34,7 +34,8 @@ export default function CatalogingDesk() {
           Physical Book Cataloging & Indexing
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          Add new physical books, accession numbers, and shelf categories to your college library.
+          Add new physical books, accession numbers, and shelf categories to
+          your college library.
         </p>
       </div>
 
@@ -134,7 +135,9 @@ export default function CatalogingDesk() {
               disabled={addBookMutation.isPending}
               className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white flex items-center gap-2 transition-colors"
             >
-              {addBookMutation.isPending && <Loader2 size={14} className="animate-spin" />}
+              {addBookMutation.isPending && (
+                <Loader2 size={14} className="animate-spin" />
+              )}
               Save to Physical Inventory
             </button>
           </div>

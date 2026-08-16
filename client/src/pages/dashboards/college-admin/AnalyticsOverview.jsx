@@ -1,4 +1,12 @@
-import { BarChart3, TrendingUp, Users, BookOpen, Clock, Activity, Loader2 } from "lucide-react";
+import {
+  BarChart3,
+  TrendingUp,
+  Users,
+  BookOpen,
+  Clock,
+  Activity,
+  Loader2,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
 
@@ -25,14 +33,16 @@ export default function AnalyticsOverview() {
             Circulation Trends & Usage Analytics
           </h1>
           <p className="text-xs font-sans text-slate-400 mt-1">
-            Comprehensive usage telemetry across departments, circulation trends, most-borrowed titles, and lab utilization.
+            Comprehensive usage telemetry across departments, circulation
+            trends, most-borrowed titles, and lab utilization.
           </p>
         </div>
       </div>
 
       {isLoading ? (
         <div className="py-12 text-center text-slate-400 flex items-center justify-center gap-2 font-sans">
-          <Loader2 className="animate-spin text-indigo-400" size={20} /> Loading campus analytics summary...
+          <Loader2 className="animate-spin text-indigo-400" size={20} /> Loading
+          campus analytics summary...
         </div>
       ) : (
         <>
@@ -46,7 +56,9 @@ export default function AnalyticsOverview() {
               <div className="text-3xl font-extrabold text-white">
                 {(stats.totalStudents || 0).toLocaleString()}
               </div>
-              <div className="text-[11px] text-slate-500">Enrolled campus students</div>
+              <div className="text-[11px] text-slate-500">
+                Enrolled campus students
+              </div>
             </div>
 
             <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
@@ -57,7 +69,9 @@ export default function AnalyticsOverview() {
               <div className="text-3xl font-extrabold text-white">
                 {(stats.catalogSize || 0).toLocaleString()}
               </div>
-              <div className="text-[11px] text-slate-500">Physical catalog titles</div>
+              <div className="text-[11px] text-slate-500">
+                Physical catalog titles
+              </div>
             </div>
 
             <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
@@ -65,8 +79,12 @@ export default function AnalyticsOverview() {
                 <span className="uppercase font-bold">Active Circulation</span>
                 <TrendingUp size={18} className="text-amber-400" />
               </div>
-              <div className="text-3xl font-extrabold text-white">{stats.activeLoans || 0}</div>
-              <div className="text-[11px] text-slate-500">Current patron loans</div>
+              <div className="text-3xl font-extrabold text-white">
+                {stats.activeLoans || 0}
+              </div>
+              <div className="text-[11px] text-slate-500">
+                Current patron loans
+              </div>
             </div>
 
             <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
@@ -77,7 +95,9 @@ export default function AnalyticsOverview() {
               <div className="text-3xl font-extrabold text-cyan-400">
                 {Math.round((stats.labUtilizationRate || 0) * 100)}%
               </div>
-              <div className="text-[11px] text-slate-500">Capacity booked rate</div>
+              <div className="text-[11px] text-slate-500">
+                Capacity booked rate
+              </div>
             </div>
           </div>
 
@@ -106,8 +126,12 @@ export default function AnalyticsOverview() {
                           #{idx + 1}
                         </span>
                         <div>
-                          <p className="text-xs font-bold text-white line-clamp-1">{book.title}</p>
-                          <p className="text-[10px] text-slate-400">{book.author}</p>
+                          <p className="text-xs font-bold text-white line-clamp-1">
+                            {book.title}
+                          </p>
+                          <p className="text-[10px] text-slate-400">
+                            {book.author}
+                          </p>
                         </div>
                       </div>
                       <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20 shrink-0">

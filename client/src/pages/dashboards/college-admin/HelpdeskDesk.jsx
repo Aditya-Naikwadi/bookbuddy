@@ -11,7 +11,11 @@ export default function HelpdeskDesk() {
   });
 
   const resolveMutation = useMutation({
-    mutationFn: ({ id, responseNote }) => collegeAdminApi.resolveHelpdeskTicket(id, { status: "resolved", responseNote }),
+    mutationFn: ({ id, responseNote }) =>
+      collegeAdminApi.resolveHelpdeskTicket(id, {
+        status: "resolved",
+        responseNote,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["helpdeskTickets"] });
     },
@@ -29,13 +33,15 @@ export default function HelpdeskDesk() {
           Student Complaints & Ticket Support Desk
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          Respond to student library inquiries, facility complaints, and book support tickets.
+          Respond to student library inquiries, facility complaints, and book
+          support tickets.
         </p>
       </div>
 
       {isLoading ? (
         <div className="py-12 text-center text-slate-400 flex items-center justify-center gap-2">
-          <Loader2 className="animate-spin text-indigo-400" size={20} /> Loading support tickets...
+          <Loader2 className="animate-spin text-indigo-400" size={20} /> Loading
+          support tickets...
         </div>
       ) : tickets.length === 0 ? (
         <div className="py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">
@@ -44,17 +50,26 @@ export default function HelpdeskDesk() {
       ) : (
         <div className="space-y-4">
           {tickets.map((t) => (
-            <div key={t._id} className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+            <div
+              key={t._id}
+              className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3"
+            >
               <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="font-bold text-white text-base">{t.subject || t.category || "Support Ticket"}</h4>
-                  <p className="text-xs text-slate-400">By {t.userId?.name || "Student"} ({t.userId?.email})</p>
+                  <h4 className="font-bold text-white text-base">
+                    {t.subject || t.category || "Support Ticket"}
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    By {t.userId?.name || "Student"} ({t.userId?.email})
+                  </p>
                 </div>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono border ${
-                  t.status === "resolved"
-                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                    : "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                }`}>
+                <span
+                  className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono border ${
+                    t.status === "resolved"
+                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                      : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                  }`}
+                >
                   {t.status}
                 </span>
               </div>
@@ -64,7 +79,13 @@ export default function HelpdeskDesk() {
               {t.status !== "resolved" && (
                 <div className="flex justify-end pt-2">
                   <button
-                    onClick={() => resolveMutation.mutate({ id: t._id, responseNote: "Issue reviewed and resolved by campus librarian." })}
+                    onClick={() =>
+                      resolveMutation.mutate({
+                        id: t._id,
+                        responseNote:
+                          "Issue reviewed and resolved by campus librarian.",
+                      })
+                    }
                     className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold"
                   >
                     Mark Ticket Resolved

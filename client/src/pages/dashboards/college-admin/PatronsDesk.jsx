@@ -41,7 +41,8 @@ export default function PatronsDesk() {
             Student & Faculty Roster
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            View registered patrons, student library access privileges, and enroll individual accounts.
+            View registered patrons, student library access privileges, and
+            enroll individual accounts.
           </p>
         </div>
 
@@ -55,11 +56,13 @@ export default function PatronsDesk() {
 
       {isLoading ? (
         <div className="py-12 text-center text-slate-400 flex items-center justify-center gap-2">
-          <Loader2 className="animate-spin text-indigo-400" size={20} /> Loading patrons roster...
+          <Loader2 className="animate-spin text-indigo-400" size={20} /> Loading
+          patrons roster...
         </div>
       ) : patrons.length === 0 ? (
         <div className="py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">
-          No registered patrons found for this campus. Use bulk CSV upload or add individual patron.
+          No registered patrons found for this campus. Use bulk CSV upload or
+          add individual patron.
         </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900">
@@ -77,7 +80,9 @@ export default function PatronsDesk() {
               {patrons.map((patron) => (
                 <tr key={patron._id}>
                   <td className="p-3.5 font-bold text-white">{patron.name}</td>
-                  <td className="p-3.5 font-mono text-slate-400">{patron.email}</td>
+                  <td className="p-3.5 font-mono text-slate-400">
+                    {patron.email}
+                  </td>
                   <td className="p-3.5">
                     <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase font-mono text-[10px]">
                       {patron.role}
@@ -100,7 +105,9 @@ export default function PatronsDesk() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4">
-            <h3 className="text-xl font-bold text-white">Enroll New Student Patron</h3>
+            <h3 className="text-xl font-bold text-white">
+              Enroll New Student Patron
+            </h3>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -175,7 +182,9 @@ export default function PatronsDesk() {
                   disabled={createPatronMutation.isPending}
                   className="px-4 py-2 rounded-xl bg-indigo-600 text-xs font-semibold text-white"
                 >
-                  {createPatronMutation.isPending ? "Creating..." : "Save Patron"}
+                  {createPatronMutation.isPending
+                    ? "Creating..."
+                    : "Save Patron"}
                 </button>
               </div>
             </form>

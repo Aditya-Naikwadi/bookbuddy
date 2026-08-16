@@ -1,4 +1,11 @@
-import { Sparkles, BookOpen, Layers, Flame, Compass, Loader2 } from "lucide-react";
+import {
+  Sparkles,
+  BookOpen,
+  Layers,
+  Flame,
+  Compass,
+  Loader2,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import recommendationApi from "../../../api/recommendationApi";
 
@@ -54,7 +61,9 @@ const Recommendations = () => {
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className={`text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md border flex items-center gap-1.5 ${badgeInfo.color}`}>
+              <span
+                className={`text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md border flex items-center gap-1.5 ${badgeInfo.color}`}
+              >
                 {badgeInfo.icon}
                 {badgeInfo.label}
               </span>
@@ -63,7 +72,8 @@ const Recommendations = () => {
               Recommended For You
             </h1>
             <p className="text-sm text-muted mt-1">
-              Personalized book recommendations generated dynamically by campus activity signals.
+              Personalized book recommendations generated dynamically by campus
+              activity signals.
             </p>
           </div>
         </div>
@@ -93,7 +103,9 @@ const Recommendations = () => {
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted">
           <Loader2 className="w-8 h-8 animate-spin text-amber-500 mb-3" />
-          <p className="text-sm font-medium">Computing personalized campus recommendations...</p>
+          <p className="text-sm font-medium">
+            Computing personalized campus recommendations...
+          </p>
         </div>
       ) : isError ? (
         <div className="p-6 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-300 text-sm">
@@ -105,9 +117,12 @@ const Recommendations = () => {
             <BookOpen className="w-8 h-8" />
           </div>
           <div className="max-w-md">
-            <h3 className="text-lg font-bold text-ink">No Catalog Recommendations Yet</h3>
+            <h3 className="text-lg font-bold text-ink">
+              No Catalog Recommendations Yet
+            </h3>
             <p className="text-sm text-muted mt-1">
-              Start borrowing books or browsing e-resources to generate tailored campus recommendations!
+              Start borrowing books or browsing e-resources to generate tailored
+              campus recommendations!
             </p>
           </div>
         </div>
@@ -128,7 +143,10 @@ const Recommendations = () => {
                   />
                 ) : (
                   <div className="w-full h-full rounded-xl bg-gradient-to-br from-slate-800 to-indigo-950 flex flex-col items-center justify-center text-center p-4 border border-slate-700/50">
-                    <BookOpen size={36} className="text-indigo-400 mb-2 opacity-60" />
+                    <BookOpen
+                      size={36}
+                      className="text-indigo-400 mb-2 opacity-60"
+                    />
                     <span className="text-xs font-bold text-slate-300 line-clamp-2">
                       {book.title}
                     </span>

@@ -26,7 +26,8 @@ export default function FacilitiesDesk() {
           Lab Workstation Grid & Bookings
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          Manage campus lab workstations, seat maintenance statuses, and student time-slot reservations.
+          Manage campus lab workstations, seat maintenance statuses, and student
+          time-slot reservations.
         </p>
       </div>
 
@@ -38,7 +39,9 @@ export default function FacilitiesDesk() {
             Workstation Grid ({seats.length} Seats)
           </h3>
           {isLoadingSeats ? (
-            <div className="py-6 text-center text-slate-400">Loading lab seats...</div>
+            <div className="py-6 text-center text-slate-400">
+              Loading lab seats...
+            </div>
           ) : seats.length === 0 ? (
             <div className="py-6 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
               No lab seats configured.
@@ -69,7 +72,9 @@ export default function FacilitiesDesk() {
             Active Seat Reservations ({bookings.length})
           </h3>
           {isLoadingBookings ? (
-            <div className="py-6 text-center text-slate-400">Loading lab bookings...</div>
+            <div className="py-6 text-center text-slate-400">
+              Loading lab bookings...
+            </div>
           ) : bookings.length === 0 ? (
             <div className="py-6 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
               No active workstation bookings recorded.
@@ -77,10 +82,17 @@ export default function FacilitiesDesk() {
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {bookings.map((b) => (
-                <div key={b._id} className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs flex justify-between">
+                <div
+                  key={b._id}
+                  className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs flex justify-between"
+                >
                   <div>
-                    <div className="font-bold text-white">{b.userId?.name || "Student"}</div>
-                    <div className="text-slate-400 font-mono">Seat #{b.seatNumber || b.seatId?.seatNumber}</div>
+                    <div className="font-bold text-white">
+                      {b.userId?.name || "Student"}
+                    </div>
+                    <div className="text-slate-400 font-mono">
+                      Seat #{b.seatNumber || b.seatId?.seatNumber}
+                    </div>
                   </div>
                   <div className="text-right font-mono text-indigo-300">
                     <div>{b.slotTime}</div>
