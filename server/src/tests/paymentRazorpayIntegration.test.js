@@ -90,7 +90,7 @@ describe('Razorpay Standard Checkout API Integration Tests', () => {
 
     it('should work via canonical root alias endpoint POST /api/create-order', async () => {
       const response = await request(app)
-        .post('/api/create-order')
+        .post('/api/v1/create-order')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           amount: 1000,
@@ -175,7 +175,7 @@ describe('Razorpay Standard Checkout API Integration Tests', () => {
         .digest('hex');
 
       const response = await request(app)
-        .post('/api/verify-payment')
+        .post('/api/v1/verify-payment')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           razorpay_order_id: orderId,

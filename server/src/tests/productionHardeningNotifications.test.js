@@ -93,7 +93,7 @@ describe('ITEM 2 — Real Notification Delivery (Email/Push), Device Tokens & De
 
   test('2.3 Register and delete FCM device token via API', async () => {
     const regRes = await request(app)
-      .post('/api/notifications/device-token')
+      .post('/api/v1/notifications/device-token')
       .set('Authorization', `Bearer ${authToken}`)
       .send({ fcmToken: 'fcm_test_token_abc123', platform: 'web' });
 
@@ -105,7 +105,7 @@ describe('ITEM 2 — Real Notification Delivery (Email/Push), Device Tokens & De
     expect(devicesInDb[0].fcmToken).toBe('fcm_test_token_abc123');
 
     const delRes = await request(app)
-      .delete('/api/notifications/device-token')
+      .delete('/api/v1/notifications/device-token')
       .set('Authorization', `Bearer ${authToken}`)
       .send({ fcmToken: 'fcm_test_token_abc123' });
 
@@ -134,7 +134,7 @@ describe('ITEM 2 — Real Notification Delivery (Email/Push), Device Tokens & De
     });
 
     const res = await request(app)
-      .get('/api/notifications/history')
+      .get('/api/v1/notifications/history')
       .set('Authorization', `Bearer ${authToken}`);
 
     expect(res.status).toBe(200);

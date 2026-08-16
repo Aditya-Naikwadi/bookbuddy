@@ -1,10 +1,15 @@
-import { Type, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Type, Check, Volume2, VolumeX, Eye } from "lucide-react";
 
 export const ReaderThemeControls = ({
   fontSize,
   onChangeFontSize,
   activeTheme,
   onChangeTheme,
+  isDyslexicFont,
+  onToggleDyslexicFont,
+  onReadAloud,
+  isSpeaking,
 }) => {
   const themes = [
     {
@@ -38,12 +43,12 @@ export const ReaderThemeControls = ({
   ];
 
   return (
-    <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xl w-64 space-y-4">
+    <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xl w-72 space-y-4 text-slate-900">
       {/* Font Size controls */}
       <div className="space-y-2">
         <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
           <Type size={14} />
-          Font Size
+          Font Size & Typography
         </h4>
         <div className="flex items-center justify-between gap-2">
           <button
@@ -55,7 +60,6 @@ export const ReaderThemeControls = ({
             A-
           </button>
 
-          {/* Live announcer for screen readers */}
           <span
             className="text-sm font-bold text-slate-900 font-mono"
             aria-live="polite"
@@ -73,6 +77,46 @@ export const ReaderThemeControls = ({
             A+
           </button>
         </div>
+      </div>
+
+      {/* Dyslexia-Friendly Font Toggle */}
+      <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+        <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+          <Eye size={14} className="text-indigo-500" />
+          Dyslexia Font Mode
+        </span>
+        <button
+          onClick={onToggleDyslexicFont}
+          className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+            isDyslexicFont
+              ? "bg-indigo-600 text-white"
+              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`}
+        >
+          {isDyslexicFont ? "ON" : "OFF"}
+        </button>
+      </div>
+
+      {/* Text-to-Speech (TTS) Read Aloud Button */}
+      <div className="pt-2 border-t border-slate-100">
+        <button
+          onClick={onReadAloud}
+          className={`w-full py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+            isSpeaking
+              ? "bg-rose-500 text-white animate-pulse"
+              : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200"
+          }`}
+        >
+          {isSpeaking ? (
+            <>
+              <VolumeX size={16} /> Stop Reading Aloud
+            </>
+          ) : (
+            <>
+              <Volume2 size={16} /> Read Page Aloud (TTS)
+            </>
+          )}
+        </button>
       </div>
 
       <hr className="border-slate-100" />

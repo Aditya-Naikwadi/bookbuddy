@@ -79,7 +79,7 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
 
   // Assertion 1: Register student returns tokens, hides password
   it('1. should register a student successfully, return tokens, and omit password', async () => {
-    const res = await request(app).post('/api/auth/register').send(studentAData);
+    const res = await request(app).post('/api/v1/auth/register').send(studentAData);
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
@@ -91,7 +91,7 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
   });
 
   it('1b. should register a public user without explicit collegeId and assign default active college', async () => {
-    const res = await request(app).post('/api/auth/register').send({
+    const res = await request(app).post('/api/v1/auth/register').send({
       studentId: 'STU_NO_COLLEGE',
       name: 'Public Signup User',
       email: 'nocollege@bookbuddy.com',
@@ -106,7 +106,7 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
 
   // Assertion 2: Login with correct credentials returns tokens
   it('2. should login successfully with correct credentials', async () => {
-    const res = await request(app).post('/api/auth/login').send({
+    const res = await request(app).post('/api/v1/auth/login').send({
       email: studentAData.email,
       password: studentAData.password,
     });
@@ -120,7 +120,7 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
 
   // Assertion 3: Login with wrong password returns 401
   it('3. should reject login with wrong password', async () => {
-    const res = await request(app).post('/api/auth/login').send({
+    const res = await request(app).post('/api/v1/auth/login').send({
       email: studentAData.email,
       password: 'wrongpassword',
     });
@@ -146,13 +146,13 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
 
   // Assertion 6: Access college_admin-only route as student returns 403
   it('6. should reject access to admin portal dashboard as student (403)', async () => {
-    const loginRes = await request(app).post('/api/auth/login').send({
+    const loginRes = await request(app).post('/api/v1/auth/login').send({
       email: studentAData.email,
       password: studentAData.password,
     });
 
     const res = await request(app)
-      .get('/api/dashboards/admin-portal/analytics')
+      .get('/api/v1/dashboards/admin-portal/analytics')
       .set('Authorization', `Bearer ${loginRes.body.accessToken}`);
 
     expect(res.status).toBe(403);
@@ -161,16 +161,16 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
   // Assertion 7: Two users in different colleges isolate tenant filter
   it("7. should verify student A's tenantFilter does NOT match student B's collegeId", async () => {
     // Register Student B
-    await request(app).post('/api/auth/register').send(studentBData);
+    await request(app).post('/api/v1/auth/register').send(studentBData);
 
     // Login Student A
-    const loginARes = await request(app).post('/api/auth/login').send({
+    const loginARes = await request(app).post('/api/v1/auth/login').send({
       email: studentAData.email,
       password: studentAData.password,
     });
 
     // Login Student B
-    const loginBRes = await request(app).post('/api/auth/login').send({
+    const loginBRes = await request(app).post('/api/v1/auth/login').send({
       email: studentBData.email,
       password: studentBData.password,
     });
@@ -196,7 +196,7 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
 
   // Assertion 8: Refresh token rotation - old refresh token rejected
   it('8. should perform refresh token rotation and reject reused old refresh token', async () => {
-    const loginRes = await request(app).post('/api/auth/login').send({
+    const loginRes = await request(app).post('/api/v1/auth/login').send({
       email: studentAData.email,
       password: studentAData.password,
     });
@@ -205,7 +205,7 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
 
     // First rotation request
     const refreshRes1 = await request(app)
-      .post('/api/auth/refresh')
+      .post('/api/v1/auth/refresh')
       .set('Cookie', [`refreshToken=${oldRefreshToken}`]);
 
     expect(refreshRes1.status).toBe(200);
@@ -213,7 +213,7 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
 
     // Replay attack: try using oldRefreshToken again (must be rejected)
     const refreshRes2 = await request(app)
-      .post('/api/auth/refresh')
+      .post('/api/v1/auth/refresh')
       .set('Cookie', [`refreshToken=${oldRefreshToken}`]);
 
     expect(refreshRes2.status).toBe(401);
@@ -221,7 +221,7 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
 
   // Assertion 9: Logout invalidates refresh token
   it('9. should invalidate refresh token on logout', async () => {
-    const loginRes = await request(app).post('/api/auth/login').send({
+    const loginRes = await request(app).post('/api/v1/auth/login').send({
       email: studentAData.email,
       password: studentAData.password,
     });
@@ -231,14 +231,14 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
 
     // Logout
     const logoutRes = await request(app)
-      .post('/api/auth/logout')
+      .post('/api/v1/auth/logout')
       .set('Authorization', `Bearer ${accessToken}`)
       .set('Cookie', [`refreshToken=${refreshToken}`]);
 
     expect(logoutRes.status).toBe(200);
 
     // Attempting to refresh with invalidated token should fail
-    const refreshRes = await request(app).post('/api/auth/refresh').send({ refreshToken });
+    const refreshRes = await request(app).post('/api/v1/auth/refresh').send({ refreshToken });
 
     expect(refreshRes.status).toBe(401);
   });
@@ -254,7 +254,7 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
       collegeId: collegeA._id.toString(),
     };
 
-    const res = await request(app).post('/api/auth/register').send(maliciousData);
+    const res = await request(app).post('/api/v1/auth/register').send(maliciousData);
 
     // Zod validation or controller should reject it with 400 or 403
     expect([400, 403]).toContain(res.status);

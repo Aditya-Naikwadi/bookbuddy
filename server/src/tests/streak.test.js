@@ -90,7 +90,7 @@ describe('Feature 5: Gamification & Engagement Integration Tests', () => {
   describe('POST /api/checkin (Daily Check-in Idempotency)', () => {
     it('should successfully check in for the first time today', async () => {
       const res = await request(app)
-        .post('/api/checkin')
+        .post('/api/v1/checkin')
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       expect(res.status).toBe(200);
@@ -101,7 +101,7 @@ describe('Feature 5: Gamification & Engagement Integration Tests', () => {
 
     it('should handle duplicate concurrent check-ins gracefully (fail-safe 200 OK)', async () => {
       const res = await request(app)
-        .post('/api/checkin')
+        .post('/api/v1/checkin')
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       // Graceful duplicate check-in handling: must return 200 and not error
@@ -114,7 +114,7 @@ describe('Feature 5: Gamification & Engagement Integration Tests', () => {
   describe('GET /api/streak and GET /api/streak/history', () => {
     it('should return current streak counts and check-in status', async () => {
       const res = await request(app)
-        .get('/api/streak')
+        .get('/api/v1/streak')
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       expect(res.status).toBe(200);
@@ -124,7 +124,7 @@ describe('Feature 5: Gamification & Engagement Integration Tests', () => {
 
     it('should return recent check-in logs for calendar view', async () => {
       const res = await request(app)
-        .get('/api/streak/history')
+        .get('/api/v1/streak/history')
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       expect(res.status).toBe(200);
@@ -136,7 +136,7 @@ describe('Feature 5: Gamification & Engagement Integration Tests', () => {
   describe('Badges GET / POST /api/badges', () => {
     it('should return the full badge list with unlocked statuses', async () => {
       const res = await request(app)
-        .get('/api/badges')
+        .get('/api/v1/badges')
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       expect(res.status).toBe(200);
@@ -147,7 +147,7 @@ describe('Feature 5: Gamification & Engagement Integration Tests', () => {
 
     it('should prevent non-admin/staff students from creating badges', async () => {
       const res = await request(app)
-        .post('/api/badges')
+        .post('/api/v1/badges')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           name: 'Hacker Sticker',
@@ -160,7 +160,7 @@ describe('Feature 5: Gamification & Engagement Integration Tests', () => {
 
     it('should allow admin users to define new badges', async () => {
       const res = await request(app)
-        .post('/api/badges')
+        .post('/api/v1/badges')
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({
           name: 'Milestone 7 Sticker',
@@ -181,7 +181,7 @@ describe('Feature 5: Gamification & Engagement Integration Tests', () => {
 
       // 2. Trigger recalculate
       const res = await request(app)
-        .post('/api/streak/recalculate')
+        .post('/api/v1/streak/recalculate')
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       expect(res.status).toBe(200);

@@ -24,6 +24,14 @@ const updateReadingListSchema = z.object({
     title: z.string().min(1).optional(),
     description: z.string().optional(),
     visibility: z.enum(['private', 'public']).optional(),
+    items: z
+      .array(
+        z.object({
+          resourceType: z.enum(['book', 'eresource']),
+          resourceId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid Resource ID format'),
+        })
+      )
+      .optional(),
   }),
 });
 

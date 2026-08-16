@@ -104,7 +104,7 @@ describe('Payment Processing & Webhook Signature Idempotency Unit Tests', () => 
     };
 
     const res = await request(app)
-      .post('/api/payments/webhook')
+      .post('/api/v1/payments/webhook')
       .set('x-razorpay-signature', 'invalid_forged_signature_hash')
       .send(payload);
 
@@ -139,7 +139,7 @@ describe('Payment Processing & Webhook Signature Idempotency Unit Tests', () => 
       .digest('hex');
 
     const res = await request(app)
-      .post('/api/payments/webhook')
+      .post('/api/v1/payments/webhook')
       .set('x-razorpay-signature', validSignature)
       .send(payload);
 
@@ -182,7 +182,7 @@ describe('Payment Processing & Webhook Signature Idempotency Unit Tests', () => 
 
     // First Delivery
     const res1 = await request(app)
-      .post('/api/payments/webhook')
+      .post('/api/v1/payments/webhook')
       .set('x-razorpay-signature', validSignature)
       .send(payload);
 
@@ -194,7 +194,7 @@ describe('Payment Processing & Webhook Signature Idempotency Unit Tests', () => 
 
     // Second Duplicate Delivery
     const res2 = await request(app)
-      .post('/api/payments/webhook')
+      .post('/api/v1/payments/webhook')
       .set('x-razorpay-signature', validSignature)
       .send(payload);
 

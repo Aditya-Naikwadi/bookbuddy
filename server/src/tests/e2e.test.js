@@ -64,13 +64,13 @@ describe('Phase 8 — End-to-End User Journeys Integration Test', () => {
 
     // Login Admin to get token
     const adminLoginRes = await request(app)
-      .post('/api/auth/login')
+      .post('/api/v1/auth/login')
       .send({ email: 'admin@e2e.edu', password: 'password123' });
     adminToken = adminLoginRes.body.accessToken;
 
     // 3. Create a Book via Admin Catalog Endpoint
     const bookRes = await request(app)
-      .post('/api/dashboards/college-admin/catalog')
+      .post('/api/v1/dashboards/college-admin/catalog')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
         isbn: '978-3-16-148410-0',
@@ -83,7 +83,7 @@ describe('Phase 8 — End-to-End User Journeys Integration Test', () => {
     book = bookRes.body.data;
 
     // 4. Register a Student
-    const studentRegRes = await request(app).post('/api/auth/register').send({
+    const studentRegRes = await request(app).post('/api/v1/auth/register').send({
       studentId: 'STU_E2E_01',
       name: 'John Doe',
       email: 'john.doe@e2e.edu',
@@ -94,7 +94,7 @@ describe('Phase 8 — End-to-End User Journeys Integration Test', () => {
 
     // Login Student
     const studentLoginRes = await request(app)
-      .post('/api/auth/login')
+      .post('/api/v1/auth/login')
       .send({ email: 'john.doe@e2e.edu', password: 'password123' });
 
     studentToken = studentLoginRes.body.accessToken;
@@ -108,7 +108,7 @@ describe('Phase 8 — End-to-End User Journeys Integration Test', () => {
   it('runs complete e2e journey: checkout -> streak update -> notify -> overdue fine -> fine dashboard check -> return', async () => {
     // Step A: Admin checks out book to student
     const checkoutRes = await request(app)
-      .post('/api/dashboards/college-admin/circulation/checkout')
+      .post('/api/v1/dashboards/college-admin/circulation/checkout')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
         userId: studentUser._id.toString(),
@@ -142,7 +142,7 @@ describe('Phase 8 — End-to-End User Journeys Integration Test', () => {
 
     // Verify notification exists in student notification list for fine accrual
     const notifyRes = await request(app)
-      .get('/api/dashboards/student/notifications')
+      .get('/api/v1/dashboards/student/notifications')
       .set('Authorization', `Bearer ${studentToken}`);
 
     expect(notifyRes.status).toBe(200);
@@ -151,7 +151,7 @@ describe('Phase 8 — End-to-End User Journeys Integration Test', () => {
 
     // Step F: Verify student sees the fine in their dashboard
     const studentFinesRes = await request(app)
-      .get('/api/dashboards/student/fines')
+      .get('/api/v1/dashboards/student/fines')
       .set('Authorization', `Bearer ${studentToken}`);
 
     expect(studentFinesRes.status).toBe(200);
@@ -160,7 +160,7 @@ describe('Phase 8 — End-to-End User Journeys Integration Test', () => {
 
     // Step G: Return the book via Admin
     const returnRes = await request(app)
-      .post('/api/dashboards/college-admin/circulation/return')
+      .post('/api/v1/dashboards/college-admin/circulation/return')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
         loanId: loan._id.toString(),

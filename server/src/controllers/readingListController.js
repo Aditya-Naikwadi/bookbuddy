@@ -89,10 +89,11 @@ const updateList = asyncHandler(async (req, res) => {
     throw new AppError('Not authorized to update this list', 403);
   }
 
-  const { title, description, visibility } = req.body;
+  const { title, description, visibility, items } = req.body;
   if (title !== undefined) list.title = title;
   if (description !== undefined) list.description = description;
   if (visibility !== undefined) list.visibility = visibility;
+  if (items !== undefined) list.items = items;
 
   await list.save();
 

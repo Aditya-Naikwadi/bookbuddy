@@ -106,7 +106,7 @@ describe('Direct REST Endpoints Integration Tests', () => {
   describe('Saved Searches API', () => {
     it('should create and retrieve a saved search', async () => {
       const createRes = await request(app)
-        .post('/api/saved-searches')
+        .post('/api/v1/saved-searches')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           queryParams: {
@@ -122,7 +122,7 @@ describe('Direct REST Endpoints Integration Tests', () => {
       expect(createRes.body.data.collegeId.toString()).toBe(collegeA._id.toString());
 
       const getRes = await request(app)
-        .get('/api/saved-searches/me')
+        .get('/api/v1/saved-searches/me')
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       expect(getRes.status).toBe(200);
@@ -134,7 +134,7 @@ describe('Direct REST Endpoints Integration Tests', () => {
   describe('Book Suggestions API', () => {
     it('should submit a book suggestion', async () => {
       const suggestRes = await request(app)
-        .post('/api/book-suggestions')
+        .post('/api/v1/book-suggestions')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           title: 'Future of AI',
@@ -149,7 +149,7 @@ describe('Direct REST Endpoints Integration Tests', () => {
       expect(suggestRes.body.data.collegeId.toString()).toBe(collegeA._id.toString());
 
       const listRes = await request(app)
-        .get('/api/book-suggestions')
+        .get('/api/v1/book-suggestions')
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       expect(listRes.status).toBe(200);
@@ -161,7 +161,7 @@ describe('Direct REST Endpoints Integration Tests', () => {
   describe('Reading Lists API', () => {
     it('should create, update, and retrieve reading lists', async () => {
       const createRes = await request(app)
-        .post('/api/reading-lists')
+        .post('/api/v1/reading-lists')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           title: 'My Custom Reading List',
@@ -178,7 +178,7 @@ describe('Direct REST Endpoints Integration Tests', () => {
       const listId = createRes.body.data._id;
 
       const getRes = await request(app)
-        .get(`/api/reading-lists/${listId}`)
+        .get(`/api/v1/reading-lists/${listId}`)
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       expect(getRes.status).toBe(200);
@@ -186,7 +186,7 @@ describe('Direct REST Endpoints Integration Tests', () => {
       expect(getRes.body.data.title).toBe('My Custom Reading List');
 
       const updateRes = await request(app)
-        .patch(`/api/reading-lists/${listId}`)
+        .patch(`/api/v1/reading-lists/${listId}`)
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           title: 'Updated Reading List Name',
@@ -200,7 +200,7 @@ describe('Direct REST Endpoints Integration Tests', () => {
   describe('Reservations API', () => {
     it('should join and leave reservation queue', async () => {
       const joinRes = await request(app)
-        .post('/api/reservations')
+        .post('/api/v1/reservations')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           bookId: bookA._id,
@@ -215,7 +215,7 @@ describe('Direct REST Endpoints Integration Tests', () => {
       const reservationId = joinRes.body.data._id || joinRes.body.data.id;
 
       const leaveRes = await request(app)
-        .delete(`/api/reservations/${reservationId}`)
+        .delete(`/api/v1/reservations/${reservationId}`)
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       expect(leaveRes.status).toBe(200);
@@ -227,7 +227,7 @@ describe('Direct REST Endpoints Integration Tests', () => {
   describe('E-Resource Progress API', () => {
     it('should submit reading progress using route params and schema', async () => {
       const progressRes = await request(app)
-        .post(`/api/eresources/${eresourceA._id}/progress`)
+        .post(`/api/v1/eresources/${eresourceA._id}/progress`)
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           dailySecondsToday: 240,
@@ -250,7 +250,7 @@ describe('Direct REST Endpoints Integration Tests', () => {
       );
 
       const bookRes = await request(app)
-        .post('/api/lab/bookings')
+        .post('/api/v1/lab/bookings')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           seatId: seatA._id,

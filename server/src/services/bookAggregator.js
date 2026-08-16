@@ -3,6 +3,8 @@ const { fetchGoogleBooks } = require('./googleBooksClient');
 const { fetchGutendexBooks } = require('./gutendexClient');
 const { fetchOpenLibraryBooks } = require('./openLibraryClient');
 
+const logger = require('../utils/logger');
+
 /**
  * Deduplicate and upsert candidate book into MongoDB
  */
@@ -147,16 +149,13 @@ const syncTopic = async (topic) => {
       if (res.action === 'inserted') insertedCount++;
       if (res.action === 'merged') mergedCount++;
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error(
-        `[Aggregator Error] Failed to process candidate "${candidate.title}":`,
-        err.message
+      logger.error(
+        `[Aggregator Error] Failed to process candidate "${candidate.title}": ${err.message}`
       );
     }
   }
 
-  // eslint-disable-next-line no-console
-  console.log(
+  logger.info(
     `[Aggregator Summary] Topic "${topic}" -> Inserted: ${insertedCount}, Merged: ${mergedCount}`
   );
   return { topic, insertedCount, mergedCount, totalCandidates: allCandidates.length };

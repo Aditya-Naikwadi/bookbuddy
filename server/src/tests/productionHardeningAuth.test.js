@@ -55,7 +55,7 @@ describe('ITEM 1 — Auth: httpOnly Cookies, Refresh Token Rotation, Theft Detec
 
   test('1.1 Login sets httpOnly refreshToken cookie and returns access token in body', async () => {
     const res = await request(app)
-      .post('/api/auth/login')
+      .post('/api/v1/auth/login')
       .send({ email: 'authtest@bookbuddy.com', password: 'Password@123' });
 
     expect(res.status).toBe(200);
@@ -74,14 +74,14 @@ describe('ITEM 1 — Auth: httpOnly Cookies, Refresh Token Rotation, Theft Detec
 
   test('1.2 Refresh-token rotation succeeds on valid use (issues new token pair, revokes old)', async () => {
     const loginRes = await request(app)
-      .post('/api/auth/login')
+      .post('/api/v1/auth/login')
       .send({ email: 'authtest@bookbuddy.com', password: 'Password@123' });
 
     const firstCookie = getCookieFromRes(loginRes, 'refreshToken');
     expect(firstCookie).toBeDefined();
 
     const refreshRes = await request(app)
-      .post('/api/auth/refresh')
+      .post('/api/v1/auth/refresh')
       .set('Cookie', [`refreshToken=${firstCookie}`]);
 
     expect(refreshRes.status).toBe(200);
@@ -105,16 +105,16 @@ describe('ITEM 1 — Auth: httpOnly Cookies, Refresh Token Rotation, Theft Detec
 
   test('1.3 Reuse of an already-rotated (revoked) refresh token is rejected AND revokes all sessions for that user', async () => {
     const loginRes = await request(app)
-      .post('/api/auth/login')
+      .post('/api/v1/auth/login')
       .send({ email: 'authtest@bookbuddy.com', password: 'Password@123' });
     const firstCookie = getCookieFromRes(loginRes, 'refreshToken');
 
     await request(app)
-      .post('/api/auth/refresh')
+      .post('/api/v1/auth/refresh')
       .set('Cookie', [`refreshToken=${firstCookie}`]);
 
     const reuseRes = await request(app)
-      .post('/api/auth/refresh')
+      .post('/api/v1/auth/refresh')
       .set('Cookie', [`refreshToken=${firstCookie}`]);
 
     expect(reuseRes.status).toBe(401);
@@ -131,7 +131,7 @@ describe('ITEM 1 — Auth: httpOnly Cookies, Refresh Token Rotation, Theft Detec
   });
 
   test('1.4 A state-changing request without a valid CSRF token is rejected with 403', async () => {
-    const csrfRes = await request(app).get('/api/auth/csrf-token');
+    const csrfRes = await request(app).get('/api/v1/auth/csrf-token');
     expect(csrfRes.status).toBe(200);
     const csrfCookie = getCookieFromRes(csrfRes, '_csrf');
     const csrfToken = csrfRes.body.csrfToken;
@@ -140,14 +140,14 @@ describe('ITEM 1 — Auth: httpOnly Cookies, Refresh Token Rotation, Theft Detec
     expect(csrfToken).toBeDefined();
 
     const badRes = await request(app)
-      .post('/api/auth/logout')
+      .post('/api/v1/auth/logout')
       .set('Cookie', [`_csrf=${csrfCookie}`]);
 
     expect(badRes.status).toBe(403);
     expect(badRes.body.message).toContain('CSRF');
 
     const goodRes = await request(app)
-      .post('/api/auth/logout')
+      .post('/api/v1/auth/logout')
       .set('Cookie', [`_csrf=${csrfCookie}`])
       .set('x-csrf-token', csrfToken);
 

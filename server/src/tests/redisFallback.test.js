@@ -7,6 +7,8 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'testjwtsecretkey999';
 
 const app = require('../app');
 const User = require('../models/User');
+const Loan = require('../models/Loan');
+const Fine = require('../models/Fine');
 const PlatformMetricSnapshot = require('../models/PlatformMetricSnapshot');
 const { generateAccessToken } = require('../utils/token');
 const { redisClient } = require('../middlewares/rateLimiters');
@@ -25,6 +27,8 @@ describe('STAGE 4: Overview Metrics Caching & Redis Fallback Test', () => {
 
     await User.deleteMany({ email: 'redis.test.sa@bookbuddy.internal' });
     await PlatformMetricSnapshot.deleteMany({ collegeId: null });
+    await Loan.deleteMany({});
+    await Fine.deleteMany({});
 
     superAdminUser = await User.create({
       studentId: 'SA-REDIS-001',
@@ -83,7 +87,7 @@ describe('STAGE 4: Overview Metrics Caching & Redis Fallback Test', () => {
     }
   });
 
-  it('2. should fall back to PlatformMetricSnapshot when Redis cache is cleared / missing', async () => {
+  it('2. should calculate live overview metrics when Redis cache is cleared / missing', async () => {
     const isRedisReady =
       redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect');
     if (isRedisReady) {

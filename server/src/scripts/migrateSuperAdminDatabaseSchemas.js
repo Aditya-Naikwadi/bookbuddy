@@ -82,7 +82,7 @@ async function runMigration() {
         },
         description: 'Primary global platform setting configuration',
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
     console.log('   SystemSetting default singleton verified.');
 

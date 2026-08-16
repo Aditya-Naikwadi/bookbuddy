@@ -1,14 +1,10 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const College = require('../models/College');
-const RegistrationRequest = require('../models/RegistrationRequest');
 const AuditLog = require('../models/AuditLog');
 const PlatformMetricSnapshot = require('../models/PlatformMetricSnapshot');
-const SystemSetting = require('../models/SystemSetting');
 const CronRunLog = require('../models/CronRunLog');
 const Loan = require('../models/Loan');
-const Fine = require('../models/Fine');
-const Book = require('../models/Book');
 
 describe('Super Admin Database Layer Verification Test Suite', () => {
   beforeAll(async () => {
@@ -66,6 +62,7 @@ describe('Super Admin Database Layer Verification Test Suite', () => {
         explanation.executionStats?.executionStages?.stage;
 
       const isIndexUsed = JSON.stringify(explanation).includes('IXSCAN');
+      expect(winningStage || isIndexUsed).toBeDefined();
       expect(isIndexUsed).toBe(true);
     });
 

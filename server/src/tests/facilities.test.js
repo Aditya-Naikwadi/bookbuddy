@@ -137,7 +137,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
 
       // Submit 2 concurrent requests for the exact same seat and timeslot
       const req1 = request(app)
-        .post('/api/dashboards/student/lab-bookings')
+        .post('/api/v1/dashboards/student/lab-bookings')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           seatId: seatA._id.toString(),
@@ -146,7 +146,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
         });
 
       const req2 = request(app)
-        .post('/api/dashboards/student/lab-bookings')
+        .post('/api/v1/dashboards/student/lab-bookings')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           seatId: seatA._id.toString(),
@@ -183,7 +183,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
       const endTime2 = '2026-08-01T14:00:00.000Z';
 
       const res1 = await request(app)
-        .post('/api/dashboards/student/lab-bookings')
+        .post('/api/v1/dashboards/student/lab-bookings')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           seatId: seatA._id.toString(),
@@ -192,7 +192,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
         });
 
       const res2 = await request(app)
-        .post('/api/dashboards/student/lab-bookings')
+        .post('/api/v1/dashboards/student/lab-bookings')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           seatId: seatA._id.toString(),
@@ -218,7 +218,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
       const endTime = '2026-08-01T16:00:00.000Z';
 
       const res = await request(app)
-        .post('/api/dashboards/student/lab-bookings')
+        .post('/api/v1/dashboards/student/lab-bookings')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           seatId: seatMaintenance._id.toString(),
@@ -237,7 +237,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
 
       // Student A creates booking
       const createRes = await request(app)
-        .post('/api/dashboards/student/lab-bookings')
+        .post('/api/v1/dashboards/student/lab-bookings')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           seatId: seatA._id.toString(),
@@ -249,13 +249,13 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
 
       // Student B tries to cancel Student A's booking (should get 403)
       const cancelByBRes = await request(app)
-        .delete(`/api/dashboards/student/lab-bookings/${bookingId}`)
+        .delete(`/api/v1/dashboards/student/lab-bookings/${bookingId}`)
         .set('Authorization', `Bearer ${tokenStudentB}`);
       expect(cancelByBRes.status).toBe(403);
 
       // Student A cancels own booking (should succeed)
       const cancelByARes = await request(app)
-        .delete(`/api/dashboards/student/lab-bookings/${bookingId}`)
+        .delete(`/api/v1/dashboards/student/lab-bookings/${bookingId}`)
         .set('Authorization', `Bearer ${tokenStudentA}`);
       expect(cancelByARes.status).toBe(200);
 
@@ -271,7 +271,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
     it('5. should handle BookSuggestion transitions correctly and guard status field on student create', async () => {
       // Student A creates suggestion with status approved injected (should ignore or default to pending)
       const createRes = await request(app)
-        .post('/api/dashboards/student/book-suggestions')
+        .post('/api/v1/dashboards/student/book-suggestions')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           title: 'Design Patterns',
@@ -287,7 +287,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
 
       // Student A tries to update status via PUT (should fail/404/403, Student Dashboard has no PUT /book-suggestions route)
       const studentUpdateRes = await request(app)
-        .put(`/api/dashboards/college-admin/book-suggestions/${suggestionId}`)
+        .put(`/api/v1/dashboards/college-admin/book-suggestions/${suggestionId}`)
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           status: 'under_review',
@@ -296,7 +296,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
 
       // Admin A transitions: pending -> under_review
       const adminUpdateRes1 = await request(app)
-        .put(`/api/dashboards/college-admin/book-suggestions/${suggestionId}`)
+        .put(`/api/v1/dashboards/college-admin/book-suggestions/${suggestionId}`)
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({
           status: 'under_review',
@@ -308,7 +308,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
 
       // Admin A transitions: under_review -> approved
       const adminUpdateRes2 = await request(app)
-        .put(`/api/dashboards/college-admin/book-suggestions/${suggestionId}`)
+        .put(`/api/v1/dashboards/college-admin/book-suggestions/${suggestionId}`)
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({
           status: 'approved',
@@ -324,7 +324,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
     it('6. should allow only college-admin to resolve complaints and set metadata correctly', async () => {
       // Student A creates complaint
       const createRes = await request(app)
-        .post('/api/dashboards/student/complaints')
+        .post('/api/v1/dashboards/student/complaints')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           subject: 'Broken AC',
@@ -335,7 +335,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
 
       // Student A tries to resolve own complaint (should get 403)
       const studentResolveRes = await request(app)
-        .put(`/api/dashboards/college-admin/helpdesk/${complaintId}/resolve`)
+        .put(`/api/v1/dashboards/college-admin/helpdesk/${complaintId}/resolve`)
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({
           resolutionMessage: 'Fixed by myself.',
@@ -344,7 +344,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
 
       // Admin A resolves the complaint
       const adminResolveRes = await request(app)
-        .put(`/api/dashboards/college-admin/helpdesk/${complaintId}/resolve`)
+        .put(`/api/v1/dashboards/college-admin/helpdesk/${complaintId}/resolve`)
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({
           resolutionMessage: 'AC unit repaired by technician.',
@@ -371,7 +371,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
 
       // Admin A tries to edit College B seat (should get 404/unauthorized)
       const resEditSeat = await request(app)
-        .put(`/api/dashboards/college-admin/lab-seats/${seatB._id}`)
+        .put(`/api/v1/dashboards/college-admin/lab-seats/${seatB._id}`)
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({
           maintenanceStatus: 'maintenance',
@@ -391,7 +391,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
 
       // Admin A tries to get lab bookings filter for College B lab (should return empty or scoped only to College A)
       const resBookings = await request(app)
-        .get('/api/dashboards/college-admin/lab-bookings')
+        .get('/api/v1/dashboards/college-admin/lab-bookings')
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .query({ labName: 'Lab B' });
 
@@ -410,7 +410,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
 
       // Admin A tries to update suggestion of College B (should get 404)
       const resUpdateSuggestion = await request(app)
-        .put(`/api/dashboards/college-admin/book-suggestions/${suggestionB._id}`)
+        .put(`/api/v1/dashboards/college-admin/book-suggestions/${suggestionB._id}`)
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({
           status: 'approved',
@@ -428,7 +428,7 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
 
       // Admin A tries to resolve College B complaint (should get 404)
       const resResolveComplaint = await request(app)
-        .put(`/api/dashboards/college-admin/helpdesk/${complaintB._id}/resolve`)
+        .put(`/api/v1/dashboards/college-admin/helpdesk/${complaintB._id}/resolve`)
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({
           resolutionMessage: 'Boosted signal.',

@@ -103,7 +103,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
   it('1. should not show newly submitted pending EResource in approved lists for uploader or other students', async () => {
     // 1. Submit resource
     const res = await request(app)
-      .post('/api/dashboards/student/eresources')
+      .post('/api/v1/dashboards/student/eresources')
       .set('Authorization', `Bearer ${tokenStudentA}`)
       .send({
         title: 'Pending Math Guide',
@@ -118,7 +118,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
 
     // 2. Fetch approved lists as student A (uploader)
     const listARes = await request(app)
-      .get('/api/dashboards/student/eresources')
+      .get('/api/v1/dashboards/student/eresources')
       .set('Authorization', `Bearer ${tokenStudentA}`);
 
     const foundInA = listARes.body.data.some((r) => r._id === resourceId);
@@ -126,7 +126,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
 
     // 3. Fetch approved lists as student A2
     const listA2Res = await request(app)
-      .get('/api/dashboards/student/eresources')
+      .get('/api/v1/dashboards/student/eresources')
       .set('Authorization', `Bearer ${tokenStudentA2}`);
 
     const foundInA2 = listA2Res.body.data.some((r) => r._id === resourceId);
@@ -148,7 +148,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
 
     // Uploader requests details -> should get 200
     const uploadRes = await request(app)
-      .get(`/api/dashboards/student/eresources/${resource._id}`)
+      .get(`/api/v1/dashboards/student/eresources/${resource._id}`)
       .set('Authorization', `Bearer ${tokenStudentA}`);
 
     expect(uploadRes.status).toBe(200);
@@ -156,7 +156,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
 
     // Other student requests details -> should get 404
     const otherRes = await request(app)
-      .get(`/api/dashboards/student/eresources/${resource._id}`)
+      .get(`/api/v1/dashboards/student/eresources/${resource._id}`)
       .set('Authorization', `Bearer ${tokenStudentA2}`);
 
     expect(otherRes.status).toBe(404);
@@ -177,7 +177,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
 
     // Approve the resource
     const modRes = await request(app)
-      .put(`/api/dashboards/college-admin/eresources/${resource._id}/moderate`)
+      .put(`/api/v1/dashboards/college-admin/eresources/${resource._id}/moderate`)
       .set('Authorization', `Bearer ${tokenAdminA}`)
       .send({ status: 'approved', note: 'Looks good' });
 
@@ -186,7 +186,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
 
     // Fetch approved lists as Student A2 -> should find it
     const listRes = await request(app)
-      .get('/api/dashboards/student/eresources')
+      .get('/api/v1/dashboards/student/eresources')
       .set('Authorization', `Bearer ${tokenStudentA2}`);
 
     const found = listRes.body.data.some((r) => r._id === resource._id.toString());
@@ -207,7 +207,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
     });
 
     const res = await request(app)
-      .put(`/api/dashboards/college-admin/eresources/${resource._id}/moderate`)
+      .put(`/api/v1/dashboards/college-admin/eresources/${resource._id}/moderate`)
       .set('Authorization', `Bearer ${tokenStudentA}`)
       .send({ status: 'approved' });
 
@@ -225,7 +225,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
 
     // Other student tries to retrieve it -> 404
     const res = await request(app)
-      .get(`/api/dashboards/student/reading-lists/${list._id}`)
+      .get(`/api/v1/dashboards/student/reading-lists/${list._id}`)
       .set('Authorization', `Bearer ${tokenStudentA2}`);
 
     expect(res.status).toBe(404);
@@ -242,7 +242,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
 
     // Same college student retrieves it -> 200
     const sameRes = await request(app)
-      .get(`/api/dashboards/student/reading-lists/${list._id}`)
+      .get(`/api/v1/dashboards/student/reading-lists/${list._id}`)
       .set('Authorization', `Bearer ${tokenStudentA2}`);
 
     expect(sameRes.status).toBe(200);
@@ -250,7 +250,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
 
     // Different college student retrieves it -> 404
     const diffRes = await request(app)
-      .get(`/api/dashboards/student/reading-lists/${list._id}`)
+      .get(`/api/v1/dashboards/student/reading-lists/${list._id}`)
       .set('Authorization', `Bearer ${tokenStudentB}`);
 
     expect(diffRes.status).toBe(404);
@@ -267,7 +267,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
 
     // Student A2 tries to update it -> 403
     const updateRes = await request(app)
-      .put(`/api/dashboards/student/reading-lists/${list._id}`)
+      .put(`/api/v1/dashboards/student/reading-lists/${list._id}`)
       .set('Authorization', `Bearer ${tokenStudentA2}`)
       .send({ title: 'Hacked Title' });
 
@@ -275,7 +275,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
 
     // Student A2 tries to delete it -> 403
     const deleteRes = await request(app)
-      .delete(`/api/dashboards/student/reading-lists/${list._id}`)
+      .delete(`/api/v1/dashboards/student/reading-lists/${list._id}`)
       .set('Authorization', `Bearer ${tokenStudentA2}`);
 
     expect(deleteRes.status).toBe(403);
@@ -296,7 +296,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
 
     // 1st progress update
     const res1 = await request(app)
-      .put(`/api/dashboards/student/reading-progress/${resource._id}`)
+      .put(`/api/v1/dashboards/student/reading-progress/${resource._id}`)
       .set('Authorization', `Bearer ${tokenStudentA}`)
       .send({ currentPage: 5 });
 
@@ -304,7 +304,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
 
     // 2nd progress update
     const res2 = await request(app)
-      .put(`/api/dashboards/student/reading-progress/${resource._id}`)
+      .put(`/api/v1/dashboards/student/reading-progress/${resource._id}`)
       .set('Authorization', `Bearer ${tokenStudentA}`)
       .send({ currentPage: 10 });
 
@@ -327,7 +327,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
   // Assertion 9: SavedSearch strict query validation shape
   it('9. should reject malformed queryParams in SavedSearch with 400', async () => {
     const res = await request(app)
-      .post('/api/dashboards/student/saved-searches')
+      .post('/api/v1/dashboards/student/saved-searches')
       .set('Authorization', `Bearer ${tokenStudentA}`)
       .send({
         queryParams: {
@@ -371,7 +371,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
     );
 
     const res = await request(app)
-      .get(`/api/eresources/external/${resource._id}/content?format=epub`)
+      .get(`/api/v1/eresources/external/${resource._id}/content?format=epub`)
       .set('Authorization', `Bearer ${tokenStudentA}`);
 
     expect(res.status).toBe(200);
@@ -398,7 +398,7 @@ describe('Digital Assets & Personalization API Integration Tests', () => {
     });
 
     const res = await request(app)
-      .get(`/api/eresources/external/${resource._id}/content?format=epub`)
+      .get(`/api/v1/eresources/external/${resource._id}/content?format=epub`)
       .set('Authorization', `Bearer ${tokenStudentA}`);
 
     expect(res.status).toBe(403);

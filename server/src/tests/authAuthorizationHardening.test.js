@@ -68,22 +68,22 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
 
   describe('1. Backend Security Boundary — requireAuth & requireRole Enforcements', () => {
     it('1.1 Unauthenticated requests return HTTP 401 on protected dashboard endpoints', async () => {
-      const studentRes = await request(app).get('/api/dashboards/student/overview');
+      const studentRes = await request(app).get('/api/v1/dashboards/student/overview');
       expect(studentRes.status).toBe(401);
       expect(studentRes.body.success).toBe(false);
 
-      const adminRes = await request(app).get('/api/dashboards/college-admin/patrons');
+      const adminRes = await request(app).get('/api/v1/dashboards/college-admin/patrons');
       expect(adminRes.status).toBe(401);
       expect(adminRes.body.success).toBe(false);
 
-      const superRes = await request(app).get('/api/dashboards/admin-portal/overview');
+      const superRes = await request(app).get('/api/v1/dashboards/admin-portal/overview');
       expect(superRes.status).toBe(401);
       expect(superRes.body.success).toBe(false);
     });
 
     it('1.2 Authenticated requests with invalid/fake tokens return HTTP 401', async () => {
       const res = await request(app)
-        .get('/api/dashboards/student/overview')
+        .get('/api/v1/dashboards/student/overview')
         .set('Authorization', 'Bearer invalid_fake_token_123');
 
       expect(res.status).toBe(401);
@@ -93,7 +93,7 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
     it('1.3 Authenticated requests with wrong role return HTTP 403 on protected routes', async () => {
       // Student attempting to access College Admin endpoint
       const studentToAdminRes = await request(app)
-        .get('/api/dashboards/college-admin/patrons')
+        .get('/api/v1/dashboards/college-admin/patrons')
         .set('Authorization', `Bearer ${studentToken}`);
 
       expect(studentToAdminRes.status).toBe(403);
@@ -101,7 +101,7 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
 
       // Student attempting to access Super Admin endpoint
       const studentToSuperRes = await request(app)
-        .get('/api/dashboards/admin-portal/overview')
+        .get('/api/v1/dashboards/admin-portal/overview')
         .set('Authorization', `Bearer ${studentToken}`);
 
       expect(studentToSuperRes.status).toBe(403);
@@ -109,7 +109,7 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
 
       // College Admin attempting to access Super Admin endpoint
       const adminToSuperRes = await request(app)
-        .get('/api/dashboards/admin-portal/overview')
+        .get('/api/v1/dashboards/admin-portal/overview')
         .set('Authorization', `Bearer ${collegeAdminToken}`);
 
       expect(adminToSuperRes.status).toBe(403);
@@ -118,7 +118,7 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
 
     it('1.4 Authenticated requests with correct role succeed', async () => {
       const studentRes = await request(app)
-        .get('/api/dashboards/student/overview')
+        .get('/api/v1/dashboards/student/overview')
         .set('Authorization', `Bearer ${studentToken}`);
 
       expect(studentRes.status).toBe(200);
@@ -151,7 +151,7 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
       expect(fetchedLegacy.password.startsWith('$2')).toBe(true);
 
       // Perform login which triggers transparent upgrade
-      const loginRes = await request(app).post('/api/auth/login').send({
+      const loginRes = await request(app).post('/api/v1/auth/login').send({
         email: legacyUser.email,
         password: legacyPassword,
       });
@@ -164,7 +164,7 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
       expect(upgradedUser.password.startsWith('$argon2')).toBe(true);
 
       // Verify upgraded user can log in with new Argon2id hash
-      const nextLoginRes = await request(app).post('/api/auth/login').send({
+      const nextLoginRes = await request(app).post('/api/v1/auth/login').send({
         email: legacyUser.email,
         password: legacyPassword,
       });
@@ -186,7 +186,7 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
 
       // Trigger 5 consecutive failed login attempts
       for (let i = 0; i < 5; i++) {
-        const failRes = await request(app).post('/api/auth/login').send({
+        const failRes = await request(app).post('/api/v1/auth/login').send({
           email: targetEmail,
           password: 'WrongPassword!',
         });
@@ -194,7 +194,7 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
       }
 
       // 6th attempt should be blocked with 429
-      const blockedRes = await request(app).post('/api/auth/login').send({
+      const blockedRes = await request(app).post('/api/v1/auth/login').send({
         email: targetEmail,
         password: 'WrongPassword!',
       });
@@ -208,7 +208,7 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
   describe('4. TOTP Multi-Factor Authentication (MFA)', () => {
     it('4.1 Allows user to setup MFA and generate secret + QR code URL', async () => {
       const setupRes = await request(app)
-        .post('/api/auth/mfa/setup')
+        .post('/api/v1/auth/mfa/setup')
         .set('Authorization', `Bearer ${collegeAdminToken}`);
 
       expect(setupRes.status).toBe(200);
@@ -220,7 +220,7 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
     it('4.2 Verifies TOTP code to enable MFA on user account', async () => {
       // Step 1: Setup MFA
       const setupRes = await request(app)
-        .post('/api/auth/mfa/setup')
+        .post('/api/v1/auth/mfa/setup')
         .set('Authorization', `Bearer ${collegeAdminToken}`);
 
       const { secret } = setupRes.body;
@@ -230,7 +230,7 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
 
       // Step 3: Verify TOTP code
       const verifyRes = await request(app)
-        .post('/api/auth/mfa/verify')
+        .post('/api/v1/auth/mfa/verify')
         .set('Authorization', `Bearer ${collegeAdminToken}`)
         .send({ totpCode: validCode });
 
@@ -253,7 +253,7 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
       await adminToUpdate.save();
 
       // Login without TOTP code -> prompt for MFA
-      const mfaRequiredRes = await request(app).post('/api/auth/login').send({
+      const mfaRequiredRes = await request(app).post('/api/v1/auth/login').send({
         email: collegeAdminUser.email,
         password: 'AdminPassword123!',
       });
@@ -265,7 +265,7 @@ describe('Master Prompt 1/3: Authentication, Authorization & Route Protection Ha
       const validCode = speakeasy.totp({ secret, encoding: 'base32' });
 
       // Login with valid TOTP code -> succeeds
-      const successLoginRes = await request(app).post('/api/auth/login').send({
+      const successLoginRes = await request(app).post('/api/v1/auth/login').send({
         email: collegeAdminUser.email,
         password: 'AdminPassword123!',
         totpCode: validCode,

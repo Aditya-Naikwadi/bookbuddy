@@ -124,7 +124,7 @@ const getOrComputeStats = async (collegeId) => {
           categoryBreakdown,
           lastPrecomputedAt: new Date(),
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
     } catch (err) {
       logger.warn('Failed to upsert DashboardStatsSnapshot:', err);

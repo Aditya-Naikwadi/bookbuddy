@@ -126,7 +126,7 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
 
     // 1. Checkout
     const checkoutRes = await request(app)
-      .post('/api/dashboards/college-admin/circulation/checkout')
+      .post('/api/v1/dashboards/college-admin/circulation/checkout')
       .set('Authorization', `Bearer ${tokenAdminA}`)
       .send({
         userId: studentA._id.toString(),
@@ -145,7 +145,7 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
 
     // 2. Renew
     const renewRes = await request(app)
-      .post(`/api/dashboards/student/loans/${loan._id}/renew`)
+      .post(`/api/v1/dashboards/student/loans/${loan._id}/renew`)
       .set('Authorization', `Bearer ${tokenStudentA}`);
 
     expect(renewRes.status).toBe(200);
@@ -157,7 +157,7 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
 
     // 3. Return
     const returnRes = await request(app)
-      .post('/api/dashboards/college-admin/circulation/return')
+      .post('/api/v1/dashboards/college-admin/circulation/return')
       .set('Authorization', `Bearer ${tokenAdminA}`)
       .send({
         loanId: loan._id.toString(),
@@ -176,7 +176,7 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
   it('2. should reject renewal once maxRenewals is hit', async () => {
     // Checkout again
     const checkoutRes = await request(app)
-      .post('/api/dashboards/college-admin/circulation/checkout')
+      .post('/api/v1/dashboards/college-admin/circulation/checkout')
       .set('Authorization', `Bearer ${tokenAdminA}`)
       .send({
         userId: studentA._id.toString(),
@@ -187,17 +187,17 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
 
     // Renew 1st time
     await request(app)
-      .post(`/api/dashboards/student/loans/${loanId}/renew`)
+      .post(`/api/v1/dashboards/student/loans/${loanId}/renew`)
       .set('Authorization', `Bearer ${tokenStudentA}`);
 
     // Renew 2nd time (hits maxLimit of 2)
     await request(app)
-      .post(`/api/dashboards/student/loans/${loanId}/renew`)
+      .post(`/api/v1/dashboards/student/loans/${loanId}/renew`)
       .set('Authorization', `Bearer ${tokenStudentA}`);
 
     // Renew 3rd time (must reject)
     const renewRes3 = await request(app)
-      .post(`/api/dashboards/student/loans/${loanId}/renew`)
+      .post(`/api/v1/dashboards/student/loans/${loanId}/renew`)
       .set('Authorization', `Bearer ${tokenStudentA}`);
 
     expect(renewRes3.status).toBe(400);
@@ -205,7 +205,7 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
 
     // Clean return for next tests
     await request(app)
-      .post('/api/dashboards/college-admin/circulation/return')
+      .post('/api/v1/dashboards/college-admin/circulation/return')
       .set('Authorization', `Bearer ${tokenAdminA}`)
       .send({ loanId });
   });
@@ -215,7 +215,7 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
     // Make book copiesAvailable = 0 (total copies = 2)
     // 1st checkout
     const checkoutRes1 = await request(app)
-      .post('/api/dashboards/college-admin/circulation/checkout')
+      .post('/api/v1/dashboards/college-admin/circulation/checkout')
       .set('Authorization', `Bearer ${tokenAdminA}`)
       .send({
         userId: studentA._id.toString(),
@@ -234,7 +234,7 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
     const tokenTempStudent = generateTokenPair(tempStudent).accessToken;
 
     const checkoutRes2 = await request(app)
-      .post('/api/dashboards/college-admin/circulation/checkout')
+      .post('/api/v1/dashboards/college-admin/circulation/checkout')
       .set('Authorization', `Bearer ${tokenAdminA}`)
       .send({
         userId: tempStudent._id.toString(),
@@ -247,7 +247,7 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
 
     // Place a hold to create a queue
     const holdRes = await request(app)
-      .post('/api/dashboards/student/reservations')
+      .post('/api/v1/dashboards/student/reservations')
       .set('Authorization', `Bearer ${tokenTempStudent}`)
       .send({ bookId: bookA._id.toString() });
 
@@ -255,7 +255,7 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
 
     // Attempt renewal on checkoutRes1 (must reject because queue exists)
     const renewRes = await request(app)
-      .post(`/api/dashboards/student/loans/${checkoutRes1.body.data._id}/renew`)
+      .post(`/api/v1/dashboards/student/loans/${checkoutRes1.body.data._id}/renew`)
       .set('Authorization', `Bearer ${tokenStudentA}`);
 
     expect(renewRes.status).toBe(400);
@@ -263,12 +263,12 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
 
     // Clean up loans
     await request(app)
-      .post('/api/dashboards/college-admin/circulation/return')
+      .post('/api/v1/dashboards/college-admin/circulation/return')
       .set('Authorization', `Bearer ${tokenAdminA}`)
       .send({ loanId: checkoutRes1.body.data._id });
 
     await request(app)
-      .post('/api/dashboards/college-admin/circulation/return')
+      .post('/api/v1/dashboards/college-admin/circulation/return')
       .set('Authorization', `Bearer ${tokenAdminA}`)
       .send({ loanId: checkoutRes2.body.data._id });
   });
@@ -299,14 +299,14 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
     // Firing concurrent checkouts (Promise.all)
     const [res1, res2] = await Promise.all([
       request(app)
-        .post('/api/dashboards/college-admin/circulation/checkout')
+        .post('/api/v1/dashboards/college-admin/circulation/checkout')
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({
           userId: studentA._id.toString(),
           bookId: singleCopyBook._id.toString(),
         }),
       request(app)
-        .post('/api/dashboards/college-admin/circulation/checkout')
+        .post('/api/v1/dashboards/college-admin/circulation/checkout')
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({
           userId: studentC._id.toString(),
@@ -327,7 +327,7 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
   // Assertion 5: Hold placement rejected if copies are actually available
   it('5. should reject hold placement if copies are available', async () => {
     const res = await request(app)
-      .post('/api/dashboards/student/reservations')
+      .post('/api/v1/dashboards/student/reservations')
       .set('Authorization', `Bearer ${tokenStudentA}`)
       .send({ bookId: bookA._id.toString() });
 
@@ -368,7 +368,7 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
 
     // Return the book
     const returnRes = await request(app)
-      .post('/api/dashboards/college-admin/circulation/return')
+      .post('/api/v1/dashboards/college-admin/circulation/return')
       .set('Authorization', `Bearer ${tokenAdminA}`)
       .send({ loanId: loan._id.toString() });
 
@@ -383,7 +383,7 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
   // Assertion 7: Cross-tenant checkout attempt rejected
   it('7. should reject cross-tenant checkout attempt (admin LCA, student LCB)', async () => {
     const res = await request(app)
-      .post('/api/dashboards/college-admin/circulation/checkout')
+      .post('/api/v1/dashboards/college-admin/circulation/checkout')
       .set('Authorization', `Bearer ${tokenAdminA}`) // LCA admin
       .send({
         userId: studentB._id.toString(), // LCB student
@@ -397,7 +397,7 @@ describe('Library Circulation & Concurrency API Integration Tests', () => {
   // Assertion 8: Student cannot access college-admin circulation routes (403)
   it('8. should block student from accessing admin circulation endpoints', async () => {
     const res = await request(app)
-      .post('/api/dashboards/college-admin/circulation/checkout')
+      .post('/api/v1/dashboards/college-admin/circulation/checkout')
       .set('Authorization', `Bearer ${tokenStudentA}`)
       .send({
         userId: studentA._id.toString(),

@@ -77,7 +77,7 @@ describe('Feature 4: Ebook Reader & Safe Proxy Integration Tests', () => {
   describe('POST /api/reader/upload', () => {
     it('should reject file upload when no file is attached', async () => {
       const res = await request(app)
-        .post('/api/reader/upload')
+        .post('/api/v1/reader/upload')
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       expect(res.status).toBe(400);
@@ -87,7 +87,7 @@ describe('Feature 4: Ebook Reader & Safe Proxy Integration Tests', () => {
     it('should reject non-EPUB file structures (invalid zip)', async () => {
       const invalidBuffer = Buffer.from('hello world plain text file content');
       const res = await request(app)
-        .post('/api/reader/upload')
+        .post('/api/v1/reader/upload')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .attach('file', invalidBuffer, 'test.epub');
 
@@ -101,7 +101,7 @@ describe('Feature 4: Ebook Reader & Safe Proxy Integration Tests', () => {
       const buffer = zip.toBuffer();
 
       const res = await request(app)
-        .post('/api/reader/upload')
+        .post('/api/v1/reader/upload')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .attach('file', buffer, 'test.epub');
 
@@ -119,7 +119,7 @@ describe('Feature 4: Ebook Reader & Safe Proxy Integration Tests', () => {
       const buffer = zip.toBuffer();
 
       const res = await request(app)
-        .post('/api/reader/upload')
+        .post('/api/v1/reader/upload')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .attach('file', buffer, 'test.epub');
 
@@ -137,7 +137,7 @@ describe('Feature 4: Ebook Reader & Safe Proxy Integration Tests', () => {
       const buffer = zip.toBuffer();
 
       const res = await request(app)
-        .post('/api/reader/upload')
+        .post('/api/v1/reader/upload')
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .field('title', 'Valid Test Book')
         .field('category', 'Test Category')
@@ -153,7 +153,7 @@ describe('Feature 4: Ebook Reader & Safe Proxy Integration Tests', () => {
   describe('GET /api/reader/:resourceId/content', () => {
     it('should proxy Gutenberg resource with strict, non-executable content-type and security headers', async () => {
       const res = await request(app)
-        .get(`/api/reader/${resourceA._id}/content`)
+        .get(`/api/v1/reader/${resourceA._id}/content`)
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       // We might mock axios or allow the network request to gutenberg.org.
@@ -170,7 +170,7 @@ describe('Feature 4: Ebook Reader & Safe Proxy Integration Tests', () => {
   describe('Reading Position GET / PUT /api/reader/:resourceId/position', () => {
     it('should return empty string if no position is saved yet', async () => {
       const res = await request(app)
-        .get(`/api/reader/${resourceA._id}/position`)
+        .get(`/api/v1/reader/${resourceA._id}/position`)
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       expect(res.status).toBe(200);
@@ -179,7 +179,7 @@ describe('Feature 4: Ebook Reader & Safe Proxy Integration Tests', () => {
 
     it('should upsert and return the updated reading position CFI string', async () => {
       const putRes = await request(app)
-        .put(`/api/reader/${resourceA._id}/position`)
+        .put(`/api/v1/reader/${resourceA._id}/position`)
         .set('Authorization', `Bearer ${tokenStudentA}`)
         .send({ position: 'epubcfi(/6/4[chap01.xhtml]!/4/2/10/2)' });
 
@@ -187,7 +187,7 @@ describe('Feature 4: Ebook Reader & Safe Proxy Integration Tests', () => {
       expect(putRes.body.success).toBe(true);
 
       const getRes = await request(app)
-        .get(`/api/reader/${resourceA._id}/position`)
+        .get(`/api/v1/reader/${resourceA._id}/position`)
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       expect(getRes.status).toBe(200);

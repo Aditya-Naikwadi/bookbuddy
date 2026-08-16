@@ -54,7 +54,7 @@ const seedServices = async () => {
     for (const serviceData of defaultServices) {
       await Service.findOneAndUpdate({ key: serviceData.key }, serviceData, {
         upsert: true,
-        new: true,
+        returnDocument: 'after',
       });
     }
 

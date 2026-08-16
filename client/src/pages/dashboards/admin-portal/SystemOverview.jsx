@@ -13,35 +13,56 @@ import adminApi from "../../../api/adminApi";
 import OpsHeader from "../../../components/ops/OpsHeader";
 import OpsSeverityBadge from "../../../components/ops/OpsSeverityBadge";
 
+import { useAdminOverview } from "../../../hooks/useAdminOverview";
+
 export default function SystemOverview() {
-  const [stats, setStats] = useState(null);
+  const { overview: stats, isLoading: isOverviewLoading, refetch: refetchOverview } = useAdminOverview();
   const [colleges, setColleges] = useState([]);
   const [health, setHealth] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingOther, setIsLoadingOther] = useState(true);
   const [error, setError] = useState("");
-  const [reloadToken, setReloadToken] = useState(0);
 
-  const fetchOverviewData = useCallback(() => setReloadToken((t) => t + 1), []);
+  const isLoading = isOverviewLoading || isLoadingOther;
+
+  const fetchOverviewData = useCallback(() => {
+    refetchOverview();
+    const loadSecondary = async () => {
+      try {
+        setIsLoadingOther(true);
+        const [collegesData, healthData] = await Promise.all([
+          adminApi.listColleges(),
+          adminApi.getSystemHealth(),
+        ]);
+        setColleges(collegesData || []);
+        setHealth(healthData);
+      } catch (err) {
+        console.error("Failed to fetch ops overview secondary metrics:", err);
+      } finally {
+        setIsLoadingOther(false);
+      }
+    };
+    loadSecondary();
+  }, [refetchOverview]);
 
   useEffect(() => {
     let isMounted = true;
     const loadData = async () => {
       try {
-        setIsLoading(true);
-        const statsData = await adminApi.getOverview();
-        if (isMounted) setStats(statsData);
-
-        const collegesData = await adminApi.listColleges();
-        if (isMounted) setColleges(collegesData || []);
-
-        const healthData = await adminApi.getSystemHealth();
-        if (isMounted) setHealth(healthData);
+        setIsLoadingOther(true);
+        const [collegesData, healthData] = await Promise.all([
+          adminApi.listColleges(),
+          adminApi.getSystemHealth(),
+        ]);
+        if (isMounted) {
+          setColleges(collegesData || []);
+          setHealth(healthData);
+        }
       } catch (err) {
         console.error("Failed to fetch ops overview metrics:", err);
         if (isMounted)
           setError("Failed to fetch live platform health telemetry.");
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted) setIsLoadingOther(false);
       }
     };
 
@@ -49,7 +70,7 @@ export default function SystemOverview() {
     return () => {
       isMounted = false;
     };
-  }, [reloadToken]);
+  }, []);
 
   const activeCollegesCount = colleges.filter(
     (c) => c.status === "active" || c.isActive,

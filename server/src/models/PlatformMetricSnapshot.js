@@ -79,6 +79,7 @@ const platformMetricSnapshotSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    collection: 'platformmetricsnapshots',
   }
 );
 

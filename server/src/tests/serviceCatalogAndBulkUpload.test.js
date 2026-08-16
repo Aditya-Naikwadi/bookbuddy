@@ -114,7 +114,7 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
 
   describe('BUILD 1: Service Catalog & Feature Resolution', () => {
     it('should list available active services in catalog', async () => {
-      const res = await request(app).get('/api/services/available');
+      const res = await request(app).get('/api/v1/services/available');
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(Array.isArray(res.body.data)).toBe(true);
@@ -124,7 +124,7 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
     it('should correctly resolve transitive dependencies (e.g. gamification -> catalog_management)', async () => {
       // Update selectedServices to ['gamification']
       const patchRes = await request(app)
-        .patch(`/api/services/college/${collegeA._id}/features`)
+        .patch(`/api/v1/services/college/${collegeA._id}/features`)
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({
           selectedServices: ['gamification'],
@@ -142,7 +142,7 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
     it('should enforce tenant isolation on feature updates', async () => {
       // Admin A tries to modify College B's features
       const res = await request(app)
-        .patch(`/api/services/college/${collegeB._id}/features`)
+        .patch(`/api/v1/services/college/${collegeB._id}/features`)
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({ selectedServices: ['analytics'] });
 
@@ -155,7 +155,7 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
     it('should reject request with 403 when feature is not enabled for tenant', async () => {
       // Student A (College A) has selectedServices: ['catalog_management'], NOT facilities_booking
       const res = await request(app)
-        .get('/api/lab/seats')
+        .get('/api/v1/lab/seats')
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       expect(res.status).toBe(403);
@@ -165,12 +165,12 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
     it('should allow request when feature is enabled for tenant', async () => {
       // Enable facilities_booking for College A
       await request(app)
-        .patch(`/api/services/college/${collegeA._id}/features`)
+        .patch(`/api/v1/services/college/${collegeA._id}/features`)
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({ selectedServices: ['facilities_booking'] });
 
       const res = await request(app)
-        .get('/api/lab/seats')
+        .get('/api/v1/lab/seats')
         .set('Authorization', `Bearer ${tokenStudentA}`);
 
       expect(res.status).toBe(200);
@@ -179,7 +179,7 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
 
     it('should allow Super Admin to bypass feature flag restrictions', async () => {
       const res = await request(app)
-        .get('/api/lab/seats')
+        .get('/api/v1/lab/seats')
         .set('Authorization', `Bearer ${tokenSuperAdmin}`);
 
       expect(res.status).toBe(200);
@@ -212,7 +212,7 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
       fs.writeFileSync(txtPath, JSON.stringify({ test: 123 }));
 
       const res = await request(app)
-        .post(`/api/college/${collegeA._id}/students/bulk-upload`)
+        .post(`/api/v1/college/${collegeA._id}/students/bulk-upload`)
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .attach('file', txtPath);
 
@@ -225,7 +225,7 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
     it('should reject cross-tenant upload requests with 403', async () => {
       // Admin A tries to upload to College B
       const res = await request(app)
-        .post(`/api/college/${collegeB._id}/students/bulk-upload`)
+        .post(`/api/v1/college/${collegeB._id}/students/bulk-upload`)
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .attach('file', testCsvPath);
 
@@ -234,7 +234,7 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
 
     it('should accept valid upload, return 202 Accepted with jobId, and process records asynchronously', async () => {
       const uploadRes = await request(app)
-        .post(`/api/college/${collegeA._id}/students/bulk-upload`)
+        .post(`/api/v1/college/${collegeA._id}/students/bulk-upload`)
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .attach('file', testCsvPath);
 
@@ -249,7 +249,7 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
       for (let i = 0; i < 20; i++) {
         await new Promise((resolve) => setTimeout(resolve, 200));
         statusRes = await request(app)
-          .get(`/api/college/${collegeA._id}/students/upload/${jobId}`)
+          .get(`/api/v1/college/${collegeA._id}/students/upload/${jobId}`)
           .set('Authorization', `Bearer ${tokenAdminA}`);
 
         if (statusRes.body.data.status === 'completed') {
@@ -274,7 +274,7 @@ describe('Service Catalog, Feature Flags & Bulk Student Upload Integration Tests
 
       // Test error report download endpoint
       const reportRes = await request(app)
-        .get(`/api/college/${collegeA._id}/students/upload/${jobId}/errors`)
+        .get(`/api/v1/college/${collegeA._id}/students/upload/${jobId}/errors`)
         .set('Authorization', `Bearer ${tokenAdminA}`);
 
       expect(reportRes.status).toBe(200);

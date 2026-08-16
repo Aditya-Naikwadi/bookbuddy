@@ -46,107 +46,101 @@ const getOverview = async (req, res, next) => {
       });
     }
 
-    // Try to get latest snapshot from DB
+    const RegistrationRequest = require('../../models/RegistrationRequest');
+    const Complaint = require('../../models/Complaint');
+    const EResource = require('../../models/EResource');
+
+    const [
+      pendingOnboardingCount,
+      unresolvedSupportCount,
+      pendingModerationCount,
+      auditLogsCount,
+      totalUsers,
+      totalColleges,
+      activeLoans,
+      unpaidFinesCount,
+    ] = await Promise.all([
+      RegistrationRequest.countDocuments({
+        type: 'tenant_onboarding',
+        status: { $in: ['pending_review', 'submitted'] },
+      }),
+      Complaint.countDocuments({ status: { $in: ['open', 'in_progress'] } }),
+      EResource.countDocuments({ moderationStatus: { $in: ['pending', 'pending_review'] } }),
+      AuditLog.countDocuments(),
+      User.countDocuments(),
+      College.countDocuments(),
+      Loan.countDocuments({ status: 'active' }),
+      Fine.countDocuments({ status: 'unpaid' }),
+    ]);
+
+    const userRoleCounts = await User.aggregate([
+      {
+        $group: {
+          _id: '$role',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const rolesMap = {
+      student: 0,
+      'college-admin': 0,
+      'super-admin': 0,
+      librarian: 0,
+      admin: 0,
+    };
+    userRoleCounts.forEach((roleGroup) => {
+      if (roleGroup._id) {
+        rolesMap[roleGroup._id] = roleGroup.count;
+      }
+    });
+
+    const unpaidFineSum = await Fine.aggregate([
+      { $match: { status: 'unpaid' } },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: '$amount' },
+        },
+      },
+    ]);
+    const totalUnpaidFineAmount = unpaidFineSum.length > 0 ? unpaidFineSum[0].totalAmount : 0;
+
+    const eResourcesCount = await EResource.countDocuments({ moderationStatus: 'published' });
+    const storageUsage = await EResource.aggregate([
+      { $group: { _id: null, total: { $sum: '$fileSizeBytes' } } },
+    ]);
+    const storageUsageBytes = storageUsage.length > 0 ? storageUsage[0].total : 0;
+
+    const PlatformMetricSnapshot = require('../../models/PlatformMetricSnapshot');
     const latestSnapshot = await PlatformMetricSnapshot.findOne({ collegeId: null }).sort({
       snapshotDate: -1,
     });
 
-    let overviewData;
-    if (latestSnapshot) {
-      overviewData = {
-        totalColleges: await College.countDocuments(),
-        activeLoans: latestSnapshot.activeLoans,
-        unpaidFinesCount: await Fine.countDocuments({ status: 'unpaid' }),
-        totalUnpaidFineAmount: latestSnapshot.totalFinesPending,
-        userCountsByRole: {
-          student: latestSnapshot.activeStudents,
-          'college-admin': latestSnapshot.activeAdmins,
-          'super-admin': await User.countDocuments({ role: 'super-admin' }),
-          librarian: 0,
-          admin: 0,
-        },
-        storageUsageBytes: latestSnapshot.storageUsageBytes,
-        eResourcesCount: latestSnapshot.eResourcesCount,
-        pendingModerationCount: latestSnapshot.pendingModerationCount,
-      };
-    } else {
-      // Cold start fallback - calculate live
-      const totalColleges = await College.countDocuments();
-      const activeLoans = await Loan.countDocuments({ status: 'active' });
-      const unpaidFinesCount = await Fine.countDocuments({ status: 'unpaid' });
+    const finalActiveLoans = activeLoans || (latestSnapshot ? latestSnapshot.activeLoans : 0);
+    const finalUnpaidFineAmount =
+      totalUnpaidFineAmount || (latestSnapshot ? latestSnapshot.totalFinesPending : 0);
+    const finalEResourcesCount =
+      eResourcesCount || (latestSnapshot ? latestSnapshot.eResourcesCount : 0);
+    const finalPendingModeration =
+      pendingModerationCount || (latestSnapshot ? latestSnapshot.pendingModerationCount : 0);
 
-      const userRoleCounts = await User.aggregate([
-        {
-          $group: {
-            _id: '$role',
-            count: { $sum: 1 },
-          },
-        },
-      ]);
+    const overviewData = {
+      totalColleges,
+      activeLoans: finalActiveLoans,
+      unpaidFinesCount,
+      totalUnpaidFineAmount: finalUnpaidFineAmount,
+      totalUsers,
+      userCountsByRole: rolesMap,
+      storageUsageBytes,
+      eResourcesCount: finalEResourcesCount,
+      pendingModerationCount: finalPendingModeration,
+      pendingOnboardingCount,
+      unresolvedSupportCount,
+      auditLogsCount,
+    };
 
-      const rolesMap = {
-        student: 0,
-        'college-admin': 0,
-        'super-admin': 0,
-        librarian: 0,
-        admin: 0,
-      };
-      userRoleCounts.forEach((roleGroup) => {
-        if (roleGroup._id) {
-          rolesMap[roleGroup._id] = roleGroup.count;
-        }
-      });
-
-      const unpaidFineSum = await Fine.aggregate([
-        { $match: { status: 'unpaid' } },
-        {
-          $group: {
-            _id: null,
-            totalAmount: { $sum: '$amount' },
-          },
-        },
-      ]);
-      const totalUnpaidFineAmount = unpaidFineSum.length > 0 ? unpaidFineSum[0].totalAmount : 0;
-
-      // E-resources stats
-      const EResource = require('../../models/EResource');
-      const eResourcesCount = await EResource.countDocuments({ moderationStatus: 'published' });
-      const pendingModerationCount = await EResource.countDocuments({
-        moderationStatus: { $in: ['pending', 'pending_review'] },
-      });
-      const storageUsage = await EResource.aggregate([
-        { $group: { _id: null, total: { $sum: '$fileSizeBytes' } } },
-      ]);
-      const storageUsageBytes = storageUsage.length > 0 ? storageUsage[0].total : 0;
-
-      overviewData = {
-        totalColleges,
-        activeLoans,
-        unpaidFinesCount,
-        totalUnpaidFineAmount,
-        userCountsByRole: rolesMap,
-        storageUsageBytes,
-        eResourcesCount,
-        pendingModerationCount,
-      };
-
-      // Materialize snapshot
-      await PlatformMetricSnapshot.create({
-        collegeId: null,
-        snapshotDate: new Date(),
-        activeStudents: rolesMap.student,
-        activeAdmins: rolesMap['college-admin'],
-        activeLoans,
-        overdueLoans: await Loan.countDocuments({ status: 'overdue' }),
-        totalFinesPending: totalUnpaidFineAmount,
-        totalFinesCollected: 0,
-        eResourcesCount,
-        pendingModerationCount,
-        storageUsageBytes,
-      });
-    }
-
-    // Cache results
+    // Cache results if redis is ready
     if (isRedisReady) {
       try {
         await redisClient.set('metrics:global:latest', JSON.stringify(overviewData), 'EX', 300);

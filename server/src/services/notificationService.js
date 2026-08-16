@@ -32,21 +32,34 @@ const retrySend = async (sendFn, maxAttempts = 3, initialDelayMs = 50) => {
   };
 };
 
+const mailer = require('../utils/mailer');
+
 /**
  * Send email notification using configured provider (Nodemailer / SendGrid / Sandbox)
  */
 const sendEmail = async (userId, userEmail, type, message) => {
-  const provider = config.emailProvider || 'sandbox-nodemailer';
+  const provider = config.emailProvider || 'nodemailer-smtp';
 
   const deliveryResult = await retrySend(
     async () => {
-      // Standard mock/sandbox or real provider invocation
       if (process.env.EMAIL_DRIVER_THROW === 'true') {
         throw new Error('Email provider connection timeout');
       }
 
-      // In non-test environment, write to logger or HTTP provider
-      logger.info(`[Email Service (${provider})] Sent to ${userEmail}: "${message}"`);
+      // Dispatch real email asynchronously via mailer utility
+      mailer.queueEmail({
+        to: userEmail,
+        subject: `[BookBuddy Notification] ${type.replace(/_/g, ' ').toUpperCase()}`,
+        text: message,
+        html: `<div style="font-family: sans-serif; padding: 20px; background: #f8fafc; border-radius: 8px;">
+          <h3 style="color: #4f46e5;">BookBuddy Alert</h3>
+          <p>${message}</p>
+        </div>`,
+      });
+
+      logger.info(
+        `[Email Service (${provider})] Dispatched async mail to ${userEmail}: "${message}"`
+      );
       return { messageId: `msg_${Date.now()}` };
     },
     3,

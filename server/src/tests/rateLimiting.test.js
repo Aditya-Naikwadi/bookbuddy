@@ -236,7 +236,7 @@ describe('API Rate Limiting & Input Validation Hardening Tests', () => {
 
       // Call profile route passing the Bearer token (which requires authentication)
       // Since it has the globalLimiter and protect applied
-      await request(app).get('/api/auth/profile').set('Authorization', `Bearer ${tokenUser}`);
+      await request(app).get('/api/v1/auth/profile').set('Authorization', `Bearer ${tokenUser}`);
 
       // Inspect mock store to verify the global limiter used the user sub ID
       const keys = Array.from(mockSharedRedisStore.keys());
@@ -274,7 +274,7 @@ describe('API Rate Limiting & Input Validation Hardening Tests', () => {
       // Since we don't have token, we can mock/stub protect in app or use a public route
       // Let's call /api/auth/login with unrecognized keys
       // Since loginSchema is not strict, it should pass validation but strip unrecognized keys
-      const res = await request(app).post('/api/auth/login').send({
+      const res = await request(app).post('/api/v1/auth/login').send({
         // missing email and studentId triggers 400 validation error
         password: 'password123',
         maliciousKey: 'attack',

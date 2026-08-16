@@ -71,6 +71,33 @@ const FeatureManagerSettings = lazy(
 const StudentUploadPage = lazy(
   () => import("./pages/dashboards/college-admin/StudentUploadPage"),
 );
+const CirculationDesk = lazy(
+  () => import("./pages/dashboards/college-admin/CirculationDesk"),
+);
+const PatronsDesk = lazy(
+  () => import("./pages/dashboards/college-admin/PatronsDesk"),
+);
+const CatalogingDesk = lazy(
+  () => import("./pages/dashboards/college-admin/CatalogingDesk"),
+);
+const InventoryOverview = lazy(
+  () => import("./pages/dashboards/college-admin/InventoryOverview"),
+);
+const FinancesDesk = lazy(
+  () => import("./pages/dashboards/college-admin/FinancesDesk"),
+);
+const FacilitiesDesk = lazy(
+  () => import("./pages/dashboards/college-admin/FacilitiesDesk"),
+);
+const DigitalAssetsDesk = lazy(
+  () => import("./pages/dashboards/college-admin/DigitalAssetsDesk"),
+);
+const HelpdeskDesk = lazy(
+  () => import("./pages/dashboards/college-admin/HelpdeskDesk"),
+);
+const AnalyticsOverview = lazy(
+  () => import("./pages/dashboards/college-admin/AnalyticsOverview"),
+);
 
 // Lazy loaded General Dashboard Features
 const GeneralDashboardHome = lazy(
@@ -284,6 +311,42 @@ function App() {
                       <Route
                         path="college-admin/bulk-upload"
                         element={<StudentUploadPage />}
+                      />
+                      <Route
+                        path="college-admin/circulation"
+                        element={<CirculationDesk />}
+                      />
+                      <Route
+                        path="college-admin/patrons"
+                        element={<PatronsDesk />}
+                      />
+                      <Route
+                        path="college-admin/cataloging"
+                        element={<CatalogingDesk />}
+                      />
+                      <Route
+                        path="college-admin/inventory"
+                        element={<InventoryOverview />}
+                      />
+                      <Route
+                        path="college-admin/finances"
+                        element={<FinancesDesk />}
+                      />
+                      <Route
+                        path="college-admin/facilities"
+                        element={<FacilitiesDesk />}
+                      />
+                      <Route
+                        path="college-admin/digital-assets"
+                        element={<DigitalAssetsDesk />}
+                      />
+                      <Route
+                        path="college-admin/helpdesk"
+                        element={<HelpdeskDesk />}
+                      />
+                      <Route
+                        path="college-admin/analytics"
+                        element={<AnalyticsOverview />}
                       />
                     </Route>
 

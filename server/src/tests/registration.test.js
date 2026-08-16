@@ -69,7 +69,7 @@ describe('Dual Registration System Integration Tests', () => {
 
   describe('GET /api/registration/colleges', () => {
     it('should return list of ACTIVE colleges only', async () => {
-      const res = await request(app).get('/api/registration/colleges');
+      const res = await request(app).get('/api/v1/registration/colleges');
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       const names = res.body.data.map((c) => c.name);
@@ -80,7 +80,7 @@ describe('Dual Registration System Integration Tests', () => {
 
   describe('Flow A: Student Registration', () => {
     it('should reject registration if college is not active', async () => {
-      const res = await request(app).post('/api/registration/student').send({
+      const res = await request(app).post('/api/v1/registration/student').send({
         name: 'Test Student',
         email: 'student@pending.edu',
         password: 'Password123!',
@@ -95,7 +95,7 @@ describe('Dual Registration System Integration Tests', () => {
     });
 
     it('should reject registration if email domain does not match college domain', async () => {
-      const res = await request(app).post('/api/registration/student').send({
+      const res = await request(app).post('/api/v1/registration/student').send({
         name: 'Test Student',
         email: 'student@gmail.com',
         password: 'Password123!',
@@ -111,7 +111,7 @@ describe('Dual Registration System Integration Tests', () => {
 
     it('should successfully submit student registration and verify via OTP', async () => {
       // 1. Submit registration
-      const regRes = await request(app).post('/api/registration/student').send({
+      const regRes = await request(app).post('/api/v1/registration/student').send({
         name: 'John Harvard',
         email: 'jharvard@mit.edu',
         password: 'Password123!',
@@ -134,7 +134,7 @@ describe('Dual Registration System Integration Tests', () => {
       const otp = reqDoc.studentData.verificationOTP;
 
       // 2. Verify Email OTP
-      const verifyRes = await request(app).post('/api/registration/verify-email').send({
+      const verifyRes = await request(app).post('/api/v1/registration/verify-email').send({
         email: 'jharvard@mit.edu',
         otp,
       });
@@ -153,7 +153,7 @@ describe('Dual Registration System Integration Tests', () => {
 
   describe('Flow B: Tenant Onboarding & Super Admin Approval', () => {
     it('should submit tenant onboarding request in pending_review status', async () => {
-      const res = await request(app).post('/api/registration/tenant-onboarding').send({
+      const res = await request(app).post('/api/v1/registration/tenant-onboarding').send({
         legalName: 'Stanford University',
         shortName: 'Stanford',
         institutionType: 'university',
@@ -201,7 +201,7 @@ describe('Dual Registration System Integration Tests', () => {
 
       // 2. Super Admin approves request
       const approveRes = await request(app)
-        .post(`/api/dashboards/admin-portal/onboardings/${reqDoc._id}/approve`)
+        .post(`/api/v1/dashboards/admin-portal/onboardings/${reqDoc._id}/approve`)
         .set('Authorization', `Bearer ${superAdminToken}`);
 
       expect(approveRes.status).toBe(200);

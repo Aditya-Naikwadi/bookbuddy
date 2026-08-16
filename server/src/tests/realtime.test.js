@@ -354,7 +354,7 @@ describe('Phase 5 — Real-Time, Gamification & Notifications Integration Tests'
 
       // Perform checkout (Phase 2 admin endpoint)
       const res = await request(app)
-        .post('/api/dashboards/college-admin/circulation/checkout')
+        .post('/api/v1/dashboards/college-admin/circulation/checkout')
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({
           userId: studentA._id.toString(),
@@ -379,7 +379,7 @@ describe('Phase 5 — Real-Time, Gamification & Notifications Integration Tests'
 
       // 2. Student B places a hold on bookA
       const holdRes = await request(app)
-        .post('/api/dashboards/student/reservations')
+        .post('/api/v1/dashboards/student/reservations')
         .set('Authorization', `Bearer ${tokenStudentB}`)
         .send({
           bookId: bookA._id.toString(),
@@ -388,7 +388,7 @@ describe('Phase 5 — Real-Time, Gamification & Notifications Integration Tests'
 
       // 3. Admin A returns bookA (triggering hold promotion for Student B)
       const returnRes = await request(app)
-        .post('/api/dashboards/college-admin/circulation/return')
+        .post('/api/v1/dashboards/college-admin/circulation/return')
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({
           loanId: loan._id.toString(),

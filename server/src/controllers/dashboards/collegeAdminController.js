@@ -211,6 +211,11 @@ const getAnalyticsSummary = async (req, res, next) => {
     const totalStudents = await User.countDocuments({ role: 'student', ...tenantFilter });
     const activeLoans = await Loan.countDocuments({ status: 'active', ...tenantFilter });
     const overdueLoans = await Loan.countDocuments({ status: 'overdue', ...tenantFilter });
+    const catalogSize = await Book.countDocuments({ ...tenantFilter });
+    const digitalResourceCount = await EResource.countDocuments({
+      ...tenantFilter,
+      moderationStatus: { $in: ['approved', 'published'] },
+    });
 
     const pendingFinesAgg = await Fine.aggregate([
       { $match: { status: 'unpaid', ...tenantFilter } },
@@ -273,12 +278,75 @@ const getAnalyticsSummary = async (req, res, next) => {
         ? Number((complaintsAgg[0].avgResolutionTimeMs / (1000 * 60 * 60)).toFixed(2))
         : 0;
 
-    // Catalog Size vs Digital Resource Count
-    const catalogSize = await Book.countDocuments({ ...tenantFilter });
-    const digitalResourceCount = await EResource.countDocuments({
-      moderationStatus: 'approved',
-      ...tenantFilter,
-    });
+    // Category Breakdown for Inventory
+    const categoryBreakdown = await Book.aggregate([
+      { $match: { ...tenantFilter } },
+      {
+        $group: {
+          _id: { $ifNull: ['$category', '$subject'] },
+          count: { $sum: 1 },
+          totalCopies: { $sum: '$totalCopies' },
+        },
+      },
+      {
+        $project: { category: { $ifNull: ['$_id', 'General'] }, count: 1, totalCopies: 1, _id: 0 },
+      },
+    ]);
+
+    // Stock Alerts (Low stock or high demand copies <= 2)
+    const stockAlerts = await Book.find({
+      availableCopies: { $lte: 2 },
+      ...req.tenantFilter,
+    })
+      .select('title author isbn totalCopies availableCopies category')
+      .limit(10);
+
+    // Circulation Trends (Monthly breakdown of loans)
+    const circulationTrends = await Loan.aggregate([
+      { $match: { ...tenantFilter } },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' },
+          },
+          checkouts: { $sum: 1 },
+          returns: {
+            $sum: { $cond: [{ $eq: ['$status', 'returned'] }, 1, 0] },
+          },
+        },
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1 } },
+      { $limit: 12 },
+    ]);
+
+    // Department Utilization (Loans grouped by student department)
+    const departmentUtilization = await Loan.aggregate([
+      { $match: { ...tenantFilter } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'userDetails',
+        },
+      },
+      { $unwind: '$userDetails' },
+      {
+        $group: {
+          _id: { $ifNull: ['$userDetails.department', '$userDetails.studentData.department'] },
+          loanCount: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          department: { $ifNull: ['$_id', 'General'] },
+          loanCount: 1,
+          _id: 0,
+        },
+      },
+      { $sort: { loanCount: -1 } },
+    ]);
 
     res.json({
       success: true,
@@ -292,6 +360,10 @@ const getAnalyticsSummary = async (req, res, next) => {
         avgComplaintResolutionHours,
         catalogSize,
         digitalResourceCount,
+        categoryBreakdown,
+        stockAlerts,
+        circulationTrends,
+        departmentUtilization,
         timestamp: Date.now(),
       },
     });

@@ -87,7 +87,7 @@ describe('Phase 0 Emergency Security Patch Integration Tests', () => {
   test('1. IDOR Prevention: User B cannot cancel User A reservation (returns 404 and leaves hold active)', async () => {
     // User A creates a reservation
     const createRes = await request(app)
-      .post('/api/reservations')
+      .post('/api/v1/reservations')
       .set('Authorization', `Bearer ${tokenUserA}`)
       .send({ bookId: outOfStockBook._id.toString() });
 
@@ -96,7 +96,7 @@ describe('Phase 0 Emergency Security Patch Integration Tests', () => {
 
     // User B attempts to DELETE User A's reservation
     const deleteRes = await request(app)
-      .delete(`/api/reservations/${reservationId}`)
+      .delete(`/api/v1/reservations/${reservationId}`)
       .set('Authorization', `Bearer ${tokenUserB}`);
 
     expect(deleteRes.status).toBe(404);
@@ -111,7 +111,7 @@ describe('Phase 0 Emergency Security Patch Integration Tests', () => {
 
   test('2. Strict CORS: Requests from unlisted origin are rejected', async () => {
     const corsRes = await request(app)
-      .get('/api/registration/colleges')
+      .get('/api/v1/registration/colleges')
       .set('Origin', 'http://malicious-unlisted-site.com');
 
     // CORS rejection by express cors middleware suppresses Access-Control-Allow-Origin header
@@ -120,7 +120,7 @@ describe('Phase 0 Emergency Security Patch Integration Tests', () => {
 
   test('3. Strict CORS: Requests from allowed origin (localhost:5173) are accepted', async () => {
     const corsRes = await request(app)
-      .get('/api/registration/colleges')
+      .get('/api/v1/registration/colleges')
       .set('Origin', 'http://localhost:5173');
 
     expect(corsRes.headers['access-control-allow-origin']).toBe('http://localhost:5173');

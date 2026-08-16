@@ -106,7 +106,7 @@ describe('Backend Audit Fixes Unit Tests (Items 1 - 3)', () => {
     test('POST /api/patron-card/verify successfully verifies a valid scanned token', async () => {
       const { token } = generatePatronToken(studentUser._id, studentUser.studentId);
 
-      const res = await request(app).post('/api/patron-card/verify').send({ token });
+      const res = await request(app).post('/api/v1/patron-card/verify').send({ token });
 
       expect(res.statusCode).toBe(200);
       expect(res.body.success).toBe(true);
@@ -117,7 +117,7 @@ describe('Backend Audit Fixes Unit Tests (Items 1 - 3)', () => {
 
     test('POST /api/patron-card/verify rejects an expired or invalid token', async () => {
       const res = await request(app)
-        .post('/api/patron-card/verify')
+        .post('/api/v1/patron-card/verify')
         .send({ token: 'bogus-scanned-qr-code' });
 
       expect(res.statusCode).toBe(400);
@@ -170,7 +170,7 @@ describe('Backend Audit Fixes Unit Tests (Items 1 - 3)', () => {
       });
 
       const res = await request(app)
-        .get('/api/dashboards/student/loans')
+        .get('/api/v1/dashboards/student/loans')
         .set('Authorization', `Bearer ${studentToken}`);
 
       expect(res.statusCode).toBe(200);
@@ -198,7 +198,7 @@ describe('Backend Audit Fixes Unit Tests (Items 1 - 3)', () => {
       });
 
       const res = await request(app)
-        .post(`/api/dashboards/student/loans/${activeLoan._id}/renew`)
+        .post(`/api/v1/dashboards/student/loans/${activeLoan._id}/renew`)
         .set('Authorization', `Bearer ${studentToken}`);
 
       expect(res.statusCode).toBe(400);

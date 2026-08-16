@@ -123,7 +123,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
   it('1. should reject college_admin with 403 on super_admin routes, and reject tampered tokens with 401', async () => {
     // A normal college_admin gets 403 Forbidden
     const resForbidden = await request(app)
-      .get('/api/dashboards/admin-portal/overview')
+      .get('/api/v1/dashboards/admin-portal/overview')
       .set('Authorization', `Bearer ${tokenAdminA}`);
     expect(resForbidden.status).toBe(403);
 
@@ -137,7 +137,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
     const tamperedToken = jwt.sign(tamperedPayload, 'wrong_secret_key_123');
 
     const resTampered = await request(app)
-      .get('/api/dashboards/admin-portal/overview')
+      .get('/api/v1/dashboards/admin-portal/overview')
       .set('Authorization', `Bearer ${tamperedToken}`);
 
     // Auth middleware throws signature error and returns 401
@@ -156,7 +156,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
 
     // Create the admin via super_admin endpoint
     const resCreate = await request(app)
-      .post('/api/dashboards/admin-portal/admins')
+      .post('/api/v1/dashboards/admin-portal/admins')
       .set('Authorization', `Bearer ${tokenSuperAdmin}`)
       .send(newAdminData);
 
@@ -169,7 +169,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
 
     // Verify tenant-scoping: When the new admin requests patrons, they only see college A's patrons
     const resScope = await request(app)
-      .get('/api/dashboards/college-admin/patrons')
+      .get('/api/v1/dashboards/college-admin/patrons')
       .set('Authorization', `Bearer ${newAdminToken}`);
 
     expect(resScope.status).toBe(200);
@@ -183,7 +183,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
   it('3. should write exactly one AuditLog entry on successful admin action, and zero on validation errors', async () => {
     // Successful college creation
     const resSuccess = await request(app)
-      .post('/api/dashboards/admin-portal/colleges')
+      .post('/api/v1/dashboards/admin-portal/colleges')
       .set('Authorization', `Bearer ${tokenSuperAdmin}`)
       .send({ name: 'Gamma Institute', code: 'GAM' });
     expect(resSuccess.status).toBe(201);
@@ -200,7 +200,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
 
     // Failed validation request: Empty name/code
     const resFail = await request(app)
-      .post('/api/dashboards/admin-portal/colleges')
+      .post('/api/v1/dashboards/admin-portal/colleges')
       .set('Authorization', `Bearer ${tokenSuperAdmin}`)
       .send({ name: '', code: '' });
     expect(resFail.status).toBe(400); // Validation error
@@ -220,7 +220,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
     };
 
     const res = await request(app)
-      .post('/api/dashboards/admin-portal/admins')
+      .post('/api/v1/dashboards/admin-portal/admins')
       .set('Authorization', `Bearer ${tokenSuperAdmin}`)
       .send(newAdminData);
     expect(res.status).toBe(201);
@@ -308,7 +308,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
 
     // Request overview
     const res = await request(app)
-      .get('/api/dashboards/admin-portal/overview')
+      .get('/api/v1/dashboards/admin-portal/overview')
       .set('Authorization', `Bearer ${tokenSuperAdmin}`);
 
     expect(res.status).toBe(200);
@@ -357,14 +357,14 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
 
     // College A Admin Request
     const resA = await request(app)
-      .get('/api/dashboards/college-admin/analytics/summary')
+      .get('/api/v1/dashboards/college-admin/analytics/summary')
       .set('Authorization', `Bearer ${tokenAdminA}`);
     expect(resA.status).toBe(200);
     expect(resA.body.data.activeLoans).toBe(1);
 
     // College B Admin Request
     const resB = await request(app)
-      .get('/api/dashboards/college-admin/analytics/summary')
+      .get('/api/v1/dashboards/college-admin/analytics/summary')
       .set('Authorization', `Bearer ${tokenAdminB}`);
     expect(resB.status).toBe(200);
     expect(resB.body.data.activeLoans).toBe(0);
@@ -524,7 +524,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
 
     // Request analytics summary
     const res = await request(app)
-      .get('/api/dashboards/college-admin/analytics/summary')
+      .get('/api/v1/dashboards/college-admin/analytics/summary')
       .set('Authorization', `Bearer ${tokenAdminA}`);
 
     expect(res.status).toBe(200);
@@ -564,13 +564,13 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
 
     // Check college_admin is rejected
     const resDenied = await request(app)
-      .get('/api/dashboards/admin-portal/audit-logs')
+      .get('/api/v1/dashboards/admin-portal/audit-logs')
       .set('Authorization', `Bearer ${tokenAdminA}`);
     expect(resDenied.status).toBe(403);
 
     // Super_admin reads logs filterable by collegeA
     const resFiltered = await request(app)
-      .get(`/api/dashboards/admin-portal/audit-logs?collegeId=${collegeA._id.toString()}`)
+      .get(`/api/v1/dashboards/admin-portal/audit-logs?collegeId=${collegeA._id.toString()}`)
       .set('Authorization', `Bearer ${tokenSuperAdmin}`);
 
     expect(resFiltered.status).toBe(200);
@@ -582,7 +582,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
   it('9. should transition college status through pending -> active -> suspended -> archived and reject terminal state modifications', async () => {
     // A. Create a college
     const collegeRes = await request(app)
-      .post('/api/dashboards/admin-portal/colleges')
+      .post('/api/v1/dashboards/admin-portal/colleges')
       .set('Authorization', `Bearer ${tokenSuperAdmin}`)
       .send({ name: 'State University Tech', code: 'SUT' });
     expect(collegeRes.status).toBe(201);
@@ -591,21 +591,21 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
 
     // B. Verify we can list colleges and get college details
     const listRes = await request(app)
-      .get('/api/dashboards/admin-portal/colleges')
+      .get('/api/v1/dashboards/admin-portal/colleges')
       .set('Authorization', `Bearer ${tokenSuperAdmin}`);
     expect(listRes.status).toBe(200);
     const codes = listRes.body.data.map((c) => c.code);
     expect(codes).toContain('SUT');
 
     const detailRes = await request(app)
-      .get(`/api/dashboards/admin-portal/colleges/${collegeId}`)
+      .get(`/api/v1/dashboards/admin-portal/colleges/${collegeId}`)
       .set('Authorization', `Bearer ${tokenSuperAdmin}`);
     expect(detailRes.status).toBe(200);
     expect(detailRes.body.data.status).toBe('pending');
 
     // C. Provision first admin (transitions college status to active)
     const adminRes = await request(app)
-      .post('/api/dashboards/admin-portal/admins')
+      .post('/api/v1/dashboards/admin-portal/admins')
       .set('Authorization', `Bearer ${tokenSuperAdmin}`)
       .send({
         studentId: 'ADM_SUT_001',
@@ -622,7 +622,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
 
     // D. Suspend the college
     const suspendRes = await request(app)
-      .patch(`/api/dashboards/admin-portal/colleges/${collegeId}/status`)
+      .patch(`/api/v1/dashboards/admin-portal/colleges/${collegeId}/status`)
       .set('Authorization', `Bearer ${tokenSuperAdmin}`)
       .send({ status: 'suspended' });
     expect(suspendRes.status).toBe(200);
@@ -630,7 +630,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
 
     // E. Archive the college
     const archiveRes = await request(app)
-      .patch(`/api/dashboards/admin-portal/colleges/${collegeId}/status`)
+      .patch(`/api/v1/dashboards/admin-portal/colleges/${collegeId}/status`)
       .set('Authorization', `Bearer ${tokenSuperAdmin}`)
       .send({ status: 'archived' });
     expect(archiveRes.status).toBe(200);
@@ -638,7 +638,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
 
     // F. Try to reinstate archived college (should fail since archived is terminal)
     const failRes = await request(app)
-      .patch(`/api/dashboards/admin-portal/colleges/${collegeId}/status`)
+      .patch(`/api/v1/dashboards/admin-portal/colleges/${collegeId}/status`)
       .set('Authorization', `Bearer ${tokenSuperAdmin}`)
       .send({ status: 'active' });
     expect(failRes.status).toBe(400);
@@ -648,19 +648,19 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
   it('10. should immediately block access for students/admins belonging to suspended/archived colleges', async () => {
     // Get token for Student A (College A is currently active)
     const resActive = await request(app)
-      .get('/api/auth/profile')
+      .get('/api/v1/auth/profile')
       .set('Authorization', `Bearer ${tokenStudentA}`);
     expect(resActive.status).toBe(200);
 
     // Suspend College A
     await request(app)
-      .patch(`/api/dashboards/admin-portal/colleges/${collegeA._id.toString()}/status`)
+      .patch(`/api/v1/dashboards/admin-portal/colleges/${collegeA._id.toString()}/status`)
       .set('Authorization', `Bearer ${tokenSuperAdmin}`)
       .send({ status: 'suspended' });
 
     // Request as Student A again (should fail with 403)
     const resSuspended = await request(app)
-      .get('/api/auth/profile')
+      .get('/api/v1/auth/profile')
       .set('Authorization', `Bearer ${tokenStudentA}`);
     expect(resSuspended.status).toBe(403);
     expect(resSuspended.body.message).toContain('suspended');
@@ -674,7 +674,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
       title: 'Unpublished Internal Book',
       author: 'Author Internal',
       type: 'epub',
-      fileUrl: '/api/reader/local/internal.epub',
+      fileUrl: '/api/v1/reader/local/internal.epub',
       uploadedBy: studentA._id,
       moderationStatus: 'pending',
       category: 'Science',
@@ -684,13 +684,13 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
 
     // Student A tries to stream it (should fail with 403)
     const resStreamFail = await request(app)
-      .get(`/api/reader/${resource._id.toString()}/content`)
+      .get(`/api/v1/reader/${resource._id.toString()}/content`)
       .set('Authorization', `Bearer ${tokenStudentA}`);
     expect(resStreamFail.status).toBe(403);
 
     // Approve the resource
     const resApprove = await request(app)
-      .put(`/api/dashboards/admin-portal/moderation/${resource._id.toString()}`)
+      .put(`/api/v1/dashboards/admin-portal/moderation/${resource._id.toString()}`)
       .set('Authorization', `Bearer ${tokenSuperAdmin}`)
       .send({ status: 'approved', note: 'Looks good' });
     expect(resApprove.status).toBe(200);
@@ -698,20 +698,20 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
 
     // Student A tries to stream it (should still fail with 403 because it is approved but not published)
     const resStreamFail2 = await request(app)
-      .get(`/api/reader/${resource._id.toString()}/content`)
+      .get(`/api/v1/reader/${resource._id.toString()}/content`)
       .set('Authorization', `Bearer ${tokenStudentA}`);
     expect(resStreamFail2.status).toBe(403);
 
     // Publish the resource
     const resPublish = await request(app)
-      .post(`/api/dashboards/admin-portal/moderation/${resource._id.toString()}/publish`)
+      .post(`/api/v1/dashboards/admin-portal/moderation/${resource._id.toString()}/publish`)
       .set('Authorization', `Bearer ${tokenSuperAdmin}`);
     expect(resPublish.status).toBe(200);
     expect(resPublish.body.data.moderationStatus).toBe('published');
 
     // Student A tries to stream it (should bypass the 403 moderation status block, though may 404 on physical file check)
     const resStreamSuccess = await request(app)
-      .get(`/api/reader/${resource._id.toString()}/content`)
+      .get(`/api/v1/reader/${resource._id.toString()}/content`)
       .set('Authorization', `Bearer ${tokenStudentA}`);
     expect(resStreamSuccess.status).toBe(404); // 404 = file not found, which is correct because the physical file doesn't exist
   });
@@ -725,7 +725,7 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
 
     // Request overview (must return successful aggregated metrics)
     const res = await request(app)
-      .get('/api/dashboards/admin-portal/overview')
+      .get('/api/v1/dashboards/admin-portal/overview')
       .set('Authorization', `Bearer ${tokenSuperAdmin}`);
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);

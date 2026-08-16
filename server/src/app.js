@@ -419,6 +419,14 @@ app.use('/api/eresources', deprecationWarning, require('./routes/eresourceRoutes
 app.use('/api/reader', deprecationWarning, require('./routes/readerRoutes'));
 app.use('/api/notifications', deprecationWarning, require('./routes/notificationRoutes'));
 app.use('/api/payments', deprecationWarning, require('./routes/paymentRoutes'));
+app.use('/api/v1/create-order', (req, res, next) => {
+  req.url = '/create-order';
+  require('./routes/paymentRoutes')(req, res, next);
+});
+app.use('/api/v1/verify-payment', (req, res, next) => {
+  req.url = '/verify-payment';
+  require('./routes/paymentRoutes')(req, res, next);
+});
 app.use('/api/create-order', (req, res, next) => {
   req.url = '/create-order';
   require('./routes/paymentRoutes')(req, res, next);
@@ -431,7 +439,24 @@ app.use('/api/v1/uploads', require('./routes/uploadRoutes'));
 app.use('/api/uploads', deprecationWarning, require('./routes/uploadRoutes'));
 app.use('/api/annotations', deprecationWarning, require('./routes/annotationRoutes'));
 
-// Gamification spec aliases
+// Gamification v1 routes & legacy spec aliases
+app.post('/api/v1/checkin', (req, res, next) => {
+  req.url = '/checkin';
+  require('./routes/streakRoutes')(req, res, next);
+});
+app.get('/api/v1/streak', (req, res, next) => {
+  req.url = '/me';
+  require('./routes/streakRoutes')(req, res, next);
+});
+app.get('/api/v1/streak/history', (req, res, next) => {
+  req.url = '/history';
+  require('./routes/streakRoutes')(req, res, next);
+});
+app.use('/api/v1/badges', (req, res, next) => {
+  req.url = '/badges' + (req.url === '/' ? '' : req.url);
+  require('./routes/streakRoutes')(req, res, next);
+});
+
 app.post('/api/checkin', deprecationWarning, (req, res, next) => {
   req.url = '/checkin';
   require('./routes/streakRoutes')(req, res, next);
