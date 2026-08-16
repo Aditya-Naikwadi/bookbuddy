@@ -43,7 +43,7 @@ const auditLog = (actionName) => {
           }
 
           // Write to DB
-          await AuditLog.create({
+          const createdLog = await AuditLog.create({
             actorId,
             actorRole: req.user.isImpersonated ? 'super-admin' : req.user.role,
             action: actionName,
@@ -53,6 +53,30 @@ const auditLog = (actionName) => {
             metadata: cleanedMetadata,
             ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
           });
+
+          // Optional SIEM Webhook Export (Opt-In Integration)
+          if (process.env.SIEM_WEBHOOK_URL) {
+            try {
+              const http = require('http');
+              const https = require('https');
+              const url = new URL(process.env.SIEM_WEBHOOK_URL);
+              const transport = url.protocol === 'https:' ? https : http;
+              const payloadData = JSON.stringify(createdLog.toObject ? createdLog.toObject() : createdLog);
+
+              const siemReq = transport.request(url, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Content-Length': Buffer.byteLength(payloadData),
+                },
+              });
+              siemReq.on('error', () => {}); // Silent failure for external SIEM errors
+              siemReq.write(payloadData);
+              siemReq.end();
+            } catch {
+              // Ignore SIEM export network errors
+            }
+          }
         } catch (err) {
           // Log errors to process stdout/logs, do not interrupt request flow
           // eslint-disable-next-line no-console

@@ -83,11 +83,11 @@ export default function GlobalDataOversight() {
       key: "userId",
       render: (val) => (
         <div>
-          <div className="font-bold text-white text-xs">
+          <div className="font-semibold text-slate-900 text-xs">
             {val?.name || "Unknown User"}
           </div>
-          <div className="text-[10px] text-slate-400 font-mono">
-            {val?.studentId || "N/A"} | {val?.email}
+          <div className="text-[11px] text-slate-500 font-normal">
+            ID: {val?.studentId || "N/A"} · {val?.email}
           </div>
         </div>
       ),
@@ -97,10 +97,10 @@ export default function GlobalDataOversight() {
       key: "bookId",
       render: (val) => (
         <div>
-          <div className="font-bold text-indigo-300 text-xs">
+          <div className="font-semibold text-indigo-600 text-xs">
             {val?.title || "Book Record"}
           </div>
-          <div className="text-[10px] text-slate-500 font-mono">
+          <div className="text-[11px] text-slate-500 font-normal">
             ISBN: {val?.isbn || "N/A"}
           </div>
         </div>
@@ -110,8 +110,8 @@ export default function GlobalDataOversight() {
       header: "College Tenant",
       key: "collegeId",
       render: (val) => (
-        <span className="text-xs font-mono text-slate-300 font-bold">
-          {val?.name ? `${val.name} (${val.code})` : "Global"}
+        <span className="text-xs text-slate-700 font-medium">
+          {val?.name ? `${val.name} (${val.code})` : "Global Scope"}
         </span>
       ),
     },
@@ -119,7 +119,7 @@ export default function GlobalDataOversight() {
       header: "Issue / Due Date",
       key: "issueDate",
       render: (_, row) => (
-        <div className="text-[10px] font-mono text-slate-400">
+        <div className="text-xs text-slate-600 font-medium">
           <div>
             Issued:{" "}
             {row.issueDate
@@ -128,7 +128,7 @@ export default function GlobalDataOversight() {
           </div>
           <div>
             Due:{" "}
-            <strong className="text-amber-300">
+            <strong className="text-amber-700">
               {row.dueDate ? new Date(row.dueDate).toLocaleDateString() : "N/A"}
             </strong>
           </div>
@@ -147,7 +147,7 @@ export default function GlobalDataOversight() {
                 ? "active"
                 : "healthy"
           }
-          label={(val || "active").toUpperCase()}
+          label={val ? val.charAt(0).toUpperCase() + val.slice(1) : "Active"}
           size="sm"
         />
       ),
@@ -160,11 +160,11 @@ export default function GlobalDataOversight() {
       key: "userId",
       render: (val) => (
         <div>
-          <div className="font-bold text-white text-xs">
+          <div className="font-semibold text-slate-900 text-xs">
             {val?.name || "Unknown User"}
           </div>
-          <div className="text-[10px] text-slate-400 font-mono">
-            {val?.studentId || "N/A"} | {val?.email}
+          <div className="text-[11px] text-slate-500 font-normal">
+            ID: {val?.studentId || "N/A"} · {val?.email}
           </div>
         </div>
       ),
@@ -173,8 +173,8 @@ export default function GlobalDataOversight() {
       header: "Fine Amount",
       key: "amount",
       render: (val) => (
-        <span className="font-mono text-amber-400 font-bold text-xs">
-          ${(val || 0).toFixed(2)}
+        <span className="font-semibold text-amber-700 text-xs">
+          ₹{(val || 0).toFixed(2)}
         </span>
       ),
     },
@@ -182,8 +182,8 @@ export default function GlobalDataOversight() {
       header: "College Tenant",
       key: "collegeId",
       render: (val) => (
-        <span className="text-xs font-mono text-slate-300 font-bold">
-          {val?.name ? `${val.name} (${val.code})` : "Global"}
+        <span className="text-xs text-slate-700 font-medium">
+          {val?.name ? `${val.name} (${val.code})` : "Global Scope"}
         </span>
       ),
     },
@@ -191,9 +191,9 @@ export default function GlobalDataOversight() {
       header: "Reason / Date",
       key: "reason",
       render: (val, row) => (
-        <div className="text-[10px] font-mono text-slate-400">
+        <div className="text-xs text-slate-600 font-medium">
           <div>{val || "Overdue Book Return"}</div>
-          <div className="text-slate-500">
+          <div className="text-slate-400 font-normal text-[11px]">
             Date: {new Date(row.createdAt).toLocaleDateString()}
           </div>
         </div>
@@ -205,7 +205,7 @@ export default function GlobalDataOversight() {
       render: (val) => (
         <OpsSeverityBadge
           status={val === "unpaid" ? "warning" : "healthy"}
-          label={(val || "unpaid").toUpperCase()}
+          label={val === "unpaid" ? "Unpaid" : "Paid"}
           size="sm"
         />
       ),
@@ -218,9 +218,9 @@ export default function GlobalDataOversight() {
       key: "title",
       render: (val, row) => (
         <div>
-          <div className="font-bold text-white text-xs">{val}</div>
-          <div className="text-[10px] text-slate-400 font-mono">
-            Author: {row.author || "Unknown"} | ISBN: {row.isbn || "N/A"}
+          <div className="font-semibold text-slate-900 text-xs">{val}</div>
+          <div className="text-[11px] text-slate-500 font-normal">
+            Author: {row.author || "Unknown"} · ISBN: {row.isbn || "N/A"}
           </div>
         </div>
       ),
@@ -229,7 +229,7 @@ export default function GlobalDataOversight() {
       header: "College Tenant Scope",
       key: "collegeId",
       render: (val) => (
-        <span className="text-xs font-mono text-indigo-300 font-bold">
+        <span className="text-xs font-semibold text-indigo-600">
           {val?.name ? `${val.name} (${val.code})` : "Global Shared"}
         </span>
       ),
@@ -238,7 +238,7 @@ export default function GlobalDataOversight() {
       header: "Inventory Copies",
       key: "totalCopies",
       render: (val, row) => (
-        <span className="text-xs font-mono text-emerald-400 font-bold">
+        <span className="text-xs font-semibold text-emerald-700">
           {row.availableCopies || val || 1} / {val || 1} Available
         </span>
       ),
@@ -247,7 +247,7 @@ export default function GlobalDataOversight() {
       header: "Category / Genre",
       key: "genre",
       render: (val, row) => (
-        <span className="text-xs font-mono text-slate-400">
+        <span className="text-xs text-slate-600 font-normal">
           {val || row.category || "General"}
         </span>
       ),
@@ -255,10 +255,10 @@ export default function GlobalDataOversight() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
       <OpsHeader
-        title="MODULE 04 // CROSS-TENANT DATA OVERSIGHT WORKSPACE"
-        subtitle="Global inspection and governance over active loans, overdue fines, and catalog holdings across all institutions"
+        title="Global Circulation & Fines Oversight"
+        subtitle="Cross-tenant oversight of active book loans, fine collection logs, and global catalog holdings"
         onRefresh={fetchTabContent}
         isRefreshing={isLoading}
       />
@@ -266,22 +266,22 @@ export default function GlobalDataOversight() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
         {/* Error Alert */}
         {error && (
-          <div className="bg-rose-950/60 border border-rose-700/60 p-3 rounded-lg text-rose-300 font-mono text-xs">
+          <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl text-rose-800 text-xs font-semibold shadow-xs">
             {error}
           </div>
         )}
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-800 font-mono">
+        <div className="flex border-b border-slate-200/80">
           <button
             onClick={() => {
               setActiveTab("loans");
               setStatusFilter("");
             }}
-            className={`px-6 py-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all ${
+            className={`px-6 py-3 text-xs font-semibold tracking-wide flex items-center gap-2 border-b-2 transition-all ${
               activeTab === "loans"
-                ? "border-indigo-500 text-indigo-400 bg-slate-900/60"
-                : "border-transparent text-slate-500 hover:text-slate-300"
+                ? "border-indigo-600 text-indigo-700 bg-white"
+                : "border-transparent text-slate-500 hover:text-slate-900"
             }`}
           >
             <Clock className="w-4 h-4" />
@@ -293,14 +293,14 @@ export default function GlobalDataOversight() {
               setActiveTab("fines");
               setStatusFilter("");
             }}
-            className={`px-6 py-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all ${
+            className={`px-6 py-3 text-xs font-semibold tracking-wide flex items-center gap-2 border-b-2 transition-all ${
               activeTab === "fines"
-                ? "border-amber-500 text-amber-400 bg-slate-900/60"
-                : "border-transparent text-slate-500 hover:text-slate-300"
+                ? "border-amber-600 text-amber-700 bg-white"
+                : "border-transparent text-slate-500 hover:text-slate-900"
             }`}
           >
             <DollarSign className="w-4 h-4" />
-            <span>Global Fines & Ledger</span>
+            <span>Fines & Collections</span>
           </button>
 
           <button
@@ -308,68 +308,78 @@ export default function GlobalDataOversight() {
               setActiveTab("catalog");
               setStatusFilter("");
             }}
-            className={`px-6 py-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all ${
+            className={`px-6 py-3 text-xs font-semibold tracking-wide flex items-center gap-2 border-b-2 transition-all ${
               activeTab === "catalog"
-                ? "border-emerald-500 text-emerald-400 bg-slate-900/60"
-                : "border-transparent text-slate-500 hover:text-slate-300"
+                ? "border-blue-600 text-blue-700 bg-white"
+                : "border-transparent text-slate-500 hover:text-slate-900"
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span>Global Book Catalog</span>
+            <span>Global Catalog Holdings</span>
           </button>
         </div>
 
         {/* Filter Controls Bar */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 font-mono space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-            {activeTab === "catalog" && (
-              <div className="relative">
-                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
-                <input
-                  type="text"
-                  placeholder="Search title, author, ISBN..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 focus:border-indigo-500 focus:outline-none"
-                />
-              </div>
-            )}
-
-            <select
-              value={collegeFilter}
-              onChange={(e) => setCollegeFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 focus:border-indigo-500 focus:outline-none"
-            >
-              <option value="">All Institutions</option>
-              {colleges.map((c) => (
-                <option key={c._id} value={c._id}>
-                  {c.name} ({c.code})
-                </option>
-              ))}
-            </select>
+        <div className="bg-white border border-slate-200/80 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-xs">
+          <div className="flex flex-wrap items-center gap-4 text-xs font-medium">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-slate-700">
+                Tenant Scope:
+              </span>
+              <select
+                value={collegeFilter}
+                onChange={(e) => setCollegeFilter(e.target.value)}
+                className="bg-white border border-slate-200 rounded-xl px-3.5 py-1.5 text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
+              >
+                <option value="">All Institutional Tenants</option>
+                {colleges.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name} ({c.code})
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {activeTab !== "catalog" && (
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 focus:border-indigo-500 focus:outline-none"
-              >
-                <option value="">All Statuses</option>
-                {activeTab === "loans" ? (
-                  <>
-                    <option value="active">Active</option>
-                    <option value="overdue">Overdue</option>
-                    <option value="returned">Returned</option>
-                  </>
-                ) : (
-                  <>
-                    <option value="unpaid">Unpaid</option>
-                    <option value="paid">Paid</option>
-                  </>
-                )}
-              </select>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-700">
+                  Filter Status:
+                </span>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="bg-white border border-slate-200 rounded-xl px-3.5 py-1.5 text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
+                >
+                  <option value="">All Statuses</option>
+                  {activeTab === "loans" ? (
+                    <>
+                      <option value="active">Active Loans</option>
+                      <option value="overdue">Overdue</option>
+                      <option value="returned">Returned</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="unpaid">Unpaid</option>
+                      <option value="paid">Paid</option>
+                    </>
+                  )}
+                </select>
+              </div>
             )}
           </div>
+
+          {activeTab === "catalog" && (
+            <div className="relative flex-1 min-w-[200px] max-w-xs">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search global catalog..."
+                className="w-full pl-9 pr-4 py-1.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-indigo-500 shadow-xs"
+              />
+            </div>
+          )}
         </div>
 
         {/* Data Table */}

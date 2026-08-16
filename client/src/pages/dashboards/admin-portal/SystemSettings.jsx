@@ -97,27 +97,27 @@ export default function SystemSettings() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
       <OpsHeader
-        title="MODULE 06 // GLOBAL SYSTEM CONFIGURATION & DATABASE BACKUP"
-        subtitle="Manage SMTP parameters, automated backup schedules, system maintenance mode, and manual snapshot triggers"
+        title="System Configuration & Backups"
+        subtitle="Manage SMTP email parameters, automated database backup schedules, and maintenance mode flags"
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6 font-mono">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
         {/* Notification Banner */}
         {message.text && (
           <div
-            className={`p-3 rounded-lg text-xs flex items-center justify-between border ${
+            className={`p-4 rounded-xl text-xs font-semibold flex items-center justify-between border shadow-xs ${
               message.type === "success"
-                ? "bg-emerald-950/60 border-emerald-700/60 text-emerald-300"
-                : "bg-rose-950/60 border-rose-700/60 text-rose-300"
+                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                : "bg-rose-50 border-rose-200 text-rose-800"
             }`}
           >
             <div className="flex items-center gap-2">
               {message.type === "success" ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               ) : (
-                <AlertTriangle className="w-4 h-4 text-rose-400" />
+                <AlertTriangle className="w-4 h-4 text-rose-600" />
               )}
               <span>{message.text}</span>
             </div>
@@ -125,29 +125,29 @@ export default function SystemSettings() {
               onClick={() => setMessage({ type: "", text: "" })}
               className="font-bold hover:underline"
             >
-              DISMISS
+              Dismiss
             </button>
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Database & Backups Panel */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-5 shadow-lg">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 space-y-5 shadow-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-2">
-                <HardDrive className="w-5 h-5 text-indigo-400" />
-                <h2 className="text-sm font-bold text-white uppercase">
-                  Database Snapshot & Maintenance
+                <HardDrive className="w-5 h-5 text-indigo-600" />
+                <h2 className="text-sm font-bold text-slate-900">
+                  Database Snapshots & Maintenance
                 </h2>
               </div>
             </div>
 
-            <div className="bg-slate-950 border border-slate-800 p-4 rounded-lg flex items-center justify-between text-xs">
+            <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-xl flex items-center justify-between text-xs">
               <div>
-                <p className="font-bold text-slate-200 uppercase">
+                <p className="font-semibold text-slate-900">
                   Automated Daily Backups
                 </p>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-slate-500 mt-0.5 font-normal">
                   Schedule: {settings.autoBackupSchedule}
                 </p>
               </div>
@@ -159,17 +159,17 @@ export default function SystemSettings() {
                   onChange={handleChange}
                   className="sr-only peer"
                 />
-                <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
               </label>
             </div>
 
-            <div className="bg-slate-950 border border-slate-800 p-4 rounded-lg flex items-center justify-between text-xs">
+            <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-xl flex items-center justify-between text-xs">
               <div>
-                <p className="font-bold text-amber-300 uppercase">
+                <p className="font-semibold text-amber-900">
                   Global System Maintenance Mode
                 </p>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Locks non-super-admin routes during system upgrades
+                <p className="text-slate-500 mt-0.5 font-normal">
+                  Locks non-super-admin access during platform upgrades
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -180,16 +180,16 @@ export default function SystemSettings() {
                   onChange={handleChange}
                   className="sr-only peer"
                 />
-                <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-600"></div>
+                <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-600"></div>
               </label>
             </div>
 
             {latestBackup && (
-              <div className="bg-emerald-950/40 border border-emerald-700/50 p-3 rounded-lg text-xs space-y-1">
-                <div className="text-[10px] text-emerald-400 uppercase font-bold">
+              <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-xs space-y-1">
+                <div className="text-xs text-emerald-800 font-semibold">
                   Latest Snapshot Generated
                 </div>
-                <div className="text-slate-200 font-mono text-[11px]">
+                <div className="text-slate-700 font-mono text-[11px]">
                   {latestBackup}
                 </div>
               </div>
@@ -198,33 +198,33 @@ export default function SystemSettings() {
             <button
               onClick={handleTriggerBackup}
               disabled={isBackingUp}
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg"
+              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
             >
               <RefreshCw
                 className={`w-4 h-4 ${isBackingUp ? "animate-spin" : ""}`}
               />
               <span>
                 {isBackingUp
-                  ? "EXECUTING SNAPSHOT DUMP..."
-                  : "FORCE MANUAL DATABASE SNAPSHOT"}
+                  ? "Generating Snapshot..."
+                  : "Generate Manual Database Snapshot"}
               </span>
             </button>
           </div>
 
           {/* Global SMTP Configuration Panel */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-5 shadow-lg">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 space-y-5 shadow-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-2">
-                <MailIcon className="w-5 h-5 text-indigo-400" />
-                <h2 className="text-sm font-bold text-white uppercase">
-                  Global SMTP Email Configuration
+                <MailIcon className="w-5 h-5 text-indigo-600" />
+                <h2 className="text-sm font-bold text-slate-900">
+                  Global Email & SMTP Configuration
                 </h2>
               </div>
             </div>
 
-            <form onSubmit={handleSaveSettings} className="space-y-3 text-xs">
+            <form onSubmit={handleSaveSettings} className="space-y-4 text-xs font-medium">
               <div>
-                <label className="text-[10px] text-slate-400 uppercase font-bold">
+                <label className="block text-slate-700 font-semibold mb-1">
                   SMTP Host *
                 </label>
                 <input
@@ -233,13 +233,13 @@ export default function SystemSettings() {
                   value={settings.smtpHost}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 mt-1 bg-slate-950 border border-slate-800 rounded text-slate-200 focus:border-indigo-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 uppercase font-bold">
+                  <label className="block text-slate-700 font-semibold mb-1">
                     Port *
                   </label>
                   <input
@@ -248,46 +248,49 @@ export default function SystemSettings() {
                     value={settings.smtpPort}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2 mt-1 bg-slate-950 border border-slate-800 rounded text-slate-200 focus:border-indigo-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
                   />
                 </div>
+
                 <div>
-                  <label className="text-[10px] text-slate-400 uppercase font-bold">
-                    Security *
+                  <label className="block text-slate-700 font-semibold mb-1">
+                    Security Protocol
                   </label>
                   <select
                     name="smtpSecurity"
                     value={settings.smtpSecurity}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 mt-1 bg-slate-950 border border-slate-800 rounded text-slate-200 focus:border-indigo-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
                   >
                     <option value="TLS">TLS</option>
                     <option value="SSL">SSL</option>
-                    <option value="None">None</option>
+                    <option value="NONE">NONE</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 uppercase font-bold">
-                  API Key / SMTP Username
+                <label className="block text-slate-700 font-semibold mb-1">
+                  SMTP Username
                 </label>
                 <input
                   type="text"
                   name="smtpUser"
                   value={settings.smtpUser}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 mt-1 bg-slate-950 border border-slate-800 rounded text-slate-200 focus:border-indigo-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="w-full py-2.5 mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg transition-all shadow-lg"
-              >
-                {isSaving ? "SAVING SETTINGS..." : "SAVE GLOBAL CONFIGURATION"}
-              </button>
+              <div className="pt-2 border-t border-slate-100 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition-all shadow-xs disabled:opacity-50"
+                >
+                  {isSaving ? "Saving Configuration..." : "Save Settings"}
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -295,3 +298,4 @@ export default function SystemSettings() {
     </div>
   );
 }
+

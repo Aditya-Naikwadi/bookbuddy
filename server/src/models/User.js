@@ -133,6 +133,17 @@ const userSchema = new mongoose.Schema(
       ref: 'User',
       default: null,
     },
+    subRole: {
+      type: String,
+      enum: ['root_admin', 'support_agent', 'content_moderator', 'security_auditor'],
+      default: 'root_admin',
+    },
+    permissions: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
   },
   {
     timestamps: true,

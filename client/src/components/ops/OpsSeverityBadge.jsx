@@ -1,6 +1,6 @@
 /**
  * OpsSeverityBadge
- * Signature status/severity indicator system for BookBuddy Super Admin Portal.
+ * Clean enterprise status badge system for BookBuddy Super Admin Console.
  * Supports: 'healthy' | 'info' | 'warning' | 'critical' | 'pending' | 'active' | 'suspended'
  */
 export function OpsSeverityBadge({
@@ -20,21 +20,21 @@ export function OpsSeverityBadge({
       case "approved":
       case "success":
         return {
-          bg: "bg-emerald-950/60",
-          border: "border-emerald-700/60",
-          text: "text-emerald-300",
-          dot: "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]",
-          code: "OK",
+          bg: "bg-emerald-50",
+          border: "border-emerald-200/80",
+          text: "text-emerald-700 font-semibold",
+          dot: "bg-emerald-500",
+          code: "Active",
         };
       case "warning":
       case "warn":
       case "suspended":
         return {
-          bg: "bg-amber-950/60",
-          border: "border-amber-700/60",
-          text: "text-amber-300",
-          dot: "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]",
-          code: "WARN",
+          bg: "bg-amber-50",
+          border: "border-amber-200/80",
+          text: "text-amber-800 font-semibold",
+          dot: "bg-amber-500",
+          code: "Warning",
         };
       case "critical":
       case "crit":
@@ -42,29 +42,29 @@ export function OpsSeverityBadge({
       case "failed":
       case "rejected":
         return {
-          bg: "bg-rose-950/60",
-          border: "border-rose-700/60",
-          text: "text-rose-300",
-          dot: "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse",
-          code: "CRIT",
+          bg: "bg-rose-50",
+          border: "border-rose-200/80",
+          text: "text-rose-700 font-semibold",
+          dot: "bg-rose-500",
+          code: "Critical",
         };
       case "pending":
       case "review":
         return {
-          bg: "bg-blue-950/60",
-          border: "border-blue-700/60",
-          text: "text-blue-300",
-          dot: "bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]",
-          code: "PENDING",
+          bg: "bg-blue-50",
+          border: "border-blue-200/80",
+          text: "text-blue-700 font-semibold",
+          dot: "bg-blue-500",
+          code: "Pending",
         };
       case "info":
       default:
         return {
-          bg: "bg-slate-900/80",
-          border: "border-slate-700/80",
-          text: "text-slate-300",
+          bg: "bg-slate-100",
+          border: "border-slate-200",
+          text: "text-slate-700 font-medium",
           dot: "bg-slate-400",
-          code: "INFO",
+          code: "Info",
         };
     }
   };
@@ -74,14 +74,14 @@ export function OpsSeverityBadge({
 
   const sizeClasses =
     size === "sm"
-      ? "px-1.5 py-0.5 text-[10px]"
+      ? "px-2 py-0.5 text-[11px]"
       : size === "lg"
-        ? "px-3 py-1 text-xs"
-        : "px-2 py-0.5 text-[11px]";
+        ? "px-3.5 py-1 text-xs"
+        : "px-2.5 py-0.5 text-xs";
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 font-mono font-bold tracking-wider uppercase border rounded ${style.bg} ${style.border} ${style.text} ${sizeClasses} ${className}`}
+      className={`inline-flex items-center gap-1.5 border rounded-full font-sans tracking-tight ${style.bg} ${style.border} ${style.text} ${sizeClasses} ${className}`}
     >
       {showDot && (
         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dot}`} />
@@ -92,3 +92,4 @@ export function OpsSeverityBadge({
 }
 
 export default OpsSeverityBadge;
+

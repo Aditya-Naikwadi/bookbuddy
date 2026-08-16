@@ -168,46 +168,46 @@ export default function GlobalContentModeration() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
       <OpsHeader
-        title="MODULE 03 // E-RESOURCE CONTENT MODERATION QUEUE"
-        subtitle="Review, audit, and approve public e-resources before platform-wide publication"
+        title="Global Content Moderation"
+        subtitle="Review uploaded digital e-books, open-access research papers, and educational materials across institutional libraries"
         onRefresh={fetchModerationQueue}
         isRefreshing={isLoading}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6 font-mono">
-        {/* Status Alert Banner */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
+        {/* Notification Alert */}
         {message.text && (
           <div
-            className={`p-3 rounded-lg text-xs font-bold flex items-center justify-between border ${
+            className={`p-4 rounded-xl text-xs font-semibold flex items-center justify-between border shadow-xs ${
               message.type === "success"
-                ? "bg-emerald-950/60 border-emerald-700/60 text-emerald-300"
-                : "bg-rose-950/60 border-rose-700/60 text-rose-300"
+                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                : "bg-rose-50 border-rose-200 text-rose-800"
             }`}
           >
             <span>{message.text}</span>
             <button
               onClick={() => setMessage({ type: "", text: "" })}
-              className="hover:underline"
+              className="hover:underline font-bold"
             >
-              DISMISS
+              Dismiss
             </button>
           </div>
         )}
 
-        {/* Top Control Bar & Ergonomics Toggle */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-3">
+        {/* Tab & Auto-Advance Control Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-3">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setActiveTab("pending")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 border ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 border ${
                 activeTab === "pending"
-                  ? "bg-indigo-950 border-indigo-600 text-indigo-200"
-                  : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200"
+                  ? "bg-indigo-50 border-indigo-200 text-indigo-700 shadow-xs"
+                  : "bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
-              <span>PENDING QUEUE</span>
+              <span>Pending Queue</span>
               <OpsSeverityBadge
                 status="warning"
                 label={String(pendingItems.length)}
@@ -217,20 +217,20 @@ export default function GlobalContentModeration() {
 
             <button
               onClick={() => setActiveTab("history")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 border ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 border ${
                 activeTab === "history"
-                  ? "bg-indigo-950 border-indigo-600 text-indigo-200"
-                  : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200"
+                  ? "bg-indigo-50 border-indigo-200 text-indigo-700 shadow-xs"
+                  : "bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
-              <span>MODERATION HISTORY</span>
-              <span className="text-[10px] text-slate-500 font-bold">
+              <span>Moderation History</span>
+              <span className="text-xs text-slate-400 font-normal">
                 ({historyItems.length})
               </span>
             </button>
           </div>
 
-          <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+          <label className="flex items-center gap-2 text-xs text-slate-600 font-medium cursor-pointer select-none">
             <input
               type="checkbox"
               checked={autoAdvance}
@@ -245,7 +245,7 @@ export default function GlobalContentModeration() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Item Queue List */}
           <div className="lg:col-span-5 space-y-3">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               {activeTab === "pending"
                 ? "Pending Items Review Queue"
                 : "Historical Moderation Decisions"}
@@ -253,7 +253,7 @@ export default function GlobalContentModeration() {
 
             <div className="space-y-2 max-h-[640px] overflow-y-auto pr-1">
               {displayedItems.length === 0 ? (
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 text-center text-slate-500 text-xs font-mono">
+                <div className="bg-white border border-slate-200/80 rounded-2xl p-8 text-center text-slate-400 text-xs font-medium shadow-xs">
                   Zero items match current moderation scope.
                 </div>
               ) : (
@@ -265,25 +265,27 @@ export default function GlobalContentModeration() {
                     <div
                       key={item._id}
                       onClick={() => setSelectedResource(item)}
-                      className={`p-3.5 rounded-xl border cursor-pointer transition-all space-y-2 ${
+                      className={`p-4 rounded-2xl border cursor-pointer transition-all space-y-2 ${
                         isSelected
-                          ? "bg-slate-900 border-indigo-500/80 shadow-lg shadow-indigo-950/50"
-                          : "bg-slate-900/60 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900"
+                          ? "bg-indigo-50/50 border-indigo-200 shadow-xs"
+                          : "bg-white border-slate-200/80 hover:border-slate-300 hover:bg-slate-50/50"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <h4 className="font-bold text-xs text-white line-clamp-1">
+                        <h4 className="font-bold text-xs text-slate-900 line-clamp-1">
                           {item.title || "Untitled E-Resource"}
                         </h4>
                         <OpsSeverityBadge status={status} size="sm" />
                       </div>
 
-                      <div className="flex items-center justify-between text-[10px] text-slate-400">
-                        <span className="flex items-center gap-1 text-indigo-300">
-                          <Building2 className="w-3 h-3" />
+                      <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                        <span className="flex items-center gap-1 text-indigo-600">
+                          <Building2 className="w-3.5 h-3.5" />
                           <span>{item.collegeName || "Institution Asset"}</span>
                         </span>
-                        <span>FORMAT: {item.format || "PDF"}</span>
+                        <span className="text-[11px] font-normal uppercase text-slate-400">
+                          {item.format || "PDF"}
+                        </span>
                       </div>
                     </div>
                   );
@@ -295,13 +297,13 @@ export default function GlobalContentModeration() {
           {/* Item Inspector & Decision Panel */}
           <div className="lg:col-span-7">
             {selectedResource ? (
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-5 shadow-2xl">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="bg-white border border-slate-200/80 rounded-2xl p-6 space-y-5 shadow-xs">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                   <div>
-                    <span className="text-[10px] font-mono text-indigo-400 uppercase font-bold bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
-                      Content Inspection Panel
+                    <span className="text-[10px] font-mono text-indigo-500 uppercase font-bold bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                      Content Inspection
                     </span>
-                    <h3 className="text-base font-bold text-white mt-1">
+                    <h3 className="text-base font-bold text-slate-900 mt-2">
                       {selectedResource.title}
                     </h3>
                   </div>

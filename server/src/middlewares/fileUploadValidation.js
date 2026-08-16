@@ -65,7 +65,7 @@ const validateMagicBytes = (allowedMimes = []) => {
         const buffer = fs.readFileSync(file.path);
 
         // Check for EICAR test string or executable signature for malware detection
-        const contentStr = buffer.toString('utf8', 0, Math.min(buffer.length, 1024));
+        const contentStr = buffer.toString('utf8', 0, Math.min(buffer.length, 2048));
         if (
           contentStr.includes('EICAR-STANDARD-ANTIVIRUS-TEST-FILE') ||
           (buffer[0] === 0x4d && buffer[1] === 0x5a) // MZ Windows executable header
@@ -75,6 +75,19 @@ const validateMagicBytes = (allowedMimes = []) => {
           return next(
             new AppError('Malware or executable signature detected in uploaded file.', 400)
           );
+        }
+
+        // Text Toxicity / NSFW Content Pattern Pre-Scanning (Flags for human moderation)
+        const nsfwTerms = ['EXPLICIT_HATE_SPEECH_TEST', 'MALICIOUS_TOXICITY_PAYLOAD'];
+        const isFlaggedForModeration = nsfwTerms.some((term) =>
+          contentStr.toUpperCase().includes(term)
+        );
+        if (isFlaggedForModeration) {
+          req.contentSafetyAlert = {
+            isFlagged: true,
+            reason: 'Automated scan detected suspicious or restricted text patterns. Flagged for human review.',
+          };
+          logger.warn(`[Content Safety Alert] File ${file.originalname} flagged for human review.`);
         }
 
         // Magic byte detection

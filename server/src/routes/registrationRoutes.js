@@ -42,6 +42,7 @@ const {
   submitTenantOnboarding,
   verifyAdminDomain,
   resubmitTenantOnboarding,
+  verifyDomainDns,
 } = require('../controllers/registrationController');
 
 const {
@@ -72,6 +73,7 @@ router.post(
 
 // Flow B: Domain ownership verification token link
 router.get('/verify-domain', verifyAdminDomain);
+router.post('/verify-domain-dns', authLimiter, verifyDomainDns);
 
 // Flow B: Resubmit rejected application
 router.put('/tenant-onboarding/:requestId/resubmit', authLimiter, resubmitTenantOnboarding);

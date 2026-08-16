@@ -108,6 +108,25 @@ const collegeSchema = new mongoose.Schema(
       type: String,
       default: 'standard',
     },
+    licenseTier: {
+      type: String,
+      enum: ['basic', 'professional', 'enterprise'],
+      default: 'basic',
+    },
+    tierLimits: {
+      maxPatrons: { type: Number, default: 500 },
+      maxStorageBytes: { type: Number, default: 10737418240 }, // 10 GB
+      customSubdomainAllowed: { type: Boolean, default: false },
+      allowAnalytics: { type: Boolean, default: true },
+    },
+    domainVerificationToken: {
+      type: String,
+      default: null,
+    },
+    isDomainVerified: {
+      type: Boolean,
+      default: false,
+    },
     adminUserId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

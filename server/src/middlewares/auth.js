@@ -18,7 +18,9 @@ const protect = async (req, res, next) => {
     const decoded = verifyAccessToken(token);
 
     // Fetch minimal user status
-    const user = await User.findById(decoded.sub).select('isActive role collegeId');
+    const user = await User.findById(decoded.sub).select(
+      'isActive role collegeId subRole permissions isMfaEnabled'
+    );
     if (!user) {
       return next(new AppError('The user belonging to this token no longer exists.', 401));
     }
@@ -74,6 +76,9 @@ const protect = async (req, res, next) => {
       id: user._id.toString(),
       _id: user._id, // Compatibility shim to prevent tenant isolation leaks on legacy controllers
       role: user.role,
+      subRole: user.subRole || 'root_admin',
+      permissions: user.permissions || [],
+      isMfaEnabled: !!user.isMfaEnabled,
       collegeId: user.collegeId,
       isImpersonated: !!decoded.isImpersonated,
       originalSuperAdminId: decoded.originalSuperAdminId || null,
@@ -97,17 +102,41 @@ const requireRole = (...allowedRoles) => {
   };
 };
 
+const requirePermission = (...requiredPermissions) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return next(new AppError('You do not have permission to perform this action.', 403));
+    }
+    // Root super-admins bypass specific permission checks
+    if (req.user.role === 'super-admin' && req.user.subRole === 'root_admin') {
+      return next();
+    }
+    const userPerms = req.user.permissions || [];
+    const hasPerm = requiredPermissions.some((p) => userPerms.includes(p));
+    if (!hasPerm) {
+      return next(
+        new AppError('Insufficient sub-role permissions to access this administrative resource.', 403)
+      );
+    }
+    next();
+  };
+};
+
 const optionalAuth = async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
     try {
       const token = req.headers.authorization.split(' ')[1];
       const decoded = verifyAccessToken(token);
-      const user = await User.findById(decoded.sub).select('isActive role collegeId');
+      const user = await User.findById(decoded.sub).select(
+        'isActive role collegeId subRole permissions'
+      );
       if (user && user.isActive) {
         req.user = {
           id: user._id.toString(),
           _id: user._id,
           role: user.role,
+          subRole: user.subRole || 'root_admin',
+          permissions: user.permissions || [],
           collegeId: user.collegeId ? user.collegeId.toString() : null,
         };
       }
@@ -123,6 +152,7 @@ module.exports = {
   authMiddleware: protect,
   requireAuth: protect,
   requireRole,
+  requirePermission,
   optionalAuth,
   restrictTo: requireRole, // Alias for backward compatibility
 };

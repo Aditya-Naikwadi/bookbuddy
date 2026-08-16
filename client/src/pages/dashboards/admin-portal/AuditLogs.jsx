@@ -93,61 +93,59 @@ export default function AuditLogs() {
 
   const columns = [
     {
-      header: "Timestamp (UTC)",
+      header: "Timestamp",
       key: "createdAt",
       render: (val) => {
         const dateStr = val
-          ? new Date(val).toISOString().replace("T", " ").substring(0, 19)
-          : "2026-07-26 12:00:00";
+          ? new Date(val).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            })
+          : "—";
         return (
-          <span className="font-mono text-slate-300 text-xs">{dateStr}</span>
+          <span className="text-xs text-slate-700 font-medium">{dateStr}</span>
         );
       },
     },
     {
-      header: "Event Severity",
+      header: "Action / Event",
       key: "action",
       render: (val) => (
-        <OpsSeverityBadge status={getActionSeverity(val)} size="sm" />
+        <div className="flex items-center gap-2">
+          <OpsSeverityBadge status={getActionSeverity(val)} size="sm" />
+          <span className="font-semibold text-slate-900 text-xs">
+            {val || "SYSTEM_EVENT"}
+          </span>
+        </div>
       ),
     },
     {
       header: "Actor Identity",
-      key: "actorRole",
+      key: "actorName",
       render: (val, row) => (
         <div>
-          <div className="font-bold text-slate-200 text-xs flex items-center gap-1.5">
-            <User className="w-3.5 h-3.5 text-indigo-400" />
-            <span>{row.actorId || "SYSTEM_PROCESS"}</span>
+          <div className="font-semibold text-slate-900 text-xs flex items-center gap-1">
+            <User className="w-3.5 h-3.5 text-indigo-600" />
+            <span>{val || row.actorEmail || "System Automation"}</span>
           </div>
-          <div className="text-[10px] text-slate-500 font-mono">
-            Role:{" "}
-            <strong className="text-indigo-300 uppercase">
-              {val || "system"}
-            </strong>{" "}
-            | IP: {row.ipAddress || "127.0.0.1"}
+          <div className="text-[11px] text-slate-500 font-normal">
+            Role: {row.actorRole || "system"}
           </div>
         </div>
       ),
     },
     {
-      header: "Mutation / Event Code",
-      key: "action",
-      render: (val) => (
-        <span className="font-mono font-bold text-xs text-white bg-slate-950 px-2 py-1 rounded border border-slate-800">
-          {val || "SYSTEM_EVENT"}
-        </span>
-      ),
-    },
-    {
-      header: "Target Resource",
+      header: "Target Entity",
       key: "targetType",
       render: (val, row) => (
-        <div className="text-xs">
-          <span className="text-slate-400 font-bold uppercase">
-            {val || "GLOBAL"}
-          </span>
-          <div className="text-[10px] text-slate-500 font-mono">
+        <div>
+          <div className="font-semibold text-slate-800 text-xs">
+            {val || "Global Platform"}
+          </div>
+          <div className="text-[11px] text-slate-500 font-normal">
             ID: {row.targetId || "N/A"}
           </div>
         </div>
@@ -160,78 +158,76 @@ export default function AuditLogs() {
       render: (val) => (
         <button
           onClick={() => setSelectedPayload(val || { status: "success" })}
-          className="px-2.5 py-1 bg-slate-950 hover:bg-slate-850 border border-slate-800 text-slate-300 rounded text-[10px] font-mono font-bold flex items-center gap-1 transition-colors"
+          className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
         >
-          <FileCode className="w-3.5 h-3.5 text-indigo-400" />
-          <span>INSPECT JSON</span>
+          <FileCode className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Inspect JSON</span>
         </button>
       ),
     },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
       <OpsHeader
-        title="MODULE 04 // CENTRALIZED SECURITY AUDIT LOG VIEWER"
-        subtitle="Read-only immutable log stream of security events, administrative mutations, and cross-tenant actions"
+        title="Security Audit Trail"
+        subtitle="Immutable log stream of security events, administrative mutations, and cross-tenant actions"
         onRefresh={fetchAuditLogs}
         isRefreshing={isLoading}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6 font-mono">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
         {/* Error Alert */}
         {error && (
-          <div className="bg-rose-950/60 border border-rose-700/60 p-3 rounded-lg text-rose-300 text-xs font-bold flex items-center justify-between">
+          <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl text-rose-800 text-xs font-semibold flex items-center justify-between shadow-xs">
             <span>{error}</span>
             <button onClick={() => setError("")} className="hover:underline">
-              DISMISS
+              Dismiss
             </button>
           </div>
         )}
 
         {/* Filter Controls Bar */}
-        <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3 text-xs">
+        <div className="bg-white border border-slate-200/80 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-xs">
+          <div className="flex flex-wrap items-center gap-4 text-xs font-medium">
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-indigo-400" />
-              <span className="font-bold text-slate-300 uppercase">
+              <Filter className="w-4 h-4 text-indigo-600" />
+              <span className="font-semibold text-slate-700">
                 Actor Role:
               </span>
               <select
                 value={actorRoleFilter}
                 onChange={(e) => setActorRoleFilter(e.target.value)}
-                className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:border-indigo-500 focus:outline-none"
+                className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
               >
-                <option value="all">ALL ROLES</option>
-                <option value="super-admin">SUPER ADMIN</option>
-                <option value="college-admin">COLLEGE ADMIN</option>
-                <option value="student">STUDENT</option>
-                <option value="system">SYSTEM</option>
+                <option value="all">All Roles</option>
+                <option value="super-admin">Super Admin</option>
+                <option value="college-admin">College Admin</option>
+                <option value="student">Student</option>
+                <option value="system">System Automation</option>
               </select>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-300 uppercase">
+              <span className="font-semibold text-slate-700">
                 Event Category:
               </span>
               <select
                 value={actionCategoryFilter}
                 onChange={(e) => setActionCategoryFilter(e.target.value)}
-                className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:border-indigo-500 focus:outline-none"
+                className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
               >
-                <option value="all">ALL CATEGORIES</option>
-                <option value="auth">AUTH & SESSIONS</option>
-                <option value="tenant">TENANT ONBOARDING</option>
-                <option value="security">SECURITY ALERTS</option>
+                <option value="all">All Categories</option>
+                <option value="auth">Auth & Sessions</option>
+                <option value="tenant">Tenant Onboarding</option>
+                <option value="security">Security Alerts</option>
               </select>
             </div>
           </div>
 
           <div className="flex items-center gap-3 text-xs">
-            <span className="text-slate-500 font-bold">
-              AUDIT STREAM:{" "}
-              <strong className="text-indigo-400">{filteredLogs.length}</strong>{" "}
-              EVENTS LOADED
+            <span className="text-slate-500 font-medium">
+              Loaded <strong className="text-slate-900">{filteredLogs.length}</strong> events
             </span>
             <button
               onClick={() =>
@@ -240,10 +236,10 @@ export default function AuditLogs() {
                   `audit-logs-${new Date().toISOString().split("T")[0]}.csv`,
                 )
               }
-              className="px-3 py-1 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700 text-indigo-300 font-bold rounded flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl flex items-center gap-1.5 transition-colors shadow-xs"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>EXPORT CSV</span>
+              <span>Export CSV</span>
             </button>
           </div>
         </div>

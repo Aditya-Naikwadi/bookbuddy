@@ -25,6 +25,12 @@ const initSockets = (server) => {
     socket.join(`user:${userId}`);
     logger.info(`User ${userId} joined room user:${userId}`);
 
+    // Join super-admin room if user has super-admin role
+    if (socket.data.user.role === 'super-admin') {
+      socket.join('room:super-admin');
+      logger.info(`Super-admin ${userId} joined room:super-admin`);
+    }
+
     socket.on('disconnect', () => {
       logger.info(`Socket disconnected: ${socket.id} for user: ${userId}`);
     });
@@ -67,6 +73,19 @@ const emitComplaintUpdate = (userId, complaint) => {
     const payload = complaint.toObject ? complaint.toObject() : complaint;
     io.to(`user:${userId}`).emit('complaint:updated', payload);
     io.to(`user:${userId}`).emit('ticket:updated', payload);
+    io.to('room:super-admin').emit('ticket:escalated', payload);
+  }
+};
+
+const emitSuperAdminSecurityAlert = (alertData) => {
+  if (io) {
+    io.to('room:super-admin').emit('security:alert', alertData);
+  }
+};
+
+const emitSuperAdminSupportEscalation = (ticketData) => {
+  if (io) {
+    io.to('room:super-admin').emit('ticket:escalated', ticketData);
   }
 };
 
@@ -76,4 +95,7 @@ module.exports = {
   emitNotification,
   emitStreakUpdate,
   emitComplaintUpdate,
+  emitSuperAdminSecurityAlert,
+  emitSuperAdminSupportEscalation,
 };
+

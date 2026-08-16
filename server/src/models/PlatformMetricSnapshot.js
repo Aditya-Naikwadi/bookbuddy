@@ -76,6 +76,12 @@ const platformMetricSnapshotSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    healthIndex: {
+      type: Number,
+      default: 100,
+      min: 0,
+      max: 100,
+    },
   },
   {
     timestamps: true,

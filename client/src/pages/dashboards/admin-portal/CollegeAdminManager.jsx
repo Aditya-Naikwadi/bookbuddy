@@ -191,9 +191,9 @@ export default function CollegeAdminManager() {
       key: "name",
       render: (val, row) => (
         <div>
-          <div className="font-bold text-white text-xs">{val}</div>
-          <div className="text-[10px] text-slate-500 font-mono">
-            Slug: /{row.slug || "college"} | Code: {row.code || "COLLEGE"}
+          <div className="font-semibold text-slate-900 text-xs">{val}</div>
+          <div className="text-[11px] text-slate-500 font-normal">
+            Slug: /{row.slug || "college"} · Code: {row.code || "COLLEGE"}
           </div>
         </div>
       ),
@@ -202,7 +202,7 @@ export default function CollegeAdminManager() {
       header: "Domain Whitelist",
       key: "domain",
       render: (val) => (
-        <span className="font-mono text-indigo-300 text-xs font-bold">
+        <span className="text-indigo-600 text-xs font-semibold">
           @{val || "institution.edu"}
         </span>
       ),
@@ -213,8 +213,8 @@ export default function CollegeAdminManager() {
       render: (val, row) => {
         const feats = val || row.selectedServices || [];
         return (
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold text-emerald-400 font-mono bg-emerald-950/60 border border-emerald-700/60 px-2 py-0.5 rounded">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full">
               {feats.length} Active Modules
             </span>
             <button
@@ -222,9 +222,9 @@ export default function CollegeAdminManager() {
                 setEditingCollege(row);
                 setEditFeatures(feats);
               }}
-              className="text-[10px] font-mono font-bold text-indigo-400 hover:underline border border-indigo-800 px-1.5 py-0.5 rounded bg-indigo-950/40"
+              className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
             >
-              EDIT
+              Edit
             </button>
           </div>
         );
@@ -238,7 +238,7 @@ export default function CollegeAdminManager() {
         return (
           <OpsSeverityBadge
             status={isAct ? "active" : "suspended"}
-            label={isAct ? "ACTIVE" : "SUSPENDED"}
+            label={isAct ? "Active" : "Suspended"}
             size="sm"
           />
         );
@@ -259,13 +259,13 @@ export default function CollegeAdminManager() {
                   isAct ? "active" : "suspended",
                 )
               }
-              className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold border transition-all ${
+              className={`text-xs font-semibold ${
                 isAct
-                  ? "bg-rose-950/60 border-rose-700/60 text-rose-300 hover:bg-rose-900"
-                  : "bg-emerald-950/60 border-emerald-700/60 text-emerald-300 hover:bg-emerald-900"
+                  ? "text-amber-700 hover:text-amber-900"
+                  : "text-emerald-700 hover:text-emerald-900"
               }`}
             >
-              {isAct ? "SUSPEND TENANT" : "ACTIVATE TENANT"}
+              {isAct ? "Suspend" : "Activate"}
             </button>
           </div>
         );
@@ -274,10 +274,10 @@ export default function CollegeAdminManager() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
       <OpsHeader
-        title="MODULE 02 // DIRECT COLLEGE TENANT PROVISIONING & MANAGEMENT"
-        subtitle="Super Admin direct operator path for standing up institutional tenants and primary admin credentials"
+        title="Tenant & Institution Management"
+        subtitle="Provision new institutional tenants, configure domain permissions, and assign college administrator credentials"
         onRefresh={fetchColleges}
         isRefreshing={isLoading}
       />
@@ -285,21 +285,21 @@ export default function CollegeAdminManager() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
         {/* Error Alert */}
         {error && (
-          <div className="bg-rose-950/60 border border-rose-700/60 p-3 rounded-lg text-rose-300 font-mono text-xs flex items-center justify-between">
+          <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl text-rose-700 text-xs flex items-center justify-between shadow-xs">
             <span>{error}</span>
             <button
               onClick={() => setError("")}
-              className="text-rose-400 font-bold hover:underline"
+              className="text-rose-800 font-semibold hover:underline"
             >
-              DISMISS
+              Dismiss
             </button>
           </div>
         )}
 
         {/* Action Bar Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4 font-mono">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+            <h2 className="text-sm font-bold text-slate-900 tracking-tight">
               Onboarded College Tenants ({colleges.length})
             </h2>
           </div>
@@ -309,10 +309,10 @@ export default function CollegeAdminManager() {
               setIsCreatingTenant(true);
               setCreatedReceipt(null);
             }}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-mono font-bold text-xs rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-indigo-950/50"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition-all flex items-center gap-2 shadow-xs"
           >
             <Plus className="w-4 h-4" />
-            <span>DIRECT OPERATOR TENANT PROVISIONING</span>
+            <span>Provision New Tenant</span>
           </button>
         </div>
 

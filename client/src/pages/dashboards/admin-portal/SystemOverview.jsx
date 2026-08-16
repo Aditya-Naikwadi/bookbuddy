@@ -108,10 +108,10 @@ export default function SystemOverview() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
       <OpsHeader
-        title="MODULE 01 // PLATFORM HEALTH & INFRASTRUCTURE OVERVIEW"
-        subtitle="Real-time multi-tenant metric stream, telemetry, and feature adoption diagnostics"
+        title="System Infrastructure & Telemetry"
+        subtitle="Real-time multi-tenant metric stream, cluster health, and feature adoption diagnostics"
         onRefresh={fetchOverviewData}
         isRefreshing={isLoading}
       />
@@ -119,82 +119,80 @@ export default function SystemOverview() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
         {/* Status Alarm Banner */}
         {pendingCollegesCount > 0 ? (
-          <div className="bg-amber-950/50 border border-amber-600/60 rounded-xl p-4 flex items-center justify-between gap-4 font-mono">
+          <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
               <div>
                 <div className="flex items-center gap-2">
                   <OpsSeverityBadge
                     status="warning"
-                    label="ATTENTION REQUIRED"
+                    label="Attention Required"
                     size="sm"
                   />
-                  <span className="text-xs font-bold text-amber-200 uppercase">
-                    {pendingCollegesCount} Tenant Onboarding Request(s) Pending
-                    Approval Gate
+                  <span className="text-xs font-bold text-slate-900">
+                    {pendingCollegesCount} Tenant Onboarding Request(s) Pending Approval
                   </span>
                 </div>
-                <p className="text-[11px] text-amber-300/80 mt-0.5">
-                  Institutions have submitted legal verification documents and
-                  are waiting for Super Admin review.
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Institutions have submitted accreditation documents and are waiting for Super Admin approval.
                 </p>
               </div>
             </div>
             <a
               href="/admin-portal/registration-queue"
-              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-lg transition-colors shrink-0"
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-xl transition-colors shadow-xs shrink-0"
             >
-              Open Queue Gate
+              Review Requests
             </a>
           </div>
         ) : (
-          <div className="bg-emerald-950/40 border border-emerald-700/50 rounded-xl p-4 flex items-center justify-between gap-4 font-mono">
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
               <div>
                 <div className="flex items-center gap-2">
                   <OpsSeverityBadge
                     status="healthy"
-                    label="ALL SYSTEMS HEALTHY"
+                    label="All Systems Nominal"
                     size="sm"
                   />
-                  <span className="text-xs font-bold text-emerald-200 uppercase">
-                    Zero Operational Bottlenecks or Pending Onboarding Gates
+                  <span className="text-xs font-semibold text-slate-800">
+                    Zero Operational Bottlenecks
                   </span>
                 </div>
-                <p className="text-[11px] text-emerald-300/80 mt-0.5">
-                  Multi-tenant routing engines, Redis cache clusters, and
-                  database clusters are operating at nominal latency.
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Multi-tenant routing engines, database clusters, and background services are operating smoothly.
                 </p>
               </div>
             </div>
-            <span className="text-xs text-emerald-400/80 font-mono">
-              UPTIME:{" "}
+            <span className="text-xs text-slate-400 font-medium hidden sm:inline-block">
+              System Uptime:{" "}
               {health?.uptimeSeconds
                 ? `${Math.floor(health.uptimeSeconds / 60)}m`
-                : "LIVE"}{" "}
-              // PID: {health?.pid || "OK"}
+                : "Active"}
             </span>
           </div>
         )}
 
         {/* Core Operational Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 font-mono space-y-2">
-            <div className="flex items-center justify-between text-slate-400 text-xs">
-              <span className="uppercase font-bold tracking-wider">
-                Active Colleges
-              </span>
-              <Building2 className="w-4 h-4 text-indigo-400" />
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-2">
+            <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider">
+              <span>Active Colleges</span>
+              <Building2 className="w-4 h-4 text-indigo-600" />
             </div>
-            <div className="text-2xl font-bold text-white tracking-tight">
+            <div className="text-2xl font-bold text-slate-900 tracking-tight">
               {stats?.activeCollegesCount || activeCollegesCount || 1}
-              <span className="text-xs text-slate-500 ml-2 font-normal">
+              <span className="text-xs text-slate-400 ml-2 font-normal">
                 / {colleges.length || 1} Total
               </span>
             </div>
-            <div className="text-[10px] text-slate-400 flex items-center gap-1.5 pt-1 border-t border-slate-800">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <div className="text-xs text-emerald-600 font-medium flex items-center gap-1.5 pt-2 border-t border-slate-100">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span>Multi-Tenant Scoping Active</span>
             </div>
           </div>

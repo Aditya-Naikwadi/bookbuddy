@@ -520,6 +520,61 @@ const resubmitTenantOnboarding = async (req, res, next) => {
   }
 };
 
+// @desc    Verify tenant domain ownership via DNS TXT record check
+// @route   POST /api/registration/verify-domain-dns
+// @access  Public
+const verifyDomainDns = async (req, res, next) => {
+  const dns = require('dns').promises;
+  try {
+    const { domain, token, requestId } = req.body;
+    if (!domain) {
+      return next(new AppError('Domain is required for DNS verification.', 400));
+    }
+
+    let regReq = null;
+    if (requestId) {
+      regReq = await RegistrationRequest.findById(requestId);
+    } else if (token) {
+      regReq = await RegistrationRequest.findOne({ 'tenantData.domainVerificationToken': token });
+    }
+
+    const verificationHost = `_bookbuddy-verify.${domain.toLowerCase().trim()}`;
+    let txtRecords = [];
+    let isVerified = false;
+
+    try {
+      const records = await dns.resolveTxt(verificationHost);
+      txtRecords = records.flat();
+      const expectedToken = token || regReq?.tenantData?.domainVerificationToken;
+      if (expectedToken && txtRecords.includes(expectedToken)) {
+        isVerified = true;
+      }
+    } catch {
+      // DNS lookup failed or host not found
+    }
+
+    if (isVerified && regReq) {
+      regReq.tenantData.isDomainVerified = true;
+      await regReq.save();
+    }
+
+    res.json({
+      success: true,
+      data: {
+        domain,
+        verificationHost,
+        isVerified,
+        txtRecordsFound: txtRecords,
+        message: isVerified
+          ? 'DNS TXT record verified successfully.'
+          : 'TXT record not detected yet. Please ensure the TXT record is published in your DNS manager.',
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getActiveColleges,
   registerStudent,
@@ -527,4 +582,5 @@ module.exports = {
   submitTenantOnboarding,
   verifyAdminDomain,
   resubmitTenantOnboarding,
+  verifyDomainDns,
 };

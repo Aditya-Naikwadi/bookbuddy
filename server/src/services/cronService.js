@@ -433,10 +433,18 @@ const runMetricsAggregation = async () => {
     globalPendingModeration += stats.pendingModerationCount;
     globalStorageUsage += stats.storageUsageBytes;
 
+    // Composite Tenant Health Index (0-100) calculation
+    const patronScore = Math.min(25, Math.round((stats.activeStudents / 50) * 25));
+    const loanScore = Math.min(25, Math.round((stats.activeLoans / 20) * 25));
+    const resourceScore = Math.min(25, Math.round((stats.eResourcesCount / 10) * 25));
+    const moderationPenalty = Math.min(25, stats.pendingModerationCount * 5);
+    const healthIndex = Math.max(0, Math.min(100, patronScore + loanScore + resourceScore + (25 - moderationPenalty)));
+
     snapshotsToCreate.push({
       collegeId: college._id,
       snapshotDate,
       ...stats,
+      healthIndex,
     });
   }
 

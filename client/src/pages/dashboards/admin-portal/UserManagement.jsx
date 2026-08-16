@@ -189,9 +189,9 @@ export default function UserManagement() {
       key: "name",
       render: (val, row) => (
         <div>
-          <div className="font-bold text-white text-xs">{val}</div>
-          <div className="text-[10px] text-slate-400 font-mono">
-            ID: {row.studentId || "N/A"} | {row.email}
+          <div className="font-semibold text-slate-900 text-xs">{val}</div>
+          <div className="text-[11px] text-slate-500 font-normal">
+            ID: {row.studentId || "N/A"} · {row.email}
           </div>
         </div>
       ),
@@ -199,29 +199,35 @@ export default function UserManagement() {
     {
       header: "Institution Scope",
       key: "collegeId",
-      render: (val) => (
-        <span className="text-xs font-mono text-indigo-300">
-          {val?.name ? `${val.name} (${val.code})` : "Global / Super Admin"}
-        </span>
-      ),
+      render: (val) => {
+        const name = val?.name || "Global / System Wide";
+        const code = val?.code ? ` (${val.code})` : "";
+        return (
+          <span className="text-xs text-slate-700 font-medium">
+            {name}
+            {code}
+          </span>
+        );
+      },
     },
     {
-      header: "Assigned Role",
+      header: "Security Role",
       key: "role",
       render: (val) => {
-        const badgeColors = {
-          "super-admin": "bg-purple-950/80 border-purple-600 text-purple-300",
-          "college-admin": "bg-indigo-950/80 border-indigo-600 text-indigo-300",
-          student: "bg-emerald-950/80 border-emerald-600 text-emerald-300",
-          general: "bg-slate-900 border-slate-700 text-slate-300",
-        };
+        const isSuper = val === "super-admin" || val === "super_admin";
+        const isAdmin = val === "college-admin" || val === "admin";
+
         return (
           <span
-            className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
-              badgeColors[val] || "bg-slate-900 text-slate-300"
+            className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+              isSuper
+                ? "bg-purple-50 text-purple-700 border border-purple-200/80"
+                : isAdmin
+                  ? "bg-indigo-50 text-indigo-700 border border-indigo-200/80"
+                  : "bg-slate-100 text-slate-700 border border-slate-200/80"
             }`}
           >
-            {val}
+            {val || "student"}
           </span>
         );
       },
@@ -230,37 +236,32 @@ export default function UserManagement() {
       header: "Account Status",
       key: "status",
       render: (val, row) => {
-        const isAct = val === "active" && row.membershipStatus === "active";
+        const isAct = val === "active" || row.isActive;
         return (
           <OpsSeverityBadge
             status={isAct ? "active" : "suspended"}
-            label={
-              isAct
-                ? "ACTIVE"
-                : `${val.toUpperCase()} / ${row.membershipStatus}`
-            }
+            label={isAct ? "Active" : "Suspended"}
             size="sm"
           />
         );
       },
     },
     {
-      header: "Governance Actions",
+      header: "Actions",
       key: "actions",
       sortable: false,
       render: (_, row) => {
-        const isAct =
-          row.status === "active" && row.membershipStatus === "active";
+        const isAct = row.status === "active" || row.isActive;
         return (
-          <div className="flex items-center gap-1.5 font-mono">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => {
                 setSelectedUser(row);
-                setNewRole(row.role);
+                setNewRole(row.role || "student");
                 setIsRoleModalOpen(true);
               }}
               title="Change Role"
-              className="p-1.5 bg-slate-900 hover:bg-slate-800 text-indigo-400 border border-slate-800 rounded text-xs"
+              className="p-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium shadow-xs"
             >
               <Shield className="w-3.5 h-3.5" />
             </button>
@@ -268,10 +269,10 @@ export default function UserManagement() {
             <button
               onClick={() => handleToggleUserStatus(row)}
               title={isAct ? "Suspend User" : "Activate User"}
-              className={`p-1.5 border rounded text-xs ${
+              className={`p-1.5 border rounded-lg text-xs font-medium shadow-xs ${
                 isAct
-                  ? "bg-rose-950/50 border-rose-800 text-rose-300 hover:bg-rose-900"
-                  : "bg-emerald-950/50 border-emerald-800 text-emerald-300 hover:bg-emerald-900"
+                  ? "bg-white border-amber-200 text-amber-700 hover:bg-amber-50"
+                  : "bg-white border-emerald-200 text-emerald-700 hover:bg-emerald-50"
               }`}
             >
               {isAct ? (
@@ -284,7 +285,7 @@ export default function UserManagement() {
             <button
               onClick={() => handleResetPassword(row)}
               title="Force Reset Password"
-              className="p-1.5 bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-800 rounded text-xs"
+              className="p-1.5 bg-white hover:bg-slate-50 text-amber-700 border border-slate-200 rounded-lg text-xs shadow-xs"
             >
               <Key className="w-3.5 h-3.5" />
             </button>
@@ -293,7 +294,7 @@ export default function UserManagement() {
               <button
                 onClick={() => handleImpersonate(row)}
                 title="Impersonate User Session"
-                className="p-1.5 bg-indigo-950/80 border border-indigo-700 text-indigo-300 hover:bg-indigo-900 rounded text-xs flex items-center gap-1"
+                className="p-1.5 bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs flex items-center gap-1 shadow-xs"
               >
                 <LogIn className="w-3.5 h-3.5" />
               </button>
@@ -305,10 +306,10 @@ export default function UserManagement() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
       <OpsHeader
-        title="MODULE 03 // GLOBAL USER DIRECTORY & ACCESS GOVERNANCE"
-        subtitle="Search, audit, suspend, reassign roles, reset passwords, and impersonate users across all campus tenants"
+        title="User Directory & Access Governance"
+        subtitle="Search, audit, suspend, reassign roles, reset passwords, and impersonate user accounts across all campus tenants"
         onRefresh={fetchUsers}
         isRefreshing={isLoading}
       />
@@ -317,25 +318,25 @@ export default function UserManagement() {
         {/* Notification Banner */}
         {message.text && (
           <div
-            className={`p-3 rounded-lg font-mono text-xs flex items-center justify-between border ${
+            className={`p-4 rounded-xl text-xs flex items-center justify-between border shadow-xs ${
               message.type === "success"
-                ? "bg-emerald-950/60 border-emerald-700/60 text-emerald-300"
-                : "bg-rose-950/60 border-rose-700/60 text-rose-300"
+                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                : "bg-rose-50 border-rose-200 text-rose-800"
             }`}
           >
             <div className="flex items-center gap-2">
               {message.type === "success" ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               ) : (
-                <AlertTriangle className="w-4 h-4 text-rose-400" />
+                <AlertTriangle className="w-4 h-4 text-rose-600" />
               )}
               <span>{message.text}</span>
             </div>
             <button
               onClick={() => setMessage({ type: "", text: "" })}
-              className="font-bold hover:underline"
+              className="font-semibold hover:underline"
             >
-              DISMISS
+              Dismiss
             </button>
           </div>
         )}
