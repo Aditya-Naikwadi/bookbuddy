@@ -131,7 +131,10 @@ export function OpsDataTable({
           </button>
           <span className="text-slate-300">|</span>
           <span className="text-slate-500">
-            Showing <strong className="text-slate-900">{paginatedData.length}</strong> of <strong className="text-slate-900">{sortedData.length}</strong> entries
+            Showing{" "}
+            <strong className="text-slate-900">{paginatedData.length}</strong>{" "}
+            of <strong className="text-slate-900">{sortedData.length}</strong>{" "}
+            entries
           </span>
         </div>
       </div>
@@ -246,4 +249,3 @@ export function OpsDataTable({
 }
 
 export default OpsDataTable;
-

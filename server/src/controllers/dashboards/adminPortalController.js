@@ -1445,7 +1445,9 @@ const updateCollegeTier = async (req, res, next) => {
   try {
     const { licenseTier } = req.body;
     if (!['basic', 'professional', 'enterprise'].includes(licenseTier)) {
-      return next(new AppError('Invalid license tier. Must be basic, professional, or enterprise.', 400));
+      return next(
+        new AppError('Invalid license tier. Must be basic, professional, or enterprise.', 400)
+      );
     }
 
     const college = await College.findById(req.params.id);
@@ -1498,7 +1500,8 @@ const getPredictiveDemandForecast = async (req, res, next) => {
           thresholdMet: false,
           currentLoanCount: loanCount,
           requiredThreshold: 50,
-          message: 'Insufficient historical loan data volume for predictive forecasting (Requires at least 50 historical loans).',
+          message:
+            'Insufficient historical loan data volume for predictive forecasting (Requires at least 50 historical loans).',
         },
       });
     }

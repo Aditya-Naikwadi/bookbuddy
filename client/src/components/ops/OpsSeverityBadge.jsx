@@ -92,4 +92,3 @@ export function OpsSeverityBadge({
 }
 
 export default OpsSeverityBadge;
-

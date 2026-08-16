@@ -115,7 +115,10 @@ const requirePermission = (...requiredPermissions) => {
     const hasPerm = requiredPermissions.some((p) => userPerms.includes(p));
     if (!hasPerm) {
       return next(
-        new AppError('Insufficient sub-role permissions to access this administrative resource.', 403)
+        new AppError(
+          'Insufficient sub-role permissions to access this administrative resource.',
+          403
+        )
       );
     }
     next();

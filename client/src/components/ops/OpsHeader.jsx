@@ -78,7 +78,9 @@ export function OpsHeader({ title, subtitle, onRefresh, isRefreshing }) {
           <span className="text-slate-700">|</span>
           <span className="inline-flex items-center gap-1.5 text-xs text-slate-400">
             <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
-            <span className="font-medium text-slate-300">All Systems Operational</span>
+            <span className="font-medium text-slate-300">
+              All Systems Operational
+            </span>
           </span>
           <span className="text-slate-700 hidden sm:inline">|</span>
           <span className="hidden sm:inline text-slate-400">{timeString}</span>
@@ -178,4 +180,3 @@ export function OpsHeader({ title, subtitle, onRefresh, isRefreshing }) {
 }
 
 export default OpsHeader;
-

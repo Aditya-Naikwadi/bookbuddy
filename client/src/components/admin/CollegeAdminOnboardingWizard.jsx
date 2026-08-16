@@ -234,7 +234,9 @@ export default function CollegeAdminOnboardingWizard({
                       }`}
                     >
                       <span className="text-lg">{item.emoji}</span>
-                      <span className="text-xs font-semibold">{item.label}</span>
+                      <span className="text-xs font-semibold">
+                        {item.label}
+                      </span>
                     </button>
                   );
                 })}
@@ -259,7 +261,8 @@ export default function CollegeAdminOnboardingWizard({
                 />
               </div>
               <p className="text-[11px] text-slate-400 mt-1">
-                Students with emails ending in this domain will be auto-approved for your campus.
+                Students with emails ending in this domain will be auto-approved
+                for your campus.
               </p>
             </div>
 
@@ -339,7 +342,9 @@ export default function CollegeAdminOnboardingWizard({
                       }`}
                     >
                       <span className="text-lg">{role.emoji}</span>
-                      <span className="text-xs font-semibold">{role.label}</span>
+                      <span className="text-xs font-semibold">
+                        {role.label}
+                      </span>
                     </button>
                   );
                 })}
@@ -405,20 +410,32 @@ export default function CollegeAdminOnboardingWizard({
 
           <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 text-left text-xs space-y-3">
             <div className="flex justify-between border-b border-slate-200/60 pb-2">
-              <span className="text-slate-500 font-medium">Institution Name:</span>
-              <span className="font-semibold text-slate-900">{formData.collegeName}</span>
+              <span className="text-slate-500 font-medium">
+                Institution Name:
+              </span>
+              <span className="font-semibold text-slate-900">
+                {formData.collegeName}
+              </span>
             </div>
             <div className="flex justify-between border-b border-slate-200/60 pb-2">
               <span className="text-slate-500 font-medium">Domain:</span>
-              <span className="font-semibold text-indigo-600">{formData.domain}</span>
+              <span className="font-semibold text-indigo-600">
+                {formData.domain}
+              </span>
             </div>
             <div className="flex justify-between border-b border-slate-200/60 pb-2">
               <span className="text-slate-500 font-medium">Administrator:</span>
-              <span className="font-semibold text-slate-900">{formData.adminName}</span>
+              <span className="font-semibold text-slate-900">
+                {formData.adminName}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500 font-medium">Provisioned Modules:</span>
-              <span className="font-semibold text-emerald-700">All 6 Core Modules</span>
+              <span className="text-slate-500 font-medium">
+                Provisioned Modules:
+              </span>
+              <span className="font-semibold text-emerald-700">
+                All 6 Core Modules
+              </span>
             </div>
           </div>
 

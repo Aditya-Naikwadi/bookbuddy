@@ -85,7 +85,8 @@ const validateMagicBytes = (allowedMimes = []) => {
         if (isFlaggedForModeration) {
           req.contentSafetyAlert = {
             isFlagged: true,
-            reason: 'Automated scan detected suspicious or restricted text patterns. Flagged for human review.',
+            reason:
+              'Automated scan detected suspicious or restricted text patterns. Flagged for human review.',
           };
           logger.warn(`[Content Safety Alert] File ${file.originalname} flagged for human review.`);
         }

@@ -192,9 +192,7 @@ export default function AuditLogs() {
           <div className="flex flex-wrap items-center gap-4 text-xs font-medium">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-indigo-600" />
-              <span className="font-semibold text-slate-700">
-                Actor Role:
-              </span>
+              <span className="font-semibold text-slate-700">Actor Role:</span>
               <select
                 value={actorRoleFilter}
                 onChange={(e) => setActorRoleFilter(e.target.value)}
@@ -227,7 +225,9 @@ export default function AuditLogs() {
 
           <div className="flex items-center gap-3 text-xs">
             <span className="text-slate-500 font-medium">
-              Loaded <strong className="text-slate-900">{filteredLogs.length}</strong> events
+              Loaded{" "}
+              <strong className="text-slate-900">{filteredLogs.length}</strong>{" "}
+              events
             </span>
             <button
               onClick={() =>

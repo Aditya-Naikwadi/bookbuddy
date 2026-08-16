@@ -227,7 +227,8 @@ export default function AdminDashboardHome() {
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  All onboarding applications, content moderation submissions, and support requests are currently up to date.
+                  All onboarding applications, content moderation submissions,
+                  and support requests are currently up to date.
                 </p>
               </div>
             </div>
@@ -339,4 +340,3 @@ export default function AdminDashboardHome() {
     </div>
   );
 }
-

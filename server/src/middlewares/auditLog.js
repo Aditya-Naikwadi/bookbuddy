@@ -61,7 +61,9 @@ const auditLog = (actionName) => {
               const https = require('https');
               const url = new URL(process.env.SIEM_WEBHOOK_URL);
               const transport = url.protocol === 'https:' ? https : http;
-              const payloadData = JSON.stringify(createdLog.toObject ? createdLog.toObject() : createdLog);
+              const payloadData = JSON.stringify(
+                createdLog.toObject ? createdLog.toObject() : createdLog
+              );
 
               const siemReq = transport.request(url, {
                 method: 'POST',

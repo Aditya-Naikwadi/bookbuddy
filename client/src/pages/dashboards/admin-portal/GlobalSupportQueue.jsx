@@ -146,7 +146,8 @@ export default function GlobalSupportQueue() {
         <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-3 shadow-xs">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <span className="text-xs font-semibold text-slate-700 flex items-center gap-2">
-              <Filter className="w-4 h-4 text-indigo-600" /> Filter Support Queue ({complaints.length})
+              <Filter className="w-4 h-4 text-indigo-600" /> Filter Support
+              Queue ({complaints.length})
             </span>
           </div>
 
@@ -189,7 +190,8 @@ export default function GlobalSupportQueue() {
               Zero Unresolved Escalated Tickets
             </h3>
             <p className="text-xs text-slate-500 mt-1">
-              All patron complaints have been handled or no records match the active filter criteria.
+              All patron complaints have been handled or no records match the
+              active filter criteria.
             </p>
           </div>
         ) : (
@@ -212,7 +214,11 @@ export default function GlobalSupportQueue() {
                                 ? "info"
                                 : "warning"
                           }
-                          label={c.status ? c.status.replace("_", " ").toUpperCase() : "OPEN"}
+                          label={
+                            c.status
+                              ? c.status.replace("_", " ").toUpperCase()
+                              : "OPEN"
+                          }
                           size="sm"
                         />
                         <span className="text-xs font-semibold text-indigo-600">
@@ -252,7 +258,9 @@ export default function GlobalSupportQueue() {
                       {c.description || c.details || "No details provided."}
                     </p>
                     <div className="flex items-center gap-3 text-slate-400 text-[11px]">
-                      <span>User ID: {c.userId?.name || c.userId || "Patron"}</span>
+                      <span>
+                        User ID: {c.userId?.name || c.userId || "Patron"}
+                      </span>
                       <span>·</span>
                       <span>Category: {c.category || "General"}</span>
                     </div>
@@ -265,7 +273,9 @@ export default function GlobalSupportQueue() {
                         <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
                         Admin Resolution Note:
                       </span>
-                      <p className="text-indigo-900 leading-relaxed">{c.adminResponse}</p>
+                      <p className="text-indigo-900 leading-relaxed">
+                        {c.adminResponse}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -290,7 +300,10 @@ export default function GlobalSupportQueue() {
                 </button>
               </div>
 
-              <form onSubmit={handleResponseSubmit} className="space-y-4 text-xs font-medium">
+              <form
+                onSubmit={handleResponseSubmit}
+                className="space-y-4 text-xs font-medium"
+              >
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">
                     Set Resolution Status

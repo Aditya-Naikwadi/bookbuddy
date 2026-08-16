@@ -132,11 +132,13 @@ export default function SystemOverview() {
                     size="sm"
                   />
                   <span className="text-xs font-bold text-slate-900">
-                    {pendingCollegesCount} Tenant Onboarding Request(s) Pending Approval
+                    {pendingCollegesCount} Tenant Onboarding Request(s) Pending
+                    Approval
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Institutions have submitted accreditation documents and are waiting for Super Admin approval.
+                  Institutions have submitted accreditation documents and are
+                  waiting for Super Admin approval.
                 </p>
               </div>
             </div>
@@ -165,7 +167,8 @@ export default function SystemOverview() {
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Multi-tenant routing engines, database clusters, and background services are operating smoothly.
+                  Multi-tenant routing engines, database clusters, and
+                  background services are operating smoothly.
                 </p>
               </div>
             </div>

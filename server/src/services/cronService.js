@@ -438,7 +438,10 @@ const runMetricsAggregation = async () => {
     const loanScore = Math.min(25, Math.round((stats.activeLoans / 20) * 25));
     const resourceScore = Math.min(25, Math.round((stats.eResourcesCount / 10) * 25));
     const moderationPenalty = Math.min(25, stats.pendingModerationCount * 5);
-    const healthIndex = Math.max(0, Math.min(100, patronScore + loanScore + resourceScore + (25 - moderationPenalty)));
+    const healthIndex = Math.max(
+      0,
+      Math.min(100, patronScore + loanScore + resourceScore + (25 - moderationPenalty))
+    );
 
     snapshotsToCreate.push({
       collegeId: college._id,

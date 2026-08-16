@@ -222,7 +222,10 @@ export default function SystemSettings() {
               </div>
             </div>
 
-            <form onSubmit={handleSaveSettings} className="space-y-4 text-xs font-medium">
+            <form
+              onSubmit={handleSaveSettings}
+              className="space-y-4 text-xs font-medium"
+            >
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">
                   SMTP Host *
@@ -298,4 +301,3 @@ export default function SystemSettings() {
     </div>
   );
 }
-
