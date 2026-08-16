@@ -1,4 +1,3 @@
-import React from "react";
 import { ShieldAlert, ArrowLeft, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
