@@ -40,6 +40,42 @@ export default function AuditLogs() {
     };
   }, [reloadToken]);
 
+  // Multi-select selection state stored outside table render window
+  const [selectedIds, setSelectedIds] = useState(new Set());
+
+  const handleSelectRow = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = (visibleIds) => {
+    setSelectedIds((prev) => {
+      const allSelected = visibleIds.every((id) => prev.has(id));
+      const next = new Set(prev);
+      if (allSelected) {
+        visibleIds.forEach((id) => next.delete(id));
+      } else {
+        visibleIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const handleExportSelectedCSV = () => {
+    const selectedLogs = filteredLogs.filter((r) =>
+      selectedIds.has(r._id || r.id),
+    );
+    if (!selectedLogs.length) return;
+    exportToCSV(
+      selectedLogs,
+      `selected-audit-logs-${new Date().toISOString().split("T")[0]}.csv`,
+    );
+  };
+
   // Filter logs by actor role & action category
   const filteredLogs = logs.filter((log) => {
     if (actorRoleFilter !== "all" && log.actorRole !== actorRoleFilter)
@@ -106,7 +142,9 @@ export default function AuditLogs() {
             })
           : "—";
         return (
-          <span className="text-xs text-slate-700 font-medium">{dateStr}</span>
+          <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+            {dateStr}
+          </span>
         );
       },
     },
@@ -116,7 +154,7 @@ export default function AuditLogs() {
       render: (val) => (
         <div className="flex items-center gap-2">
           <OpsSeverityBadge status={getActionSeverity(val)} size="sm" />
-          <span className="font-semibold text-slate-900 text-xs">
+          <span className="font-semibold text-slate-900 dark:text-ink text-xs">
             {val || "SYSTEM_EVENT"}
           </span>
         </div>
@@ -127,11 +165,11 @@ export default function AuditLogs() {
       key: "actorName",
       render: (val, row) => (
         <div>
-          <div className="font-semibold text-slate-900 text-xs flex items-center gap-1">
-            <User className="w-3.5 h-3.5 text-indigo-600" />
+          <div className="font-semibold text-slate-900 dark:text-ink text-xs flex items-center gap-1">
+            <User className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             <span>{val || row.actorEmail || "System Automation"}</span>
           </div>
-          <div className="text-[11px] text-slate-500 font-normal">
+          <div className="text-[11px] text-slate-500 dark:text-muted font-normal">
             Role: {row.actorRole || "system"}
           </div>
         </div>
@@ -142,10 +180,10 @@ export default function AuditLogs() {
       key: "targetType",
       render: (val, row) => (
         <div>
-          <div className="font-semibold text-slate-800 text-xs">
+          <div className="font-semibold text-slate-800 dark:text-slate-200 text-xs">
             {val || "Global Platform"}
           </div>
-          <div className="text-[11px] text-slate-500 font-normal">
+          <div className="text-[11px] text-slate-500 dark:text-muted font-normal">
             ID: {row.targetId || "N/A"}
           </div>
         </div>
@@ -158,9 +196,9 @@ export default function AuditLogs() {
       render: (val) => (
         <button
           onClick={() => setSelectedPayload(val || { status: "success" })}
-          className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+          className="px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
         >
-          <FileCode className="w-3.5 h-3.5 text-indigo-600" />
+          <FileCode className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
           <span>Inspect JSON</span>
         </button>
       ),
@@ -168,7 +206,7 @@ export default function AuditLogs() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
+    <div className="min-h-screen bg-slate-50 dark:bg-void text-slate-900 dark:text-ink font-sans pb-12">
       <OpsHeader
         title="Security Audit Trail"
         subtitle="Immutable log stream of security events, administrative mutations, and cross-tenant actions"
@@ -179,7 +217,7 @@ export default function AuditLogs() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
         {/* Error Alert */}
         {error && (
-          <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl text-rose-800 text-xs font-semibold flex items-center justify-between shadow-xs">
+          <div className="bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 p-4 rounded-xl text-rose-800 dark:text-rose-300 text-xs font-semibold flex items-center justify-between shadow-xs">
             <span>{error}</span>
             <button onClick={() => setError("")} className="hover:underline">
               Dismiss
@@ -188,15 +226,17 @@ export default function AuditLogs() {
         )}
 
         {/* Filter Controls Bar */}
-        <div className="bg-white border border-slate-200/80 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-xs">
+        <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-xs">
           <div className="flex flex-wrap items-center gap-4 text-xs font-medium">
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-indigo-600" />
-              <span className="font-semibold text-slate-700">Actor Role:</span>
+              <Filter className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <span className="font-semibold text-slate-700 dark:text-slate-300">
+                Actor Role:
+              </span>
               <select
                 value={actorRoleFilter}
                 onChange={(e) => setActorRoleFilter(e.target.value)}
-                className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
+                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none shadow-xs"
               >
                 <option value="all">All Roles</option>
                 <option value="super-admin">Super Admin</option>
@@ -207,13 +247,13 @@ export default function AuditLogs() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-slate-700">
+              <span className="font-semibold text-slate-700 dark:text-slate-300">
                 Event Category:
               </span>
               <select
                 value={actionCategoryFilter}
                 onChange={(e) => setActionCategoryFilter(e.target.value)}
-                className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
+                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none shadow-xs"
               >
                 <option value="all">All Categories</option>
                 <option value="auth">Auth & Sessions</option>
@@ -251,6 +291,19 @@ export default function AuditLogs() {
           isLoading={isLoading}
           searchPlaceholder="Filter audit records by action, IP address, actor ID..."
           emptyMessage="Zero security audit events match current filter conditions."
+          selectable={true}
+          selectedIds={selectedIds}
+          onSelectRow={handleSelectRow}
+          onSelectAll={handleSelectAll}
+          batchActions={
+            <button
+              onClick={handleExportSelectedCSV}
+              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl flex items-center gap-1.5 shadow-xs"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export Selected ({selectedIds.size}) CSV</span>
+            </button>
+          }
         />
 
         {/* JSON Payload Inspector Modal */}

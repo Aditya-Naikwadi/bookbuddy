@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
   Book,
@@ -34,6 +34,14 @@ export default function DashboardLayout() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [prevPath, setPrevPath] = useState(location.pathname);
+  const mainContentRef = useRef(null);
+
+  // Problem 2 Task 4: Reset main content scroll position to top on route change
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+  }, [location.pathname]);
 
   if (prevPath !== location.pathname) {
     setPrevPath(location.pathname);
@@ -83,9 +91,9 @@ export default function DashboardLayout() {
   }, [mobileMenuOpen, closeMenu]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-void text-slate-900 dark:text-ink flex flex-col md:flex-row transition-colors duration-200">
+    <div className="h-screen w-screen overflow-hidden bg-slate-50 dark:bg-void text-slate-900 dark:text-ink flex flex-col md:flex-row transition-colors duration-200">
       {/* Desktop Sidebar (Visible on >= md) */}
-      <aside className="w-full md:w-64 bg-white dark:bg-surface border-r border-slate-200 dark:border-edge flex-shrink-0 flex-col hidden md:flex md:h-screen md:sticky md:top-0 z-30">
+      <aside className="w-full md:w-64 bg-white dark:bg-surface border-r border-slate-200 dark:border-edge flex-shrink-0 flex-col hidden md:flex h-full z-30 overflow-hidden">
         <div className="p-6 border-b border-slate-100 dark:border-edge flex items-center gap-2 flex-shrink-0">
           <Book className="text-indigo-600 dark:text-ember w-8 h-8" />
           <span className="text-2xl font-serif font-bold text-slate-900 dark:text-ink">
@@ -253,8 +261,11 @@ export default function DashboardLayout() {
         </div>
       </aside>
 
-      {/* Main Content & Topbar */}
-      <main className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
+      {/* Main Content & Topbar (Independent Scroll Region) */}
+      <main
+        ref={mainContentRef}
+        className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto scrollbar-thin pb-16 md:pb-0"
+      >
         {/* Topbar */}
         <header className="h-16 bg-white dark:bg-surface border-b border-slate-200 dark:border-edge flex items-center justify-between px-4 sm:px-6 z-20 transition-colors duration-200">
           <div className="flex items-center gap-3">
@@ -288,7 +299,8 @@ export default function DashboardLayout() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Search catalog..."
+                placeholder="Search global books & catalog..."
+                aria-label="Search global books and catalog"
                 className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-deep border border-slate-200 dark:border-edge rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-ember text-slate-900 dark:text-ink text-sm placeholder-slate-400 dark:placeholder-slate-500 transition-colors"
               />
             </div>
@@ -587,15 +599,26 @@ export default function DashboardLayout() {
   );
 }
 
-const NavItem = ({ to, icon, label }) => (
-  <Link
-    to={to}
-    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 font-medium transition-colors"
-  >
-    {icon}
-    {label}
-  </Link>
-);
+const NavItem = ({ to, icon, label }) => {
+  const location = useLocation();
+  const isActive =
+    location.pathname === to ||
+    (to !== "/admin-portal" && location.pathname.startsWith(to));
+  return (
+    <Link
+      to={to}
+      className={cn(
+        "flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all text-xs",
+        isActive
+          ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-200 dark:border-indigo-800/60 shadow-xs"
+          : "text-slate-600 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-ink",
+      )}
+    >
+      {icon}
+      <span>{label}</span>
+    </Link>
+  );
+};
 
 const MobileNavItem = ({ to, icon, label }) => (
   <Link

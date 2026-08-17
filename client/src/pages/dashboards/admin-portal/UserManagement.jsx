@@ -189,8 +189,10 @@ export default function UserManagement() {
       key: "name",
       render: (val, row) => (
         <div>
-          <div className="font-semibold text-slate-900 text-xs">{val}</div>
-          <div className="text-[11px] text-slate-500 font-normal">
+          <div className="font-semibold text-slate-900 dark:text-ink text-xs">
+            {val}
+          </div>
+          <div className="text-[11px] text-slate-500 dark:text-muted font-normal">
             ID: {row.studentId || "N/A"} · {row.email}
           </div>
         </div>
@@ -203,7 +205,7 @@ export default function UserManagement() {
         const name = val?.name || "Global / System Wide";
         const code = val?.code ? ` (${val.code})` : "";
         return (
-          <span className="text-xs text-slate-700 font-medium">
+          <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
             {name}
             {code}
           </span>
@@ -221,10 +223,10 @@ export default function UserManagement() {
           <span
             className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
               isSuper
-                ? "bg-purple-50 text-purple-700 border border-purple-200/80"
+                ? "bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800"
                 : isAdmin
-                  ? "bg-indigo-50 text-indigo-700 border border-indigo-200/80"
-                  : "bg-slate-100 text-slate-700 border border-slate-200/80"
+                  ? "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700"
             }`}
           >
             {val || "student"}
@@ -261,7 +263,7 @@ export default function UserManagement() {
                 setIsRoleModalOpen(true);
               }}
               title="Change Role"
-              className="p-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium shadow-xs"
+              className="p-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium shadow-xs"
             >
               <Shield className="w-3.5 h-3.5" />
             </button>
@@ -271,8 +273,8 @@ export default function UserManagement() {
               title={isAct ? "Suspend User" : "Activate User"}
               className={`p-1.5 border rounded-lg text-xs font-medium shadow-xs ${
                 isAct
-                  ? "bg-white border-amber-200 text-amber-700 hover:bg-amber-50"
-                  : "bg-white border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                  ? "bg-white dark:bg-slate-800 border-amber-200 dark:border-amber-800/80 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                  : "bg-white dark:bg-slate-800 border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
               }`}
             >
               {isAct ? (
@@ -285,7 +287,7 @@ export default function UserManagement() {
             <button
               onClick={() => handleResetPassword(row)}
               title="Force Reset Password"
-              className="p-1.5 bg-white hover:bg-slate-50 text-amber-700 border border-slate-200 rounded-lg text-xs shadow-xs"
+              className="p-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-amber-700 dark:text-amber-400 border border-slate-200 dark:border-slate-700 rounded-lg text-xs shadow-xs"
             >
               <Key className="w-3.5 h-3.5" />
             </button>
@@ -294,7 +296,7 @@ export default function UserManagement() {
               <button
                 onClick={() => handleImpersonate(row)}
                 title="Impersonate User Session"
-                className="p-1.5 bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs flex items-center gap-1 shadow-xs"
+                className="p-1.5 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 rounded-lg text-xs flex items-center gap-1 shadow-xs"
               >
                 <LogIn className="w-3.5 h-3.5" />
               </button>
@@ -306,7 +308,7 @@ export default function UserManagement() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
+    <div className="min-h-screen bg-slate-50 dark:bg-void text-slate-900 dark:text-ink font-sans pb-12">
       <OpsHeader
         title="User Directory & Access Governance"
         subtitle="Search, audit, suspend, reassign roles, reset passwords, and impersonate user accounts across all campus tenants"
@@ -320,8 +322,8 @@ export default function UserManagement() {
           <div
             className={`p-4 rounded-xl text-xs flex items-center justify-between border shadow-xs ${
               message.type === "success"
-                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                : "bg-rose-50 border-rose-200 text-rose-800"
+                ? "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+                : "bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -378,30 +380,30 @@ export default function UserManagement() {
         )}
 
         {/* Filter Controls Bar */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 font-mono space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <span className="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
-              <Filter className="w-4 h-4 text-indigo-400" /> Filter User Records
-              ({users.length})
+        <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-5 shadow-xs space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-edge pb-2">
+            <span className="text-xs font-bold text-slate-900 dark:text-ink tracking-tight flex items-center gap-2">
+              <Filter className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />{" "}
+              Filter User Records ({users.length})
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
             <div className="relative">
-              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+              <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-2.5" />
               <input
                 type="text"
                 placeholder="Search name, email, ID..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 focus:border-indigo-500 focus:outline-none"
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-deep border border-slate-200 dark:border-edge rounded-xl text-slate-900 dark:text-ink focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
 
             <select
               value={collegeFilter}
               onChange={(e) => setCollegeFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 focus:border-indigo-500 focus:outline-none"
+              className="px-3 py-2 bg-slate-50 dark:bg-deep border border-slate-200 dark:border-edge rounded-xl text-slate-900 dark:text-ink focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             >
               <option value="">All Institutions</option>
               {colleges.map((c) => (
@@ -414,7 +416,7 @@ export default function UserManagement() {
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 focus:border-indigo-500 focus:outline-none"
+              className="px-3 py-2 bg-slate-50 dark:bg-deep border border-slate-200 dark:border-edge rounded-xl text-slate-900 dark:text-ink focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             >
               <option value="">All Roles</option>
               <option value="student">Student</option>
@@ -426,7 +428,7 @@ export default function UserManagement() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 focus:border-indigo-500 focus:outline-none"
+              className="px-3 py-2 bg-slate-50 dark:bg-deep border border-slate-200 dark:border-edge rounded-xl text-slate-900 dark:text-ink focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             >
               <option value="">All Account Statuses</option>
               <option value="active">Active</option>

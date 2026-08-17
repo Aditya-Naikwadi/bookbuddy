@@ -10,6 +10,7 @@ import {
 import adminApi from "../../../api/adminApi";
 import OpsHeader from "../../../components/ops/OpsHeader";
 import OpsSeverityBadge from "../../../components/ops/OpsSeverityBadge";
+import NoSupportTickets from "../../../components/ops/illustrations/NoSupportTickets";
 
 export default function GlobalSupportQueue() {
   const [complaints, setComplaints] = useState([]);
@@ -107,29 +108,29 @@ export default function GlobalSupportQueue() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
+    <div className="min-h-screen bg-slate-50 dark:bg-void text-slate-900 dark:text-ink font-sans pb-12">
       <OpsHeader
-        title="Helpdesk & Support Escalations"
-        subtitle="Centralized support management queue for technical support tickets, patron inquiries, and system complaints"
+        title="Cross-Tenant Helpdesk & Support Escalations"
+        subtitle="Review patron complaints, system feedback, and technical support requests escalated to global operations"
         onRefresh={fetchComplaints}
         isRefreshing={isLoading}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
-        {/* Notification Banner */}
+        {/* Notification Alert Banner */}
         {message.text && (
           <div
             className={`p-4 rounded-xl text-xs font-semibold flex items-center justify-between border shadow-xs ${
               message.type === "success"
-                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                : "bg-rose-50 border-rose-200 text-rose-800"
+                ? "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+                : "bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300"
             }`}
           >
             <div className="flex items-center gap-2">
               {message.type === "success" ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               ) : (
-                <AlertTriangle className="w-4 h-4 text-rose-600" />
+                <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
               )}
               <span>{message.text}</span>
             </div>
@@ -143,11 +144,11 @@ export default function GlobalSupportQueue() {
         )}
 
         {/* Filter Controls Bar */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-3 shadow-xs">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <span className="text-xs font-semibold text-slate-700 flex items-center gap-2">
-              <Filter className="w-4 h-4 text-indigo-600" /> Filter Support
-              Queue ({complaints.length})
+        <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-4 space-y-3 shadow-xs">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-edge pb-3">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+              <Filter className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />{" "}
+              Filter Support Queue ({complaints.length})
             </span>
           </div>
 
@@ -155,7 +156,7 @@ export default function GlobalSupportQueue() {
             <select
               value={collegeFilter}
               onChange={(e) => setCollegeFilter(e.target.value)}
-              className="bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
+              className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none shadow-xs"
             >
               <option value="">All Institutions</option>
               {colleges.map((c) => (
@@ -168,7 +169,7 @@ export default function GlobalSupportQueue() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
+              className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none shadow-xs"
             >
               <option value="">All Ticket Statuses</option>
               <option value="open">Open</option>
@@ -180,18 +181,18 @@ export default function GlobalSupportQueue() {
 
         {/* Complaints Grid */}
         {isLoading ? (
-          <div className="py-12 text-center text-slate-400 text-xs font-medium animate-pulse">
+          <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs font-medium animate-pulse">
             Fetching cross-tenant complaint queue...
           </div>
         ) : complaints.length === 0 ? (
-          <div className="py-16 text-center bg-white border border-slate-200/80 rounded-2xl p-8 shadow-xs">
-            <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto mb-3" />
-            <h3 className="text-sm font-bold text-slate-900">
+          <div className="py-16 text-center bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-8 shadow-xs space-y-3">
+            <NoSupportTickets className="w-24 h-24 mx-auto" />
+            <h3 className="text-base font-bold text-slate-900 dark:text-ink">
               Zero Unresolved Escalated Tickets
             </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              All patron complaints have been handled or no records match the
-              active filter criteria.
+            <p className="text-xs text-slate-500 dark:text-muted max-w-sm mx-auto">
+              All patron complaints have been handled or no support records
+              match the active filter criteria.
             </p>
           </div>
         ) : (

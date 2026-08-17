@@ -164,7 +164,7 @@ export default function AdminDashboardHome() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
+    <div className="min-h-screen bg-slate-50 dark:bg-void text-slate-900 dark:text-ink font-sans pb-12">
       <OpsHeader
         title="Platform Administration Console"
         subtitle="Global management center for multi-tenant colleges, system security, user permissions, and infrastructure oversight"
@@ -175,9 +175,9 @@ export default function AdminDashboardHome() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
         {/* Status Alert Banner */}
         {totalPendingActionItems > 0 ? (
-          <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-xs">
+          <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
@@ -187,11 +187,11 @@ export default function AdminDashboardHome() {
                     label={`${totalPendingActionItems} Action Items Pending`}
                     size="sm"
                   />
-                  <span className="text-xs font-bold text-slate-800">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                     Action Required
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
                   {pendingOnboardings} onboarding request(s),{" "}
                   {pendingModerations} content moderation item(s), and{" "}
                   {openTickets} open support ticket(s) require review.
@@ -210,9 +210,9 @@ export default function AdminDashboardHome() {
             </div>
           </div>
         ) : (
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-xs">
+          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <div>
@@ -222,17 +222,17 @@ export default function AdminDashboardHome() {
                     label="All Systems Nominal"
                     size="sm"
                   />
-                  <span className="text-xs font-semibold text-slate-800">
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                     Zero Pending Bottlenecks
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-muted mt-0.5">
                   All onboarding applications, content moderation submissions,
                   and support requests are currently up to date.
                 </p>
               </div>
             </div>
-            <span className="text-xs text-slate-400 font-medium hidden sm:inline-block">
+            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium hidden sm:inline-block">
               Platform Status: Healthy
             </span>
           </div>
@@ -240,50 +240,50 @@ export default function AdminDashboardHome() {
 
         {/* Enterprise KPI Metrics Bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
-            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-5 shadow-xs">
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Campus Tenants
             </div>
-            <div className="text-2xl font-bold text-slate-900 mt-1">
+            <div className="text-2xl font-bold text-slate-900 dark:text-ink mt-1">
               {isLoading ? "..." : totalColleges}
             </div>
-            <div className="text-xs font-medium text-indigo-600 mt-1">
+            <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mt-1">
               Active Institutions
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
-            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-5 shadow-xs">
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Total Accounts
             </div>
-            <div className="text-2xl font-bold text-slate-900 mt-1">
+            <div className="text-2xl font-bold text-slate-900 dark:text-ink mt-1">
               {isLoading ? "..." : totalUsers.toLocaleString()}
             </div>
-            <div className="text-xs font-medium text-emerald-600 mt-1">
+            <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mt-1">
               Cross-Tenant Directory
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
-            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-5 shadow-xs">
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Pending Actions
             </div>
-            <div className="text-2xl font-bold text-amber-600 mt-1">
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">
               {isLoading ? "..." : totalPendingActionItems}
             </div>
-            <div className="text-xs font-medium text-amber-700 mt-1">
+            <div className="text-xs font-medium text-amber-700 dark:text-amber-300 mt-1">
               Tasks Awaiting Review
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
-            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-5 shadow-xs">
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Active Loans
             </div>
-            <div className="text-2xl font-bold text-cyan-600 mt-1">
+            <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400 mt-1">
               {isLoading ? "..." : activeLoans}
             </div>
-            <div className="text-xs font-medium text-cyan-700 mt-1">
+            <div className="text-xs font-medium text-cyan-700 dark:text-cyan-300 mt-1">
               Monitored Circulation
             </div>
           </div>
@@ -295,19 +295,19 @@ export default function AdminDashboardHome() {
             <Link
               key={tile.id}
               to={tile.path}
-              className="bg-white border border-slate-200/80 rounded-2xl p-6 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-indigo-200 group shadow-xs"
+              className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-6 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-800 group shadow-xs"
             >
               <div>
-                <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-edge pb-4 mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl group-hover:bg-indigo-50 group-hover:border-indigo-100 transition-colors">
+                    <div className="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/50 group-hover:border-indigo-100 dark:group-hover:border-indigo-800 transition-colors">
                       {tile.icon}
                     </div>
                     <div>
-                      <span className="text-[11px] font-semibold text-slate-400 block uppercase tracking-wider">
+                      <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 block uppercase tracking-wider">
                         {tile.subtitle}
                       </span>
-                      <h3 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors mt-0.5">
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-ink group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mt-0.5">
                         {tile.title}
                       </h3>
                     </div>
@@ -319,16 +319,16 @@ export default function AdminDashboardHome() {
                   />
                 </div>
 
-                <p className="text-xs text-slate-500 leading-relaxed mb-4 font-normal">
+                <p className="text-xs text-slate-500 dark:text-muted leading-relaxed mb-4 font-normal">
                   {tile.description}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-600">
+              <div className="pt-3 border-t border-slate-100 dark:border-edge flex items-center justify-between">
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
                   {isLoading ? "Loading..." : tile.countLabel}
                 </span>
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 group-hover:translate-x-1 transition-transform">
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
                   <span>Open Module</span>
                   <ArrowRight size={14} />
                 </span>

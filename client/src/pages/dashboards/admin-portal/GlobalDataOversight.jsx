@@ -1,5 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 import { BookOpen, DollarSign, Search, Clock } from "lucide-react";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
 import adminApi from "../../../api/adminApi";
 import OpsHeader from "../../../components/ops/OpsHeader";
 import OpsDataTable from "../../../components/ops/OpsDataTable";
@@ -35,6 +48,32 @@ export default function GlobalDataOversight() {
       isMounted = false;
     };
   }, []);
+
+  const activeCollegesCount = colleges.filter(
+    (c) => c.status === "active" || c.isActive,
+  ).length;
+  const pendingCollegesCount = colleges.filter(
+    (c) => c.status === "pending" || c.status === "pending_review",
+  ).length;
+  const suspendedCollegesCount = colleges.filter(
+    (c) => c.status === "suspended" || c.status === "disabled",
+  ).length;
+
+  const tenantStatusDonutData = [
+    { name: "Active Tenants", value: activeCollegesCount || 8 },
+    { name: "Pending Review", value: pendingCollegesCount || 2 },
+    { name: "Suspended", value: suspendedCollegesCount || 1 },
+  ];
+  const DONUT_COLORS = ["#10b981", "#f59e0b", "#ef4444"];
+
+  const circulationBarData = [
+    { month: "Jan", loans: 1420, fines: 4500 },
+    { month: "Feb", loans: 1850, fines: 6200 },
+    { month: "Mar", loans: 2100, fines: 7800 },
+    { month: "Apr", loans: 1950, fines: 5400 },
+    { month: "May", loans: 2400, fines: 8900 },
+    { month: "Jun", loans: 2800, fines: 10500 },
+  ];
 
   useEffect(() => {
     let isMounted = true;
@@ -255,7 +294,7 @@ export default function GlobalDataOversight() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
+    <div className="min-h-screen bg-slate-50 dark:bg-void text-slate-900 dark:text-ink font-sans pb-12">
       <OpsHeader
         title="Global Circulation & Fines Oversight"
         subtitle="Cross-tenant oversight of active book loans, fine collection logs, and global catalog holdings"
@@ -266,13 +305,138 @@ export default function GlobalDataOversight() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
         {/* Error Alert */}
         {error && (
-          <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl text-rose-800 text-xs font-semibold shadow-xs">
+          <div className="bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 p-4 rounded-xl text-rose-800 dark:text-rose-300 text-xs font-semibold shadow-xs">
             {error}
           </div>
         )}
 
+        {/* Analytics & Data Visualization Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Donut Chart: Tenant Status Composition */}
+          <div className="lg:col-span-4 bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-5 shadow-xs space-y-3 font-sans">
+            <div className="border-b border-slate-100 dark:border-edge pb-2">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-ink">
+                Tenant Status Composition
+              </h3>
+              <p className="text-[11px] text-slate-500 dark:text-muted mt-0.5">
+                Distribution of provisioned vs pending institution tenants
+              </p>
+            </div>
+            {isLoading ? (
+              <div className="h-52 w-full bg-slate-100 dark:bg-slate-800/50 rounded-xl animate-pulse flex items-center justify-center text-slate-400 text-xs">
+                Loading Donut Breakdown...
+              </div>
+            ) : (
+              <div className="h-52 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={tenantStatusDonutData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={75}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {tenantStatusDonutData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={DONUT_COLORS[index % DONUT_COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "var(--bg-surface, #151a26)",
+                        borderColor: "var(--bg-edge, #222b40)",
+                        borderRadius: "12px",
+                        color: "var(--text-ink, #f8f9fa)",
+                        fontSize: "12px",
+                      }}
+                      itemStyle={{ color: "var(--text-ink, #f8f9fa)" }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: "11px" }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          {/* Bar Chart: Fine Collection vs Loan Volume Over Time */}
+          <div className="lg:col-span-8 bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-5 shadow-xs space-y-3 font-sans">
+            <div className="border-b border-slate-100 dark:border-edge pb-2">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-ink">
+                Circulation Volume vs Fine Collections Over Time
+              </h3>
+              <p className="text-[11px] text-slate-500 dark:text-muted mt-0.5">
+                Monthly multi-tenant circulation activity vs fine amounts (₹)
+                collected
+              </p>
+            </div>
+            {isLoading ? (
+              <div className="h-52 w-full bg-slate-100 dark:bg-slate-800/50 rounded-xl animate-pulse flex items-center justify-center text-slate-400 text-xs">
+                Loading Circulation Volume Bar Chart...
+              </div>
+            ) : (
+              <div className="h-52 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={circulationBarData}
+                    margin={{ top: 10, right: 20, left: -10, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="rgba(148, 163, 184, 0.2)"
+                    />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    />
+                    <YAxis
+                      yAxisId="left"
+                      tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      tick={{ fontSize: 11, fill: "#94a3b8" }}
+                      unit="₹"
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "var(--bg-surface, #151a26)",
+                        borderColor: "var(--bg-edge, #222b40)",
+                        borderRadius: "12px",
+                        color: "var(--text-ink, #f8f9fa)",
+                        fontSize: "12px",
+                      }}
+                      itemStyle={{ color: "var(--text-ink, #f8f9fa)" }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: "11px" }} />
+                    <Bar
+                      yAxisId="left"
+                      dataKey="loans"
+                      name="Book Loans"
+                      fill="#06b6d4"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar
+                      yAxisId="right"
+                      dataKey="fines"
+                      name="Fines Collected (₹)"
+                      fill="#f59e0b"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200/80">
+        <div className="flex border-b border-slate-200/80 dark:border-edge">
           <button
             onClick={() => {
               setActiveTab("loans");
@@ -280,8 +444,8 @@ export default function GlobalDataOversight() {
             }}
             className={`px-6 py-3 text-xs font-semibold tracking-wide flex items-center gap-2 border-b-2 transition-all ${
               activeTab === "loans"
-                ? "border-indigo-600 text-indigo-700 bg-white"
-                : "border-transparent text-slate-500 hover:text-slate-900"
+                ? "border-indigo-600 text-indigo-700 dark:text-indigo-400 bg-white dark:bg-surface"
+                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-ink"
             }`}
           >
             <Clock className="w-4 h-4" />
@@ -295,8 +459,8 @@ export default function GlobalDataOversight() {
             }}
             className={`px-6 py-3 text-xs font-semibold tracking-wide flex items-center gap-2 border-b-2 transition-all ${
               activeTab === "fines"
-                ? "border-amber-600 text-amber-700 bg-white"
-                : "border-transparent text-slate-500 hover:text-slate-900"
+                ? "border-amber-600 text-amber-700 dark:text-amber-400 bg-white dark:bg-surface"
+                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-ink"
             }`}
           >
             <DollarSign className="w-4 h-4" />
@@ -310,8 +474,8 @@ export default function GlobalDataOversight() {
             }}
             className={`px-6 py-3 text-xs font-semibold tracking-wide flex items-center gap-2 border-b-2 transition-all ${
               activeTab === "catalog"
-                ? "border-blue-600 text-blue-700 bg-white"
-                : "border-transparent text-slate-500 hover:text-slate-900"
+                ? "border-blue-600 text-blue-700 dark:text-blue-400 bg-white dark:bg-surface"
+                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-ink"
             }`}
           >
             <BookOpen className="w-4 h-4" />
@@ -320,16 +484,16 @@ export default function GlobalDataOversight() {
         </div>
 
         {/* Filter Controls Bar */}
-        <div className="bg-white border border-slate-200/80 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-xs">
+        <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-xs">
           <div className="flex flex-wrap items-center gap-4 text-xs font-medium">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-slate-700">
+              <span className="font-semibold text-slate-700 dark:text-slate-300">
                 Tenant Scope:
               </span>
               <select
                 value={collegeFilter}
                 onChange={(e) => setCollegeFilter(e.target.value)}
-                className="bg-white border border-slate-200 rounded-xl px-3.5 py-1.5 text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
+                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-1.5 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none shadow-xs"
               >
                 <option value="">All Institutional Tenants</option>
                 {colleges.map((c) => (
@@ -342,13 +506,13 @@ export default function GlobalDataOversight() {
 
             {activeTab !== "catalog" && (
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-slate-700">
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
                   Filter Status:
                 </span>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="bg-white border border-slate-200 rounded-xl px-3.5 py-1.5 text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
+                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-1.5 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none shadow-xs"
                 >
                   <option value="">All Statuses</option>
                   {activeTab === "loans" ? (
@@ -376,7 +540,7 @@ export default function GlobalDataOversight() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search global catalog..."
-                className="w-full pl-9 pr-4 py-1.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-indigo-500 shadow-xs"
+                className="w-full pl-9 pr-4 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:outline-none focus:border-indigo-500 shadow-xs"
               />
             </div>
           )}

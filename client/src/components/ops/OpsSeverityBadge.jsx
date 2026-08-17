@@ -20,9 +20,9 @@ export function OpsSeverityBadge({
       case "approved":
       case "success":
         return {
-          bg: "bg-emerald-50",
-          border: "border-emerald-200/80",
-          text: "text-emerald-700 font-semibold",
+          bg: "bg-emerald-50 dark:bg-emerald-950/40",
+          border: "border-emerald-200/80 dark:border-emerald-800",
+          text: "text-emerald-700 dark:text-emerald-300 font-semibold",
           dot: "bg-emerald-500",
           code: "Active",
         };
@@ -30,9 +30,9 @@ export function OpsSeverityBadge({
       case "warn":
       case "suspended":
         return {
-          bg: "bg-amber-50",
-          border: "border-amber-200/80",
-          text: "text-amber-800 font-semibold",
+          bg: "bg-amber-50 dark:bg-amber-950/40",
+          border: "border-amber-200/80 dark:border-amber-800",
+          text: "text-amber-800 dark:text-amber-300 font-semibold",
           dot: "bg-amber-500",
           code: "Warning",
         };
@@ -42,28 +42,28 @@ export function OpsSeverityBadge({
       case "failed":
       case "rejected":
         return {
-          bg: "bg-rose-50",
-          border: "border-rose-200/80",
-          text: "text-rose-700 font-semibold",
+          bg: "bg-rose-50 dark:bg-rose-950/40",
+          border: "border-rose-200/80 dark:border-rose-800",
+          text: "text-rose-700 dark:text-rose-300 font-semibold",
           dot: "bg-rose-500",
           code: "Critical",
         };
       case "pending":
       case "review":
         return {
-          bg: "bg-blue-50",
-          border: "border-blue-200/80",
-          text: "text-blue-700 font-semibold",
+          bg: "bg-blue-50 dark:bg-blue-950/40",
+          border: "border-blue-200/80 dark:border-blue-800",
+          text: "text-blue-700 dark:text-blue-300 font-semibold",
           dot: "bg-blue-500",
           code: "Pending",
         };
       case "info":
       default:
         return {
-          bg: "bg-slate-100",
-          border: "border-slate-200",
-          text: "text-slate-700 font-medium",
-          dot: "bg-slate-400",
+          bg: "bg-slate-100 dark:bg-slate-800/60",
+          border: "border-slate-200 dark:border-slate-700",
+          text: "text-slate-700 dark:text-slate-300 font-medium",
+          dot: "bg-slate-400 dark:bg-slate-500",
           code: "Info",
         };
     }

@@ -202,7 +202,7 @@ export default function CollegeAdminManager() {
       header: "Domain Whitelist",
       key: "domain",
       render: (val) => (
-        <span className="text-indigo-600 text-xs font-semibold">
+        <span className="text-indigo-600 dark:text-indigo-400 text-xs font-semibold">
           @{val || "institution.edu"}
         </span>
       ),
@@ -214,7 +214,7 @@ export default function CollegeAdminManager() {
         const feats = val || row.selectedServices || [];
         return (
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full">
+            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800 px-2.5 py-0.5 rounded-full">
               {feats.length} Active Modules
             </span>
             <button
@@ -222,7 +222,7 @@ export default function CollegeAdminManager() {
                 setEditingCollege(row);
                 setEditFeatures(feats);
               }}
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
+              className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline"
             >
               Edit
             </button>
@@ -261,8 +261,8 @@ export default function CollegeAdminManager() {
               }
               className={`text-xs font-semibold ${
                 isAct
-                  ? "text-amber-700 hover:text-amber-900"
-                  : "text-emerald-700 hover:text-emerald-900"
+                  ? "text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300"
+                  : "text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300"
               }`}
             >
               {isAct ? "Suspend" : "Activate"}
@@ -274,7 +274,7 @@ export default function CollegeAdminManager() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
+    <div className="min-h-screen bg-slate-50 dark:bg-void text-slate-900 dark:text-ink font-sans pb-12">
       <OpsHeader
         title="Tenant & Institution Management"
         subtitle="Provision new institutional tenants, configure domain permissions, and assign college administrator credentials"
@@ -285,11 +285,11 @@ export default function CollegeAdminManager() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
         {/* Error Alert */}
         {error && (
-          <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl text-rose-700 text-xs flex items-center justify-between shadow-xs">
+          <div className="bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 p-4 rounded-xl text-rose-700 dark:text-rose-300 text-xs flex items-center justify-between shadow-xs">
             <span>{error}</span>
             <button
               onClick={() => setError("")}
-              className="text-rose-800 font-semibold hover:underline"
+              className="text-rose-800 dark:text-rose-200 font-semibold hover:underline"
             >
               Dismiss
             </button>
@@ -299,7 +299,7 @@ export default function CollegeAdminManager() {
         {/* Action Bar Header */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <h2 className="text-sm font-bold text-slate-900 tracking-tight">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-ink tracking-tight">
               Onboarded College Tenants ({colleges.length})
             </h2>
           </div>
@@ -407,19 +407,19 @@ export default function CollegeAdminManager() {
         {isCreatingTenant && (
           <form
             onSubmit={handleCreateTenant}
-            className="bg-slate-900 border border-indigo-600/50 rounded-xl p-5 font-mono space-y-5 shadow-2xl"
+            className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-6 font-sans space-y-5 shadow-xs"
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-edge pb-3">
               <div className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-indigo-400" />
-                <span className="text-sm font-bold text-white uppercase">
+                <Building2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <span className="text-sm font-bold text-slate-900 dark:text-ink">
                   Direct Tenant Provisioning Form (Operator Path)
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCreatingTenant(false)}
-                className="text-slate-500 hover:text-slate-300 text-xs font-bold"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-semibold"
               >
                 CANCEL
               </button>
@@ -427,7 +427,7 @@ export default function CollegeAdminManager() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
               <div className="space-y-1">
-                <label className="text-[10px] text-slate-400 uppercase font-bold">
+                <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">
                   College Legal Name *
                 </label>
                 <input
@@ -437,12 +437,12 @@ export default function CollegeAdminManager() {
                   onChange={handleInputChange}
                   placeholder="e.g. Oxford University"
                   required
-                  className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-200 focus:border-indigo-500 focus:outline-none"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-deep border border-slate-200 dark:border-edge rounded-xl text-slate-900 dark:text-ink focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] text-slate-400 uppercase font-bold">
+                <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">
                   Institution Domain Whitelist *
                 </label>
                 <input
@@ -452,7 +452,7 @@ export default function CollegeAdminManager() {
                   onChange={handleInputChange}
                   placeholder="e.g. ox.ac.uk"
                   required
-                  className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-200 focus:border-indigo-500 focus:outline-none"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-deep border border-slate-200 dark:border-edge rounded-xl text-slate-900 dark:text-ink focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
 

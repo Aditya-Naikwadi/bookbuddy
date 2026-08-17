@@ -97,7 +97,7 @@ export default function SystemSettings() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
+    <div className="min-h-screen bg-slate-50 dark:bg-void text-slate-900 dark:text-ink font-sans pb-12">
       <OpsHeader
         title="System Configuration & Backups"
         subtitle="Manage SMTP email parameters, automated database backup schedules, and maintenance mode flags"
@@ -109,15 +109,15 @@ export default function SystemSettings() {
           <div
             className={`p-4 rounded-xl text-xs font-semibold flex items-center justify-between border shadow-xs ${
               message.type === "success"
-                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                : "bg-rose-50 border-rose-200 text-rose-800"
+                ? "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+                : "bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300"
             }`}
           >
             <div className="flex items-center gap-2">
               {message.type === "success" ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               ) : (
-                <AlertTriangle className="w-4 h-4 text-rose-600" />
+                <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
               )}
               <span>{message.text}</span>
             </div>
@@ -132,22 +132,22 @@ export default function SystemSettings() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Database & Backups Panel */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 space-y-5 shadow-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-6 space-y-5 shadow-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-edge pb-4">
               <div className="flex items-center gap-2">
-                <HardDrive className="w-5 h-5 text-indigo-600" />
-                <h2 className="text-sm font-bold text-slate-900">
+                <HardDrive className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <h2 className="text-sm font-bold text-slate-900 dark:text-ink">
                   Database Snapshots & Maintenance
                 </h2>
               </div>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-xl flex items-center justify-between text-xs">
+            <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-edge p-4 rounded-xl flex items-center justify-between text-xs">
               <div>
-                <p className="font-semibold text-slate-900">
+                <p className="font-semibold text-slate-900 dark:text-ink">
                   Automated Daily Backups
                 </p>
-                <p className="text-slate-500 mt-0.5 font-normal">
+                <p className="text-slate-500 dark:text-muted mt-0.5 font-normal">
                   Schedule: {settings.autoBackupSchedule}
                 </p>
               </div>
@@ -159,16 +159,16 @@ export default function SystemSettings() {
                   onChange={handleChange}
                   className="sr-only peer"
                 />
-                <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                <div className="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
               </label>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-xl flex items-center justify-between text-xs">
+            <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-edge p-4 rounded-xl flex items-center justify-between text-xs">
               <div>
-                <p className="font-semibold text-amber-900">
+                <p className="font-semibold text-amber-900 dark:text-amber-300">
                   Global System Maintenance Mode
                 </p>
-                <p className="text-slate-500 mt-0.5 font-normal">
+                <p className="text-slate-500 dark:text-muted mt-0.5 font-normal">
                   Locks non-super-admin access during platform upgrades
                 </p>
               </div>
@@ -180,16 +180,16 @@ export default function SystemSettings() {
                   onChange={handleChange}
                   className="sr-only peer"
                 />
-                <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-600"></div>
+                <div className="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-600"></div>
               </label>
             </div>
 
             {latestBackup && (
-              <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-xs space-y-1">
-                <div className="text-xs text-emerald-800 font-semibold">
+              <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-4 rounded-xl text-xs space-y-1">
+                <div className="text-xs text-emerald-800 dark:text-emerald-300 font-semibold">
                   Latest Snapshot Generated
                 </div>
-                <div className="text-slate-700 font-mono text-[11px]">
+                <div className="text-slate-700 dark:text-slate-300 font-mono text-[11px]">
                   {latestBackup}
                 </div>
               </div>
@@ -212,11 +212,11 @@ export default function SystemSettings() {
           </div>
 
           {/* Global SMTP Configuration Panel */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 space-y-5 shadow-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-6 space-y-5 shadow-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-edge pb-4">
               <div className="flex items-center gap-2">
-                <MailIcon className="w-5 h-5 text-indigo-600" />
-                <h2 className="text-sm font-bold text-slate-900">
+                <MailIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <h2 className="text-sm font-bold text-slate-900 dark:text-ink">
                   Global Email & SMTP Configuration
                 </h2>
               </div>
@@ -227,7 +227,7 @@ export default function SystemSettings() {
               className="space-y-4 text-xs font-medium"
             >
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
                   SMTP Host *
                 </label>
                 <input
@@ -236,13 +236,13 @@ export default function SystemSettings() {
                   value={settings.smtpHost}
                   onChange={handleChange}
                   required
-                  className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
+                  className="w-full px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none shadow-xs"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
                     Port *
                   </label>
                   <input
@@ -251,19 +251,19 @@ export default function SystemSettings() {
                     value={settings.smtpPort}
                     onChange={handleChange}
                     required
-                    className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
+                    className="w-full px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none shadow-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
                     Security Protocol
                   </label>
                   <select
                     name="smtpSecurity"
                     value={settings.smtpSecurity}
                     onChange={handleChange}
-                    className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
+                    className="w-full px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none shadow-xs"
                   >
                     <option value="TLS">TLS</option>
                     <option value="SSL">SSL</option>
@@ -273,7 +273,7 @@ export default function SystemSettings() {
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
                   SMTP Username
                 </label>
                 <input
@@ -281,11 +281,11 @@ export default function SystemSettings() {
                   name="smtpUser"
                   value={settings.smtpUser}
                   onChange={handleChange}
-                  className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:border-indigo-500 focus:outline-none shadow-xs"
+                  className="w-full px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none shadow-xs"
                 />
               </div>
 
-              <div className="pt-2 border-t border-slate-100 flex justify-end">
+              <div className="pt-2 border-t border-slate-100 dark:border-edge flex justify-end">
                 <button
                   type="submit"
                   disabled={isSaving}
