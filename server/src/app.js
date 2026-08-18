@@ -280,6 +280,7 @@ const getHealthStatus = async () => {
   };
 };
 
+// Retrieve live runtime commit SHA, explicitly prioritizing Render's auto-injected RENDER_GIT_COMMIT env var
 const getCommitSha = () =>
   process.env.RENDER_GIT_COMMIT ||
   process.env.VERCEL_GIT_COMMIT_SHA ||
