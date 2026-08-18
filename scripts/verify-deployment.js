@@ -17,6 +17,7 @@ const EXPECTED_COMMIT_SHA = process.env.EXPECTED_COMMIT_SHA || process.argv[3] |
 const TIMEOUT_SECONDS = parseInt(process.env.TIMEOUT_SECONDS || process.argv[4] || '300', 10);
 const POLL_INTERVAL_SECONDS = parseInt(process.env.POLL_INTERVAL_SECONDS || process.argv[5] || '10', 10);
 const RENDER_SERVICE_ID = process.env.RENDER_SERVICE_ID || 'srv-d9rltltbedkc73c1khkg';
+const RENDER_API_KEY = process.env.RENDER_API_KEY || '';
 const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL || '';
 const SUMMARY_FILE = process.env.GITHUB_STEP_SUMMARY || '';
 const TRIGGER_EVENT = process.env.GITHUB_EVENT_NAME || (process.argv[6] || 'manual');
@@ -189,6 +190,26 @@ const shasMatch = (expected, actual) => {
   return exp.startsWith(act) || act.startsWith(exp);
 };
 
+const checkRenderDeployStatus = async () => {
+  if (!RENDER_API_KEY || !RENDER_SERVICE_ID) return null;
+  try {
+    const isHttps = true;
+    const urlStr = `https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys?limit=1`;
+    const res = await makeRequest(urlStr, {
+      headers: { Authorization: `Bearer ${RENDER_API_KEY}` },
+    });
+    if (res.ok && Array.isArray(res.json) && res.json.length > 0) {
+      const deploy = res.json[0].deploy;
+      return {
+        id: deploy.id,
+        status: deploy.status,
+        commitSha: deploy.commit ? deploy.commit.id : null,
+      };
+    }
+  } catch {}
+  return null;
+};
+
 const runVerification = async () => {
   console.log('=====================================================');
   console.log('🚀 POST-PUSH DEPLOYMENT VERIFICATION AUTOMATION');
@@ -221,8 +242,15 @@ const runVerification = async () => {
       liveVersion = res.json.version || '1.0.0';
 
       const match = shasMatch(EXPECTED_COMMIT_SHA, liveCommitSha);
+      let renderDeployNote = '';
+      if (!match && RENDER_API_KEY && pollAttempts % 3 === 1) {
+        const renderDeploy = await checkRenderDeployStatus();
+        if (renderDeploy) {
+          renderDeployNote = ` | Render Deploy Status: ${renderDeploy.status.toUpperCase()}`;
+        }
+      }
       console.log(
-        `   [Attempt ${pollAttempts}] Status: ${res.status} | Live SHA: ${liveCommitSha} | Expected SHA: ${EXPECTED_COMMIT_SHA || 'ANY'} | Match: ${match ? '✅ YES' : '⏳ NO'}`
+        `   [Attempt ${pollAttempts}] Status: ${res.status} | Live SHA: ${liveCommitSha} | Expected SHA: ${EXPECTED_COMMIT_SHA || 'ANY'} | Match: ${match ? '✅ YES' : '⏳ NO'}${renderDeployNote}`
       );
 
       if (match) {
