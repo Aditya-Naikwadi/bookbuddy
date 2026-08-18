@@ -398,6 +398,12 @@ app.use('/api/v1/eresources/external', require('./routes/eresourceExternalRoutes
 app.use('/api/v1/google-books', require('./routes/googleBooksRoutes'));
 app.use('/api/v1/streak', require('./routes/streakRoutes'));
 app.use('/api/v1/stickers', require('./routes/stickerRoutes'));
+app.use('/api/v1/shelves', require('./routes/shelfRoutes'));
+app.use('/api/v1/book-requests', require('./routes/bookRequestRoutes'));
+app.use('/api/v1/item-reports', require('./routes/itemReportRoutes'));
+app.use('/api/v1/notification-preferences', require('./routes/notificationPrefRoutes'));
+app.use('/api/v1/reading-stats', require('./routes/readingStatsRoutes'));
+app.use('/api/v1/digital-card', require('./routes/digitalCardRoutes'));
 
 // Deprecated Legacy Unversioned Routes (Supported with 90-day deprecation headers)
 app.use('/api/college/:id/books', deprecationWarning, require('./routes/collegeBookRoutes'));

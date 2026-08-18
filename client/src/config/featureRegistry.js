@@ -157,6 +157,82 @@ export const FEATURE_REGISTRY = {
     isCore: false,
     requires: [],
   },
+  "student.shelves": {
+    id: "student.shelves",
+    name: "Custom Student Bookshelves",
+    category: FEATURE_CATEGORIES.CONTENT.key,
+    description:
+      "Allow students to build and organize custom book collections.",
+    icon: ListPlus,
+    isCore: false,
+    requires: [],
+  },
+  "student.bookRequests": {
+    id: "student.bookRequests",
+    name: "Book Acquisition Requests",
+    category: FEATURE_CATEGORIES.CONTENT.key,
+    description:
+      "Let students request new physical/digital titles for library addition.",
+    icon: BookOpen,
+    isCore: false,
+    requires: [],
+  },
+  "student.itemReports": {
+    id: "student.itemReports",
+    name: "Lost / Damaged Item Reporting",
+    category: FEATURE_CATEGORIES.COMMUNICATION.key,
+    description:
+      "Direct student self-service reporting for damaged or missing loans.",
+    icon: HelpCircle,
+    isCore: false,
+    requires: [],
+  },
+  "student.renewal": {
+    id: "student.renewal",
+    name: "Self-Service Book Renewals",
+    category: FEATURE_CATEGORIES.CONTENT.key,
+    description:
+      "Enable online loan extensions with real-time hold queue checks.",
+    icon: Library,
+    isCore: false,
+    requires: [],
+  },
+  "student.notificationPrefs": {
+    id: "student.notificationPrefs",
+    name: "Notification Preferences Panel",
+    category: FEATURE_CATEGORIES.COMMUNICATION.key,
+    description: "Student control over email, push, and in-app alert channels.",
+    icon: HelpCircle,
+    isCore: false,
+    requires: [],
+  },
+  "student.finePayment": {
+    id: "student.finePayment",
+    name: "Online Fine Payment Gateway",
+    category: FEATURE_CATEGORIES.FINANCIALS.key,
+    description: "Seamless online clearing of overdue library fines.",
+    icon: Receipt,
+    isCore: false,
+    requires: [],
+  },
+  "student.stats": {
+    id: "student.stats",
+    name: "Personal Reading Analytics",
+    category: FEATURE_CATEGORIES.ENGAGEMENT.key,
+    description: "Visual charts for reading history and checkout velocity.",
+    icon: BarChart3,
+    isCore: false,
+    requires: [],
+  },
+  "student.digitalCard": {
+    id: "student.digitalCard",
+    name: "Digital Patron QR Library Card",
+    category: FEATURE_CATEGORIES.CORE.key,
+    description: "Time-bound signed QR code for instant scanner check-ins.",
+    icon: Users,
+    isCore: false,
+    requires: [],
+  },
 };
 
 export const getEnabledFeaturesList = (userEnabledIds) => {

@@ -38,6 +38,15 @@ const fineSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    paymentTransactionId: {
+      type: String,
+      default: null,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['unpaid', 'pending', 'paid', 'failed'],
+      default: 'unpaid',
+    },
   },
   {
     timestamps: true,

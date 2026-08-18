@@ -127,6 +127,8 @@ const verifyPayment = async (req, res, next) => {
       const fine = await Fine.findById(fineId);
       if (fine && fine.status !== 'paid') {
         fine.status = 'paid';
+        fine.paymentStatus = 'paid';
+        fine.paymentTransactionId = razorpay_payment_id;
         fine.paidAt = new Date();
         await fine.save();
       }
