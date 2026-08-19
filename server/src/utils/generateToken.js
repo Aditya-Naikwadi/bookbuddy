@@ -1,20 +1,32 @@
 const jwt = require('jsonwebtoken');
+const config = require('../config');
 
 const generateToken = (res, userId) => {
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: '15m',
+  if (!userId) {
+    throw new Error('User ID must be provided to generate token');
+  }
+
+  const jwtSecret = config.jwt.secret || process.env.JWT_SECRET;
+  const refreshSecret = config.jwt.refreshSecret || process.env.JWT_REFRESH_SECRET;
+
+  const token = jwt.sign({ userId }, jwtSecret, {
+    algorithm: 'HS256',
+    expiresIn: config.jwt.accessExpiry || '15m',
   });
 
-  const refreshToken = jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: '7d',
+  const refreshToken = jwt.sign({ userId }, refreshSecret, {
+    algorithm: 'HS256',
+    expiresIn: config.jwt.refreshExpiry || '7d',
   });
 
-  res.cookie('jwt_refresh', refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV !== 'development', // Use secure cookies in production
-    sameSite: 'strict', // Prevent CSRF attacks
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  });
+  if (res && typeof res.cookie === 'function') {
+    res.cookie('jwt_refresh', refreshToken, {
+      httpOnly: true,
+      secure: config.nodeEnv === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+  }
 
   return token;
 };

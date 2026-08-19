@@ -63,34 +63,37 @@ if (targetRedisUrl) {
 }
 
 const getCache = async (key) => {
-  if (!isConnected || !redisClient) return null;
+  if (!isConnected || !redisClient || !key) return null;
   try {
     const data = await redisClient.get(key);
     return data ? JSON.parse(data) : null;
-  } catch {
+  } catch (err) {
+    logger.warn(`⚠️ Redis getCache error for key "${key}": ${err.message}`);
     return null;
   }
 };
 
 const setCache = async (key, value, ttlSeconds = 300) => {
-  if (!isConnected || !redisClient) return false;
+  if (!isConnected || !redisClient || !key) return false;
   try {
     await redisClient.set(key, JSON.stringify(value), 'EX', ttlSeconds);
     return true;
-  } catch {
+  } catch (err) {
+    logger.warn(`⚠️ Redis setCache error for key "${key}": ${err.message}`);
     return false;
   }
 };
 
 const deleteCache = async (keyPattern) => {
-  if (!isConnected || !redisClient) return false;
+  if (!isConnected || !redisClient || !keyPattern) return false;
   try {
     const keys = await redisClient.keys(keyPattern);
     if (keys.length > 0) {
       await redisClient.del(keys);
     }
     return true;
-  } catch {
+  } catch (err) {
+    logger.warn(`⚠️ Redis deleteCache error for pattern "${keyPattern}": ${err.message}`);
     return false;
   }
 };

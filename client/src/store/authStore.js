@@ -228,6 +228,7 @@ const useAuthStore = create((set) => {
             setInMemoryToken(newToken);
             localStorage.setItem("token", newToken);
           } catch {
+            // Ignore refresh token error and check if storedToken is valid
             if (storedToken && !isNearExpiry) {
               setInMemoryToken(storedToken);
             }
@@ -250,7 +251,7 @@ const useAuthStore = create((set) => {
         });
         return true;
       } catch {
-        // If stored token or refresh failed but originalSuperAdminToken exists, attempt to restore super admin
+        // Fallback: If stored token or refresh failed but originalSuperAdminToken exists, attempt to restore super admin
         const origToken = localStorage.getItem("originalSuperAdminToken");
         if (origToken) {
           setInMemoryToken(origToken);
@@ -268,7 +269,7 @@ const useAuthStore = create((set) => {
             });
             return true;
           } catch {
-            // Fall through to logout
+            // Fall through to unauthenticated logout reset
           }
         }
 

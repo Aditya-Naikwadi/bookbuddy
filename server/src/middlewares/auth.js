@@ -39,7 +39,7 @@ const protect = async (req, res, next) => {
         try {
           collegeStatus = await redisClient.get(`college:status:${collegeIdStr}`);
         } catch {
-          // ignore cache errors, fallback to DB
+          // Ignore cache fetch error, fallback to DB query
         }
       }
 
@@ -55,7 +55,7 @@ const protect = async (req, res, next) => {
           try {
             await redisClient.set(`college:status:${collegeIdStr}`, collegeStatus, 'EX', 60);
           } catch {
-            // ignore cache set errors
+            // Ignore cache set error
           }
         }
       }

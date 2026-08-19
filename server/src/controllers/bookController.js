@@ -1,13 +1,14 @@
 const Book = require('../models/Book');
 const BookDTO = require('../dtos/BookDTO');
+const AppError = require('../utils/AppError');
 const asyncHandler = require('express-async-handler');
 
 // @desc    Get all books with search, filter & pagination
 // @route   GET /api/books
 // @access  Public
 const getBooks = asyncHandler(async (req, res) => {
-  const pageSize = Number(req.query.limit) || 12;
-  const page = Number(req.query.page) || 1;
+  const pageSize = Math.max(1, Math.min(100, Number(req.query.limit) || 12));
+  const page = Math.max(1, Number(req.query.page) || 1);
 
   const { search, category, format, available, yearFrom, yearTo, lang } = req.query;
 
@@ -59,31 +60,29 @@ const getBooks = asyncHandler(async (req, res) => {
 // @desc    Get book by ID
 // @route   GET /api/books/:id
 // @access  Public
-const getBookById = asyncHandler(async (req, res) => {
+const getBookById = asyncHandler(async (req, res, next) => {
   const book = await Book.findOne({ _id: req.params.id, ...req.tenantFilter });
 
-  if (book) {
-    res.json({ success: true, book: BookDTO.transform(book) });
-  } else {
-    res.status(404);
-    throw new Error('Book not found');
+  if (!book) {
+    return next(new AppError('Book not found', 404));
   }
+
+  res.json({ success: true, book: BookDTO.transform(book) });
 });
 
 // @desc    Get book availability
 // @route   GET /api/books/:id/availability
 // @access  Public
-const getBookAvailability = asyncHandler(async (req, res) => {
+const getBookAvailability = asyncHandler(async (req, res, next) => {
   const book = await Book.findOne({ _id: req.params.id, ...req.tenantFilter }).select(
     'totalCopies availableCopies'
   );
 
-  if (book) {
-    res.json({ success: true, availability: book });
-  } else {
-    res.status(404);
-    throw new Error('Book not found');
+  if (!book) {
+    return next(new AppError('Book not found', 404));
   }
+
+  res.json({ success: true, availability: book });
 });
 
 module.exports = {

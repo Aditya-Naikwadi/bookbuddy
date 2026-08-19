@@ -56,7 +56,10 @@ const cacheHelper = {
    * Generates a multi-tenant scoped cache key to prevent cross-tenant collisions.
    */
   makeKey: (collegeId, resource, identifier) => {
-    return `tenant:${collegeId}:${resource}:${identifier}`;
+    const cId = collegeId || 'global';
+    const res = resource || 'generic';
+    const id = identifier || 'all';
+    return `tenant:${cId}:${res}:${id}`;
   },
 };
 
