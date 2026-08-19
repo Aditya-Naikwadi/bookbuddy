@@ -23,17 +23,19 @@ BookBuddy is a modern, production-grade full-stack platform that transforms trad
 
 ---
 
-## 🚀 Live Deployments
+## 🚀 Live Deployments & Case Study
 
 - 🌐 **Production Web Application (Vercel):** [https://book-buddy-eight-rosy.vercel.app](https://book-buddy-eight-rosy.vercel.app)
 - ⚙️ **Production REST API & Backend (Render):** [https://bookbuddy-kcwl.onrender.com](https://bookbuddy-kcwl.onrender.com)
 - 🏥 **Backend Health Check:** [`https://bookbuddy-kcwl.onrender.com/health`](https://bookbuddy-kcwl.onrender.com/health)
 - 📌 **Live Version Metadata:** [`https://bookbuddy-kcwl.onrender.com/version`](https://bookbuddy-kcwl.onrender.com/version)
+- 📄 **Full Engineering Case Study:** [`docs/CASE_STUDY.md`](docs/CASE_STUDY.md)
 
 ---
 
 ## 📋 Table of Contents
 
+- [📄 Comprehensive Engineering Case Study](docs/CASE_STUDY.md)
 - [📖 Overview \& Key Differentiators](#-overview--key-differentiators)
 - [🏛️ System Architecture](#️-system-architecture)
 - [🔒 Multi-Tenancy \& Data Isolation](#-multi-tenancy--data-isolation)
@@ -266,29 +268,31 @@ sequenceDiagram
 
 ## ✨ Portal Feature Matrix
 
-| Feature | Student Portal 🎓 | College Admin Portal 🏛️ | Super Admin Portal 🌐 |
-| :--- | :---: | :---: | :---: |
-| **Catalog Search & Filtering** | ✅ | ✅ | ✅ |
-| **Physical Book Reservations & Holds** | ✅ | ✅ (Manage Holds) | ✅ |
-| **In-Browser EPUB & PDF Reader** | ✅ | ✅ | ✅ |
-| **Lab Workstation Booking** | ✅ | ✅ (Seat Config) | ✅ |
-| **Reading Streaks & Badges** | ✅ | ❌ | ❌ |
-| **Online Fine Payments (Razorpay)** | ✅ | ✅ (Manual Fine Override) | ✅ |
-| **Roster CSV Bulk Upload (Worker)** | ❌ | ✅ | ✅ |
-| **Multi-Tenant Feature Gate Toggles** | ❌ | ❌ | ✅ |
-| **Campus Suspension & Archival** | ❌ | ❌ | ✅ |
-| **Super-Admin User Impersonation** | ❌ | ❌ | ✅ |
-| **Global Audit Log Inspection** | ❌ | ✅ (Campus Scope) | ✅ (Global Scope) |
+| Feature                                | Student Portal 🎓 |  College Admin Portal 🏛️  | Super Admin Portal 🌐 |
+| :------------------------------------- | :---------------: | :-----------------------: | :-------------------: |
+| **Catalog Search & Filtering**         |        ✅         |            ✅             |          ✅           |
+| **Physical Book Reservations & Holds** |        ✅         |     ✅ (Manage Holds)     |          ✅           |
+| **In-Browser EPUB & PDF Reader**       |        ✅         |            ✅             |          ✅           |
+| **Lab Workstation Booking**            |        ✅         |     ✅ (Seat Config)      |          ✅           |
+| **Reading Streaks & Badges**           |        ✅         |            ❌             |          ❌           |
+| **Online Fine Payments (Razorpay)**    |        ✅         | ✅ (Manual Fine Override) |          ✅           |
+| **Roster CSV Bulk Upload (Worker)**    |        ❌         |            ✅             |          ✅           |
+| **Multi-Tenant Feature Gate Toggles**  |        ❌         |            ❌             |          ✅           |
+| **Campus Suspension & Archival**       |        ❌         |            ❌             |          ✅           |
+| **Super-Admin User Impersonation**     |        ❌         |            ❌             |          ✅           |
+| **Global Audit Log Inspection**        |        ❌         |     ✅ (Campus Scope)     |   ✅ (Global Scope)   |
 
 ---
 
 ## 🔌 Complete API Reference
 
 ### Core & Health
+
 - `GET /health` — Detailed system health payload (`api`, `database`, `cache`, `externalServices`)
 - `GET /version` — Version metadata and active deployment commit SHA
 
 ### Authentication & MFA
+
 - `POST /api/v1/auth/register` — Public student/patron registration
 - `POST /api/v1/auth/login` — Authenticate credentials (returns access token & sets refresh cookie)
 - `POST /api/v1/auth/refresh` — Rotate refresh token & issue new access token
@@ -297,23 +301,27 @@ sequenceDiagram
 - `POST /api/v1/auth/mfa/verify` — Verify TOTP code and enable MFA
 
 ### Books & Catalog
+
 - `GET /api/v1/books` — Search physical book catalog with filters & pagination
 - `GET /api/v1/books/:id` — Retrieve book details by ID
 - `GET /api/v1/books/:id/availability` — Retrieve real-time available copies
 - `GET /api/v1/catalog/external-search` — Aggregated search across Open Library & Google Books
 
 ### E-Resources & Reader
+
 - `GET /api/v1/eresources` — List digital e-resources (EPUB/PDF)
 - `GET /api/v1/eresources/:id/stream` — Stream e-resource file with HTTP 206 Range support
 - `POST /api/v1/annotations` — Create text highlight/note annotation
 - `GET /api/v1/annotations` — Fetch patron annotations for an e-resource
 
 ### Lab Reservations
+
 - `GET /api/v1/lab/seats` — Get computer lab seat grid status
 - `POST /api/v1/lab/bookings` — Reserve a workstation seat for a time slot
 - `DELETE /api/v1/lab/bookings/:id` — Cancel workstation reservation
 
 ### Fines & Payments
+
 - `GET /api/v1/fines` — Get patron outstanding fines
 - `POST /api/v1/payments/create-order` — Create Razorpay order ID for fine payment
 - `POST /api/v1/payments/verify` — Verify payment HMAC signature and clear fine
@@ -360,6 +368,7 @@ CLOUDINARY_URL=cloudinary://key:secret@cloud_name
 ## 🚀 Quick Start & Installation Guide
 
 ### Prerequisites
+
 - **Node.js**: `v20.x` or higher
 - **npm**: `v10.x` or higher
 - **MongoDB**: `v6.0` or cloud instance (Atlas)
