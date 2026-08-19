@@ -17,6 +17,8 @@
     "lint:client": "cd client && npm run lint",
     "test:server": "cd server && npm test",
     "test:load": "k6 run scripts/k6-load-test.js",
+    "loadtest:smoke": "node load-tests/smoke.js",
+    "loadtest:flow": "artillery run load-tests/user-flow.yml",
     "prepush": "sh scripts/pre-commit.sh && npm run lint:server && npm run lint:client && npm run test:server"
   },
   "lint-staged": {

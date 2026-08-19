@@ -1,0 +1,46 @@
+config:
+  target: "{{ $processEnv.BASE_URL || 'http://localhost:5000' }}"
+  phases:
+    - duration: 20
+      arrivalRate: 2
+      rampTo: 10
+      name: "Ramp-up User Flow (2 to 10 VUs)"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      User-Agent: "BookBuddy-Artillery-LoadTest/1.0"
+  ensure:
+    p95: 300
+    maxErrorRate: 1
+
+scenarios:
+  - name: "Authenticated Patron Flow: Login -> Search Catalog -> Reserve Book"
+    flow:
+      # Step 1: Authenticate against real login endpoint
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "student@bookbuddy.internal"
+            password: "Password123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+            - json: "$.data.token"
+              as: "fallbackToken"
+
+      # Step 2: Search physical book catalog using captured Bearer JWT
+      - get:
+          url: "/api/v1/books?page=1&pageSize=10"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          capture:
+            - json: "$.data[0]._id"
+              as: "targetBookId"
+
+      # Step 3: Place hold/reservation for captured book ID
+      - post:
+          url: "/api/v1/reservations"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            bookId: "{{ targetBookId }}"
