@@ -3,7 +3,7 @@ services:
     name: bookbuddy-backend
     env: node
     rootDir: server
-    buildCommand: npm install
+    buildCommand: npm install --legacy-peer-deps
     startCommand: node src/server.js
     healthCheckPath: /health
     autoDeploy: true

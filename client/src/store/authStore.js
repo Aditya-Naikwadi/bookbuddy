@@ -7,6 +7,28 @@ import apiClient, {
   broadcastLogout,
 } from "../api/client";
 
+const isTokenExpiredOrNearExpiry = (token, thresholdSeconds = 60) => {
+  if (!token || typeof token !== "string") return true;
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return true;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join(""),
+    );
+    const payload = JSON.parse(jsonPayload);
+    if (!payload.exp) return false;
+    const nowInSec = Math.floor(Date.now() / 1000);
+    return payload.exp - nowInSec <= thresholdSeconds;
+  } catch {
+    return false;
+  }
+};
+
 const useAuthStore = create((set) => {
   setOnUnauthorizedCallback(() => {
     set({ user: null, token: null, isAuthenticated: false, isLoading: false });
@@ -193,16 +215,23 @@ const useAuthStore = create((set) => {
         await fetchCsrfToken();
 
         const storedToken = localStorage.getItem("token");
-        if (storedToken) {
-          setInMemoryToken(storedToken);
-        }
+        const isNearExpiry =
+          storedToken && isTokenExpiredOrNearExpiry(storedToken, 60);
 
-        // Silent token refresh using httpOnly cookie if no storedToken
-        if (!storedToken) {
-          const { data } = await apiClient.post("/auth/refresh");
-          const newToken = data.accessToken;
-          setInMemoryToken(newToken);
-          localStorage.setItem("token", newToken);
+        if (storedToken && !isNearExpiry) {
+          setInMemoryToken(storedToken);
+        } else {
+          // Silent token refresh if missing or near expiration
+          try {
+            const { data } = await apiClient.post("/auth/refresh");
+            const newToken = data.accessToken;
+            setInMemoryToken(newToken);
+            localStorage.setItem("token", newToken);
+          } catch {
+            if (storedToken && !isNearExpiry) {
+              setInMemoryToken(storedToken);
+            }
+          }
         }
 
         const profileRes = await apiClient.get("/auth/profile");

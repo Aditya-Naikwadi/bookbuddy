@@ -206,6 +206,7 @@ const getHealthStatus = async () => {
   }
 
   const isDbHealthy = readyState === 1;
+  const isWarmingUp = readyState === 2 || (readyState === 0 && process.uptime() < 15);
   const isCacheHealthy = true; // Redis is optional performance cache with transparent 100% in-memory fallback
 
   const components = {
@@ -219,7 +220,7 @@ const getHealthStatus = async () => {
     },
     database: {
       name: 'MongoDB Database',
-      status: isDbHealthy ? 'healthy' : 'down',
+      status: isDbHealthy ? 'healthy' : isWarmingUp ? 'degraded' : 'down',
       latencyMs: dbLatencyMs,
       poolState: dbStatus,
       readyState,
@@ -251,7 +252,7 @@ const getHealthStatus = async () => {
       ? 'degraded'
       : 'ok';
 
-  const statusCode = isDbHealthy ? 200 : 503;
+  const statusCode = isDbHealthy || isWarmingUp ? 200 : 503;
   const commitSha = getCommitSha();
 
   const message = !isDbHealthy
@@ -281,13 +282,39 @@ const getHealthStatus = async () => {
 };
 
 // Retrieve live runtime commit SHA, explicitly prioritizing Render's auto-injected RENDER_GIT_COMMIT env var
-const getCommitSha = () =>
-  process.env.RENDER_GIT_COMMIT ||
-  process.env.VERCEL_GIT_COMMIT_SHA ||
-  process.env.COMMIT_SHA ||
-  process.env.GITHUB_SHA ||
-  process.env.BUILD_ID ||
-  'unknown';
+const getCommitSha = () => {
+  if (process.env.RENDER_GIT_COMMIT) return process.env.RENDER_GIT_COMMIT;
+  if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA;
+  if (process.env.COMMIT_SHA) return process.env.COMMIT_SHA;
+  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA;
+  if (process.env.BUILD_ID) return process.env.BUILD_ID;
+
+  try {
+    const { execSync } = require('child_process');
+    const sha = execSync('git rev-parse HEAD', {
+      encoding: 'utf8',
+      timeout: 1000,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    if (sha) return sha;
+  } catch {
+    // Ignore git rev-parse failure if git is not available or not in a git repo
+  }
+
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const versionFilePath = path.join(__dirname, '..', 'version.json');
+    if (fs.existsSync(versionFilePath)) {
+      const data = JSON.parse(fs.readFileSync(versionFilePath, 'utf8'));
+      if (data.commitSha) return data.commitSha;
+    }
+  } catch {
+    // Ignore file read or parse error if version.json is invalid
+  }
+
+  return 'unknown';
+};
 
 const healthCheckController = async (req, res) => {
   const health = await getHealthStatus();

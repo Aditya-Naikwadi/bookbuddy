@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const commitSha =
+  process.env.RENDER_GIT_COMMIT ||
   process.env.VERCEL_GIT_COMMIT_SHA ||
   process.env.GITHUB_SHA ||
   process.env.COMMIT_SHA ||

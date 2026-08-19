@@ -43,7 +43,7 @@ const hashToken = (token) => {
 };
 
 const verifyAccessToken = (token) => {
-  return jwt.verify(token, config.jwt.secret);
+  return jwt.verify(token, config.jwt.secret, { algorithms: ['HS256'] });
 };
 
 const generateAccessToken = (user, impersonationOptions = null) => {

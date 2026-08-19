@@ -4,7 +4,7 @@
   "app": "BookBuddy Frontend Client",
   "commitSha": "local-dev",
   "shortCommitSha": "local-d",
-  "version": "0.0.0",
-  "buildTime": "2026-08-18T06:53:06.595Z",
+  "version": "1.0.0",
+  "buildTime": "2026-08-19T16:44:27.335Z",
   "environment": "production"
 }

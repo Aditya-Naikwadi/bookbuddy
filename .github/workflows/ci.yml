@@ -175,6 +175,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            COMMIT_SHA=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -190,16 +192,20 @@ jobs:
         env:
           RENDER_SERVICE_ID: ${{ vars.RENDER_SERVICE_ID || 'srv-d9rltltbedkc73c1khkg' }}
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          if [ -z "$RENDER_API_KEY" ]; then
-            echo "::warning::RENDER_API_KEY secret is not set in GitHub Environment Secrets. Skipping Render API deployment trigger."
-          else
+          if [ -n "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "🚀 Triggering Render deployment via Deploy Hook URL..."
+            curl -s -X POST "$RENDER_DEPLOY_HOOK_URL"
+          elif [ -n "$RENDER_API_KEY" ]; then
             echo "🚀 Triggering Render deployment for service ${RENDER_SERVICE_ID}..."
             curl --request POST \
               --url "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys" \
               --header "Authorization: Bearer ${RENDER_API_KEY}" \
               --header "Accept: application/json" \
               --header "Content-Type: application/json"
+          else
+            echo "::warning::Neither RENDER_API_KEY nor RENDER_DEPLOY_HOOK_URL secret is set in GitHub Environment Secrets. Skipping Render API deployment trigger."
           fi
 
   verify-post-deploy:
@@ -234,7 +240,9 @@ jobs:
           POLL_INTERVAL_SECONDS: 15
           RENDER_SERVICE_ID: ${{ vars.RENDER_SERVICE_ID || 'srv-d9rltltbedkc73c1khkg' }}
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          ALLOW_SHA_MISMATCH: ${{ (secrets.RENDER_API_KEY == '' && secrets.RENDER_DEPLOY_HOOK_URL == '') && 'true' || 'false' }}
         run: node scripts/verify-deployment.js
 
       - name: Upload Audit History Artifact

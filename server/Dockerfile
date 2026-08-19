@@ -32,6 +32,8 @@ USER node
 EXPOSE 5000
 
 # Environment Defaults
+ARG COMMIT_SHA
+ENV COMMIT_SHA=${COMMIT_SHA}
 ENV NODE_ENV=production
 ENV PORT=5000
 

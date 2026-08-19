@@ -185,6 +185,24 @@ const runAllE2ETests = async () => {
   const pass4 = test4.exitCode === 1 && test4.stdout.includes('ROLLBACK REQUIRED');
   results.push({ name: 'Negative Case 3: Crashed/Unreachable Server Caught', pass: pass4, exitCode: test4.exitCode });
 
+  // --- 5. FALLBACK CASE: ALLOW_SHA_MISMATCH = TRUE ---
+  const port5 = 5805;
+  const server5 = await createMockServer(port5, { commitSha: 'different-commit-sha-77777' });
+  const test5 = await runTest(
+    'FALLBACK CASE: SHA Mismatch Allowed via ALLOW_SHA_MISMATCH=true',
+    {
+      APP_URL: `http://127.0.0.1:${port5}`,
+      EXPECTED_COMMIT_SHA: 'expected-commit-sha-88888',
+      ALLOW_SHA_MISMATCH: 'true',
+      TIMEOUT_SECONDS: '2',
+      POLL_INTERVAL_SECONDS: '1',
+    }
+  );
+  server5.close();
+
+  const pass5 = test5.exitCode === 0 && test5.stdout.includes('DEPLOYMENT VERIFIED LIVE');
+  results.push({ name: 'Fallback Case: ALLOW_SHA_MISMATCH=true Gracefully Passed', pass: pass5, exitCode: test5.exitCode });
+
   // --- 5. REPORT SUMMARY ---
   console.log('\n=====================================================');
   console.log('📊 FINAL E2E AUTOMATION VERIFICATION SUMMARY');

@@ -20,8 +20,21 @@ function getCookie(name) {
   return null;
 }
 
+const rawBaseUrl =
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  "/api/v1";
+
+const getBaseUrl = (raw) => {
+  if (!raw) return "/api/v1";
+  if (raw.startsWith("/")) return raw;
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/api/v1") ? trimmed : `${trimmed}/api/v1`;
+};
+
 const apiClient = axios.create({
-  baseURL: "/api/v1",
+  baseURL: getBaseUrl(rawBaseUrl),
+  timeout: 30000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -128,14 +141,45 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// Response Interceptor for 401 handling
+// Response Interceptor for 401 token refresh, transient 502/503/504 GET retries & 403 CSRF auto-recovery
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
+    const isGetMethod = originalRequest.method?.toLowerCase() === "get";
+    const status = error.response?.status;
+
+    // Retry transient 502/503/504 errors on idempotent GET requests (up to 2 retries)
+    if (isGetMethod && [502, 503, 504].includes(status)) {
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+      if (originalRequest._retryCount <= 2) {
+        const delayMs = Math.pow(2, originalRequest._retryCount) * 500;
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        return apiClient(originalRequest);
+      }
+    }
+
+    // Auto-recovery for 403 CSRF token errors on state-changing requests
     if (
-      !originalRequest ||
+      status === 403 &&
+      !originalRequest._csrfRetried &&
+      error.response?.data?.message?.toLowerCase().includes("csrf")
+    ) {
+      originalRequest._csrfRetried = true;
+      const newCsrf = await fetchCsrfToken();
+      if (newCsrf) {
+        originalRequest.headers["x-csrf-token"] = newCsrf;
+        return apiClient(originalRequest);
+      }
+    }
+
+    // Skip 401 refresh logic for auth routes
+    if (
       originalRequest.url?.includes("/auth/refresh") ||
       originalRequest.url?.includes("/auth/login") ||
       originalRequest.url?.includes("/auth/register") ||
@@ -145,7 +189,7 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });

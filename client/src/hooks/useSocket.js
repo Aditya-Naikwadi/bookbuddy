@@ -2,7 +2,16 @@ import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import useAuthStore from "../store/authStore";
 
-const SOCKET_URL = typeof window !== "undefined" ? window.location.origin : "";
+const getSocketUrl = () => {
+  const envUrl =
+    import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL;
+  if (envUrl) {
+    return envUrl.replace(/\/api\/v1\/?$/, "").replace(/\/$/, "");
+  }
+  return typeof window !== "undefined" ? window.location.origin : "";
+};
+
+const SOCKET_URL = getSocketUrl();
 
 export const useSocket = () => {
   const { token } = useAuthStore();

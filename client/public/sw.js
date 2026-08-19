@@ -1,16 +1,11 @@
 const CACHE_NAME = "bookbuddy-pwa-v1";
-const STATIC_ASSETS = [
-  "/",
-  "/index.html",
-  "/version.json",
-  "/favicon.ico",
-];
+const STATIC_ASSETS = ["/", "/index.html", "/version.json", "/favicon.ico"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS);
-    })
+    }),
   );
   self.skipWaiting();
 });
@@ -23,9 +18,9 @@ self.addEventListener("activate", (event) => {
           if (name !== CACHE_NAME) {
             return caches.delete(name);
           }
-        })
+        }),
       );
-    })
+    }),
   );
   self.clients.claim();
 });
@@ -58,11 +53,11 @@ self.addEventListener("fetch", (event) => {
           }
           return networkResponse;
         });
-      })
+      }),
     );
   } else {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request).catch(() => caches.match(event.request)),
     );
   }
 });

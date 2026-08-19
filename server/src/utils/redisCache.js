@@ -26,10 +26,15 @@ const targetRedisUrl = normalizeRedisUrl(rawRedisUrl);
 
 if (targetRedisUrl) {
   try {
+    const isTls = targetRedisUrl.startsWith('rediss://');
     redisClient = new Redis(targetRedisUrl, {
-      maxRetriesPerRequest: 1,
-      connectTimeout: 2000,
-      retryStrategy: () => null,
+      maxRetriesPerRequest: 2,
+      connectTimeout: 5000,
+      tls: isTls ? { rejectUnauthorized: false } : undefined,
+      retryStrategy: (times) => {
+        if (times > 5) return null; // Stop retrying after 5 attempts to allow graceful in-memory fallback
+        return Math.min(times * 500, 3000);
+      },
       lazyConnect: true,
     });
 
@@ -38,15 +43,22 @@ if (targetRedisUrl) {
       logger.info('Connected to Redis cache.');
     });
 
-    redisClient.on('error', (_err) => {
+    redisClient.on('error', (err) => {
+      if (isConnected) {
+        logger.warn(`⚠️ Redis Cache Connection Warning [${err.code || 'UNKNOWN'}]: ${err.message}`);
+      }
       isConnected = false;
     });
 
-    redisClient.connect().catch(() => {
+    redisClient.connect().catch((err) => {
       isConnected = false;
+      logger.warn(
+        `⚠️ Redis Initial Connection Failed [${err.code || 'UNKNOWN'}]: ${err.message}. Using in-memory fallback.`
+      );
     });
-  } catch {
+  } catch (err) {
     isConnected = false;
+    logger.warn(`⚠️ Redis Client Creation Error: ${err.message}. Using in-memory fallback.`);
   }
 }
 

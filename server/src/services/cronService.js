@@ -17,14 +17,22 @@ const { runInTransaction } = require('../utils/transactionHelper');
 
 const { captureException } = require('../utils/sentry');
 
+const runningJobs = new Set();
+
 /**
- * Single job runner wrapper for observability and failure isolation.
+ * Single job runner wrapper for observability, failure isolation, and atomic execution concurrency locking.
  */
 const runJob = async (jobName, jobFn) => {
   if (mongoose.connection.readyState !== 1) {
     logger.warn(`Skipping cron job ${jobName}: Database is disconnected.`);
     return;
   }
+  if (runningJobs.has(jobName)) {
+    logger.warn(`Skipping cron job ${jobName}: Previous execution is still in progress.`);
+    return;
+  }
+
+  runningJobs.add(jobName);
   const startedAt = new Date();
   let affectedCount;
   try {
@@ -46,6 +54,8 @@ const runJob = async (jobName, jobFn) => {
       status: 'failed',
       errorMessage: err.message,
     }).catch(() => {});
+  } finally {
+    runningJobs.delete(jobName);
   }
 };
 

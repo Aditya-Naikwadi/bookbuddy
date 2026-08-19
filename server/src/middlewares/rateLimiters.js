@@ -144,9 +144,23 @@ const getClientIp = (req) => {
   return req?.ip || req?.socket?.remoteAddress || 'unknown-ip';
 };
 
+const isSystemProbeRoute = (path) => {
+  return [
+    '/health',
+    '/api/health',
+    '/api/v1/health',
+    '/version',
+    '/api/version',
+    '/api/v1/version',
+    '/ping',
+    '/api/ping',
+    '/api/v1/ping',
+  ].includes(path);
+};
+
 // Middlewares
 const globalLimiter = async (req, res, next) => {
-  if (req.path === '/health' || req.path === '/api/health') {
+  if (isSystemProbeRoute(req.path)) {
     return next();
   }
 
@@ -176,7 +190,7 @@ const globalLimiter = async (req, res, next) => {
 };
 
 const authLimiter = async (req, res, next) => {
-  if (req.path === '/health' || req.path === '/api/health') {
+  if (isSystemProbeRoute(req.path)) {
     return next();
   }
 
@@ -215,7 +229,7 @@ const authLimiter = async (req, res, next) => {
 };
 
 const userLimiter = async (req, res, next) => {
-  if (req.path === '/health' || req.path === '/api/health') {
+  if (isSystemProbeRoute(req.path)) {
     return next();
   }
 
@@ -229,7 +243,7 @@ const userLimiter = async (req, res, next) => {
 };
 
 const expensiveRouteLimiter = async (req, res, next) => {
-  if (req.path === '/health' || req.path === '/api/health') {
+  if (isSystemProbeRoute(req.path)) {
     return next();
   }
 
@@ -243,7 +257,7 @@ const expensiveRouteLimiter = async (req, res, next) => {
 };
 
 const generalDashboardLimiter = async (req, res, next) => {
-  if (req.path === '/health' || req.path === '/api/health') {
+  if (isSystemProbeRoute(req.path)) {
     return next();
   }
 

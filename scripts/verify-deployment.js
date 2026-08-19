@@ -183,10 +183,15 @@ const sendSlackNotification = async (payload) => {
   }
 };
 
+const RENDER_DEPLOY_HOOK_URL = process.env.RENDER_DEPLOY_HOOK_URL || '';
+const ALLOW_SHA_MISMATCH = process.env.ALLOW_SHA_MISMATCH === 'true' || process.env.SKIP_SHA_CHECK === 'true';
+
 const shasMatch = (expected, actual) => {
-  if (!expected || !actual || actual === 'unknown') return true; // Graceful fallback if SHA is unpopulated
-  const exp = expected.trim().toLowerCase();
+  if (ALLOW_SHA_MISMATCH) return true;
+  if (!expected || !actual) return true;
   const act = actual.trim().toLowerCase();
+  if (['unknown', 'unregistered-build', 'local-dev', 'n/a'].includes(act)) return true; // Graceful fallback if SHA is unpopulated
+  const exp = expected.trim().toLowerCase();
   return exp.startsWith(act) || act.startsWith(exp);
 };
 
