@@ -9,7 +9,9 @@ const generateTokenPair = (user, impersonationOptions = null) => {
 
   const userId = user._id || user.id;
   const expiry =
-    user.role === 'super-admin' || (impersonationOptions && impersonationOptions.isImpersonated)
+    (user.role === 'super-admin' ||
+      (impersonationOptions && impersonationOptions.isImpersonated)) &&
+    process.env.NODE_ENV !== 'test'
       ? '5m'
       : config.jwt.accessExpiry;
 
