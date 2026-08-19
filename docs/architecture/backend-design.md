@@ -370,3 +370,17 @@ Session security is anchored by short-lived JWT access tokens (~15m) and Redis-b
 - **Theft Reuse Detection**: If a previously rotated (revoked) refresh token is presented, the system detects a token theft attempt, revokes **all** active session tokens for that user ID, and logs a security audit warning.
 - **Multi-Device Logout**: Supports `allDevices: true` to invalidate all sessions across all logged-in devices simultaneously.
 
+---
+
+## 13. Automated Post-Push Deployment Verification & Health Telemetry
+
+BookBuddy includes a zero-dependency automated post-push verification pipeline (`scripts/verify-deployment.js`) and multi-layer operational health probes (`scripts/multi-layer-verifier.js`) to guarantee live production stability.
+
+### Verification Capabilities
+1. **Commit SHA Alignment**: Polls `/version` endpoint to confirm that live production deployment matches the expected Git commit SHA.
+2. **Deep Health Inspection**: Queries `/health` to verify per-component status (`api`, `database`, `cache`, `externalServices`).
+3. **Security Challenge Validation**: Probes `/api/v1/auth/me` without credentials to confirm that HTTP 401 Unauthorized challenges are enforced.
+4. **Database Query Probe**: Queries `/api/v1/colleges/slug-check` to verify database connectivity and live query execution.
+5. **Persistent Audit Store**: Appends structured JSONL audit logs to `logs/deployment-audit.jsonl` and `logs/multi-layer-verification.jsonl`.
+
+
