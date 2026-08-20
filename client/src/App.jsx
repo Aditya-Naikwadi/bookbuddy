@@ -146,7 +146,6 @@ const IncomingShareRequests = lazy(
   () => import("./pages/dashboards/admin/IncomingShareRequests")
 );
 const CrossCollegeCatalog = lazy(() => import("./pages/CrossCollegeCatalog"));
-const Fines = lazy(() => import("./pages/Fines"));
 
 // Component to redirect authenticated users away from Auth routes
 const AuthRedirect = ({ children }) => {
@@ -356,6 +355,7 @@ function App() {
                         path="college-admin/share-requests"
                         element={<IncomingShareRequests />}
                       />
+                      <Route
                         path="college-admin/analytics"
                         element={<AnalyticsOverview />}
                       />
