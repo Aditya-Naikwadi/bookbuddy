@@ -2,7 +2,8 @@ const request = require('supertest');
 const mongoose = require('mongoose');
 
 process.env.NODE_ENV = 'test';
-process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_cross_college_sec_test';
+process.env.MONGO_URI =
+  process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_cross_college_sec_test';
 
 const app = require('../app');
 const Book = require('../models/Book');
@@ -223,7 +224,9 @@ describe('Cross-College Resource Sharing Security Audit (F6.3, F6.4, F6.5)', () 
 
       // ACCEPTANCE CRITERIA: Returns 403 Forbidden
       expect(resAdminC.statusCode).toBe(403);
-      expect(resAdminC.body.message).toContain('Only the administrator of the owning college can approve');
+      expect(resAdminC.body.message).toContain(
+        'Only the administrator of the owning college can approve'
+      );
 
       // Verify request status remains unchanged in DB
       const untouchedReq = await ShareRequest.findById(activeShareRequest._id);

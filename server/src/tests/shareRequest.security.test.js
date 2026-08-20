@@ -2,7 +2,8 @@ const request = require('supertest');
 const mongoose = require('mongoose');
 
 process.env.NODE_ENV = 'test';
-process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_sharereq_sec_audit_test';
+process.env.MONGO_URI =
+  process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_sharereq_sec_audit_test';
 
 const app = require('../app');
 const Book = require('../models/Book');
@@ -167,7 +168,9 @@ describe('F6.9 — Comprehensive Cross-College Resource Sharing Security Audit',
         .send({ status: 'approved' });
 
       expect(res.statusCode).toBe(403);
-      expect(res.body.message).toContain('Only the administrator of the owning college can approve');
+      expect(res.body.message).toContain(
+        'Only the administrator of the owning college can approve'
+      );
     });
   });
 

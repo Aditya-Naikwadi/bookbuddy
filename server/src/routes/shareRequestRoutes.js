@@ -12,11 +12,8 @@ router.use(protect);
 
 router.get('/incoming', getIncomingShareRequests);
 
-router.route('/')
-  .post(createShareRequest)
-  .get(getShareRequests);
+router.route('/').post(createShareRequest).get(getShareRequests);
 
-router.route('/:id')
-  .patch(updateShareRequestStatus);
+router.route('/:id').patch(updateShareRequestStatus);
 
 module.exports = router;

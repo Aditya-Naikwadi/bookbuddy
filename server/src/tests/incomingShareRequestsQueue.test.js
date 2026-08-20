@@ -2,7 +2,8 @@ const request = require('supertest');
 const mongoose = require('mongoose');
 
 process.env.NODE_ENV = 'test';
-process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_incoming_queue_test';
+process.env.MONGO_URI =
+  process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_incoming_queue_test';
 
 const app = require('../app');
 const Book = require('../models/Book');

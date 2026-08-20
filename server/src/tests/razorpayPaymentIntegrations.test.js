@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 
 process.env.NODE_ENV = 'test';
-process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_razorpay_test';
+process.env.MONGO_URI =
+  process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_razorpay_test';
 process.env.RAZORPAY_WEBHOOK_SECRET = 'test_webhook_secret_key_12345';
 process.env.RAZORPAY_KEY_SECRET = 'test_razorpay_key_secret_12345';
 
@@ -117,8 +118,20 @@ describe('Razorpay Integration & Security Audit (F7.2, F7.3, F7.4)', () => {
         .update(rawPayload)
         .digest('hex');
 
-      expect(paymentGatewayService.verifyWebhookSignature(rawPayload, validSig, process.env.RAZORPAY_WEBHOOK_SECRET)).toBe(true);
-      expect(paymentGatewayService.verifyWebhookSignature(rawPayload, 'invalid_sig', process.env.RAZORPAY_WEBHOOK_SECRET)).toBe(false);
+      expect(
+        paymentGatewayService.verifyWebhookSignature(
+          rawPayload,
+          validSig,
+          process.env.RAZORPAY_WEBHOOK_SECRET
+        )
+      ).toBe(true);
+      expect(
+        paymentGatewayService.verifyWebhookSignature(
+          rawPayload,
+          'invalid_sig',
+          process.env.RAZORPAY_WEBHOOK_SECRET
+        )
+      ).toBe(false);
     });
   });
 

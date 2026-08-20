@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 
 process.env.NODE_ENV = 'test';
-process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_payment_idempotency_test';
+process.env.MONGO_URI =
+  process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_payment_idempotency_test';
 
 const Payment = require('../models/Payment');
 const Fine = require('../models/Fine');
@@ -63,7 +64,9 @@ describe('Payment Model Idempotency Index & Fine Schema Extension', () => {
 
     expect(duplicateError).not.toBeNull();
     // Unique index Mongo error code 11000 or duplicate key message
-    expect(duplicateError.code === 11000 || duplicateError.message.includes('duplicate key')).toBe(true);
+    expect(duplicateError.code === 11000 || duplicateError.message.includes('duplicate key')).toBe(
+      true
+    );
 
     // Ensure total Payment count in DB remains exactly 1
     const count = await Payment.countDocuments({ gatewayOrderId: orderId });

@@ -655,7 +655,9 @@ const runDailyPaymentReconciliation = async (options = {}) => {
   for (const payment of localPayments) {
     processedCount++;
     try {
-      const gatewayOrder = await paymentGatewayService.fetchOrderFromGateway(payment.gatewayOrderId);
+      const gatewayOrder = await paymentGatewayService.fetchOrderFromGateway(
+        payment.gatewayOrderId
+      );
 
       // Scenario 1: Payment marked paid locally but absent on gateway API
       if (!gatewayOrder) {

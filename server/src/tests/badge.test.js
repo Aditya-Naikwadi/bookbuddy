@@ -275,7 +275,9 @@ describe('Badge Definitions Schema, UserBadge Schema & Seed Data', () => {
       const snapshot = await LeaderboardSnapshot.findOne({ metric: 'points' });
       expect(snapshot).not.toBeNull();
       expect(snapshot.topEntries.length).toBeGreaterThanOrEqual(1);
-      expect(snapshot.topEntries.some((e) => e.userId.toString() === testUser._id.toString())).toBe(true);
+      expect(snapshot.topEntries.some((e) => e.userId.toString() === testUser._id.toString())).toBe(
+        true
+      );
     });
   });
 
@@ -324,7 +326,9 @@ describe('Badge Definitions Schema, UserBadge Schema & Seed Data', () => {
       const step1 = createMockReqRes();
       await getLeaderboard(step1.req, step1.res);
       const initialLeaderboard = step1.getResponseData().data;
-      expect(initialLeaderboard.some((u) => u.userId.toString() === testUser._id.toString())).toBe(true);
+      expect(initialLeaderboard.some((u) => u.userId.toString() === testUser._id.toString())).toBe(
+        true
+      );
 
       // 2. Toggle visibility OFF (isLeaderboardVisible = false)
       testUser.isLeaderboardVisible = false;
@@ -334,7 +338,9 @@ describe('Badge Definitions Schema, UserBadge Schema & Seed Data', () => {
       const step2 = createMockReqRes();
       await getLeaderboard(step2.req, step2.res);
       const updatedLeaderboard = step2.getResponseData().data;
-      expect(updatedLeaderboard.some((u) => u.userId.toString() === testUser._id.toString())).toBe(false);
+      expect(updatedLeaderboard.some((u) => u.userId.toString() === testUser._id.toString())).toBe(
+        false
+      );
     });
   });
 });

@@ -1,17 +1,15 @@
 const mongoose = require('mongoose');
 
 process.env.NODE_ENV = 'test';
-process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_sharereq_test';
+process.env.MONGO_URI =
+  process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_sharereq_test';
 
 const Book = require('../models/Book');
 const EResource = require('../models/EResource');
 const ShareRequest = require('../models/ShareRequest');
 const User = require('../models/User');
 const College = require('../models/College');
-const {
-  canTransition,
-  validateTransition,
-} = require('../utils/shareRequestStateMachine');
+const { canTransition, validateTransition } = require('../utils/shareRequestStateMachine');
 
 describe('F6.1 & F6.2 — ILL Cross-College Resource Sharing & State Machine', () => {
   let collegeA, collegeB;
@@ -136,9 +134,7 @@ describe('F6.1 & F6.2 — ILL Cross-College Resource Sharing & State Machine', (
       shareReq.status = 'fulfilled';
 
       // ACCEPTANCE CRITERIA: save() throws validation error via state machine
-      await expect(shareReq.save()).rejects.toThrow(
-        /Invalid share request status transition/
-      );
+      await expect(shareReq.save()).rejects.toThrow(/Invalid share request status transition/);
     });
   });
 });

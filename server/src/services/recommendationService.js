@@ -23,8 +23,10 @@ const generateRecommendationsForUser = async (userId) => {
   const loans = await Loan.find({ userId }).select('bookId');
   const reviews = await Review.find({ userId }).select('bookId rating');
 
-  const borrowedBookIds = loans.map((l) => l.bookId ? l.bookId.toString() : null).filter(Boolean);
-  const reviewedBookIds = reviews.map((r) => r.bookId ? r.bookId.toString() : null).filter(Boolean);
+  const borrowedBookIds = loans.map((l) => (l.bookId ? l.bookId.toString() : null)).filter(Boolean);
+  const reviewedBookIds = reviews
+    .map((r) => (r.bookId ? r.bookId.toString() : null))
+    .filter(Boolean);
 
   const readBookIdsSet = new Set([...borrowedBookIds, ...reviewedBookIds]);
   const readBookIds = Array.from(readBookIdsSet);
@@ -57,7 +59,9 @@ const generateRecommendationsForUser = async (userId) => {
   });
 
   const topTags = Object.keys(userTagsMap).sort((a, b) => userTagsMap[b] - userTagsMap[a]);
-  const topAuthors = Object.keys(userAuthorsMap).sort((a, b) => userAuthorsMap[b] - userAuthorsMap[a]);
+  const topAuthors = Object.keys(userAuthorsMap).sort(
+    (a, b) => userAuthorsMap[b] - userAuthorsMap[a]
+  );
   const topCategories = Object.keys(userCategoriesMap).sort(
     (a, b) => userCategoriesMap[b] - userCategoriesMap[a]
   );

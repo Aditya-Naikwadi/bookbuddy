@@ -2,7 +2,8 @@ const request = require('supertest');
 const mongoose = require('mongoose');
 
 process.env.NODE_ENV = 'test';
-process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_signed_dl_test';
+process.env.MONGO_URI =
+  process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_signed_dl_test';
 
 const app = require('../app');
 const EResource = require('../models/EResource');
@@ -106,7 +107,9 @@ describe('F10.3 — Signed Download-URL Endpoint & Access Control Security', () 
       expect(resAdmin.body.downloadUrl).toBeUndefined();
 
       // Verify ZERO download log entries created for blocked attempt
-      const logsCount = await DownloadLog.countDocuments({ resourceId: nonDownloadableResource._id });
+      const logsCount = await DownloadLog.countDocuments({
+        resourceId: nonDownloadableResource._id,
+      });
       expect(logsCount).toBe(0);
     });
 
