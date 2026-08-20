@@ -51,8 +51,7 @@ const createFeedPost = asyncHandler(async (req, res) => {
     if (io) {
       io.to(`college:${collegeId}`).emit('feed:new', feedPost);
     }
-  /* eslint-disable-next-line no-unused-vars */
-  } catch (socketErr) {
+  } catch (_socketErr) {
     // Non-blocking socket emission fallback
   }
 

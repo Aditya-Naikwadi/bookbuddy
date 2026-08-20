@@ -49,8 +49,7 @@ const verifyWebhookSignature = (rawBody, signature, webhookSecret) => {
     const expectedSignature = crypto.createHmac('sha256', secret).update(bodyString).digest('hex');
 
     return crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature));
-  /* eslint-disable-next-line no-unused-vars */
-  } catch (err) {
+  } catch (_err) {
     return false;
   }
 };
@@ -65,8 +64,7 @@ const fetchOrderFromGateway = async (gatewayOrderId) => {
   try {
     const order = await razorpay.orders.fetch(gatewayOrderId);
     return order;
-  /* eslint-disable-next-line no-unused-vars */
-  } catch (err) {
+  } catch (_err) {
     return null;
   }
 };

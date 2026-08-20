@@ -20,7 +20,10 @@ module.exports = [
     },
     rules: {
       'prettier/prettier': 'error',
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
       'no-console': 'warn',
       'preserve-caught-error': 'off',
     },
@@ -29,6 +32,12 @@ module.exports = [
     files: ['src/scripts/**/*.js', 'src/seed.js'],
     rules: {
       'no-console': 'off',
+    },
+  },
+  {
+    files: ['src/tests/**/*.js'],
+    rules: {
+      'no-unused-vars': 'off',
     },
   },
   {

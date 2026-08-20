@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 const request = require('supertest');
 const mongoose = require('mongoose');
 

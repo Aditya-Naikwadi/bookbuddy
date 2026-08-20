@@ -166,8 +166,7 @@ const handlePaymentWebhook = asyncHandler(async (req, res) => {
         paidAt: payment.webhookVerifiedAt,
       });
     }
-  /* eslint-disable-next-line no-unused-vars */
-  } catch (socketErr) {
+  } catch (_socketErr) {
     // Non-blocking socket emission
   }
 
