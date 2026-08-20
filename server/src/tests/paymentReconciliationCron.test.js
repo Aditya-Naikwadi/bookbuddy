@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 const mongoose = require('mongoose');
 
 process.env.NODE_ENV = 'test';
@@ -25,7 +26,7 @@ describe('F7.6 — Daily Payment Reconciliation Cron Job Mismatch Audit', () => 
     const dummyUserId = new mongoose.Types.ObjectId();
 
     // 1. Create a Payment document marked 'paid' locally
-    const absentPayment = await Payment.create({
+    await Payment.create({
       userId: dummyUserId,
       fineIds: [],
       amount: 250.0,
@@ -36,7 +37,7 @@ describe('F7.6 — Daily Payment Reconciliation Cron Job Mismatch Audit', () => 
     });
 
     // 2. Create a Payment document marked 'created' locally, but 'paid' on gateway
-    const uncapturedPayment = await Payment.create({
+    await Payment.create({
       userId: dummyUserId,
       fineIds: [],
       amount: 100.0,

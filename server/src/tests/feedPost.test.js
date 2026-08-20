@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+const request = require('supertest');
 const mongoose = require('mongoose');
 
 process.env.NODE_ENV = 'test';
@@ -159,11 +161,9 @@ describe('FeedPost Schema & Endpoints (F5.1, F5.2, F5.3, F5.4)', () => {
   });
 
   describe('F5.3 — Student Feed Read Endpoint (Tenant + Audience + Expiry Filtered)', () => {
-    let expiredPost, activeStudentPost, adminOnlyPost;
-
     beforeAll(async () => {
       // Past expired post
-      expiredPost = await FeedPost.create({
+      await FeedPost.create({
         collegeId: collegeA._id,
         type: 'announcement',
         title: 'Expired Announcement',
@@ -174,7 +174,7 @@ describe('FeedPost Schema & Endpoints (F5.1, F5.2, F5.3, F5.4)', () => {
       });
 
       // Active student post
-      activeStudentPost = await FeedPost.create({
+      await FeedPost.create({
         collegeId: collegeA._id,
         type: 'announcement',
         title: 'Active Student Announcement',
@@ -185,7 +185,7 @@ describe('FeedPost Schema & Endpoints (F5.1, F5.2, F5.3, F5.4)', () => {
       });
 
       // Admin-only post
-      adminOnlyPost = await FeedPost.create({
+      await FeedPost.create({
         collegeId: collegeA._id,
         type: 'announcement',
         title: 'Admin Policy Change',

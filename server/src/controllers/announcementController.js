@@ -52,7 +52,7 @@ const toggleRSVP = asyncHandler(async (req, res) => {
   const userIdStr = req.user.id.toString();
   const existingIdx = announcement.rsvpUsers.findIndex((u) => u.userId.toString() === userIdStr);
 
-  let hasRSVPd = false;
+  let hasRSVPd;
 
   if (existingIdx > -1) {
     announcement.rsvpUsers.splice(existingIdx, 1);

@@ -2,7 +2,6 @@ const asyncHandler = require('../utils/asyncHandler');
 const Streak = require('../models/Streak');
 const ReadingActivityLog = require('../models/ReadingActivityLog');
 const User = require('../models/User');
-const AppError = require('../utils/AppError');
 
 // @desc    Get college leaderboard
 // @route   GET /api/v1/leaderboard
@@ -11,7 +10,7 @@ const getLeaderboard = asyncHandler(async (req, res) => {
   const { metric = 'streak', limit = 10 } = req.query;
   const numLimit = Math.min(50, parseInt(limit, 10) || 10);
 
-  let leaderboard = [];
+  let leaderboard;
 
   if (metric === 'points') {
     const topUsers = await User.find({

@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 
 process.env.NODE_ENV = 'test';
 process.env.MONGO_URI =
-  process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_sharereq_sec_audit_test';
+  process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_share_req_sec_test';
 
 const app = require('../app');
 const Book = require('../models/Book');

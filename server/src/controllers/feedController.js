@@ -51,6 +51,7 @@ const createFeedPost = asyncHandler(async (req, res) => {
     if (io) {
       io.to(`college:${collegeId}`).emit('feed:new', feedPost);
     }
+  /* eslint-disable-next-line no-unused-vars */
   } catch (socketErr) {
     // Non-blocking socket emission fallback
   }
@@ -142,7 +143,7 @@ const rsvpEvent = asyncHandler(async (req, res) => {
     (r) => r.userId && r.userId.toString() === userIdObj.toString()
   );
 
-  let isRsvped = false;
+  let isRsvped;
   if (existingIndex !== -1) {
     // Toggle OFF: Remove user from RSVPs
     post.rsvps.splice(existingIndex, 1);

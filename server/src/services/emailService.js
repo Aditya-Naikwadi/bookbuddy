@@ -12,7 +12,7 @@ const sendNotificationWithEmailFallback = async (userId, type, message, extraPay
   const userEmail = user?.email;
   const userName = user?.name || 'Patron';
 
-  let online = false;
+  let online;
   try {
     online = isUserConnected(userId);
   } catch {

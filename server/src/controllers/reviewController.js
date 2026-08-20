@@ -4,6 +4,7 @@ const Book = require('../models/Book');
 const AppError = require('../utils/AppError');
 const mongoose = require('mongoose');
 const { evaluateBadges } = require('../services/badgeService');
+const logger = require('../utils/logger');
 
 // @desc    Get reviews for a book or resource with pagination & pinned user review
 // @route   GET /api/books/:id/reviews OR GET /api/v1/reviews/:resourceType/:resourceId
@@ -49,7 +50,7 @@ const getBookReviews = asyncHandler(async (req, res) => {
   const total = (ownReview ? 1 : 0) + totalOther;
   const hasMore = page * limit < total;
 
-  let reviews = [];
+  let reviews;
 
   if (ownReview) {
     if (page === 1) {
@@ -152,7 +153,7 @@ const createReview = asyncHandler(async (req, res) => {
   const reviewStatus =
     req.isProfane || req.body.status === 'flagged' ? 'flagged' : req.body.status || 'approved';
 
-  let session = null;
+  let session;
   try {
     session = await mongoose.startSession();
     session.startTransaction();
@@ -223,7 +224,7 @@ const createReview = asyncHandler(async (req, res) => {
     const userId = req.user && (req.user.id || req.user._id);
     if (userId) {
       evaluateBadges(userId, 'review_submitted', { reviewId: review._id }).catch((err) =>
-        console.error('Error evaluating badges after review creation:', err)
+        logger.error(`Error evaluating badges after review creation: ${err.message}`)
       );
     }
 

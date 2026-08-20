@@ -4,13 +4,14 @@ const Payment = require('../models/Payment');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 const paymentGatewayService = require('../services/paymentGatewayService');
+const logger = require('../utils/logger');
 
 /**
  * @desc    Create a Razorpay order with SERVER-COMPUTED amount (F7.3)
  * @route   POST /api/v1/payments/create-order OR POST /api/payments/create-order
  * @access  Private (Authenticated User)
  */
-const createOrder = asyncHandler(async (req, res, next) => {
+const createOrder = asyncHandler(async (req, res) => {
   const userId = req.user.id || req.user._id;
   const { fineIds, fineId } = req.body;
 
@@ -73,7 +74,7 @@ const createOrder = asyncHandler(async (req, res, next) => {
  * @route   POST /api/v1/payments/webhook OR POST /api/payments/webhook
  * @access  Public (Signature Verified)
  */
-const handlePaymentWebhook = asyncHandler(async (req, res, next) => {
+const handlePaymentWebhook = asyncHandler(async (req, res) => {
   const signature = req.headers['x-razorpay-signature'];
   const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET;
 
@@ -87,7 +88,7 @@ const handlePaymentWebhook = asyncHandler(async (req, res, next) => {
   );
 
   if (!isSignatureValid) {
-    console.warn(
+    logger.warn(
       '[Razorpay Webhook Warning] Webhook signature verification failed or header missing.'
     );
     return res.status(400).json({
@@ -165,6 +166,7 @@ const handlePaymentWebhook = asyncHandler(async (req, res, next) => {
         paidAt: payment.webhookVerifiedAt,
       });
     }
+  /* eslint-disable-next-line no-unused-vars */
   } catch (socketErr) {
     // Non-blocking socket emission
   }
@@ -181,7 +183,7 @@ const handlePaymentWebhook = asyncHandler(async (req, res, next) => {
  * @route   GET /api/v1/payments/:orderId/status OR GET /api/payments/:orderId/status
  * @access  Private
  */
-const getOrderStatus = asyncHandler(async (req, res, next) => {
+const getOrderStatus = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
   const payment = await Payment.findOne({ gatewayOrderId: orderId });
 
@@ -206,7 +208,7 @@ const getOrderStatus = asyncHandler(async (req, res, next) => {
  * @route   POST /api/v1/payments/verify-payment OR POST /api/payments/verify-payment
  * @access  Private
  */
-const verifyPayment = asyncHandler(async (req, res, next) => {
+const verifyPayment = asyncHandler(async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {

@@ -137,6 +137,7 @@ const updateShareRequestStatus = asyncHandler(async (req, res) => {
       // 2. Notify updating owning admin's isolated user room
       io.to(`user:${userId.toString()}`).emit('share-request:status', notificationPayload);
     }
+  /* eslint-disable-next-line no-unused-vars */
   } catch (socketErr) {
     // Non-blocking socket emission fallback
   }

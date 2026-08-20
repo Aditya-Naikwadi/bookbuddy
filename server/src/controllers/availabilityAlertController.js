@@ -1,37 +1,39 @@
-const asyncHandler = require('../utils/asyncHandler');
+const asyncHandler = require('express-async-handler');
 const AvailabilityAlert = require('../models/AvailabilityAlert');
 const { notify } = require('../services/notificationService');
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
-// @desc    Toggle or create availability alert for a catalog item
+// @desc    Subscribe to availability alert for a book or e-resource
 // @route   POST /api/v1/availability-alerts
 // @access  Private
 const subscribeAlert = asyncHandler(async (req, res) => {
   const { resourceType, resourceId } = req.body;
 
-  if (!['book', 'eresource'].includes(resourceType)) {
-    throw new AppError('Invalid resource type', 400);
+  if (!['book', 'eresource'].includes(resourceType) || !resourceId) {
+    throw new AppError('Valid resourceType and resourceId required', 400);
   }
 
-  let alert = await AvailabilityAlert.findOne({
+  const existing = await AvailabilityAlert.findOne({
     collegeId: req.user.collegeId,
     userId: req.user.id,
+    resourceType,
     resourceId,
   });
 
-  if (alert) {
-    if (alert.status === 'active') {
-      alert.status = 'cancelled';
-      await alert.save();
+  if (existing) {
+    if (existing.status === 'active') {
+      existing.status = 'cancelled';
+      await existing.save();
       return res.json({
         success: true,
-        message: 'Alert unsubscribed',
+        message: 'Alert cancelled',
         data: { subscribed: false },
       });
     } else {
-      alert.status = 'active';
-      alert.notifiedAt = null;
-      await alert.save();
+      existing.status = 'active';
+      existing.notifiedAt = null;
+      await existing.save();
       return res.json({
         success: true,
         message: 'Alert subscribed',
@@ -40,7 +42,7 @@ const subscribeAlert = asyncHandler(async (req, res) => {
     }
   }
 
-  alert = await AvailabilityAlert.create({
+  await AvailabilityAlert.create({
     collegeId: req.user.collegeId,
     userId: req.user.id,
     resourceType,
@@ -97,7 +99,7 @@ const notifyAvailableResource = async ({ collegeId, resourceType, resourceId, ti
       );
     }
   } catch (error) {
-    console.error('Error dispatching availability alerts:', error);
+    logger.error(`Error dispatching availability alerts: ${error.message}`);
   }
 };
 

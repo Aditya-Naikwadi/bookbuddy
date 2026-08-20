@@ -7,6 +7,7 @@ const notificationService = require('./notificationService');
 const { evaluateBadges } = require('./badgeService');
 const { emitStreakUpdate } = require('../sockets');
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
 // Config-driven list of qualifying action types
 const QUALIFYING_ACTIONS = [
@@ -130,7 +131,7 @@ const recordQualifyingAction = async (userId, collegeId, actionType) => {
     await streak.save({ session });
 
     evaluateBadges(userId, 'streak_updated', { length: streak.currentStreak }).catch((err) =>
-      console.error('Error evaluating badges on streak update:', err)
+      logger.error(`Error evaluating badges on streak update: ${err.message}`)
     );
 
     // 2. Process milestones/rewards

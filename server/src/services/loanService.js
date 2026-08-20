@@ -8,6 +8,7 @@ const config = require('../config');
 const streakService = require('./streakService');
 const reservationService = require('./reservationService');
 const { evaluateBadges } = require('./badgeService');
+const logger = require('../utils/logger');
 const { runInTransaction } = require('../utils/transactionHelper');
 
 const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
@@ -79,7 +80,7 @@ const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
 
       await streakService.recordQualifyingAction(userId, collegeId, 'checkout');
       evaluateBadges(userId, 'book_borrowed', { bookId, loanId: loan._id }).catch((err) =>
-        console.error('Error evaluating badges after book checkout:', err)
+        logger.error(`Error evaluating badges after book checkout: ${err.message}`)
       );
 
       return loan;
@@ -122,7 +123,7 @@ const returnBook = async (loanId, collegeId) => {
 
     await streakService.recordQualifyingAction(loan.userId, collegeId, 'return');
     evaluateBadges(loan.userId, 'book_returned', { loanId: loan._id, bookId: loan.bookId }).catch(
-      (err) => console.error('Error evaluating badges after book return:', err)
+      (err) => logger.error(`Error evaluating badges after book return: ${err.message}`)
     );
 
     // 5. Send notification with Nodemailer email fallback if target user is offline (no active socket)
