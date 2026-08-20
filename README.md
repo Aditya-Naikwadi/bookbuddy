@@ -63,10 +63,13 @@ BookBuddy replaces fragmented library software with a unified multi-tenant platf
 2. **Computer Lab Seat Grid Reservations**: Visual seat grid layout, real-time availability polling, and atomic reservation concurrency protection.
 3. **Digital E-Resource Repository & Reader**: In-browser EPUB & PDF rendering, HTTP range streaming, position CFI/page synchronization, and persistent text highlights & notes.
 4. **External Catalog Aggregation**: Automated search fallback and metadata enrichment via Open Library API, Google Books API, and Project Gutenberg.
-5. **Digital Fine Payments**: Online payment collection via Razorpay with HMAC-SHA256 signature verification and idempotent webhook processing.
+5. **Digital Fine Payments & Daily Reconciliation**: Online payment collection via Razorpay with HMAC-SHA256 signature verification, idempotent webhook processing, and daily payment reconciliation cron jobs (`runDailyPaymentReconciliation`).
 6. **Gamified Student Engagement**: Daily reading check-in streak tracking, streak freeze buffers, and milestone achievement badges.
-7. **Real-Time WebSocket Network**: Socket.io real-time event broadcasting for loan updates, seat status changes, and notification center alerts.
-8. **Automated Verification & Post-Push Monitoring**: Self-healing post-push verification pipeline (`verify-deployment.js`) and multi-layer operational health probes (`multi-layer-verifier.js`).
+7. **Inter-Library Resource Sharing (ILL)**: Opt-in cross-college catalog discovery (`isShareableAcrossColleges`), state-machine validated status transitions, and targeted real-time Socket.io notifications.
+8. **Help Center & First-Run Onboarding**: Client-side searchable help modal with build-time static articles and automated first-run onboarding tour with profile completion tracking (`hasSeenOnboarding`).
+9. **Real-Time WebSocket Network**: Socket.io real-time event broadcasting for loan updates, seat status changes, and notification center alerts.
+10. **WCAG 2.1 AA Accessibility & Security Hardening**: Visible focus ring indicators (`:focus-visible`), 4.5:1 text color contrast, and dedicated cross-tenant security test suites (`feed.security.test.js`, `shareRequest.security.test.js`).
+11. **Automated Verification & Post-Push Monitoring**: Self-healing post-push verification pipeline (`verify-deployment.js`) and multi-layer operational health probes (`multi-layer-verifier.js`).
 
 ---
 

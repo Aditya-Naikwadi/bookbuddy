@@ -28,11 +28,13 @@ BookBuddy was built to solve these challenges with a single, highly scalable mul
 
 - **Logical Multi-Tenancy with 100% Data Isolation**: Supporting hundreds of college campuses on a shared database cluster without cross-tenant data leaks.
 - **Embedded E-Resource Reader Engine**: Streamlined EPUB & PDF reading inside the browser with HTTP 206 Partial Content streaming and persistent CFI (Content Fragment Identifier) annotations.
+- **Inter-Library Resource Sharing (ILL)**: Opt-in cross-college catalog discovery (`isShareableAcrossColleges: true`), state machine-validated request workflow, and targeted real-time status notifications.
 - **Concurrency-Safe Facility Reservations**: Computer lab workstation seat booking grids backed by atomic database transactions.
 - **Automated External Catalog Aggregation**: Fallback search enrichment across Open Library API, Google Books API, and Project Gutenberg.
 - **Gamified Student Engagement**: Idempotent daily reading check-ins, streak calculations with freeze log protection, and automated achievement badge awards.
-- **Idempotent Fine Payments**: Digital fine collection via Razorpay payment gateway with HMAC-SHA256 signature verification and webhook processing.
-- **Automated Deployment Verification**: Self-healing post-push deployment verifiers and GitHub Actions operational heartbeat probes.
+- **Idempotent Fine Payments & Daily Reconciliation**: Digital fine collection via Razorpay payment gateway with HMAC-SHA256 signature verification, idempotent webhook processing, and daily reconciliation cron jobs (`runDailyPaymentReconciliation`).
+- **Searchable Help Center & Guided Onboarding**: Build-time static articles search modal and automated first-run onboarding tour with profile completion state (`hasSeenOnboarding`).
+- **Automated Deployment Verification & Hardening**: Self-healing post-push deployment verifiers, GitHub Actions operational heartbeat probes, WCAG 2.1 AA accessibility contrast, and dedicated cross-tenant security test suites.
 
 ---
 
