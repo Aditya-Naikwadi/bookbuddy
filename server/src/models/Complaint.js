@@ -51,4 +51,7 @@ const complaintSchema = new mongoose.Schema(
   }
 );
 
+const { tenantScopingPlugin } = require('../middlewares/scopeToCollege');
+complaintSchema.plugin(tenantScopingPlugin);
+
 module.exports = mongoose.model('Complaint', complaintSchema);

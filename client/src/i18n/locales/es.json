@@ -1,0 +1,37 @@
+{
+  "app": {
+    "title": "Biblioteca BookBuddy",
+    "subtitle": "Sistema Inteligente de Biblioteca y Catálogo Digital",
+    "welcome": "Bienvenido de nuevo a la Biblioteca BookBuddy",
+    "searchPlaceholder": "Buscar catálogo por título, autor o ISBN...",
+    "libraryHours": "Horario de Biblioteca Hoy",
+    "openNow": "Abierto Ahora",
+    "closed": "Cerrado",
+    "quickLinks": "Enlaces Rápidos",
+    "searchCatalog": "Buscar Catálogo",
+    "eresources": "Recursos E-Digitales",
+    "bookmarks": "Mis Marcadores",
+    "labBooking": "Reserva de Laboratorio",
+    "offlineDownloads": "Descargas sin Conexión",
+    "trendingInCollege": "Tendencias en tu Universidad",
+    "tailoredForYou": "Adaptado para Ti",
+    "recommendedForYou": "Recomendado para Ti",
+    "language": "Idioma",
+    "selectLanguage": "Seleccionar Idioma del Sistema",
+    "availableOffline": "Disponible sin Conexión",
+    "downloadForOffline": "Descargar para Lectura sin Conexión"
+  },
+  "nav": {
+    "dashboard": "Panel Principal",
+    "catalog": "Catálogo",
+    "loans": "Mis Préstamos",
+    "fines": "Multas",
+    "eresources": "Recursos E-Digitales",
+    "downloads": "Descargas",
+    "shelves": "Mis Estantes",
+    "recommendations": "Recomendaciones",
+    "feed": "Novedades Campus",
+    "profile": "Perfil y Insignias",
+    "leaderboard": "Clasificación"
+  }
+}

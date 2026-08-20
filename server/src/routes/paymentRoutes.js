@@ -5,6 +5,7 @@ const requireIdempotency = require('../middlewares/idempotency');
 const {
   createOrder,
   verifyPayment,
+  getOrderStatus,
   createCheckoutSession,
   handlePaymentWebhook,
 } = require('../controllers/paymentController');
@@ -15,6 +16,7 @@ router.post('/webhook', handlePaymentWebhook);
 // Razorpay Order Creation & Payment Verification
 router.post('/create-order', protect, createOrder);
 router.post('/verify-payment', protect, verifyPayment);
+router.get('/:orderId/status', protect, getOrderStatus);
 
 // Checkout session creation endpoints (enforce idempotency)
 router.post('/checkout-session', protect, requireIdempotency, createCheckoutSession);

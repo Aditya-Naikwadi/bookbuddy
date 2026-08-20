@@ -12,23 +12,39 @@ const createEResourceSchema = z.object({
 });
 
 const createReadingListSchema = z.object({
-  body: z.object({
-    title: z.string().min(1, 'Title is required'),
-    description: z.string().optional(),
-    visibility: z.enum(['private', 'public']).default('private'),
-  }),
+  body: z
+    .object({
+      name: z.string().min(1, 'Name is required').optional(),
+      title: z.string().min(1, 'Title is required').optional(),
+      description: z.string().optional(),
+      visibility: z.enum(['private', 'college', 'public']).default('private'),
+    })
+    .refine((data) => data.name || data.title, {
+      message: 'Either name or title is required',
+      path: ['name'],
+    }),
 });
 
 const updateReadingListSchema = z.object({
   body: z.object({
+    name: z.string().min(1).optional(),
     title: z.string().min(1).optional(),
     description: z.string().optional(),
-    visibility: z.enum(['private', 'public']).optional(),
+    visibility: z.enum(['private', 'college', 'public']).optional(),
     items: z
       .array(
         z.object({
-          resourceType: z.enum(['book', 'eresource']),
-          resourceId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid Resource ID format'),
+          bookId: z
+            .string()
+            .regex(/^[0-9a-fA-F]{24}$/, 'Invalid Book ID format')
+            .optional(),
+          resourceType: z.enum(['book', 'eresource']).optional(),
+          resourceId: z
+            .string()
+            .regex(/^[0-9a-fA-F]{24}$/, 'Invalid Resource ID format')
+            .optional(),
+          addedAt: z.union([z.string(), z.date()]).optional(),
+          note: z.string().optional(),
         })
       )
       .optional(),
@@ -36,10 +52,23 @@ const updateReadingListSchema = z.object({
 });
 
 const addReadingListItemSchema = z.object({
-  body: z.object({
-    resourceType: z.enum(['book', 'eresource']),
-    resourceId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid Resource ID format'),
-  }),
+  body: z
+    .object({
+      bookId: z
+        .string()
+        .regex(/^[0-9a-fA-F]{24}$/, 'Invalid Book ID format')
+        .optional(),
+      resourceId: z
+        .string()
+        .regex(/^[0-9a-fA-F]{24}$/, 'Invalid Resource ID format')
+        .optional(),
+      resourceType: z.enum(['book', 'eresource']).optional(),
+      note: z.string().optional(),
+    })
+    .refine((data) => data.bookId || data.resourceId, {
+      message: 'Either bookId or resourceId is required',
+      path: ['bookId'],
+    }),
 });
 
 const updateProgressSchema = z.object({

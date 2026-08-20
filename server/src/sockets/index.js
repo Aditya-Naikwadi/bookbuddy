@@ -19,11 +19,18 @@ const initSockets = (server) => {
 
   io.on('connection', (socket) => {
     const userId = socket.data.user.id;
+    const collegeId = socket.data.user.collegeId;
     logger.info(`Socket connected: ${socket.id} for user: ${userId}`);
 
     // Automatically join the user-specific room
     socket.join(`user:${userId}`);
     logger.info(`User ${userId} joined room user:${userId}`);
+
+    // Automatically join the college-specific room if authenticated session has collegeId
+    if (collegeId) {
+      socket.join(`college:${collegeId}`);
+      logger.info(`User ${userId} joined room college:${collegeId}`);
+    }
 
     // Join super-admin room if user has super-admin role
     if (socket.data.user.role === 'super-admin') {
@@ -44,6 +51,12 @@ const getIo = () => {
     throw new Error('Socket.io not initialized!');
   }
   return io;
+};
+
+const emitCollegeBroadcast = (collegeId, eventName, data) => {
+  if (io && collegeId) {
+    io.to(`college:${collegeId}`).emit(eventName, data);
+  }
 };
 
 const emitNotification = (userId, notification) => {
@@ -89,9 +102,17 @@ const emitSuperAdminSupportEscalation = (ticketData) => {
   }
 };
 
+const isUserConnected = (userId) => {
+  if (!io || !io.sockets || !io.sockets.adapter || !io.sockets.adapter.rooms) return false;
+  const room = io.sockets.adapter.rooms.get(`user:${userId}`);
+  return !!(room && room.size > 0);
+};
+
 module.exports = {
   initSockets,
   getIo,
+  isUserConnected,
+  emitCollegeBroadcast,
   emitNotification,
   emitStreakUpdate,
   emitComplaintUpdate,

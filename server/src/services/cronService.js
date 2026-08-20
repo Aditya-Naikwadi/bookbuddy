@@ -541,7 +541,175 @@ const initCronJobs = () => {
     runJob('Platform Metrics Aggregation', runMetricsAggregation);
   });
 
+  // Weekly Leaderboard Snapshot: Every Sunday at midnight
+  cron.schedule('0 0 * * 0', () => {
+    runJob('Weekly Leaderboard Snapshot', runWeeklyLeaderboardSnapshot);
+  });
+
+  // Nightly Recommendation Recomputation: Daily at 2:00 AM
+  cron.schedule('0 2 * * *', () => {
+    runJob('Nightly Recommendation Recomputation', runNightlyRecommendations);
+  });
+
+  // Daily Payment Reconciliation: Daily at 3:00 AM
+  cron.schedule('0 3 * * *', () => {
+    runJob('Daily Payment Reconciliation', runDailyPaymentReconciliation);
+  });
+
   logger.info('Cron jobs initialized successfully.');
+};
+
+/**
+ * JOB 7: Weekly Leaderboard Snapshot
+ * Snapshots top readers by points weekly into LeaderboardSnapshot collection.
+ */
+const runWeeklyLeaderboardSnapshot = async () => {
+  const LeaderboardSnapshot = require('../models/LeaderboardSnapshot');
+  const User = require('../models/User');
+
+  const now = new Date();
+  const weekStr = `${now.getFullYear()}-W${Math.ceil(now.getDate() / 7)}`;
+
+  const topUsers = await User.find({
+    isLeaderboardVisible: { $ne: false },
+  })
+    .sort({ points: -1 })
+    .limit(10)
+    .select('name points department')
+    .lean();
+
+  const topEntries = topUsers.map((u, index) => ({
+    rank: index + 1,
+    userId: u._id,
+    displayName: u.name,
+    score: u.points || 0,
+    department: u.department || 'General',
+  }));
+
+  await LeaderboardSnapshot.findOneAndUpdate(
+    { weekIdentifier: weekStr, metric: 'points' },
+    {
+      weekIdentifier: weekStr,
+      metric: 'points',
+      topEntries,
+      snapshotDate: now,
+    },
+    { upsert: true, returnDocument: 'after' }
+  );
+
+  return topEntries.length;
+};
+
+/**
+ * JOB 8: Nightly Recommendation Recomputation
+ * Recomputes recommendations for all users college-by-college to bound memory usage.
+ * Isolated error handling ensures an exception for one user does not abort the batch.
+ */
+const runNightlyRecommendations = async () => {
+  const College = require('../models/College');
+  const User = require('../models/User');
+  const { generateRecommendationsForUser } = require('./recommendationService');
+
+  const colleges = await College.find({}).select('_id name');
+  let processedCount = 0;
+  let errorCount = 0;
+
+  for (const college of colleges) {
+    const users = await User.find({ collegeId: college._id }).select('_id');
+    for (const user of users) {
+      try {
+        await generateRecommendationsForUser(user._id);
+        processedCount++;
+      } catch (userErr) {
+        errorCount++;
+        logger.error(
+          `Failed to recompute recommendations for user ${user._id} in college ${college._id}: ${userErr.message}`
+        );
+      }
+    }
+  }
+
+  logger.info(
+    `Nightly recommendations recomputation finished. Processed: ${processedCount}, Errors: ${errorCount}, Colleges: ${colleges.length}`
+  );
+
+  return processedCount;
+};
+
+/**
+ * JOB 9: Daily Payment Reconciliation (F7.6)
+ * Cross-checks local Payment records against gateway transactions API.
+ * Flags mismatches (e.g. locally marked paid but absent/failed on gateway) in audit logs/reports.
+ */
+const runDailyPaymentReconciliation = async (options = {}) => {
+  const Payment = require('../models/Payment');
+  const paymentGatewayService = require('./paymentGatewayService');
+
+  // Time window: payments from last 48 hours or specified since date
+  const timeLimit = options.since || new Date(Date.now() - 48 * 60 * 60 * 1000);
+  const localPayments = await Payment.find({ createdAt: { $gte: timeLimit } });
+
+  let processedCount = 0;
+  const mismatches = [];
+
+  for (const payment of localPayments) {
+    processedCount++;
+    try {
+      const gatewayOrder = await paymentGatewayService.fetchOrderFromGateway(payment.gatewayOrderId);
+
+      // Scenario 1: Payment marked paid locally but absent on gateway API
+      if (!gatewayOrder) {
+        if (payment.status === 'paid') {
+          const mismatchInfo = {
+            paymentId: payment._id,
+            gatewayOrderId: payment.gatewayOrderId,
+            localStatus: payment.status,
+            gatewayStatus: 'ABSENT',
+            issue: 'Payment marked paid locally but absent on payment gateway API',
+          };
+          mismatches.push(mismatchInfo);
+          logger.warn(`[Payment Reconciliation Mismatch] ${mismatchInfo.issue}`, mismatchInfo);
+        }
+        continue;
+      }
+
+      // Scenario 2: Status mismatch between gateway and local DB
+      const gatewayStatus = gatewayOrder.status; // 'paid', 'created', 'failed', 'attempted'
+      if (payment.status === 'paid' && gatewayStatus !== 'paid') {
+        const mismatchInfo = {
+          paymentId: payment._id,
+          gatewayOrderId: payment.gatewayOrderId,
+          localStatus: payment.status,
+          gatewayStatus,
+          issue: `Local payment is 'paid' but gateway order status is '${gatewayStatus}'`,
+        };
+        mismatches.push(mismatchInfo);
+        logger.warn(`[Payment Reconciliation Mismatch] ${mismatchInfo.issue}`, mismatchInfo);
+      } else if (payment.status === 'created' && gatewayStatus === 'paid') {
+        const mismatchInfo = {
+          paymentId: payment._id,
+          gatewayOrderId: payment.gatewayOrderId,
+          localStatus: payment.status,
+          gatewayStatus,
+          issue: `Gateway status is 'paid' but local payment status is still 'created'`,
+        };
+        mismatches.push(mismatchInfo);
+        logger.warn(`[Payment Reconciliation Mismatch] ${mismatchInfo.issue}`, mismatchInfo);
+      }
+    } catch (err) {
+      logger.error(`Error reconciling payment ${payment._id}: ${err.message}`);
+    }
+  }
+
+  logger.info(
+    `Daily Payment Reconciliation finished. Processed: ${processedCount}, Mismatches Flagged: ${mismatches.length}`
+  );
+
+  return {
+    processedCount,
+    mismatchCount: mismatches.length,
+    mismatches,
+  };
 };
 
 module.exports = {
@@ -553,4 +721,7 @@ module.exports = {
   runStreakExpirySweep,
   runStreakReminders,
   runMetricsAggregation,
+  runWeeklyLeaderboardSnapshot,
+  runNightlyRecommendations,
+  runDailyPaymentReconciliation,
 };

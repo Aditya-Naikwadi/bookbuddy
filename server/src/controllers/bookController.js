@@ -2,6 +2,7 @@ const Book = require('../models/Book');
 const BookDTO = require('../dtos/BookDTO');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('express-async-handler');
+const { scopeToCollege } = require('../middlewares/scopeToCollege');
 
 // @desc    Get all books with search, filter & pagination
 // @route   GET /api/books
@@ -12,38 +13,40 @@ const getBooks = asyncHandler(async (req, res) => {
 
   const { search, category, format, available, yearFrom, yearTo, lang } = req.query;
 
-  let query = { ...req.tenantFilter };
+  let queryFilter = {};
 
   if (search) {
-    query.$text = { $search: search };
+    queryFilter.$text = { $search: search };
   }
 
   if (category) {
     // allow comma separated categories
-    query.category = { $in: category.split(',') };
+    queryFilter.category = { $in: category.split(',') };
   }
 
   if (format) {
-    query.format = format;
+    queryFilter.format = format;
   }
 
   if (available === 'true') {
-    query.availableCopies = { $gt: 0 };
+    queryFilter.availableCopies = { $gt: 0 };
   }
 
   if (yearFrom || yearTo) {
-    query.publishedYear = {};
-    if (yearFrom) query.publishedYear.$gte = Number(yearFrom);
-    if (yearTo) query.publishedYear.$lte = Number(yearTo);
+    queryFilter.publishedYear = {};
+    if (yearFrom) queryFilter.publishedYear.$gte = Number(yearFrom);
+    if (yearTo) queryFilter.publishedYear.$lte = Number(yearTo);
   }
 
   if (lang) {
-    query.language = lang;
+    queryFilter.language = lang;
   }
 
-  const count = await Book.countDocuments(query);
+  const scopedQuery = scopeToCollege(queryFilter, req.user?.collegeId);
 
-  const books = await Book.find(query)
+  const count = await Book.countDocuments(scopedQuery);
+
+  const books = await Book.find(scopedQuery)
     .limit(pageSize)
     .skip(pageSize * (page - 1))
     .sort(search ? { score: { $meta: 'textScore' } } : { createdAt: -1 });
@@ -61,7 +64,8 @@ const getBooks = asyncHandler(async (req, res) => {
 // @route   GET /api/books/:id
 // @access  Public
 const getBookById = asyncHandler(async (req, res, next) => {
-  const book = await Book.findOne({ _id: req.params.id, ...req.tenantFilter });
+  const scopedFilter = scopeToCollege({ _id: req.params.id }, req.user?.collegeId);
+  const book = await Book.findOne(scopedFilter);
 
   if (!book) {
     return next(new AppError('Book not found', 404));
@@ -74,9 +78,8 @@ const getBookById = asyncHandler(async (req, res, next) => {
 // @route   GET /api/books/:id/availability
 // @access  Public
 const getBookAvailability = asyncHandler(async (req, res, next) => {
-  const book = await Book.findOne({ _id: req.params.id, ...req.tenantFilter }).select(
-    'totalCopies availableCopies'
-  );
+  const scopedFilter = scopeToCollege({ _id: req.params.id }, req.user?.collegeId);
+  const book = await Book.findOne(scopedFilter).select('totalCopies availableCopies');
 
   if (!book) {
     return next(new AppError('Book not found', 404));

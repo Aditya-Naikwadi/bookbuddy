@@ -8,6 +8,8 @@ const {
   submitEResource,
   getMySubmissions,
   updateProgress,
+  issueOfflineToken,
+  getSignedDownloadUrl,
 } = require('../controllers/eresourceController');
 
 const { protect } = require('../middlewares/auth');
@@ -20,6 +22,8 @@ router.use(scopeToTenant);
 
 router.get('/my-submissions', getMySubmissions);
 router.post('/submit', upload.single('file'), submitEResource);
+router.get('/:id/download-url', getSignedDownloadUrl);
+router.post('/:id/offline-token', issueOfflineToken);
 
 router.route('/').get(listInternalResources);
 router.route('/:eresourceId/progress').post(validate(updateProgressSchema), updateProgress);

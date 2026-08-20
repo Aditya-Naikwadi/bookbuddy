@@ -6,7 +6,7 @@ const bookSchema = new mongoose.Schema(
     collegeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'College',
-      required: true,
+      required: [true, 'CRITICAL TENANT ERROR: Cannot save document without tenant collegeId'],
     },
     isbn: {
       type: String,
@@ -43,6 +43,20 @@ const bookSchema = new mongoose.Schema(
     },
     shelfLocation: {
       type: String,
+    },
+    avgRating: {
+      type: Number,
+      default: 0,
+    },
+    ratingCount: {
+      type: Number,
+      default: 0,
+    },
+    // F6.1: ILL-Style Cross-College sharing opt-in flag (defaults to false)
+    isShareableAcrossColleges: {
+      type: Boolean,
+      default: false,
+      index: true,
     },
   },
   {

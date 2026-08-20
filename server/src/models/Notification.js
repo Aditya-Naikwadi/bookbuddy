@@ -26,6 +26,8 @@ const notificationSchema = new mongoose.Schema(
         'general',
         'LOAN_DUE',
         'loan_due',
+        'book_returned',
+        'book_available',
       ],
       required: true,
       index: true,

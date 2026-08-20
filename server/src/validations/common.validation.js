@@ -33,6 +33,13 @@ const paramIdAndItemIdSchema = z.object({
   }),
 });
 
+const paramIdAndBookIdSchema = z.object({
+  params: z.object({
+    id: objectIdSchema,
+    bookId: objectIdSchema,
+  }),
+});
+
 module.exports = {
   objectIdSchema,
   paramIdSchema,
@@ -40,4 +47,5 @@ module.exports = {
   paramEResourceIdSchema,
   paramGutenbergIdSchema,
   paramIdAndItemIdSchema,
+  paramIdAndBookIdSchema,
 };

@@ -98,6 +98,18 @@ const eResourceSchema = new mongoose.Schema(
     isPublished: {
       type: Boolean,
       default: false,
+      index: true,
+    },
+    // F10.1: Offline Download Mode toggle flag (defaults false)
+    isDownloadable: {
+      type: Boolean,
+      default: false,
+    },
+    // F6.1: ILL-Style Cross-College sharing opt-in flag (defaults to false)
+    isShareableAcrossColleges: {
+      type: Boolean,
+      default: false,
+      index: true,
     },
     publishedAt: {
       type: Date,
@@ -214,5 +226,9 @@ eResourceSchema.index({ collegeId: 1, moderationStatus: 1, isPublished: 1 });
 
 // College moderation list index
 eResourceSchema.index({ collegeId: 1, moderationStatus: 1, createdAt: -1 });
+
+// Apply tenant-scoping plugin to prevent cross-college e-resource leaks
+const { tenantScopingPlugin } = require('../middlewares/scopeToCollege');
+eResourceSchema.plugin(tenantScopingPlugin);
 
 module.exports = mongoose.model('EResource', eResourceSchema);

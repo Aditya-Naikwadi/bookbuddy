@@ -6,6 +6,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Analytics } from "@vercel/analytics/react";
 import { queryClient } from "./lib/reactQuery.js";
 import "./index.css";
+import "./i18n/config.js";
 import App from "./App.jsx";
 import { ThemeProvider } from "./context/ThemeContext.tsx";
 import { ConfigProvider, useConfig } from "./context/ConfigContext.jsx";

@@ -36,9 +36,35 @@ const announcementSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ['Operational', 'Academic', 'Maintenance', 'General'],
+      enum: ['Operational', 'Academic', 'Maintenance', 'General', 'Event', 'BookClub', 'Workshop'],
       default: 'General',
     },
+    isEvent: {
+      type: Boolean,
+      default: false,
+    },
+    eventType: {
+      type: String,
+      enum: ['book_club', 'workshop', 'exhibition', 'author_visit', 'general'],
+      default: 'general',
+    },
+    eventDate: {
+      type: Date,
+    },
+    location: {
+      type: String,
+      trim: true,
+    },
+    maxCapacity: {
+      type: Number,
+      default: 0, // 0 = unlimited
+    },
+    rsvpUsers: [
+      {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        rsvpAt: { type: Date, default: Date.now },
+      },
+    ],
     startDate: {
       type: Date,
       default: Date.now,

@@ -43,4 +43,7 @@ feedbackSchema.pre('save', function () {
   }
 });
 
+const { tenantScopingPlugin } = require('../middlewares/scopeToCollege');
+feedbackSchema.plugin(tenantScopingPlugin);
+
 module.exports = mongoose.model('Feedback', feedbackSchema);

@@ -228,7 +228,7 @@ const getHealthStatus = async () => {
     },
     cache: {
       name: 'Cache Layer',
-      status: 'healthy',
+      status: isCacheHealthy ? 'healthy' : 'degraded',
       latencyMs: redisLatencyMs,
       connectionState: redisStatus,
       message:
@@ -389,6 +389,7 @@ const deprecationWarning = require('./middlewares/deprecationWarning');
 app.use('/api/colleges', require('./routes/collegeFeatureRoutes'));
 app.use('/api/v1/colleges', require('./routes/collegeFeatureRoutes'));
 app.use('/api/v1/college/:id/books', require('./routes/collegeBookRoutes'));
+app.use('/api/v1/catalog/cross-college', require('./routes/crossCollegeCatalogRoutes'));
 app.use('/api/v1/catalog', require('./routes/catalogRoutes'));
 app.use('/api/v1/services', require('./routes/serviceRoutes'));
 app.use('/api/v1/college/:id', require('./routes/bulkUploadRoutes'));
@@ -398,9 +399,13 @@ app.use('/api/v1/registration', require('./routes/registrationRoutes'));
 app.use('/api/v1/books', require('./routes/bookRoutes'));
 app.use('/api/v1/loans', require('./routes/loanRoutes'));
 app.use('/api/v1/fines', require('./routes/fineRoutes'));
+app.use('/api/v1/ill', require('./routes/illRoutes'));
 app.use('/api/v1/patron-card', require('./routes/patronCardRoutes'));
 app.use('/api/v1/reservations', require('./routes/reservationRoutes'));
 app.use('/api/v1/reading-lists', require('./routes/readingListRoutes'));
+app.use('/api/v1/reading-progress', require('./routes/readingProgressRoutes'));
+app.use('/api/v1/reviews', require('./routes/reviewRoutes'));
+app.use('/api/v1/availability-alerts', require('./routes/availabilityAlertRoutes'));
 app.use('/api/v1/bookmarks', require('./routes/bookmarkRoutes'));
 app.use('/api/v1/saved-searches', require('./routes/savedSearchRoutes'));
 app.use('/api/v1/recommendations', require('./routes/recommendationRoutes'));
@@ -422,9 +427,11 @@ app.use('/api/v1/lab', require('./routes/labRoutes'));
 app.use('/api/v1/feedback', require('./routes/feedbackRoutes'));
 app.use('/api/v1/complaints', require('./routes/complaintRoutes'));
 app.use('/api/v1/book-suggestions', require('./routes/bookSuggestionRoutes'));
+app.use('/api/v1/announcements', require('./routes/announcementRoutes'));
 app.use('/api/v1/eresources/external', require('./routes/eresourceExternalRoutes'));
 app.use('/api/v1/google-books', require('./routes/googleBooksRoutes'));
 app.use('/api/v1/streak', require('./routes/streakRoutes'));
+app.use('/api/v1/leaderboard', require('./routes/leaderboardRoutes'));
 app.use('/api/v1/stickers', require('./routes/stickerRoutes'));
 app.use('/api/v1/shelves', require('./routes/shelfRoutes'));
 app.use('/api/v1/book-requests', require('./routes/bookRequestRoutes'));
@@ -432,8 +439,20 @@ app.use('/api/v1/item-reports', require('./routes/itemReportRoutes'));
 app.use('/api/v1/notification-preferences', require('./routes/notificationPrefRoutes'));
 app.use('/api/v1/reading-stats', require('./routes/readingStatsRoutes'));
 app.use('/api/v1/digital-card', require('./routes/digitalCardRoutes'));
+app.use('/api/v1/tags', require('./routes/tagRoutes'));
+app.use('/api/v1/help', require('./routes/helpRoutes'));
+app.use('/api/v1/users', require('./routes/userRoutes'));
+app.use('/api/v1/feed', require('./routes/feedRoutes'));
+app.use('/api/v1/recommendations', require('./routes/recommendationRoutes'));
+app.use('/api/v1/catalog/cross-college', require('./routes/crossCollegeCatalogRoutes'));
+app.use('/api/v1/share-requests', require('./routes/shareRequestRoutes'));
 
 // Deprecated Legacy Unversioned Routes (Supported with 90-day deprecation headers)
+app.use('/api/catalog/cross-college', deprecationWarning, require('./routes/crossCollegeCatalogRoutes'));
+app.use('/api/share-requests', deprecationWarning, require('./routes/shareRequestRoutes'));
+app.use('/api/recommendations', deprecationWarning, require('./routes/recommendationRoutes'));
+app.use('/api/feed', deprecationWarning, require('./routes/feedRoutes'));
+app.use('/api/users', deprecationWarning, require('./routes/userRoutes'));
 app.use('/api/college/:id/books', deprecationWarning, require('./routes/collegeBookRoutes'));
 app.use('/api/catalog', deprecationWarning, require('./routes/catalogRoutes'));
 app.use('/api/services', deprecationWarning, require('./routes/serviceRoutes'));
@@ -446,12 +465,14 @@ app.use('/api/fines', deprecationWarning, require('./routes/fineRoutes'));
 app.use('/api/patron-card', deprecationWarning, require('./routes/patronCardRoutes'));
 app.use('/api/reservations', deprecationWarning, require('./routes/reservationRoutes'));
 app.use('/api/reading-lists', deprecationWarning, require('./routes/readingListRoutes'));
+app.use('/api/reading-progress', deprecationWarning, require('./routes/readingProgressRoutes'));
 app.use('/api/bookmarks', deprecationWarning, require('./routes/bookmarkRoutes'));
 app.use('/api/saved-searches', deprecationWarning, require('./routes/savedSearchRoutes'));
 app.use('/api/recommendations', deprecationWarning, require('./routes/recommendationRoutes'));
 app.use('/api/eresources', deprecationWarning, require('./routes/eresourceRoutes'));
 app.use('/api/reader', deprecationWarning, require('./routes/readerRoutes'));
 app.use('/api/notifications', deprecationWarning, require('./routes/notificationRoutes'));
+app.use('/api/tags', deprecationWarning, require('./routes/tagRoutes'));
 app.use('/api/payments', deprecationWarning, require('./routes/paymentRoutes'));
 app.use('/api/v1/create-order', (req, res, next) => {
   req.url = '/create-order';

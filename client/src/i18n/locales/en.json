@@ -1,0 +1,37 @@
+{
+  "app": {
+    "title": "BookBuddy Library",
+    "subtitle": "Smart Library System & Digital Catalog",
+    "welcome": "Welcome back to BookBuddy Library",
+    "searchPlaceholder": "Search catalog by title, author, or ISBN...",
+    "libraryHours": "Library Hours Today",
+    "openNow": "Open Now",
+    "closed": "Closed",
+    "quickLinks": "Quick Links",
+    "searchCatalog": "Search Catalog",
+    "eresources": "E-Resources",
+    "bookmarks": "My Bookmarks",
+    "labBooking": "Lab Booking",
+    "offlineDownloads": "Offline Downloads",
+    "trendingInCollege": "Trending in Your College",
+    "tailoredForYou": "Tailored For You",
+    "recommendedForYou": "Recommended For You",
+    "language": "Language",
+    "selectLanguage": "Select System Language",
+    "availableOffline": "Available Offline",
+    "downloadForOffline": "Download for Offline Reading"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "catalog": "Catalog",
+    "loans": "My Loans",
+    "fines": "Fines",
+    "eresources": "E-Resources",
+    "downloads": "Downloads",
+    "shelves": "My Shelves",
+    "recommendations": "Recommendations",
+    "feed": "Campus Feed",
+    "profile": "Profile & Badges",
+    "leaderboard": "Leaderboard"
+  }
+}

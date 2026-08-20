@@ -40,12 +40,24 @@ export const deleteBookmark = async (id) => {
   return data;
 };
 
+export const addReadingListItem = async (listId, payload) => {
+  const { data } = await apiClient.post(`/reading-lists/${listId}/items`, payload);
+  return data.data || data;
+};
+
+export const removeReadingListItem = async (listId, bookId) => {
+  const { data } = await apiClient.delete(`/reading-lists/${listId}/items/${bookId}`);
+  return data.data || data;
+};
+
 const readingListApi = {
   getReadingLists,
   getReadingListById,
   createReadingList,
   updateReadingList,
   deleteReadingList,
+  addReadingListItem,
+  removeReadingListItem,
   getMyBookmarks,
   createBookmark,
   deleteBookmark,

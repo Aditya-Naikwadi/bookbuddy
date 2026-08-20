@@ -19,6 +19,7 @@ import { useReaderPosition } from "../../../hooks/useReaderPosition";
 import { ReaderToolbar } from "../../../components/student/ebook-reader/ReaderToolbar";
 import { TableOfContents } from "../../../components/student/ebook-reader/TableOfContents";
 import { ReaderThemeControls } from "../../../components/student/ebook-reader/ReaderThemeControls";
+import { ResumePromptToast } from "../../../components/student/ebook-reader/ResumePromptToast";
 import * as pdfjsLib from "pdfjs-dist";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -102,13 +103,16 @@ const EbookReader = () => {
   } = useEpubLoader(isPdf ? null : fileUrl, viewerRef);
 
   // 3. Reader position tracking (handles both EPUB CFI & PDF Page)
-  const pdfState = isPdf ? { page: pdfPage, totalPages: pdfTotalPages } : null;
-  const { percentComplete, initialPosition } = useReaderPosition(
-    resourceId,
-    userId,
-    rendition,
-    pdfState,
-  );
+  const pdfState = isPdf
+    ? { page: pdfPage, totalPages: pdfTotalPages, setPdfPage }
+    : null;
+  const {
+    percentComplete,
+    initialPosition,
+    discrepancy,
+    dismissDiscrepancy,
+    jumpToPosition,
+  } = useReaderPosition(resourceId, userId, rendition, pdfState);
 
   // Set initial PDF page when position restores or from offline cache
   useEffect(() => {
@@ -594,6 +598,12 @@ const EbookReader = () => {
           </div>
         </div>
       )}
+
+      <ResumePromptToast
+        discrepancy={discrepancy}
+        onJump={jumpToPosition}
+        onStay={dismissDiscrepancy}
+      />
     </div>
   );
 };

@@ -7,6 +7,7 @@ const AppError = require('../utils/AppError');
 const config = require('../config');
 const streakService = require('./streakService');
 const reservationService = require('./reservationService');
+const { evaluateBadges } = require('./badgeService');
 const { runInTransaction } = require('../utils/transactionHelper');
 
 const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
@@ -77,6 +78,9 @@ const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
       );
 
       await streakService.recordQualifyingAction(userId, collegeId, 'checkout');
+      evaluateBadges(userId, 'book_borrowed', { bookId, loanId: loan._id }).catch((err) =>
+        console.error('Error evaluating badges after book checkout:', err)
+      );
 
       return loan;
     } catch (err) {
@@ -117,6 +121,43 @@ const returnBook = async (loanId, collegeId) => {
     await reservationService.promoteNextHold(loan.bookId, collegeId);
 
     await streakService.recordQualifyingAction(loan.userId, collegeId, 'return');
+    evaluateBadges(loan.userId, 'book_returned', { loanId: loan._id, bookId: loan.bookId }).catch(
+      (err) => console.error('Error evaluating badges after book return:', err)
+    );
+
+    // 5. Send notification with Nodemailer email fallback if target user is offline (no active socket)
+    try {
+      const { sendNotificationWithEmailFallback } = require('./emailService');
+      const bookTitle = book ? book.title : 'Catalog Item';
+      await sendNotificationWithEmailFallback(
+        loan.userId,
+        'book_returned',
+        `Your borrowed book "${bookTitle}" was successfully returned to the library.`,
+        {
+          relatedId: loan.bookId,
+          relatedType: 'Book',
+          subject: `📚 Book Return Confirmation: "${bookTitle}"`,
+        }
+      );
+
+      // Also notify any watchers
+      const WatchRequest = require('../models/WatchRequest');
+      const watchers = await WatchRequest.find({ bookId: loan.bookId });
+      for (const watcher of watchers) {
+        await sendNotificationWithEmailFallback(
+          watcher.userId,
+          'book_available',
+          `Good news! The book "${bookTitle}" you were watching is now available in the library.`,
+          {
+            relatedId: loan.bookId,
+            relatedType: 'Book',
+            subject: `🔔 Book Available: "${bookTitle}"`,
+          }
+        );
+      }
+    } catch {
+      // Non-blocking notification dispatch
+    }
 
     return loan;
   });

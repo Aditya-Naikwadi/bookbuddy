@@ -139,6 +139,14 @@ const EbookReader = lazy(
 const Achievements = lazy(
   () => import("./pages/dashboards/student/Achievements"),
 );
+const Downloads = lazy(() => import("./pages/Downloads"));
+const MyShelves = lazy(() => import("./pages/MyShelves"));
+const Feed = lazy(() => import("./pages/Feed"));
+const IncomingShareRequests = lazy(
+  () => import("./pages/dashboards/admin/IncomingShareRequests")
+);
+const CrossCollegeCatalog = lazy(() => import("./pages/CrossCollegeCatalog"));
+const Fines = lazy(() => import("./pages/Fines"));
 
 // Component to redirect authenticated users away from Auth routes
 const AuthRedirect = ({ children }) => {
@@ -345,6 +353,9 @@ function App() {
                         element={<HelpdeskDesk />}
                       />
                       <Route
+                        path="college-admin/share-requests"
+                        element={<IncomingShareRequests />}
+                      />
                         path="college-admin/analytics"
                         element={<AnalyticsOverview />}
                       />
@@ -428,6 +439,8 @@ function App() {
                           </FeatureGate>
                         }
                       />
+                      <Route path="shelves" element={<MyShelves />} />
+                      <Route path="my-shelves" element={<MyShelves />} />
                       <Route
                         path="recommendations"
                         element={
@@ -468,7 +481,23 @@ function App() {
                           </FeatureGate>
                         }
                       />
+                      <Route path="feed" element={<Feed />} />
+                      <Route path="campus-feed" element={<Feed />} />
+                      <Route path="cross-college" element={<CrossCollegeCatalog />} />
+                      <Route path="fines" element={<Fines />} />
+                      <Route path="checkout" element={<Fines />} />
+                      <Route path="downloads" element={<Downloads />} />
+                      <Route path="offline-downloads" element={<Downloads />} />
                     </Route>
+                  </Route>
+
+                  {/* Standalone Downloads & Reader Routes */}
+                  <Route
+                    element={
+                      <ProtectedRoute allowedRoles={["student", "general", "college-admin", "super-admin"]} />
+                    }
+                  >
+                    <Route path="/downloads" element={<Downloads />} />
                   </Route>
 
                   {/* Fullscreen Reader Route (Protected but outside dashboard layout) */}

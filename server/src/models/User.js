@@ -68,6 +68,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    hasSeenOnboarding: {
+      type: Boolean,
+      default: false,
+    },
     role: {
       type: String,
       enum: ['student', 'college-admin', 'super-admin', 'general'],
@@ -144,6 +148,15 @@ const userSchema = new mongoose.Schema(
         trim: true,
       },
     ],
+    points: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+    isLeaderboardVisible: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
@@ -176,6 +189,15 @@ userSchema
   })
   .set(function (v) {
     this.mfaSecret = v;
+  });
+
+userSchema
+  .virtual('isLeaderboardPublic')
+  .get(function () {
+    return this.isLeaderboardVisible;
+  })
+  .set(function (v) {
+    this.isLeaderboardVisible = v;
   });
 
 userSchema.set('toJSON', { virtuals: true });

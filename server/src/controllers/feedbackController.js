@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const Feedback = require('../models/Feedback');
+const { scopeToCollege } = require('../middlewares/scopeToCollege');
 
 // @desc    Submit feedback
 // @route   POST /api/feedback
@@ -22,7 +23,8 @@ const submitFeedback = asyncHandler(async (req, res) => {
 // @route   GET /api/feedback
 // @access  Private/Admin
 const getFeedback = asyncHandler(async (req, res) => {
-  const feedback = await Feedback.find(req.tenantFilter)
+  const scopedFilter = scopeToCollege({}, req.user?.collegeId);
+  const feedback = await Feedback.find(scopedFilter)
     .sort({ createdAt: -1 })
     .populate('submittedBy', 'name email');
   res.json({ success: true, data: feedback });

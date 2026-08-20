@@ -24,7 +24,8 @@ import DonutChart from "../../../components/general/DonutChart";
 import { useGeneralDashboard } from "../../../hooks/useBookData";
 import BookDataState from "../../../components/common/BookDataState";
 import BookCoverImage from "../../../components/common/BookCoverImage";
-import DashboardErrorBoundary from "../../../components/common/DashboardErrorBoundary";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../../../components/LanguageSwitcher";
 import { getTranslation } from "../../../i18n/dashboard";
 import { initWebVitalsTelemetry } from "../../../utils/webVitalsTelemetry";
 
@@ -33,10 +34,9 @@ const GeneralDashboardHome = () => {
   const carouselRef = useRef(null);
   const { bookmarks, toggleBookmark, isBookmarked } = useLocalBookmarks();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
 
   const collegeId = user?.collegeId || null;
-  const [lang] = useState("en");
-  const t = (key) => getTranslation(lang, key);
 
   // Measure Core Web Vitals on mount
   useEffect(() => {
@@ -123,9 +123,10 @@ const GeneralDashboardHome = () => {
         {/* Scoped Autocomplete Top Search Bar */}
         <div className="relative flex-1 max-w-md">
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
             <input
               type="text"
+              aria-label={t("searchPlaceholder", "Search catalog by title, author, or ISBN...")}
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -146,6 +147,7 @@ const GeneralDashboardHome = () => {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
+                aria-label="Clear search query"
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 <X className="w-3.5 h-3.5" />

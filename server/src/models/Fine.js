@@ -38,6 +38,11 @@ const fineSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    paymentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Payment',
+      default: null,
+    },
     paymentTransactionId: {
       type: String,
       default: null,

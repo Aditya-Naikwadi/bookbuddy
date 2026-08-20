@@ -4,6 +4,7 @@ const StreakReward = require('../models/StreakReward');
 const Sticker = require('../models/Sticker');
 const UserSticker = require('../models/UserSticker');
 const notificationService = require('./notificationService');
+const { evaluateBadges } = require('./badgeService');
 const { emitStreakUpdate } = require('../sockets');
 const AppError = require('../utils/AppError');
 
@@ -127,6 +128,10 @@ const recordQualifyingAction = async (userId, collegeId, actionType) => {
 
     streak.lastQualifyingActionAt = now;
     await streak.save({ session });
+
+    evaluateBadges(userId, 'streak_updated', { length: streak.currentStreak }).catch((err) =>
+      console.error('Error evaluating badges on streak update:', err)
+    );
 
     // 2. Process milestones/rewards
     const newlyUnlocked = [];
