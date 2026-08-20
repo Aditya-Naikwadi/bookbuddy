@@ -87,7 +87,9 @@ const handlePaymentWebhook = asyncHandler(async (req, res, next) => {
   );
 
   if (!isSignatureValid) {
-    console.warn('[Razorpay Webhook Warning] Webhook signature verification failed or header missing.');
+    console.warn(
+      '[Razorpay Webhook Warning] Webhook signature verification failed or header missing.'
+    );
     return res.status(400).json({
       success: false,
       message: 'Invalid webhook signature: Verification failed or signature header missing.',
@@ -97,8 +99,10 @@ const handlePaymentWebhook = asyncHandler(async (req, res, next) => {
   // Extract orderId and paymentId from gateway payload
   const bodyPayload = req.body || {};
   const paymentEntity = bodyPayload.payload?.payment?.entity || bodyPayload;
-  const gatewayOrderId = paymentEntity.order_id || bodyPayload.gatewayOrderId || bodyPayload.orderId;
-  const gatewayPaymentId = paymentEntity.id || bodyPayload.gatewayPaymentId || bodyPayload.paymentId;
+  const gatewayOrderId =
+    paymentEntity.order_id || bodyPayload.gatewayOrderId || bodyPayload.orderId;
+  const gatewayPaymentId =
+    paymentEntity.id || bodyPayload.gatewayPaymentId || bodyPayload.paymentId;
 
   if (!gatewayOrderId) {
     return res.status(400).json({

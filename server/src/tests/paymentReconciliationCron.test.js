@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 
 process.env.NODE_ENV = 'test';
-process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_payment_recon_test';
+process.env.MONGO_URI =
+  process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_payment_recon_test';
 
 const Payment = require('../models/Payment');
 const { runDailyPaymentReconciliation } = require('../services/cronService');
@@ -44,24 +45,28 @@ describe('F7.6 — Daily Payment Reconciliation Cron Job Mismatch Audit', () => 
     });
 
     // 3. Mock paymentGatewayService.fetchOrderFromGateway
-    vi_spy = jest.spyOn(paymentGatewayService, 'fetchOrderFromGateway').mockImplementation((orderId) => {
-      if (orderId === 'order_absent_gateway_123') {
-        // Absent on payment gateway API (returns null)
+    const vi_spy = jest
+      .spyOn(paymentGatewayService, 'fetchOrderFromGateway')
+      .mockImplementation((orderId) => {
+        if (orderId === 'order_absent_gateway_123') {
+          // Absent on payment gateway API (returns null)
+          return Promise.resolve(null);
+        }
+        if (orderId === 'order_uncaptured_gateway_456') {
+          // Gateway status is 'paid' while local DB is 'created'
+          return Promise.resolve({
+            id: 'order_uncaptured_gateway_456',
+            status: 'paid',
+            amount: 10000,
+          });
+        }
         return Promise.resolve(null);
-      }
-      if (orderId === 'order_uncaptured_gateway_456') {
-        // Gateway status is 'paid' while local DB is 'created'
-        return Promise.resolve({
-          id: 'order_uncaptured_gateway_456',
-          status: 'paid',
-          amount: 10000,
-        });
-      }
-      return Promise.resolve(null);
-    });
+      });
 
     // Execute daily reconciliation job
-    const report = await runDailyPaymentReconciliation({ since: new Date(Date.now() - 24 * 60 * 60 * 1000) });
+    const report = await runDailyPaymentReconciliation({
+      since: new Date(Date.now() - 24 * 60 * 60 * 1000),
+    });
 
     vi_spy.mockRestore();
 
@@ -70,13 +75,17 @@ describe('F7.6 — Daily Payment Reconciliation Cron Job Mismatch Audit', () => 
     expect(report.processedCount).toBeGreaterThanOrEqual(2);
     expect(report.mismatchCount).toBe(2);
 
-    const absentMismatch = report.mismatches.find((m) => m.gatewayOrderId === 'order_absent_gateway_123');
+    const absentMismatch = report.mismatches.find(
+      (m) => m.gatewayOrderId === 'order_absent_gateway_123'
+    );
     expect(absentMismatch).toBeDefined();
     expect(absentMismatch.localStatus).toBe('paid');
     expect(absentMismatch.gatewayStatus).toBe('ABSENT');
     expect(absentMismatch.issue).toContain('absent on payment gateway API');
 
-    const uncapturedMismatch = report.mismatches.find((m) => m.gatewayOrderId === 'order_uncaptured_gateway_456');
+    const uncapturedMismatch = report.mismatches.find(
+      (m) => m.gatewayOrderId === 'order_uncaptured_gateway_456'
+    );
     expect(uncapturedMismatch).toBeDefined();
     expect(uncapturedMismatch.localStatus).toBe('created');
     expect(uncapturedMismatch.gatewayStatus).toBe('paid');

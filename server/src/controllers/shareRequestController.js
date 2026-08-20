@@ -129,7 +129,10 @@ const updateShareRequestStatus = asyncHandler(async (req, res) => {
       };
 
       // 1. Notify requesting student's isolated user room
-      io.to(`user:${shareRequest.requestedBy.toString()}`).emit('share-request:status', notificationPayload);
+      io.to(`user:${shareRequest.requestedBy.toString()}`).emit(
+        'share-request:status',
+        notificationPayload
+      );
 
       // 2. Notify updating owning admin's isolated user room
       io.to(`user:${userId.toString()}`).emit('share-request:status', notificationPayload);

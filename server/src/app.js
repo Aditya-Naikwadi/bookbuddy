@@ -448,7 +448,11 @@ app.use('/api/v1/catalog/cross-college', require('./routes/crossCollegeCatalogRo
 app.use('/api/v1/share-requests', require('./routes/shareRequestRoutes'));
 
 // Deprecated Legacy Unversioned Routes (Supported with 90-day deprecation headers)
-app.use('/api/catalog/cross-college', deprecationWarning, require('./routes/crossCollegeCatalogRoutes'));
+app.use(
+  '/api/catalog/cross-college',
+  deprecationWarning,
+  require('./routes/crossCollegeCatalogRoutes')
+);
 app.use('/api/share-requests', deprecationWarning, require('./routes/shareRequestRoutes'));
 app.use('/api/recommendations', deprecationWarning, require('./routes/recommendationRoutes'));
 app.use('/api/feed', deprecationWarning, require('./routes/feedRoutes'));

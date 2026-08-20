@@ -28,15 +28,11 @@ const getCrossCollegeCatalog = asyncHandler(async (req, res) => {
   let eresources = [];
 
   if (!type || type === 'book') {
-    books = await Book.find(query)
-      .populate('collegeId', 'name shortName code')
-      .lean();
+    books = await Book.find(query).populate('collegeId', 'name shortName code').lean();
   }
 
   if (!type || type === 'eresource') {
-    eresources = await EResource.find(query)
-      .populate('collegeId', 'name shortName code')
-      .lean();
+    eresources = await EResource.find(query).populate('collegeId', 'name shortName code').lean();
   }
 
   res.json({
