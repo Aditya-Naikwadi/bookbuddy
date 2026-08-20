@@ -3,6 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "main": "src/server.js",
+  "engines": {
+    "node": "20.x"
+  },
+  "allowScripts": {
+    "argon2": true,
+    "bcrypt": true,
+    "protobufjs": true,
+    "unix-dgram": true,
+    "unrs-resolver": true
+  },
   "jest": {
     "setupFilesAfterEnv": [
       "./src/tests/setup.js"

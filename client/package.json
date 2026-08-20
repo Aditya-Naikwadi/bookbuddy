@@ -3,6 +3,14 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
+  "allowScripts": {
+    "core-js": true,
+    "es5-ext": true,
+    "puppeteer": true
+  },
   "scripts": {
     "dev": "vite",
     "prebuild": "node scripts/generate-version.cjs",
