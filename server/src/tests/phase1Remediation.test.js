@@ -9,6 +9,7 @@ const User = require('../models/User');
 const College = require('../models/College');
 const Fine = require('../models/Fine');
 const Loan = require('../models/Loan');
+const Payment = require('../models/Payment');
 const { generateTokenPair } = require('../utils/token');
 
 describe('Phase 1 Remediation Integration Tests', () => {
@@ -21,6 +22,12 @@ describe('Phase 1 Remediation Integration Tests', () => {
     if (mongoose.connection.readyState === 0) {
       await mongoose.connect(process.env.MONGO_URI);
     }
+    try {
+      await mongoose.connection.db.collection('payments').dropIndex('providerEventId_1');
+    } catch (_err) {
+      // Index may already be dropped
+    }
+    await Payment.syncIndexes();
   });
 
   afterAll(async () => {
@@ -28,6 +35,7 @@ describe('Phase 1 Remediation Integration Tests', () => {
     await User.deleteMany({});
     await Fine.deleteMany({});
     await Loan.deleteMany({});
+    await Payment.deleteMany({});
     await mongoose.disconnect();
   });
 
@@ -36,6 +44,7 @@ describe('Phase 1 Remediation Integration Tests', () => {
     await User.deleteMany({});
     await Fine.deleteMany({});
     await Loan.deleteMany({});
+    await Payment.deleteMany({});
 
     college = await College.create({
       name: 'Phase 1 College',

@@ -83,6 +83,20 @@ const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
         logger.error(`Error evaluating badges after book checkout: ${err.message}`)
       );
 
+      try {
+        const socketModule = require('../sockets');
+        const io =
+          socketModule && typeof socketModule.getIo === 'function' ? socketModule.getIo() : null;
+        if (io && collegeId) {
+          io.to(`college:${collegeId}`).emit('book:availability_updated', {
+            bookId,
+            availableCopies: book.copiesAvailable,
+          });
+        }
+      } catch (_err) {
+        // Non-blocking socket emit
+      }
+
       return loan;
     } catch (err) {
       // Rollback the atomic decrement if loan creation failed
@@ -140,10 +154,30 @@ const returnBook = async (loanId, collegeId) => {
           subject: `📚 Book Return Confirmation: "${bookTitle}"`,
         }
       );
+    } catch (_err) {
+      // Email fallback is non-blocking
+    }
 
+    try {
+      const socketModule = require('../sockets');
+      const io =
+        socketModule && typeof socketModule.getIo === 'function' ? socketModule.getIo() : null;
+      if (io && collegeId) {
+        io.to(`college:${collegeId}`).emit('book:availability_updated', {
+          bookId: loan.bookId,
+          availableCopies: book ? book.copiesAvailable : undefined,
+        });
+      }
+    } catch (_err) {
+      // Non-blocking socket emit
+    }
+
+    try {
       // Also notify any watchers
       const WatchRequest = require('../models/WatchRequest');
       const watchers = await WatchRequest.find({ bookId: loan.bookId });
+      const bookTitle = book ? book.title : 'Catalog Item';
+      const { sendNotificationWithEmailFallback } = require('./emailService');
       for (const watcher of watchers) {
         await sendNotificationWithEmailFallback(
           watcher.userId,
@@ -156,7 +190,7 @@ const returnBook = async (loanId, collegeId) => {
           }
         );
       }
-    } catch {
+    } catch (_err) {
       // Non-blocking notification dispatch
     }
 

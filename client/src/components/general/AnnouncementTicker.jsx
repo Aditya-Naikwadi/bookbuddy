@@ -10,17 +10,17 @@ import {
 
 const priorityConfig = {
   Urgent: {
-    bg: "bg-rose-50 border-rose-200 text-rose-800",
+    bg: "bg-rose-950/80 border-rose-800/80 text-rose-200",
     badge: "bg-rose-600 text-white",
     icon: AlertCircle,
   },
   Warning: {
-    bg: "bg-amber-50 border-amber-200 text-amber-800",
+    bg: "bg-amber-950/80 border-amber-800/80 text-amber-200",
     badge: "bg-amber-500 text-white",
     icon: Bell,
   },
   Notice: {
-    bg: "bg-indigo-50 border-indigo-200 text-indigo-800",
+    bg: "bg-indigo-950/80 border-indigo-800/80 text-indigo-200",
     badge: "bg-indigo-600 text-white",
     icon: Info,
   },
@@ -42,8 +42,8 @@ const AnnouncementTicker = ({ announcements = [], onDismiss }) => {
 
   if (!announcements || announcements.length === 0) {
     return (
-      <div className="flex items-center gap-2 p-2.5 px-4 bg-emerald-50/80 border border-emerald-200/80 text-emerald-800 rounded-xl text-xs font-medium">
-        <Info className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+      <div className="flex items-center gap-2 p-2.5 px-4 bg-emerald-950/80 border border-emerald-800/80 text-emerald-300 rounded-xl text-xs font-medium">
+        <Info className="w-4 h-4 text-emerald-400 flex-shrink-0" />
         <span>
           All systems normal. No active campus operational announcements at this
           time.
@@ -60,7 +60,7 @@ const AnnouncementTicker = ({ announcements = [], onDismiss }) => {
     <div
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      className={`flex items-center justify-between gap-3 p-2.5 px-4 rounded-xl border text-xs font-medium transition-all shadow-sm ${config.bg}`}
+      className={`flex items-center justify-between gap-3 p-2.5 px-4 rounded-xl border text-xs font-medium transition-all shadow-md ${config.bg}`}
     >
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <span
@@ -72,10 +72,10 @@ const AnnouncementTicker = ({ announcements = [], onDismiss }) => {
         <PriorityIcon className="w-4 h-4 flex-shrink-0" />
 
         <div className="truncate flex items-center gap-2">
-          <span className="font-bold text-slate-900 truncate">
+          <span className="font-bold text-slate-100 truncate">
             {current.title}:
           </span>
-          <span className="text-slate-700 truncate">{current.content}</span>
+          <span className="text-slate-300 truncate">{current.content}</span>
         </div>
       </div>
 
@@ -91,7 +91,7 @@ const AnnouncementTicker = ({ announcements = [], onDismiss }) => {
                 (prev - 1 + announcements.length) % announcements.length,
             )
           }
-          className="p-1 rounded-md hover:bg-black/5 text-slate-600 transition-colors"
+          className="p-1 rounded-md hover:bg-white/10 text-slate-300 transition-colors"
           title="Previous Notice"
         >
           <ChevronLeft className="w-3.5 h-3.5" />
@@ -101,7 +101,7 @@ const AnnouncementTicker = ({ announcements = [], onDismiss }) => {
           onClick={() =>
             setCurrentIndex((prev) => (prev + 1) % announcements.length)
           }
-          className="p-1 rounded-md hover:bg-black/5 text-slate-600 transition-colors"
+          className="p-1 rounded-md hover:bg-white/10 text-slate-300 transition-colors"
           title="Next Notice"
         >
           <ChevronRight className="w-3.5 h-3.5" />
@@ -110,7 +110,7 @@ const AnnouncementTicker = ({ announcements = [], onDismiss }) => {
         {onDismiss && (
           <button
             onClick={() => onDismiss(current.id)}
-            className="p-1 rounded-md hover:bg-black/10 text-slate-500 hover:text-slate-800 transition-colors ml-1"
+            className="p-1 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors ml-1"
             title="Dismiss Notice"
           >
             <X className="w-3.5 h-3.5" />

@@ -218,29 +218,32 @@ const GeneralEResources = () => {
         label: "E-Books",
         value: ebooks,
         icon: BookOpen,
-        colorClass: "text-indigo-600",
-        bgBadgeClass: "bg-indigo-50 text-indigo-700",
+        colorClass: "text-indigo-400",
+        bgBadgeClass:
+          "bg-indigo-950 text-indigo-300 border border-indigo-800/80",
       },
       {
         label: "Journals",
         value: journals,
         icon: Globe,
-        colorClass: "text-emerald-600",
-        bgBadgeClass: "bg-emerald-50 text-emerald-700",
+        colorClass: "text-emerald-400",
+        bgBadgeClass:
+          "bg-emerald-950 text-emerald-300 border border-emerald-800/80",
       },
       {
         label: "Databases",
         value: databases,
         icon: Database,
-        colorClass: "text-purple-600",
-        bgBadgeClass: "bg-purple-50 text-purple-700",
+        colorClass: "text-purple-400",
+        bgBadgeClass:
+          "bg-purple-950 text-purple-300 border border-purple-800/80",
       },
       {
         label: "Past Papers",
         value: pastPapers,
         icon: FileCheck,
-        colorClass: "text-amber-600",
-        bgBadgeClass: "bg-amber-50 text-amber-700",
+        colorClass: "text-amber-400",
+        bgBadgeClass: "bg-amber-950 text-amber-300 border border-amber-800/80",
       },
     ];
   }, [allList]);
@@ -263,7 +266,7 @@ const GeneralEResources = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-full max-w-7xl mx-auto p-3 sm:p-4 gap-4 font-sans pb-10">
+    <div className="flex flex-col min-h-full max-w-7xl mx-auto p-3 sm:p-4 gap-4 font-sans pb-10 text-slate-100">
       {/* Sticky Control Bar */}
       <StickyControlBar
         searchQuery={rawSearch}
@@ -289,8 +292,8 @@ const GeneralEResources = () => {
                     onClick={() => setActiveCategory(cat)}
                     className={`px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
                       isActive
-                        ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/20"
-                        : "bg-slate-100/80 text-slate-600 hover:bg-slate-200/80"
+                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                        : "bg-slate-950 text-slate-300 hover:bg-slate-800 border border-slate-800"
                     }`}
                   >
                     {cat !== "All" && <Icon className="w-3.5 h-3.5" />}
@@ -319,20 +322,20 @@ const GeneralEResources = () => {
         viewMode={viewMode}
         columns="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
         emptyState={
-          <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200/80 shadow-sm text-center space-y-4 max-w-md my-auto">
-            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl w-12 h-12 mx-auto flex items-center justify-center">
+          <div className="bg-slate-900 p-8 sm:p-12 rounded-3xl border border-slate-800 shadow-2xl text-center space-y-4 max-w-md my-auto text-slate-100">
+            <div className="p-3 bg-indigo-950 text-indigo-400 border border-indigo-800/60 rounded-2xl w-12 h-12 mx-auto flex items-center justify-center">
               <FileText className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-slate-900">
+            <h3 className="text-base font-bold text-slate-100">
               No E-Resources Found
             </h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-slate-400 leading-relaxed">
               No public e-resources match your active category and keyword
               filter. Try resetting filters.
             </p>
             <button
               onClick={handleResetAll}
-              className="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+              className="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-500 transition-colors shadow-md"
             >
               Reset Filters
             </button>
@@ -346,11 +349,11 @@ const GeneralEResources = () => {
           return (
             <div
               key={item.id}
-              className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group"
+              className="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-xl hover:border-indigo-500/50 hover:shadow-2xl transition-all duration-200 flex flex-col justify-between group"
             >
               <div>
                 <div className="flex items-start justify-between mb-3">
-                  <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl">
+                  <div className="p-2.5 bg-indigo-950/80 text-indigo-400 border border-indigo-800/60 rounded-2xl">
                     <Icon className="w-5 h-5" />
                   </div>
 
@@ -358,8 +361,8 @@ const GeneralEResources = () => {
                     <span
                       className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg border ${
                         isOpenAccess
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : "bg-amber-50 text-amber-700 border-amber-200"
+                          ? "bg-emerald-950/80 text-emerald-300 border-emerald-800/80"
+                          : "bg-amber-950/80 text-amber-300 border-amber-800/80"
                       }`}
                     >
                       {isOpenAccess ? (
@@ -377,8 +380,8 @@ const GeneralEResources = () => {
                       }
                       className={`p-1.5 rounded-xl border transition-all ${
                         bookmarked
-                          ? "bg-amber-500 text-white border-amber-500 shadow-xs"
-                          : "bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-700"
+                          ? "bg-amber-500 text-white border-amber-500 shadow-amber-500/30"
+                          : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800"
                       }`}
                     >
                       <Bookmark
@@ -391,21 +394,21 @@ const GeneralEResources = () => {
                 <div className="flex items-center gap-2 text-[10px] font-semibold text-slate-400 mb-1">
                   <span>{item.category}</span>
                   <span>•</span>
-                  <span className="text-indigo-600 font-bold">
+                  <span className="text-indigo-400 font-bold">
                     {item.format}
                   </span>
                 </div>
 
-                <h3 className="font-bold text-slate-900 text-sm leading-snug line-clamp-2 group-hover:text-indigo-600 transition-colors mb-1.5">
+                <h3 className="font-bold text-slate-100 text-sm leading-snug line-clamp-2 group-hover:text-indigo-400 transition-colors mb-1.5">
                   {item.title}
                 </h3>
 
-                <p className="text-xs text-slate-600 leading-relaxed line-clamp-3 mb-3">
+                <p className="text-xs text-slate-300 leading-relaxed line-clamp-3 mb-3">
                   {item.description}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-auto">
+              <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-2 mt-auto">
                 <span className="text-[10px] text-slate-400 font-medium truncate">
                   Source: {item.source}
                 </span>
@@ -441,7 +444,7 @@ const GeneralEResources = () => {
                       });
                     }
                   }}
-                  className="px-3 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 font-bold text-xs rounded-xl transition-all flex items-center gap-1 flex-shrink-0 shadow-xs"
+                  className="px-3 py-1.5 bg-indigo-600 text-white hover:bg-indigo-500 font-bold text-xs rounded-xl transition-all flex items-center gap-1 flex-shrink-0 shadow-md shadow-indigo-600/20"
                 >
                   <BookOpen className="w-3.5 h-3.5" />
                   <span>Preview In-App</span>

@@ -43,14 +43,14 @@ const VirtualizedCardGrid = ({
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
-              className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm animate-pulse space-y-3"
+              className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm animate-pulse space-y-3"
             >
               <div className="flex justify-between">
-                <div className="w-10 h-10 bg-slate-200 rounded-xl"></div>
-                <div className="w-20 h-4 bg-slate-200 rounded-md"></div>
+                <div className="w-10 h-10 bg-slate-800 rounded-xl"></div>
+                <div className="w-20 h-4 bg-slate-800 rounded-md"></div>
               </div>
-              <div className="h-4 w-3/4 bg-slate-200 rounded-md"></div>
-              <div className="h-3 w-1/2 bg-slate-200 rounded-md"></div>
+              <div className="h-4 w-3/4 bg-slate-800 rounded-md"></div>
+              <div className="h-3 w-1/2 bg-slate-800 rounded-md"></div>
             </div>
           ))}
         </div>
@@ -70,7 +70,6 @@ const VirtualizedCardGrid = ({
   const isLargeList = items.length > 12;
   const numColumns = viewMode === "list" ? 1 : 3;
   const totalRows = Math.ceil(items.length / numColumns);
-  const _totalHeight = totalRows * estimatedItemHeight;
 
   let visibleItems = items;
   let paddingTop = 0;

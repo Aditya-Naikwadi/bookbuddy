@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   BookOpen,
@@ -18,8 +18,10 @@ import StatSummaryStrip from "../../../components/general/StatSummaryStrip";
 import VirtualizedCardGrid from "../../../components/general/VirtualizedCardGrid";
 import MobileFilterSheet from "../../../components/general/MobileFilterSheet";
 import DigitalReaderModal from "../../../components/general/DigitalReaderModal";
+import CiteThisItemModal from "../../../components/general/CiteThisItemModal";
 import useAuthStore from "../../../store/authStore";
 import { useBookSearch } from "../../../hooks/useBookData";
+import useBookAvailability from "../../../hooks/useBookAvailability";
 import BookDataState from "../../../components/common/BookDataState";
 
 const GENRES = [
@@ -43,32 +45,92 @@ const SORT_OPTIONS = [
 ];
 
 const GeneralSearch = () => {
-  const [searchParams] = useSearchParams();
-  const initialQuery = searchParams.get("q") || "";
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuthStore();
   const collegeId = user?.collegeId || null;
 
   const { toggleBookmark, isBookmarked } = useLocalBookmarks();
 
-  const [rawQuery, setRawQuery] = useState(initialQuery);
-  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
-  const [selectedGenre, setSelectedGenre] = useState("All");
-  const [selectedAvailability, setSelectedAvailability] = useState("All");
-  const [selectedFormat, setSelectedFormat] = useState("All");
-  const [sortBy, setSortBy] = useState("relevance");
+  // Read filter values directly from URL search params as source of truth
+  const urlQuery = searchParams.get("q") || "";
+  const selectedGenre = searchParams.get("category") || "All";
+  const selectedAvailability = searchParams.get("available") || "All";
+  const selectedFormat = searchParams.get("format") || "All";
+  const sortBy = searchParams.get("sortBy") || "relevance";
+
+  const [rawQuery, setRawQuery] = useState(urlQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState(urlQuery);
+  const [prevUrlQuery, setPrevUrlQuery] = useState(urlQuery);
+
+  // Sync rawQuery & debouncedQuery when urlQuery changes via browser navigation
+  if (urlQuery !== prevUrlQuery) {
+    setPrevUrlQuery(urlQuery);
+    setRawQuery(urlQuery);
+    setDebouncedQuery(urlQuery);
+  }
+
   const [viewMode, setViewMode] = useState("grid");
   const [showFiltersSheet, setShowFiltersSheet] = useState(false);
   const [genreSearch, setGenreSearch] = useState("");
   const [selectedLocationBook, setSelectedLocationBook] = useState(null);
   const [activeDigitalBook, setActiveDigitalBook] = useState(null);
+  const [citeBook, setCiteBook] = useState(null);
 
-  // Debounce search query changes (~300ms)
+  // Helper to update URL search params
+  const updateUrlFilters = useCallback(
+    (updates) => {
+      const nextParams = new URLSearchParams(searchParams);
+      const nextState = {
+        q: debouncedQuery,
+        category: selectedGenre,
+        available: selectedAvailability,
+        format: selectedFormat,
+        sortBy,
+        ...updates,
+      };
+
+      if (nextState.q) nextParams.set("q", nextState.q);
+      else nextParams.delete("q");
+
+      if (nextState.category && nextState.category !== "All")
+        nextParams.set("category", nextState.category);
+      else nextParams.delete("category");
+
+      if (nextState.available && nextState.available !== "All")
+        nextParams.set("available", nextState.available);
+      else nextParams.delete("available");
+
+      if (nextState.format && nextState.format !== "All")
+        nextParams.set("format", nextState.format);
+      else nextParams.delete("format");
+
+      if (nextState.sortBy && nextState.sortBy !== "relevance")
+        nextParams.set("sortBy", nextState.sortBy);
+      else nextParams.delete("sortBy");
+
+      setSearchParams(nextParams, { replace: true });
+    },
+    [
+      searchParams,
+      setSearchParams,
+      debouncedQuery,
+      selectedGenre,
+      selectedAvailability,
+      selectedFormat,
+      sortBy,
+    ],
+  );
+
+  // Debounce input search query changes (~300ms) & push to URL
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(rawQuery);
+      if (rawQuery !== urlQuery) {
+        updateUrlFilters({ q: rawQuery });
+      }
     }, 300);
     return () => clearTimeout(timer);
-  }, [rawQuery]);
+  }, [rawQuery, urlQuery, updateUrlFilters]);
 
   // Unified React Query Shared Data Layer Hook
   const {
@@ -85,6 +147,8 @@ const GeneralSearch = () => {
     sortBy,
     limit: 50,
   });
+
+  useBookAvailability(collegeId, refetch);
 
   const catalogBooks = useMemo(
     () => searchData?.books || [],
@@ -108,29 +172,31 @@ const GeneralSearch = () => {
         label: "Total Matches",
         value: catalogBooks.length,
         icon: BookOpen,
-        colorClass: "text-indigo-600",
-        bgBadgeClass: "bg-indigo-50 text-indigo-700",
+        colorClass: "text-indigo-400",
+        bgBadgeClass:
+          "bg-indigo-950 text-indigo-300 border border-indigo-800/80",
       },
       {
         label: "Available",
         value: available,
         icon: CheckCircle2,
-        colorClass: "text-emerald-600",
-        bgBadgeClass: "bg-emerald-50 text-emerald-700",
+        colorClass: "text-emerald-400",
+        bgBadgeClass:
+          "bg-emerald-950 text-emerald-300 border border-emerald-800/80",
       },
       {
         label: "On Hold",
         value: onHold,
         icon: Clock,
-        colorClass: "text-amber-600",
-        bgBadgeClass: "bg-amber-50 text-amber-700",
+        colorClass: "text-amber-400",
+        bgBadgeClass: "bg-amber-950 text-amber-300 border border-amber-800/80",
       },
       {
         label: "Checked Out",
         value: checkedOut,
         icon: BookX,
-        colorClass: "text-rose-600",
-        bgBadgeClass: "bg-rose-50 text-rose-700",
+        colorClass: "text-rose-400",
+        bgBadgeClass: "bg-rose-950 text-rose-300 border border-rose-800/80",
       },
     ];
   }, [catalogBooks]);
@@ -143,19 +209,26 @@ const GeneralSearch = () => {
   ];
 
   const handleRemoveChip = (key) => {
-    if (key === "query") setRawQuery("");
-    if (key === "genre") setSelectedGenre("All");
-    if (key === "availability") setSelectedAvailability("All");
-    if (key === "format") setSelectedFormat("All");
+    if (key === "query") {
+      setRawQuery("");
+      setDebouncedQuery("");
+      updateUrlFilters({ q: "" });
+    }
+    if (key === "genre") {
+      updateUrlFilters({ category: "All" });
+    }
+    if (key === "availability") {
+      updateUrlFilters({ available: "All" });
+    }
+    if (key === "format") {
+      updateUrlFilters({ format: "All" });
+    }
   };
 
   const handleResetAll = () => {
     setRawQuery("");
     setDebouncedQuery("");
-    setSelectedGenre("All");
-    setSelectedAvailability("All");
-    setSelectedFormat("All");
-    setSortBy("relevance");
+    setSearchParams(new URLSearchParams(), { replace: true });
   };
 
   const filteredGenresList = GENRES.filter((g) =>
@@ -163,9 +236,9 @@ const GeneralSearch = () => {
   );
 
   const filterContent = (
-    <div className="space-y-5">
+    <div className="space-y-5 text-slate-100">
       <div>
-        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+        <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
           Genre / Subject
         </label>
         <div className="relative mb-2">
@@ -175,47 +248,47 @@ const GeneralSearch = () => {
             value={genreSearch}
             onChange={(e) => setGenreSearch(e.target.value)}
             placeholder="Search genres..."
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200/80 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-950 border border-slate-700/80 rounded-lg text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
         </div>
-        <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+        <div className="space-y-1 max-h-40 overflow-y-auto pr-1 scrollbar-thin">
           {filteredGenresList.map((genre) => (
             <button
               key={genre}
-              onClick={() => setSelectedGenre(genre)}
+              onClick={() => updateUrlFilters({ category: genre })}
               className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between ${
                 selectedGenre === genre
-                  ? "bg-indigo-50 text-indigo-700 font-bold"
-                  : "text-slate-600 hover:bg-slate-50"
+                  ? "bg-indigo-950 text-indigo-300 font-bold border border-indigo-800/80"
+                  : "text-slate-300 hover:bg-slate-800"
               }`}
             >
               <span>{genre}</span>
               {selectedGenre === genre && (
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
               )}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="border-t border-slate-100 pt-4">
-        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+      <div className="border-t border-slate-800 pt-4">
+        <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
           Status & Availability
         </label>
         <div className="space-y-1">
           {AVAILABILITY_OPTIONS.map((status) => (
             <button
               key={status}
-              onClick={() => setSelectedAvailability(status)}
+              onClick={() => updateUrlFilters({ available: status })}
               className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between ${
                 selectedAvailability === status
-                  ? "bg-indigo-50 text-indigo-700 font-bold"
-                  : "text-slate-600 hover:bg-slate-50"
+                  ? "bg-indigo-950 text-indigo-300 font-bold border border-indigo-800/80"
+                  : "text-slate-300 hover:bg-slate-800"
               }`}
             >
-              <span>{status}</span>
+              <span className="capitalize">{status.replace("_", " ")}</span>
               {selectedAvailability === status && (
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
               )}
             </button>
           ))}
@@ -225,25 +298,29 @@ const GeneralSearch = () => {
   );
 
   return (
-    <div className="flex flex-col min-h-full max-w-7xl mx-auto p-3 sm:p-4 gap-4 font-sans pb-10">
+    <div className="flex flex-col min-h-full max-w-7xl mx-auto p-3 sm:p-4 gap-4 font-sans pb-10 text-slate-100">
       <StickyControlBar
         searchQuery={rawQuery}
         onSearchChange={setRawQuery}
-        onClearSearch={() => setRawQuery("")}
+        onClearSearch={() => {
+          setRawQuery("");
+          setDebouncedQuery("");
+          updateUrlFilters({ q: "" });
+        }}
         placeholder="Search catalog by title, author, or discipline..."
         sortBy={sortBy}
-        onSortChange={setSortBy}
+        onSortChange={(val) => updateUrlFilters({ sortBy: val })}
         sortOptions={SORT_OPTIONS}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onOpenMobileFilters={() => setShowFiltersSheet(true)}
-        resultCount={catalogBooks.length}
+        _resultCount={catalogBooks.length}
         filterSlot={
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <StatSummaryStrip items={stats} />
             <button
               onClick={() => setShowFiltersSheet(true)}
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 hover:bg-indigo-100 transition-all ml-auto"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-indigo-950/80 text-indigo-300 font-bold text-xs rounded-xl border border-indigo-800/80 hover:bg-indigo-900 transition-all ml-auto"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
               <span>Faceted Filters</span>
@@ -265,20 +342,20 @@ const GeneralSearch = () => {
         onRetry={refetch}
         isEmpty={catalogBooks.length === 0}
         emptyState={
-          <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200/80 shadow-sm text-center space-y-4 max-w-md mx-auto my-auto">
-            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl w-12 h-12 mx-auto flex items-center justify-center">
+          <div className="bg-slate-900 p-8 sm:p-12 rounded-3xl border border-slate-800 shadow-2xl text-center space-y-4 max-w-md mx-auto my-auto text-slate-100">
+            <div className="p-3 bg-indigo-950 text-indigo-400 border border-indigo-800/60 rounded-2xl w-12 h-12 mx-auto flex items-center justify-center">
               <BookOpen className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-slate-900">
+            <h3 className="text-base font-bold text-slate-100">
               No Matching Catalog Items
             </h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-slate-400 leading-relaxed">
               We couldn’t find any physical books matching your active search
               query and filter combination.
             </p>
             <button
               onClick={handleResetAll}
-              className="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition-colors shadow-xs"
+              className="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-500 transition-colors shadow-md"
             >
               Clear All Filters
             </button>
@@ -304,6 +381,7 @@ const GeneralSearch = () => {
               onToggleBookmark={toggleBookmark}
               onViewLocation={(b) => setSelectedLocationBook(b)}
               onReadOnline={(b) => setActiveDigitalBook(b)}
+              onCite={(b) => setCiteBook(b)}
             />
           )}
         />
@@ -328,42 +406,48 @@ const GeneralSearch = () => {
         title={activeDigitalBook?.title}
       />
 
+      <CiteThisItemModal
+        isOpen={Boolean(citeBook)}
+        onClose={() => setCiteBook(null)}
+        item={citeBook}
+      />
+
       {selectedLocationBook && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-slate-100 relative animate-in fade-in zoom-in-95 duration-200 space-y-4">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 rounded-3xl max-w-md w-full p-5 shadow-2xl border border-slate-800 relative animate-in fade-in zoom-in-95 duration-200 space-y-4 text-slate-100">
             <button
               onClick={() => setSelectedLocationBook(null)}
-              className="absolute top-4 right-4 p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+              <div className="p-3 bg-indigo-950 text-indigo-400 border border-indigo-800/60 rounded-2xl">
                 <MapPin className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-sm font-bold text-slate-100">
                   {selectedLocationBook.title}
                 </h3>
-                <p className="text-xs text-slate-500">Physical Shelf Mapping</p>
+                <p className="text-xs text-slate-400">Physical Shelf Mapping</p>
               </div>
             </div>
 
-            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2.5 text-xs">
-              <div className="flex justify-between py-1 border-b border-slate-200/60">
-                <span className="text-slate-500 font-medium">Shelf Code</span>
-                <span className="font-bold text-indigo-900">
+            <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-2.5 text-xs">
+              <div className="flex justify-between py-1 border-b border-slate-800">
+                <span className="text-slate-400 font-medium">Shelf Code</span>
+                <span className="font-bold text-indigo-300">
                   {selectedLocationBook.shelfLocation ||
                     selectedLocationBook.location ||
                     "Main Stacks"}
                 </span>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-200/60">
-                <span className="text-slate-500 font-medium">
+              <div className="flex justify-between py-1 border-b border-slate-800">
+                <span className="text-slate-400 font-medium">
                   Copies Available
                 </span>
-                <span className="font-bold text-slate-900">
+                <span className="font-bold text-slate-100">
                   {selectedLocationBook.availableCopies} Copies
                 </span>
               </div>
@@ -371,7 +455,7 @@ const GeneralSearch = () => {
 
             <button
               onClick={() => setSelectedLocationBook(null)}
-              className="w-full py-2.5 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-600/20"
+              className="w-full py-2.5 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-500 transition-colors shadow-md shadow-indigo-600/20"
             >
               Close Location Guide
             </button>

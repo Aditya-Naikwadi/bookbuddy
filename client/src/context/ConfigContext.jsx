@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "../api/client";
 
 const ConfigContext = createContext({
   googleClientId: "",
@@ -19,8 +19,8 @@ export const ConfigProvider = ({ children }) => {
 
   useEffect(() => {
     let isMounted = true;
-    axios
-      .get("/api/v1/config/public")
+    apiClient
+      .get("/config/public")
       .then((res) => {
         if (isMounted && res.data?.success && res.data?.config) {
           setConfig({

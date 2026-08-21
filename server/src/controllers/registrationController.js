@@ -191,8 +191,6 @@ const verifyStudentEmail = async (req, res, next) => {
       membershipStatus: 'active',
     });
 
-    // Bypass password hashing pre-save since passwordHash is already pre-hashed
-    newUser.isModified = (field) => (field === 'password' ? false : true);
     await newUser.save();
 
     // Mark registration request active

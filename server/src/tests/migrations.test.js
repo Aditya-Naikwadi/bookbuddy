@@ -108,4 +108,20 @@ describe('Database Migration Integration & Idempotency Tests', () => {
 
     await client.close();
   });
+
+  afterAll(async () => {
+    try {
+      const Payment = require('../models/Payment');
+      if (mongoose.connection && mongoose.connection.db) {
+        try {
+          await mongoose.connection.db.collection('payments').dropIndex('providerEventId_1');
+        } catch (_err) {
+          // Index may already be dropped
+        }
+        await Payment.syncIndexes();
+      }
+    } catch (_err) {
+      // Connection may already be closed
+    }
+  });
 });

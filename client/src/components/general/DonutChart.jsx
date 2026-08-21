@@ -1,9 +1,9 @@
 const DonutChart = ({
   data = [
-    { label: "Computer Science", value: 35, color: "#4F46E5" },
+    { label: "Computer Science", value: 35, color: "#6366F1" },
     { label: "Literature", value: 25, color: "#10B981" },
     { label: "Economics", value: 20, color: "#F59E0B" },
-    { label: "Architecture", value: 20, color: "#8B5CF6" },
+    { label: "Architecture", value: 20, color: "#A855F7" },
   ],
   size = 100,
   strokeWidth = 14,
@@ -49,7 +49,7 @@ const DonutChart = ({
           ))}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-xs font-bold text-slate-800 tracking-tight">
+          <span className="text-xs font-bold text-slate-100 tracking-tight">
             {total}%
           </span>
           <span className="text-[9px] text-slate-400 font-medium">
@@ -65,7 +65,7 @@ const DonutChart = ({
               className="w-2.5 h-2.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: item.color }}
             />
-            <span className="text-slate-600 font-medium truncate max-w-[90px]">
+            <span className="text-slate-300 font-medium truncate max-w-[90px]">
               {item.label}
             </span>
             <span className="text-slate-400 font-semibold text-[10px] ml-auto">

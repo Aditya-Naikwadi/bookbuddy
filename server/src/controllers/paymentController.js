@@ -142,7 +142,7 @@ const handlePaymentWebhook = asyncHandler(async (req, res) => {
       amount: fineDoc ? fineDoc.amount : paymentEntity.amount ? paymentEntity.amount / 100 : 0,
       gatewayOrderId: gatewayOrderId || `ord_${Date.now()}`,
       gatewayPaymentId: gatewayPaymentId || `pay_${Date.now()}`,
-      providerEventId: eventId,
+      ...(eventId ? { providerEventId: eventId } : {}),
       status: 'paid',
       webhookVerifiedAt: new Date(),
     });

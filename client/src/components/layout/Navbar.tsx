@@ -119,7 +119,6 @@ const NavbarComponent = () => {
 
         {/* Desktop Actions (Visible on >= 1024px) */}
         <div className="hidden lg:flex items-center gap-4">
-          <ThemeToggle />
           <Button onClick={() => (window.location.href = "/auth/register")}>
             Start for Free
           </Button>
@@ -127,7 +126,6 @@ const NavbarComponent = () => {
 
         {/* Mobile & Tablet Controls (Visible on < 1024px) */}
         <div className="flex lg:hidden items-center gap-2 sm:gap-3">
-          <ThemeToggle />
 
           {/* CSS-Animated Hamburger Toggle Button */}
           <button

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   Mail,
@@ -8,11 +8,13 @@ import {
   AlertCircle,
   BookOpen,
 } from "lucide-react";
+import { registrationApi } from "../../api/registrationApi";
 
 export default function CollegeStudentRegister() {
   const { collegeSlug } = useParams();
 
-  const [collegeData, _setCollegeData] = useState({
+  const [collegeData, setCollegeData] = useState({
+    _id: null,
     name: "Stanford University",
     slug: collegeSlug || "stanford-univ",
     domain: "stanford.edu",
@@ -40,7 +42,37 @@ export default function CollegeStudentRegister() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [globalError, setGlobalError] = useState("");
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    async function loadColleges() {
+      try {
+        const colleges = await registrationApi.getActiveColleges();
+        if (colleges && colleges.length > 0) {
+          const match =
+            colleges.find(
+              (c) =>
+                c.shortName?.toLowerCase() === collegeSlug?.toLowerCase() ||
+                c.code?.toLowerCase() === collegeSlug?.toLowerCase() ||
+                c.name?.toLowerCase().includes(collegeSlug?.toLowerCase()),
+            ) || colleges[0];
+          setCollegeData((prev) => ({
+            ...prev,
+            _id: match._id,
+            name: match.name,
+            domain: match.domain || prev.domain,
+            configuredDepartments:
+              match.configuredDepartments?.length > 0
+                ? match.configuredDepartments
+                : prev.configuredDepartments,
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to load active colleges:", err);
+      }
+    }
+    loadColleges();
+  }, [collegeSlug]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setGlobalError("");
 
@@ -50,10 +82,30 @@ export default function CollegeStudentRegister() {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      if (collegeData._id) {
+        const fullName =
+          `${studentForm.firstName} ${studentForm.lastName}`.trim();
+        await registrationApi.registerStudent({
+          name: fullName,
+          email: studentForm.email,
+          password: studentForm.password,
+          collegeId: collegeData._id,
+          studentId:
+            studentForm.rollNumber || `STU-${Date.now().toString().slice(-4)}`,
+          department: studentForm.department,
+          phone: studentForm.phone,
+        });
+      }
       setIsSubmitting(false);
       setShowSuccess(true);
-    }, 1200);
+    } catch (err) {
+      setIsSubmitting(false);
+      setGlobalError(
+        err.response?.data?.message ||
+          "Registration failed. Please check your information and try again.",
+      );
+    }
   };
 
   return (

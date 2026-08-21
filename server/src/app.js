@@ -41,6 +41,7 @@ app.use(
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
     frameguard: { action: 'deny' },
     crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],

@@ -5,6 +5,7 @@ import apiClient, {
   fetchCsrfToken,
   setOnUnauthorizedCallback,
   broadcastLogout,
+  refreshTokenSingleFlight,
 } from "../api/client";
 
 const isTokenExpiredOrNearExpiry = (token, thresholdSeconds = 60) => {
@@ -221,16 +222,30 @@ const useAuthStore = create((set) => {
         if (storedToken && !isNearExpiry) {
           setInMemoryToken(storedToken);
         } else {
-          // Silent token refresh if missing or near expiration
+          // Silent single-flight token refresh if missing or near expiration
           try {
-            const { data } = await apiClient.post("/auth/refresh");
-            const newToken = data.accessToken;
-            setInMemoryToken(newToken);
-            localStorage.setItem("token", newToken);
+            const data = await refreshTokenSingleFlight();
+            const newToken = data?.accessToken;
+            if (newToken) {
+              setInMemoryToken(newToken);
+              localStorage.setItem("token", newToken);
+            }
           } catch {
-            // Ignore refresh token error and check if storedToken is valid
             if (storedToken && !isNearExpiry) {
               setInMemoryToken(storedToken);
+            } else {
+              // Unauthenticated state: Stop early to prevent duplicate profile 401 -> refresh cascades
+              setInMemoryToken(null);
+              localStorage.removeItem("token");
+              set({
+                user: null,
+                token: null,
+                isAuthenticated: false,
+                isLoading: false,
+                isImpersonated: false,
+                originalSuperAdminToken: null,
+              });
+              return false;
             }
           }
         }

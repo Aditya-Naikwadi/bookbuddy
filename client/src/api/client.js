@@ -78,8 +78,38 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-let isRefreshing = false;
-let failedQueue = [];
+let refreshSingleFlightPromise = null;
+
+export const refreshTokenSingleFlight = async () => {
+  if (refreshSingleFlightPromise) {
+    return refreshSingleFlightPromise;
+  }
+
+  refreshSingleFlightPromise = (async () => {
+    try {
+      const { data } = await apiClient.post("/auth/refresh");
+      const newToken = data?.accessToken;
+      if (newToken) {
+        setInMemoryToken(newToken);
+        localStorage.setItem("token", newToken);
+        broadcastTokenRefreshed(newToken);
+      }
+      return data;
+    } catch (err) {
+      setInMemoryToken(null);
+      localStorage.removeItem("token");
+      broadcastLogout();
+      if (onUnauthorizedCallback) {
+        onUnauthorizedCallback();
+      }
+      throw err;
+    } finally {
+      refreshSingleFlightPromise = null;
+    }
+  })();
+
+  return refreshSingleFlightPromise;
+};
 
 const authChannel =
   typeof window !== "undefined" && "BroadcastChannel" in window
@@ -130,17 +160,6 @@ if (typeof window !== "undefined") {
   });
 }
 
-const processQueue = (error, token = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  failedQueue = [];
-};
-
 // Response Interceptor for 401 token refresh, transient 502/503/504 GET retries & 403 CSRF auto-recovery
 apiClient.interceptors.response.use(
   (response) => response,
@@ -190,41 +209,16 @@ apiClient.interceptors.response.use(
     }
 
     if (status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return apiClient(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
-      }
-
       originalRequest._retry = true;
-      isRefreshing = true;
 
       try {
-        const { data } = await apiClient.post("/auth/refresh");
-        const newToken = data.accessToken;
-        setInMemoryToken(newToken);
-        broadcastTokenRefreshed(newToken);
-
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        processQueue(null, newToken);
-        isRefreshing = false;
-
+        const refreshData = await refreshTokenSingleFlight();
+        const newToken = refreshData?.accessToken;
+        if (newToken) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        }
         return apiClient(originalRequest);
       } catch (refreshError) {
-        processQueue(refreshError, null);
-        isRefreshing = false;
-        setInMemoryToken(null);
-        broadcastLogout();
-
-        if (onUnauthorizedCallback) {
-          onUnauthorizedCallback();
-        }
-
         return Promise.reject(refreshError);
       }
     }

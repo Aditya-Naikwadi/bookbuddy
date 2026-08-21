@@ -77,7 +77,7 @@ describe('Persistent Sessions & Token Rotation Integration Tests', () => {
     expect(refreshRes.headers['set-cookie']).toBeDefined();
   });
 
-  it('3. Theft Reuse Detection: Presenting a rotated-out refresh token revokes all sessions', async () => {
+  it('3. Grace Period & Theft Reuse Detection: Parallel refresh within 30s grace period succeeds', async () => {
     // Step 1: Login
     const loginRes = await request(app)
       .post('/api/v1/auth/login')
@@ -92,11 +92,12 @@ describe('Persistent Sessions & Token Rotation Integration Tests', () => {
 
     expect(firstRefreshRes.status).toBe(200);
 
-    // Step 3: Attempt to reuse the original (now rotated-out) cookie -> Reuse Detection!
-    const reuseRes = await request(app).post('/api/v1/auth/refresh').set('Cookie', originalCookie);
+    // Step 3: Immediate parallel retry with original cookie falls within 30s grace period -> 200 OK!
+    const graceRes = await request(app).post('/api/v1/auth/refresh').set('Cookie', originalCookie);
 
-    expect(reuseRes.status).toBe(401);
-    expect(reuseRes.body.message).toMatch(/reuse detected/i);
+    expect(graceRes.status).toBe(200);
+    expect(graceRes.body.success).toBe(true);
+    expect(graceRes.body).toHaveProperty('accessToken');
   });
 
   it('4. Logout revokes session and clears cookie', async () => {

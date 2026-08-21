@@ -19,16 +19,21 @@ const generateRecommendationsForUser = async (userId) => {
 
   const collegeId = user.collegeId;
 
-  // 1. Fetch user's borrow history & reviews to exclude read titles and extract preferences
+  // 1. Fetch user's borrow history, reviews, and saved reading-list items to extract preferences
   const loans = await Loan.find({ userId }).select('bookId');
   const reviews = await Review.find({ userId }).select('bookId rating');
+  const ReadingList = require('../models/ReadingList');
+  const readingLists = await ReadingList.find({ userId }).select('items.bookId');
 
   const borrowedBookIds = loans.map((l) => (l.bookId ? l.bookId.toString() : null)).filter(Boolean);
   const reviewedBookIds = reviews
     .map((r) => (r.bookId ? r.bookId.toString() : null))
     .filter(Boolean);
+  const savedBookIds = readingLists
+    .flatMap((rl) => (rl.items || []).map((i) => (i.bookId ? i.bookId.toString() : null)))
+    .filter(Boolean);
 
-  const readBookIdsSet = new Set([...borrowedBookIds, ...reviewedBookIds]);
+  const readBookIdsSet = new Set([...borrowedBookIds, ...reviewedBookIds, ...savedBookIds]);
   const readBookIds = Array.from(readBookIdsSet);
 
   // 2. Extract user's favorite tags, authors, and categories

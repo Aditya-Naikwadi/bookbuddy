@@ -6,6 +6,7 @@ const AppError = require('../utils/AppError');
 const mongoose = require('mongoose');
 
 const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 Days
+const ROTATION_GRACE_PERIOD_MS = 30 * 1000; // 30 Seconds Grace Period for parallel/race-condition requests
 
 /**
  * Creates a new session record in Redis with audit fallback to MongoDB
@@ -24,6 +25,7 @@ const createSession = async ({ user, deviceInfo = 'Web Browser', parentTokenId =
     expiresAt: expiresAt.toISOString(),
     revoked: false,
     parentTokenId,
+    refreshToken,
   };
 
   // 1. Store in Redis
@@ -44,11 +46,10 @@ const createSession = async ({ user, deviceInfo = 'Web Browser', parentTokenId =
 };
 
 /**
- * Resolves an active session from Redis or MongoDB fallback
+ * Resolves an active session by token hash
  */
-const getSession = async (refreshToken) => {
-  if (!refreshToken) return null;
-  const hash = hashToken(refreshToken);
+const getSessionByHash = async (hash) => {
+  if (!hash) return null;
   const redisKey = `session:${hash}`;
 
   // Check Redis
@@ -69,6 +70,7 @@ const getSession = async (refreshToken) => {
     issuedAt: mongoToken.createdAt ? mongoToken.createdAt.toISOString() : new Date().toISOString(),
     expiresAt: mongoToken.expiresAt.toISOString(),
     revoked: Boolean(mongoToken.revokedAt),
+    revokedAt: mongoToken.revokedAt ? mongoToken.revokedAt.toISOString() : null,
     parentTokenId: mongoToken.parentTokenId || null,
     replacedBy: mongoToken.replacedBy || null,
   };
@@ -77,7 +79,16 @@ const getSession = async (refreshToken) => {
 };
 
 /**
- * Rotates a refresh token session with Theft Reuse Detection
+ * Resolves an active session from Redis or MongoDB fallback
+ */
+const getSession = async (refreshToken) => {
+  if (!refreshToken) return null;
+  const hash = hashToken(refreshToken);
+  return getSessionByHash(hash);
+};
+
+/**
+ * Rotates a refresh token session with Theft Reuse Detection and Grace Period
  */
 const rotateSession = async (refreshToken, deviceInfo = 'Web Browser') => {
   const result = await getSession(refreshToken);
@@ -87,8 +98,41 @@ const rotateSession = async (refreshToken, deviceInfo = 'Web Browser') => {
 
   const { session: existingSession, hash: clientHash } = result;
 
-  // REUSE DETECTION: If token was already revoked or replaced, revoke whole family!
+  // REUSE DETECTION: If token was already revoked or replaced, check grace period first!
   if (existingSession.revoked || existingSession.replacedBy) {
+    const revokedAtMs = existingSession.revokedAt
+      ? new Date(existingSession.revokedAt).getTime()
+      : 0;
+    const timeSinceRevocation = Date.now() - revokedAtMs;
+
+    if (
+      revokedAtMs > 0 &&
+      timeSinceRevocation < ROTATION_GRACE_PERIOD_MS &&
+      existingSession.replacedBy
+    ) {
+      // Parallel request within grace period: Return the replacement active session token
+      const replacementResult = await getSessionByHash(existingSession.replacedBy);
+      if (replacementResult && replacementResult.session && !replacementResult.session.revoked) {
+        const user = await User.findById(replacementResult.session.userId).select('+isActive');
+        if (user && user.isActive) {
+          const { accessToken } = generateTokenPair(user);
+          return {
+            accessToken,
+            refreshToken: replacementResult.session.refreshToken || refreshToken,
+            user: {
+              _id: user._id,
+              studentId: user.studentId,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              collegeId: user.collegeId,
+            },
+          };
+        }
+      }
+    }
+
+    // Token reused OUTSIDE grace period -> Theft detected! Revoke all sessions for safety.
     await revokeAllSessionsForUser(existingSession.userId);
     throw new AppError(
       'Security Warning: Session reuse detected. All sessions revoked for safety.',
@@ -116,14 +160,16 @@ const rotateSession = async (refreshToken, deviceInfo = 'Web Browser') => {
     parentTokenId: existingSession.tokenId,
   });
 
-  // Mark old session as revoked & replaced
+  // Mark old session as revoked & replaced with timestamp
+  const now = new Date();
   existingSession.revoked = true;
   existingSession.replacedBy = newSession.hash;
+  existingSession.revokedAt = now.toISOString();
   await cacheHelper.set(`session:${clientHash}`, existingSession, 3600); // keep short TTL record for reuse detection
 
   await RefreshToken.updateOne(
     { tokenHash: clientHash },
-    { revokedAt: new Date(), replacedBy: newSession.hash }
+    { revokedAt: now, replacedBy: newSession.hash }
   );
 
   return {

@@ -14,14 +14,15 @@ const ActiveFilterChips = ({ chips = [], onRemoveChip, onResetAll }) => {
       {activeChips.map((chip) => (
         <span
           key={chip.key}
-          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/80 font-semibold text-[11px] animate-in fade-in zoom-in-95 duration-150"
+          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-950/90 text-indigo-300 border border-indigo-800/80 font-semibold text-[11px] animate-in fade-in zoom-in-95 duration-150"
         >
           <span>
-            {chip.label}: <strong className="font-bold">{chip.value}</strong>
+            {chip.label}:{" "}
+            <strong className="font-bold text-white">{chip.value}</strong>
           </span>
           <button
             onClick={() => onRemoveChip(chip.key)}
-            className="hover:bg-indigo-200/80 p-0.5 rounded-full text-indigo-600 transition-colors"
+            className="hover:bg-indigo-900/80 p-0.5 rounded-full text-indigo-400 hover:text-white transition-colors"
             title={`Remove ${chip.label} filter`}
           >
             <X className="w-3 h-3" />
@@ -32,7 +33,7 @@ const ActiveFilterChips = ({ chips = [], onRemoveChip, onResetAll }) => {
       {onResetAll && (
         <button
           onClick={onResetAll}
-          className="text-[11px] text-slate-500 hover:text-indigo-600 font-semibold ml-1 flex items-center gap-1 transition-colors"
+          className="text-[11px] text-slate-400 hover:text-indigo-400 font-semibold ml-1 flex items-center gap-1 transition-colors"
         >
           <RotateCcw className="w-3 h-3" />
           <span>Clear All</span>

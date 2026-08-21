@@ -100,10 +100,12 @@ const eResourceSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
-    // F10.1: Offline Download Mode toggle flag (defaults false)
+    // F10.1: Offline Download Mode toggle flag (defaults true for Gutenberg open content, false for internal)
     isDownloadable: {
       type: Boolean,
-      default: false,
+      default: function () {
+        return this.source === 'gutenberg';
+      },
     },
     // F6.1: ILL-Style Cross-College sharing opt-in flag (defaults to false)
     isShareableAcrossColleges: {

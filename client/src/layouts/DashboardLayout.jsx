@@ -307,7 +307,6 @@ export default function DashboardLayout() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 ml-auto">
-            <ThemeToggle />
             <NotificationCenter />
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-indigo-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-indigo-700 dark:text-ember font-bold uppercase text-xs">
