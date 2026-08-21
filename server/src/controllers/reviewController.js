@@ -153,14 +153,26 @@ const createReview = asyncHandler(async (req, res) => {
   const reviewStatus =
     req.isProfane || req.body.status === 'flagged' ? 'flagged' : req.body.status || 'approved';
 
-  let session;
-  try {
-    session = await mongoose.startSession();
-    session.startTransaction();
-  } catch {
-    session = null;
+  let session = null;
+  const isReplicaSet = Boolean(
+    mongoose.connection.replicaSet ||
+    (mongoose.connection.client &&
+      mongoose.connection.client.topology &&
+      typeof mongoose.connection.client.topology.hasReplicaSet === 'function' &&
+      mongoose.connection.client.topology.hasReplicaSet())
+  );
+
+  if (isReplicaSet) {
+    try {
+      const s = await mongoose.startSession();
+      s.startTransaction();
+      session = s;
+    } catch {
+      session = null;
+    }
   }
 
+  let review;
   try {
     const reviewData = {
       collegeId: req.user.collegeId,
@@ -175,7 +187,6 @@ const createReview = asyncHandler(async (req, res) => {
       status: reviewStatus,
     };
 
-    let review;
     if (session) {
       const docs = await Review.create([reviewData], { session });
       review = docs[0];
@@ -216,13 +227,18 @@ const createReview = asyncHandler(async (req, res) => {
     if (session) {
       await session.commitTransaction();
       session.endSession();
+      session = null;
     }
 
-    review.$session(null);
-    await review.populate('userId', 'name avatar role');
+    if (review) {
+      if (typeof review.$session === 'function') {
+        review.$session(null);
+      }
+      await review.populate('userId', 'name avatar role');
+    }
 
     const userId = req.user && (req.user.id || req.user._id);
-    if (userId) {
+    if (userId && review) {
       evaluateBadges(userId, 'review_submitted', { reviewId: review._id }).catch((err) =>
         logger.error(`Error evaluating badges after review creation: ${err.message}`)
       );
@@ -236,6 +252,8 @@ const createReview = asyncHandler(async (req, res) => {
     if (session) {
       await session.abortTransaction().catch(() => {});
       session.endSession().catch(() => {});
+    } else if (review && review._id) {
+      await Review.deleteOne({ _id: review._id }).catch(() => {});
     }
 
     if (err.code === 11000) {

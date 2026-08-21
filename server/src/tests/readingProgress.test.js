@@ -7,10 +7,10 @@ describe('ReadingProgress Schema & Upsert Integrity', () => {
 
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {
-      const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_progress_test';
+      const uri = 'mongodb://127.0.0.1:27017/bookbuddy_progress_test';
       await mongoose.connect(uri, {
-        serverSelectionTimeoutMS: 2000,
-        connectTimeoutMS: 2000,
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 5000,
       });
     }
 

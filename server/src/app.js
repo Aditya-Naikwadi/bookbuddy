@@ -478,6 +478,14 @@ app.use('/api/reader', deprecationWarning, require('./routes/readerRoutes'));
 app.use('/api/notifications', deprecationWarning, require('./routes/notificationRoutes'));
 app.use('/api/tags', deprecationWarning, require('./routes/tagRoutes'));
 app.use('/api/payments', deprecationWarning, require('./routes/paymentRoutes'));
+app.use('/api/v1/checkout-session', (req, res, next) => {
+  req.url = '/checkout-session';
+  require('./routes/paymentRoutes')(req, res, next);
+});
+app.use('/api/checkout-session', (req, res, next) => {
+  req.url = '/checkout-session';
+  require('./routes/paymentRoutes')(req, res, next);
+});
 app.use('/api/v1/create-order', (req, res, next) => {
   req.url = '/create-order';
   require('./routes/paymentRoutes')(req, res, next);

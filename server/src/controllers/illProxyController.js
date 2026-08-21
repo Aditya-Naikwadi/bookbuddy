@@ -13,18 +13,19 @@ const searchILLCatalog = asyncHandler(async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 10;
   const skip = (page - 1) * limit;
 
-  // Security Policy: Strictly require isILLShared: true AND exclude own collegeId
+  // Security Policy: Strictly require isILLShared or isShareableAcrossColleges: true AND exclude own collegeId
   const filter = {
-    isILLShared: true,
+    $or: [{ isILLShared: true }, { isShareableAcrossColleges: true }],
     collegeId: { $ne: req.user.collegeId },
     copiesAvailable: { $gt: 0 },
   };
 
   if (query) {
-    filter.$or = [
+    const searchOr = [
       { title: { $regex: query, $options: 'i' } },
       { author: { $regex: query, $options: 'i' } },
     ];
+    filter.$and = [{ $or: searchOr }];
   }
 
   if (category) {
@@ -57,8 +58,9 @@ const createILLRequest = asyncHandler(async (req, res) => {
     throw new AppError('Book not found in inter-library catalog', 404);
   }
 
-  // Security Check: Enforce isILLShared flag
-  if (!book.isILLShared) {
+  // Security Check: Enforce isILLShared / isShareableAcrossColleges flag
+  const isShared = book.isILLShared || book.isShareableAcrossColleges;
+  if (!isShared) {
     throw new AppError(
       'Access Denied: This catalog item is not shared for inter-library loan',
       403

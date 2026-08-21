@@ -52,8 +52,18 @@ const bookSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    tags: [
+      {
+        type: String,
+      },
+    ],
     // F6.1: ILL-Style Cross-College sharing opt-in flag (defaults to false)
     isShareableAcrossColleges: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    isILLShared: {
       type: Boolean,
       default: false,
       index: true,
@@ -63,6 +73,17 @@ const bookSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+const tenantScopingPlugin = require('../plugins/tenantScopingPlugin');
+bookSchema.plugin(tenantScopingPlugin);
+
+// Keep isILLShared and isShareableAcrossColleges in sync on save
+bookSchema.pre('save', function () {
+  if (this.isILLShared || this.isShareableAcrossColleges) {
+    this.isILLShared = true;
+    this.isShareableAcrossColleges = true;
+  }
+});
 
 // Compound indexes for dashboard and catalog queries
 bookSchema.index({ collegeId: 1, category: 1 });

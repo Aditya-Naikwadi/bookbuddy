@@ -5,7 +5,11 @@ const paymentSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      index: true,
+    },
+    fineId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Fine',
       index: true,
     },
     fineIds: [
@@ -23,10 +27,14 @@ const paymentSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      sparse: true,
     },
     gatewayPaymentId: {
       type: String,
       default: null,
+    },
+    providerEventId: {
+      type: String,
     },
     status: {
       type: String,

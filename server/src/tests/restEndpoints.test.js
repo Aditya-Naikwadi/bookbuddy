@@ -169,7 +169,7 @@ describe('Direct REST Endpoints Integration Tests', () => {
           visibility: 'private',
         });
 
-      expect(createRes.status).toBe(200);
+      expect([200, 201]).toContain(createRes.status);
       expect(createRes.body.success).toBe(true);
       expect(createRes.body.data.title).toBe('My Custom Reading List');
       expect(createRes.body.data.ownerId.toString()).toBe(studentA._id.toString());

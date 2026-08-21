@@ -69,6 +69,6 @@ const reviewSchema = new mongoose.Schema(
 // Indexes
 reviewSchema.index({ userId: 1, bookId: 1 }, { unique: true, sparse: true });
 reviewSchema.index({ collegeId: 1, resourceType: 1, resourceId: 1, status: 1 });
-reviewSchema.index({ collegeId: 1, userId: 1, resourceId: 1 }, { unique: true });
+reviewSchema.index({ collegeId: 1, userId: 1, resourceId: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Review', reviewSchema);
