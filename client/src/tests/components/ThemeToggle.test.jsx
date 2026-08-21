@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { ThemeProvider } from "../../context/ThemeContext";
 import { ThemeToggle } from "../../components/common/ThemeToggle";
