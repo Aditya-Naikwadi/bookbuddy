@@ -15,28 +15,27 @@ const createOrder = asyncHandler(async (req, res) => {
   const userId = req.user.id || req.user._id;
   const { fineIds, fineId, amount: clientAmount, currency = 'INR' } = req.body;
 
-  let targetFines;
-  let query = { userId, status: 'unpaid' };
+  let targetFines = [];
+  let finalAmountInPaise;
 
   if (Array.isArray(fineIds) && fineIds.length > 0) {
-    query._id = { $in: fineIds };
-    targetFines = await Fine.find(query);
+    targetFines = await Fine.find({ userId, status: 'unpaid', _id: { $in: fineIds } });
+    const serverComputedRupees = targetFines.reduce((sum, f) => sum + (f.amount || 0), 0);
+    finalAmountInPaise = serverComputedRupees * 100;
   } else if (fineId) {
-    query._id = fineId;
-    targetFines = await Fine.find(query);
-  } else {
-    // If no fineIds specified, fetch all unpaid fines for user
-    targetFines = await Fine.find(query);
-  }
-
-  let finalAmountInPaise;
-  if (targetFines && targetFines.length > 0) {
+    targetFines = await Fine.find({ userId, status: 'unpaid', _id: fineId });
     const serverComputedRupees = targetFines.reduce((sum, f) => sum + (f.amount || 0), 0);
     finalAmountInPaise = serverComputedRupees * 100;
   } else if (clientAmount !== undefined) {
     finalAmountInPaise = Number(clientAmount);
   } else {
-    throw new AppError('No unpaid fines found to process.', 400);
+    targetFines = await Fine.find({ userId, status: 'unpaid' });
+    if (targetFines && targetFines.length > 0) {
+      const serverComputedRupees = targetFines.reduce((sum, f) => sum + (f.amount || 0), 0);
+      finalAmountInPaise = serverComputedRupees * 100;
+    } else {
+      throw new AppError('No unpaid fines found to process.', 400);
+    }
   }
 
   if (finalAmountInPaise < 100) {
@@ -244,7 +243,7 @@ const verifyPayment = asyncHandler(async (req, res) => {
     );
   }
 
-  const keySecret = process.env.RAZORPAY_KEY_SECRET || 'dummy_razorpay_secret_key';
+  const keySecret = process.env.RAZORPAY_KEY_SECRET || 'e7CkAkfrsJzdLz3fTvAwg2MY';
   const expectedSignature = crypto
     .createHmac('sha256', keySecret)
     .update(`${razorpay_order_id}|${razorpay_payment_id}`)

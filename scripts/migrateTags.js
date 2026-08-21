@@ -1,11 +1,18 @@
-const mongoose = require('mongoose');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../server/.env') });
+const serverDir = path.join(__dirname, '../server');
+require('dotenv').config({ path: path.join(serverDir, '.env') });
 
-const connectDB = require('../server/src/config/db');
-const Book = require('../server/src/models/Book');
-const Tag = require('../server/src/models/Tag');
-const { normalizeTag } = require('../server/src/utils/tagUtils');
+let mongoose;
+try {
+  mongoose = require('mongoose');
+} catch (_err) {
+  mongoose = require(path.join(serverDir, 'node_modules/mongoose'));
+}
+
+const connectDB = require(path.join(serverDir, 'src/config/db'));
+const Book = require(path.join(serverDir, 'src/models/Book'));
+const Tag = require(path.join(serverDir, 'src/models/Tag'));
+const { normalizeTag } = require(path.join(serverDir, 'src/utils/tagUtils'));
 
 const migrateTags = async (options = { quiet: false }) => {
   const log = (...args) => {
