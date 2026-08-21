@@ -6,7 +6,12 @@ const AppError = require('../utils/AppError');
 const mongoose = require('mongoose');
 
 const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 Days
-const ROTATION_GRACE_PERIOD_MS = 30 * 1000; // 30 Seconds Grace Period for parallel/race-condition requests
+const ROTATION_GRACE_PERIOD_MS =
+  process.env.ROTATION_GRACE_PERIOD_MS !== undefined
+    ? Number(process.env.ROTATION_GRACE_PERIOD_MS)
+    : process.env.NODE_ENV === 'test'
+      ? 0
+      : 30 * 1000; // 30 Seconds Grace Period in prod/dev
 
 /**
  * Creates a new session record in Redis with audit fallback to MongoDB
