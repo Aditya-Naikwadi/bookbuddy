@@ -1,6 +1,19 @@
 const path = require('path');
 const serverDir = path.join(__dirname, '../server');
-require('dotenv').config({ path: path.join(serverDir, '.env') });
+
+let dotenv;
+try {
+  dotenv = require('dotenv');
+} catch (_err) {
+  try {
+    dotenv = require(path.join(serverDir, 'node_modules/dotenv'));
+  } catch (_e) {
+    // Optional fallback if dotenv is absent
+  }
+}
+if (dotenv && typeof dotenv.config === 'function') {
+  dotenv.config({ path: path.join(serverDir, '.env') });
+}
 
 let mongoose;
 try {
