@@ -12,10 +12,16 @@ const LEVEL_NAMES = ['DEBUG', 'INFO', 'WARN', 'ERROR'];
 
 const currentLevel = config.nodeEnv === 'production' ? LEVELS.info : LEVELS.debug;
 
+const instanceId = process.env.INSTANCE_ID || process.env.PM2_ID || `pid-${process.pid}`;
+const os = require('os');
+const hostname = os.hostname();
+
 const formatLog = (level, message, meta) => {
   const logObj = {
     timestamp: new Date().toISOString(),
     level: LEVEL_NAMES[level],
+    instanceId,
+    hostname,
     message,
     ...(meta && { meta }),
   };

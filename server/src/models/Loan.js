@@ -62,6 +62,8 @@ const loanSchema = new mongoose.Schema(
 
 // Compound indexes
 loanSchema.index({ collegeId: 1, status: 1 });
+loanSchema.index({ collegeId: 1, userId: 1, status: 1 });
+loanSchema.index({ collegeId: 1, status: 1, dueDate: 1 });
 loanSchema.index({ userId: 1, status: 1 });
 loanSchema.index({ userId: 1, status: 1, dueDate: 1 });
 

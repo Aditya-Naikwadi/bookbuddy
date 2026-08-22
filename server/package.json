@@ -43,6 +43,7 @@
   "type": "commonjs",
   "dependencies": {
     "@sentry/node": "^10.68.0",
+    "@socket.io/redis-adapter": "^8.3.0",
     "adm-zip": "^0.6.0",
     "algoliasearch": "^5.56.0",
     "argon2": "^0.45.1",

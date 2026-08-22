@@ -133,6 +133,7 @@ const limiters = {
     Math.ceil(config.rateLimits.expensiveWindowMs / 1000)
   ),
   generalDashboard: getLimiter('generalDashboard', 100, 900),
+  college: getLimiter('collegeRateLimit', 1000, 900),
 };
 
 // Helper to extract clean client IP
@@ -328,6 +329,35 @@ const resetAllLimiters = () => {
     Math.ceil(config.rateLimits.expensiveWindowMs / 1000)
   );
   limiters.generalDashboard = getLimiter('generalDashboard', 100, 900);
+  limiters.college = getLimiter('collegeRateLimit', 1000, 900);
+};
+
+const collegeRateLimiter = async (req, res, next) => {
+  const collegeId =
+    req.user?.collegeId || req.tenantId || req.headers['x-college-id'] || req.query?.collegeId;
+
+  if (!collegeId) {
+    return next();
+  }
+
+  const collegeIdStr = collegeId.toString();
+
+  try {
+    await limiters.college(`college:${collegeIdStr}`);
+    next();
+  } catch (err) {
+    if (err instanceof Error) {
+      logger.warn(`College rate limiter execution error for tenant ${collegeIdStr}`, err);
+      return next();
+    }
+
+    res.status(429).json({
+      success: false,
+      message:
+        'Your institution has exceeded its allocated request quota. Please try again shortly.',
+      retryAfterSeconds: Math.ceil((err.msBeforeNext || 60000) / 1000),
+    });
+  }
 };
 
 module.exports = {
@@ -336,6 +366,7 @@ module.exports = {
   userLimiter,
   expensiveRouteLimiter,
   generalDashboardLimiter,
+  collegeRateLimiter,
   getLimiter,
   redisClient,
   resetAllLimiters,

@@ -1,4 +1,6 @@
 const { Server } = require('socket.io');
+const { createAdapter } = require('@socket.io/redis-adapter');
+const Redis = require('ioredis');
 const socketAuth = require('./socketAuth');
 const events = require('./events');
 const logger = require('../utils/logger');
@@ -12,7 +14,24 @@ const initSockets = (server) => {
       methods: ['GET', 'POST'],
       credentials: true,
     },
+    transports: ['websocket', 'polling'],
   });
+
+  // Attach Redis Adapter for cross-instance pub/sub broadcasting in multi-node clusters
+  const redisUrl = process.env.REDIS_URL;
+  if (redisUrl && process.env.NODE_ENV !== 'test') {
+    try {
+      const pubClient = new Redis(redisUrl, { lazyConnect: false });
+      const subClient = pubClient.duplicate();
+      io.adapter(createAdapter(pubClient, subClient));
+      logger.info('Socket.io Redis adapter initialized for multi-instance pub/sub broadcasting.');
+    } catch (adapterErr) {
+      logger.warn(
+        'Failed to initialize Socket.io Redis adapter; falling back to single-instance adapter.',
+        adapterErr
+      );
+    }
+  }
 
   // Attach authentication middleware
   io.use(socketAuth);
