@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   HardDrive,
@@ -6,9 +6,7 @@ import {
   BookOpen,
   FileText,
   Clock,
-  Sparkles,
   CheckCircle2,
-  AlertCircle,
   Database,
   ArrowRight,
   ShieldCheck,
@@ -25,9 +23,9 @@ export const Downloads = () => {
   const [storageInfo, setStorageInfo] = useState({ totalMB: '0.0', freeMB: '0.0' });
   const navigate = useNavigate();
 
-  const loadOfflineItems = async () => {
+  const loadOfflineItems = async (showLoading = false) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const offlineList = await getAllOfflineResources();
       setItems(offlineList);
 
@@ -49,6 +47,7 @@ export const Downloads = () => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Asynchronous offline storage load updates state after IndexedDB fetch
     loadOfflineItems();
   }, []);
 

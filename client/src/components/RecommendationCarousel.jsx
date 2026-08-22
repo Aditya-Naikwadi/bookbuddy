@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
   Star,
   BookOpen,
-  TrendingUp,
   Flame,
   Info,
 } from 'lucide-react';

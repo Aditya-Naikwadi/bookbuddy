@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   DndContext,
@@ -28,7 +28,6 @@ import {
   Edit3,
   Loader2,
   Search,
-  Check,
 } from 'lucide-react';
 import {
   getReadingLists,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ONBOARDING_TOUR_STEPS } from '../onboarding/tourSteps';
 import { Sparkles, ChevronRight, CheckCircle2, X } from 'lucide-react';
 
@@ -9,6 +9,7 @@ export const OnboardingTour = ({ user, onCompleteTour, forceStart = false }) => 
   useEffect(() => {
     // F9.3: Automatic first-run trigger if user hasSeenOnboarding is false OR forceStart is true
     if (forceStart) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Synchronizing onboarding active state with external forceStart trigger
       setIsActive(true);
       setCurrentStepIndex(0);
     } else if (user && user.hasSeenOnboarding === false) {

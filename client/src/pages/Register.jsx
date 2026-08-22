@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
+import { useConfig } from "../context/ConfigContext";
 import { Loader2, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,6 +28,26 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const GoogleSignUpButton = ({ isLoading, onSuccess, onError }) => {
+  const triggerGoogleLogin = useGoogleLogin({
+    onSuccess,
+    onError,
+  });
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      disabled={isLoading}
+      onClick={() => triggerGoogleLogin()}
+      className="w-full flex items-center justify-center gap-2 border-edge hover:bg-surface/60 h-9"
+    >
+      <GoogleIcon />
+      <span className="text-xs">Continue with Google</span>
+    </Button>
+  );
+};
+
 const Register = () => {
   const [name, setName] = useState("");
   const [studentId, setStudentId] = useState("");
@@ -37,19 +58,20 @@ const Register = () => {
 
   const navigate = useNavigate();
   const { register, loginWithGoogle, isLoading, error } = useAuthStore();
+  const { googleClientId } = useConfig();
+  const isGoogleAuthAvailable = Boolean(
+    googleClientId &&
+      typeof googleClientId === "string" &&
+      googleClientId.trim(),
+  );
 
-  const triggerGoogleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      const idToken = tokenResponse.access_token || tokenResponse.id_token;
-      const success = await loginWithGoogle(idToken);
-      if (success) {
-        navigate("/general-dashboard", { replace: true });
-      }
-    },
-    onError: (err) => {
-      console.error("Google Login Error:", err);
-    },
-  });
+  const handleGoogleSuccess = async (tokenResponse) => {
+    const idToken = tokenResponse.access_token || tokenResponse.id_token;
+    const success = await loginWithGoogle(idToken);
+    if (success) {
+      navigate("/general-dashboard", { replace: true });
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -311,29 +333,26 @@ const Register = () => {
           </Button>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="pt-2">
-          <div className="relative flex items-center justify-center">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-edge"></div>
+        {isGoogleAuthAvailable && (
+          <motion.div variants={itemVariants} className="pt-2">
+            <div className="relative flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-edge"></div>
+              </div>
+              <div className="relative bg-deep/40 px-3 text-[10px] uppercase tracking-wider text-muted backdrop-blur-md">
+                Or continue with
+              </div>
             </div>
-            <div className="relative bg-deep/40 px-3 text-[10px] uppercase tracking-wider text-muted backdrop-blur-md">
-              Or continue with
-            </div>
-          </div>
 
-          <div className="mt-3">
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={isLoading}
-              onClick={() => triggerGoogleLogin()}
-              className="w-full flex items-center justify-center gap-2 border-edge hover:bg-surface/60 h-9"
-            >
-              <GoogleIcon />
-              <span className="text-xs">Continue with Google</span>
-            </Button>
-          </div>
-        </motion.div>
+            <div className="mt-3">
+              <GoogleSignUpButton
+                isLoading={isLoading}
+                onSuccess={handleGoogleSuccess}
+                onError={(err) => console.error("Google Login Error:", err)}
+              />
+            </div>
+          </motion.div>
+        )}
       </motion.form>
 
       <motion.p

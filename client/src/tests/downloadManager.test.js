@@ -4,7 +4,6 @@ import {
   checkStorageQuota,
   isResourceDownloaded,
   getOfflineResource,
-  deleteOfflineResource,
 } from '../lib/downloadManager';
 
 describe('F10.5 & F10.6 — downloadManager & Storage Quota Guard', () => {

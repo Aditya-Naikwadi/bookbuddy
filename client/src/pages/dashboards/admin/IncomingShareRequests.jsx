@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Share2,
   CheckCircle2,
@@ -19,10 +19,12 @@ export const IncomingShareRequests = () => {
   const [errorMsg, setErrorMsg] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
 
-  const fetchIncomingQueue = async () => {
+  const fetchIncomingQueue = async (showLoading = false) => {
     try {
-      setLoading(true);
-      setErrorMsg(null);
+      if (showLoading) {
+        setLoading(true);
+        setErrorMsg(null);
+      }
       const token = localStorage.getItem("token");
       const res = await fetch("/api/v1/share-requests/incoming", {
         headers: {
@@ -47,6 +49,7 @@ export const IncomingShareRequests = () => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Asynchronous queue fetch triggers setState after await
     fetchIncomingQueue();
   }, []);
 

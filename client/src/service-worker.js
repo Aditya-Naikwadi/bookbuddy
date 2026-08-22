@@ -1,5 +1,3 @@
-/* eslint-disable no-restricted-globals */
-
 // Workbox & Custom Service Worker for BookBuddy PWA & Offline E-Resources Mode
 const CACHE_NAME = 'bookbuddy-static-v1';
 const EBOOK_CACHE = 'bookbuddy-ebooks-v1';
@@ -63,7 +61,7 @@ self.addEventListener('fetch', (event) => {
             cache.put(request, networkResponse.clone());
           }
           return networkResponse;
-        } catch (err) {
+        } catch {
           return new Response('Offline E-Resource Content Unavailable', { status: 503 });
         }
       })

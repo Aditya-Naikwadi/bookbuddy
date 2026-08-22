@@ -1,11 +1,9 @@
-import React from "react";
 import {
   Clock,
   CheckCircle2,
   Truck,
   CheckCheck,
   XCircle,
-  ArrowRight,
 } from "lucide-react";
 
 export const ShareRequestStatusTracker = ({ request }) => {

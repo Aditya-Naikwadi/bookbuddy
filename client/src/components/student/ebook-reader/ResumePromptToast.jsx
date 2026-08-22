@@ -1,4 +1,3 @@
-import React from "react";
 import { BookOpen, ArrowRight, X } from "lucide-react";
 
 /**

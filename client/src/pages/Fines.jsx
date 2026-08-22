@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   CreditCard,
   CheckCircle2,
@@ -32,10 +32,12 @@ export const Fines = () => {
   const [activeOrderId, setActiveOrderId] = useState(null);
   const [processingState, setProcessingState] = useState(null); // null | 'processing' | 'confirmed' | 'failed'
 
-  const fetchFines = async () => {
+  const fetchFines = async (showLoading = false) => {
     try {
-      setLoading(true);
-      setErrorMsg(null);
+      if (showLoading) {
+        setLoading(true);
+        setErrorMsg(null);
+      }
       const token = localStorage.getItem('token');
       const res = await fetch('/api/v1/fines', {
         headers: {
@@ -72,6 +74,7 @@ export const Fines = () => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Asynchronous fines list fetch updates state after API response
     fetchFines();
 
     // Socket.io push listener for webhook confirmation (F7.5)
@@ -87,7 +90,7 @@ export const Fines = () => {
           fetchFines();
         }
       });
-    } catch (err) {
+    } catch {
       // Socket fallback to polling
     }
 
@@ -167,7 +170,7 @@ export const Fines = () => {
         name: 'BookBuddy Library Fines',
         description: 'Fine Settlement',
         order_id: orderData.orderId,
-        handler: async function (response) {
+        handler: async function () {
           // Client callback: transition UI to "Payment processing...", NEVER "Paid" until webhook verifies
           setProcessingState('processing');
         },

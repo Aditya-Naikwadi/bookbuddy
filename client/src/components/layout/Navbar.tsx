@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/Button";
 import { cn } from "../../utils/cn";
 import { ThemeToggle } from "../common/ThemeToggle";
@@ -13,6 +14,7 @@ const NAV_ITEMS = [
 ];
 
 const NavbarComponent = () => {
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -72,7 +74,7 @@ const NavbarComponent = () => {
         element.scrollIntoView({ behavior: "smooth" });
       }
     } else {
-      window.location.href = target;
+      navigate(target);
     }
   };
 
@@ -119,7 +121,7 @@ const NavbarComponent = () => {
 
         {/* Desktop Actions (Visible on >= 1024px) */}
         <div className="hidden lg:flex items-center gap-4">
-          <Button onClick={() => (window.location.href = "/auth/register")}>
+          <Button onClick={() => navigate("/auth/register")}>
             Start for Free
           </Button>
         </div>
@@ -176,14 +178,14 @@ const NavbarComponent = () => {
           <Button
             className="w-full justify-center"
             size="lg"
-            onClick={() => (window.location.href = "/auth/register")}
+            onClick={() => navigate("/auth/register")}
           >
             Start for Free
           </Button>
           <Button
             variant="outline"
             className="w-full justify-center"
-            onClick={() => (window.location.href = "/auth/login")}
+            onClick={() => navigate("/auth/login")}
           >
             Sign In
           </Button>

@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Trophy,
   Flame,
   BookOpen,
   Eye,
   EyeOff,
-  Shield,
   Sparkles,
   RefreshCw,
 } from "lucide-react";
@@ -29,8 +28,8 @@ export const Leaderboard = () => {
     }
   };
 
-  const fetchLeaderboard = async (selectedMetric = metric) => {
-    setLoading(true);
+  const fetchLeaderboard = useCallback(async (selectedMetric = metric, showLoading = false) => {
+    if (showLoading) setLoading(true);
     try {
       const res = await apiClient.get(`/leaderboard?metric=${selectedMetric}`);
       if (res.data?.data) {
@@ -43,15 +42,17 @@ export const Leaderboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [metric]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Asynchronous data fetch on mount triggers setState only after await
     fetchUser();
   }, []);
 
   useEffect(() => {
-    fetchLeaderboard(metric);
-  }, [metric]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Asynchronous leaderboard fetch triggers setState after await
+    fetchLeaderboard(metric, false);
+  }, [metric, fetchLeaderboard]);
 
   const handleToggleVisibility = async () => {
     if (!user) return;
@@ -196,7 +197,6 @@ export const Leaderboard = () => {
           <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
             {leaderboard.map((entry, idx) => {
               const rank = entry.rank || idx + 1;
-              const isTop3 = rank <= 3;
               const rankBadges = {
                 1: "🥇",
                 2: "🥈",

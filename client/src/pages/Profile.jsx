@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Award, Lock, Sparkles, User as UserIcon, Shield, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Award, Lock, Sparkles, User as UserIcon, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import apiClient from '../api/client';
 
 export const Profile = () => {

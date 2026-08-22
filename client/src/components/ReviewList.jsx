@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getBookReviews, submitBookReview } from '../api/reviewApi';
 import StarRatingInput from './StarRatingInput';
@@ -11,7 +11,6 @@ const ReviewList = ({ bookId, currentUserId }) => {
   const [clientError, setClientError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-  const [existingReviewId, setExistingReviewId] = useState(null);
 
   // TanStack Query useInfiniteQuery against F4.5
   const {
@@ -30,7 +29,10 @@ const ReviewList = ({ bookId, currentUserId }) => {
     enabled: !!bookId,
   });
 
-  const allReviews = data?.pages?.flatMap((page) => page?.data || []) || [];
+  const allReviews = useMemo(
+    () => data?.pages?.flatMap((page) => page?.data || []) || [],
+    [data]
+  );
 
   // Detect if user already has a review for this book and pre-fill for editing
   useEffect(() => {
@@ -43,9 +45,9 @@ const ReviewList = ({ bookId, currentUserId }) => {
     }) || (allReviews[0]?.userId?._id === currentUserId ? allReviews[0] : null);
 
     if (ownReview && !isEditing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Pre-filling edit form state when React Query reviews data is fetched
       setRating(ownReview.rating || 0);
       setText(ownReview.text || ownReview.comment || '');
-      setExistingReviewId(ownReview._id);
       setIsEditing(true);
     }
   }, [allReviews, currentUserId, isEditing]);

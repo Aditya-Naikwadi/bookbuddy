@@ -1,14 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Share2,
   Search,
   Building2,
   BookOpen,
-  FileText,
   Clock,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
   X,
   Send,
 } from 'lucide-react';
@@ -17,14 +13,14 @@ import ShareRequestStatusTracker from '../components/ShareRequestStatusTracker';
 export const CrossCollegeCatalog = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [catalogItems, setCatalogItems] = useState({ books: [], eresources: [] });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [myRequests, setMyRequests] = useState([]);
   const [selectedResource, setSelectedResource] = useState(null);
   const [requesting, setRequesting] = useState(false);
 
-  const fetchCrossCollegeCatalog = async (query = '') => {
+  const fetchCrossCollegeCatalog = async (query = '', showLoading = false) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const token = localStorage.getItem('token');
       const res = await fetch(`/api/v1/catalog/cross-college?q=${encodeURIComponent(query)}`, {
         headers: {
@@ -61,13 +57,14 @@ export const CrossCollegeCatalog = () => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Asynchronous cross-college catalog fetch updates state after API response
     fetchCrossCollegeCatalog();
     fetchMyRequests();
   }, []);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    fetchCrossCollegeCatalog(searchQuery);
+    fetchCrossCollegeCatalog(searchQuery, true);
   };
 
   const handleConfirmRequest = async () => {

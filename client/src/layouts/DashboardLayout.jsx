@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 
 import NotificationCenter from "../components/student/NotificationCenter";
-import ThemeToggle from "../components/common/ThemeToggle";
 import useAuthStore from "../store/authStore";
 import { useFeatureFlags } from "../hooks/useFeatureFlags";
 import {

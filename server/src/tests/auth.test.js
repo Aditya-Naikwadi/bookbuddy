@@ -211,7 +211,13 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
     expect(refreshRes1.status).toBe(200);
     expect(refreshRes1.body.accessToken).toBeDefined();
 
-    // Replay attack: try using oldRefreshToken again (must be rejected)
+    // Replay attack: try using oldRefreshToken again outside grace period (must be rejected)
+    const { hashToken } = require('../utils/token');
+    const oldHash = hashToken(oldRefreshToken);
+    await RefreshToken.updateOne({ tokenHash: oldHash }, { revokedAt: new Date(Date.now() - 31000) });
+    const cacheHelper = require('../utils/cacheHelper');
+    await cacheHelper.del(`session:${oldHash}`);
+
     const refreshRes2 = await request(app)
       .post('/api/v1/auth/refresh')
       .set('Cookie', [`refreshToken=${oldRefreshToken}`]);

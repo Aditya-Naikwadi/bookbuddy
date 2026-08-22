@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  Bell,
   Calendar,
   Clock,
   Users,
@@ -8,12 +7,10 @@ import {
   Plus,
   Sparkles,
   Filter,
-  Grid,
   List,
   Megaphone,
   Calendar as CalendarIcon,
   Tag,
-  ChevronRight,
   UserCheck,
   AlertCircle,
   X,
@@ -43,9 +40,9 @@ export const Feed = () => {
   const [createError, setCreateError] = useState('');
 
   // Fetch initial feed posts from server
-  const fetchFeed = useCallback(async () => {
+  const fetchFeed = useCallback(async (showLoading = false) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const url = filterType === 'all' ? '/api/v1/feed' : `/api/v1/feed?type=${filterType}`;
       const res = await fetch(url, {
         headers: {
@@ -64,6 +61,7 @@ export const Feed = () => {
   }, [filterType]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Asynchronous feed fetch updates state after API response
     fetchFeed();
   }, [fetchFeed]);
 

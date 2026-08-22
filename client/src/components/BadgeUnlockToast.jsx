@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Award, Sparkles, X } from 'lucide-react';
 import { useSocket } from '../hooks/useSocket';
 

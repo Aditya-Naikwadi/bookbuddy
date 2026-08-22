@@ -1,4 +1,5 @@
-import Leaderboard from '../../../client/src/pages/Leaderboard';
+import { Leaderboard } from '../../../client/src/pages/Leaderboard';
+import DefaultLeaderboard from '../../../client/src/pages/Leaderboard';
 
-export default Leaderboard;
-export * from '../../../client/src/pages/Leaderboard';
+export { Leaderboard };
+export default DefaultLeaderboard;

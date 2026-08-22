@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Download,
   CheckCircle2,
@@ -13,7 +13,7 @@ import {
   deleteOfflineResource,
 } from '../lib/downloadManager';
 
-export const OfflineDownloadButton = ({ resourceId, isDownloadable = true, title = 'Resource' }) => {
+export const OfflineDownloadButton = ({ resourceId, isDownloadable = true }) => {
   const [downloaded, setDownloaded] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);

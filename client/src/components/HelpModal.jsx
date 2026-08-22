@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   HelpCircle,
   Search,
@@ -6,17 +6,13 @@ import {
   X,
   PlayCircle,
   ChevronRight,
-  Sparkles,
-  FileText,
   Tag,
 } from 'lucide-react';
 import { HELP_ARTICLES } from '../content/help/articles';
-import { ONBOARDING_TOUR_STEPS } from '../onboarding/tourSteps';
 
 export const HelpModal = ({ isOpen, onClose, onStartTour }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArticle, setSelectedArticle] = useState(null);
-  const [activeTab, setActiveTab] = useState('articles'); // 'articles' | 'tour'
 
   if (!isOpen) return null;
 
