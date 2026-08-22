@@ -94,7 +94,7 @@ const MODULE_COMMANDS = [
   },
   {
     id: "nav-home",
-    title: "Super Admin Command Hub",
+    title: "Administrator Command Hub",
     subtitle: "Return to the main operations portal dashboard grid",
     icon: LayoutDashboard,
     path: "/admin-portal",
@@ -110,7 +110,11 @@ export default function OpsCommandPalette({ isOpen, onClose }) {
 
   useEffect(() => {
     if (isOpen) {
-      const timer = setTimeout(() => inputRef.current?.focus(), 50);
+      const timer = setTimeout(() => {
+        setQuery("");
+        setSelectedIndex(0);
+        inputRef.current?.focus();
+      }, 50);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
@@ -183,7 +187,7 @@ export default function OpsCommandPalette({ isOpen, onClose }) {
               setSelectedIndex(0);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Type a command or search Super Admin modules (Ctrl+K)..."
+            placeholder="Type a command or search Administrator modules (Ctrl+K)..."
             className="w-full bg-transparent text-slate-900 dark:text-ink text-sm font-medium focus:outline-none placeholder-slate-400 dark:placeholder-slate-500"
           />
           <kbd className="hidden sm:inline-block px-2 py-1 text-[10px] font-mono font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700">
@@ -256,7 +260,7 @@ export default function OpsCommandPalette({ isOpen, onClose }) {
               to select
             </span>
           </div>
-          <span>BookBuddy Super Admin Portal</span>
+          <span>BookBuddy Administrator Portal</span>
         </div>
       </div>
     </div>

@@ -134,7 +134,7 @@ export default function DashboardLayout() {
           {isAdminPortal && (
             <>
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                Super Admin
+                Administrator
               </p>
               <NavItem
                 to="/admin-portal/overview"
@@ -360,7 +360,7 @@ export default function DashboardLayout() {
           {isAdminPortal && (
             <>
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                Super Admin
+                Administrator
               </p>
               <NavItem
                 to="/admin-portal/overview"

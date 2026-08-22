@@ -116,7 +116,7 @@ export function OpsHeader({ title, subtitle, onRefresh, isRefreshing }) {
               {user?.email || "superadmin@bookbuddy.com"}
             </span>
             <span className="px-1.5 py-0.2 text-[10px] font-bold bg-indigo-500/20 text-indigo-300 rounded border border-indigo-500/30">
-              Super Admin
+              Administrator
             </span>
           </div>
           <button
