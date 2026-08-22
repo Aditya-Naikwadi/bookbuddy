@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const path = require('path');
-const bcrypt = require('bcrypt');
+const connectDB = require('../config/db');
 
 dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
 const User = require('../models/User');
@@ -9,29 +9,34 @@ const User = require('../models/User');
 async function seedSuperAdmin() {
   try {
     console.log('Connecting to MongoDB...');
-    await mongoose.connect(process.env.MONGO_URI);
+    await connectDB();
     console.log('Connected to DB successfully.');
 
-    let superAdmin = await User.findOne({ role: { $in: ['super-admin', 'super_admin'] } }).select(
-      '+password'
-    );
+    let superAdmin = await User.findOne({
+      $or: [
+        { role: { $in: ['super-admin', 'super_admin'] } },
+        { email: 'superadmin@bookbuddy.com' },
+      ],
+    }).select('+password');
 
     if (superAdmin) {
       console.log('--- EXISTING SUPER ADMIN ACCOUNT ---');
       console.log(`Email: ${superAdmin.email}`);
       console.log(`Role: ${superAdmin.role}`);
-      console.log('If password is unknown, updating password to: SuperAdmin@123');
-      superAdmin.password = await bcrypt.hash('SuperAdmin@123', 10);
+      console.log('Resetting password to: SuperAdmin@123');
+      superAdmin.password = 'SuperAdmin@123';
+      superAdmin.role = 'super-admin';
+      superAdmin.isActive = true;
+      superAdmin.status = 'active';
       await superAdmin.save();
       console.log('Password reset successfully!');
     } else {
       console.log('--- CREATING NEW SUPER ADMIN ACCOUNT ---');
-      const hashedPassword = await bcrypt.hash('SuperAdmin@123', 10);
       superAdmin = await User.create({
         studentId: 'SUPERADMIN-001',
         name: 'System Super Admin',
         email: 'superadmin@bookbuddy.com',
-        password: hashedPassword,
+        password: 'SuperAdmin@123',
         role: 'super-admin',
         isActive: true,
         isEmailVerified: true,
@@ -50,7 +55,9 @@ async function seedSuperAdmin() {
   } catch (err) {
     console.error('Error:', err);
   } finally {
-    await mongoose.connection.close();
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
+    }
   }
 }
 
