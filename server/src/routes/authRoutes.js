@@ -19,9 +19,16 @@ const { registerSchema, loginSchema, refreshSchema } = require('../validations/a
 const { authLimiter } = require('../middlewares/rateLimiters');
 const { loginRateLimiter } = require('../middlewares/loginRateLimiter');
 
+const activationController = require('../controllers/activationController');
+
 // @desc    CSRF token generation endpoint
 // @access  Public
 router.get('/csrf-token', getCsrfTokenController);
+
+// @desc    Activation Token Verification & Account Setup
+// @access  Public
+router.get('/activate/verify', activationController.verifyActivationToken);
+router.post('/activate/confirm', authLimiter, activationController.activateAccount);
 
 // @desc    Register a user
 // @access  Public

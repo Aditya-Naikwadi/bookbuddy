@@ -22,6 +22,9 @@ const CollegeStudentRegister = lazy(
 const CollegeDeepLinkEntry = lazy(
   () => import("./pages/public/CollegeDeepLinkEntry"),
 );
+const StudentActivationPage = lazy(
+  () => import("./pages/public/StudentActivationPage"),
+);
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 
 // Lazy loaded layout components
@@ -221,6 +224,14 @@ function App() {
                   <Route
                     path="/register/:collegeSlug"
                     element={<CollegeStudentRegister />}
+                  />
+                  <Route
+                    path="/c/:collegeSlug/activate"
+                    element={<StudentActivationPage />}
+                  />
+                  <Route
+                    path="/activate-account"
+                    element={<StudentActivationPage />}
                   />
                   <Route
                     path="/c/:collegeSlug/*"

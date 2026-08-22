@@ -92,32 +92,63 @@ const registerUser = async (req, res, next) => {
   }
 };
 
-// @desc    Auth user & get token
-// @route   POST /api/auth/login
-// @access  Public
 const loginUser = async (req, res, next) => {
   try {
     const { consumeFailedLogin, resetFailedLogins } = require('../middlewares/loginRateLimiter');
-    const { email, studentId, password, totpCode } = req.body;
-    const credential = email || studentId;
-    const normalizedEmail = email
-      ? email.trim().toLowerCase()
-      : credential
-        ? credential.trim().toLowerCase()
-        : '';
+    const { email, studentId, password, totpCode, collegeSlug, collegeId: reqCollegeId } = req.body;
+    const credential = (email || studentId || '').trim();
+    const normalizedEmail = credential.toLowerCase();
 
-    const user = await User.findOne({
+    // Resolve target collegeId if collegeSlug or collegeId is provided in request context
+    let targetCollegeId = reqCollegeId;
+    if (!targetCollegeId && collegeSlug) {
+      const college = await College.findOne({ slug: collegeSlug });
+      if (college) {
+        targetCollegeId = college._id;
+      }
+    }
+
+    // Build tenant-scoped query
+    const query = {
       $or: [{ email: normalizedEmail }, { email: credential }, { studentId: credential }],
-    }).select('+password +mfaSecret');
+    };
+
+    // Hard Rule: If college context is present, ALWAYS scope by collegeId
+    if (targetCollegeId) {
+      query.collegeId = targetCollegeId;
+    }
+
+    const user = await User.findOne(query).select('+password +mfaSecret +activationTokenHash');
 
     if (!user) {
       await consumeFailedLogin(req);
       return next(new AppError('Invalid credentials.', 401));
     }
 
-    if (!user.isActive) {
+    // Hard Rule: Unactivated bulk-uploaded accounts cannot log in with any password until activated
+    if (user.activationTokenHash && !user.password) {
+      await consumeFailedLogin(req);
+      return next(
+        new AppError(
+          'Your account has not been activated yet. Please check your email for your single-use activation link.',
+          400
+        )
+      );
+    }
+
+    if (!user.isActive || user.status === 'disabled') {
       await consumeFailedLogin(req);
       return next(new AppError('Your account has been deactivated.', 401));
+    }
+
+    if (user.status === 'inactive') {
+      await consumeFailedLogin(req);
+      return next(
+        new AppError(
+          'Your student account is currently inactive. Please contact your college administrator.',
+          401
+        )
+      );
     }
 
     const isMatch = await user.comparePassword(password);

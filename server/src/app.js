@@ -396,6 +396,8 @@ app.use('/api/v1/services', require('./routes/serviceRoutes'));
 app.use('/api/v1/college/:id', require('./routes/bulkUploadRoutes'));
 app.use('/api/v1/config', require('./routes/configRoutes'));
 app.use('/api/v1/auth', require('./routes/authRoutes'));
+app.use('/api/admin/students', require('./routes/adminStudentRoutes'));
+app.use('/api/v1/admin/students', require('./routes/adminStudentRoutes'));
 app.use('/api/v1/registration', require('./routes/registrationRoutes'));
 app.use('/api/v1/books', require('./routes/bookRoutes'));
 app.use('/api/v1/loans', require('./routes/loanRoutes'));

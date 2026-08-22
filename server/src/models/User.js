@@ -15,13 +15,39 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
+      trim: true,
+    },
+    program: {
+      type: String,
+      trim: true,
+    },
+    year: {
+      type: String,
+      trim: true,
+    },
+    activationTokenHash: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    activationTokenExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    uploadBatchId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'StudentUploadBatch',
+      default: null,
+    },
+    uploadedAt: {
+      type: Date,
+      default: null,
     },
     password: {
       type: String,
       required: function () {
-        return !['google', 'github'].includes(this.authProvider);
+        return !['google', 'github'].includes(this.authProvider) && !this.activationTokenHash;
       },
       select: false,
     },
@@ -84,7 +110,7 @@ const userSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['invited', 'active', 'disabled'],
+      enum: ['invited', 'active', 'inactive', 'disabled'],
       default: 'active',
     },
     invitedVia: {
@@ -101,7 +127,7 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: () => {
         const date = new Date();
-        date.setFullYear(date.getFullYear() + 4); // Default 4 years validity
+        date.setFullYear(date.getFullYear() + 4);
         return date;
       },
     },
@@ -206,6 +232,8 @@ userSchema.set('toObject', { virtuals: true });
 // Compound unique indexes scoped to collegeId
 userSchema.index({ collegeId: 1, studentId: 1 }, { unique: true, sparse: true });
 userSchema.index({ collegeId: 1, email: 1 }, { unique: true, sparse: true });
+userSchema.index({ activationTokenHash: 1 }, { sparse: true });
+userSchema.index({ collegeId: 1, status: 1 });
 
 // Super Admin Directory & Query Optimization Indexes
 userSchema.index({ role: 1, collegeId: 1, status: 1 });
