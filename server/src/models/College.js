@@ -132,6 +132,13 @@ const collegeSchema = new mongoose.Schema(
       ref: 'User',
       default: null,
     },
+    formerSlugs: [
+      {
+        type: String,
+        lowercase: true,
+        trim: true,
+      },
+    ],
     allowedFeatures: {
       eReaderEnabled: { type: Boolean, default: true },
       labBookingEnabled: { type: Boolean, default: true },
@@ -156,8 +163,26 @@ collegeSchema
 collegeSchema.set('toJSON', { virtuals: true });
 collegeSchema.set('toObject', { virtuals: true });
 
-// Keep creationPath and createdVia synchronized
-collegeSchema.pre('save', function (next) {
+// Auto-generate slug if missing and track formerSlugs on change
+collegeSchema.pre('save', async function (next) {
+  if (!this.slug && this.name) {
+    let baseSlug = this.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    if (!baseSlug) baseSlug = 'college';
+
+    let candidateSlug = baseSlug;
+    let counter = 1;
+    const College = mongoose.model('College');
+    while (await College.exists({ slug: candidateSlug, _id: { $ne: this._id } })) {
+      candidateSlug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+    this.slug = candidateSlug;
+  }
+
   if (this.createdVia && !this.creationPath) {
     this.creationPath = this.createdVia;
   } else if (this.creationPath && !this.createdVia) {

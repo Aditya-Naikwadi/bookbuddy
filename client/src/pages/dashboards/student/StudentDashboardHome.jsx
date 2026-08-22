@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStudentOverview } from "../../../hooks/useStudentOverview";
 import useAuthStore from "../../../store/authStore";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { ReadingAnalyticsChart } from "../../../components/student/analytics/ReadingAnalyticsChart";
@@ -31,11 +31,14 @@ import {
   Layers,
   CreditCard,
   Bell,
+  Building2,
 } from "lucide-react";
 
 export const StudentDashboardHome = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user: authUser } = useAuthStore();
+  const mismatchNotice = location.state?.mismatchNotice;
   const {
     overview,
     isLoading,
@@ -190,6 +193,16 @@ export const StudentDashboardHome = () => {
           unlockedBadges={unlockedBadgesToCelebrated}
           onClose={() => setUnlockedBadgesToCelebrated([])}
         />
+      )}
+
+      {/* Tenant Mismatch Notice Banner */}
+      {mismatchNotice && (
+        <div className="p-4 bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 rounded-2xl flex items-center justify-between text-xs sm:text-sm font-medium shadow-xs">
+          <div className="flex items-center gap-3">
+            <Building2 className="w-5 h-5 text-amber-500 shrink-0" />
+            <span>{mismatchNotice}</span>
+          </div>
+        </div>
       )}
 
       {/* Renewal / Action Alert Banner */}

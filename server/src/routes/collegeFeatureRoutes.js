@@ -12,6 +12,7 @@ const bindTenantContext = require('../middlewares/tenantScoping');
 
 // Public endpoints
 router.get('/slug-check', checkSlugAvailability);
+router.get('/by-slug/:slug', getPublicCollegeBySlug);
 router.get('/public/:slug', getPublicCollegeBySlug);
 
 // Authenticated endpoints for college feature configuration

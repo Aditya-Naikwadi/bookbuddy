@@ -13,6 +13,9 @@ import {
   MessageSquare,
   UploadCloud,
   Settings2,
+  Share2,
+  Megaphone,
+  Download,
 } from "lucide-react";
 
 export const STUDENT_NAV_ITEMS = [
@@ -25,7 +28,7 @@ export const STUDENT_NAV_ITEMS = [
   },
   {
     key: "catalog",
-    label: "Catalog & Alerts",
+    label: "Catalog & Search",
     icon: Search,
     route: "/catalog",
     feature: "catalog",
@@ -66,6 +69,34 @@ export const STUDENT_NAV_ITEMS = [
     feature: "reading-lists",
   },
   {
+    key: "shelves",
+    label: "My Shelves",
+    icon: Bookmark,
+    route: "/shelves",
+    feature: "readingLists",
+  },
+  {
+    key: "feed",
+    label: "Campus Feed",
+    icon: Megaphone,
+    route: "/feed",
+    feature: "bulletinBoard",
+  },
+  {
+    key: "cross-college",
+    label: "Inter-College",
+    icon: Share2,
+    route: "/cross-college",
+    feature: "crossCollegeILL",
+  },
+  {
+    key: "downloads",
+    label: "Downloads",
+    icon: Download,
+    route: "/downloads",
+    feature: "offlineDownload",
+  },
+  {
     key: "recommendations",
     label: "Recommendations",
     icon: Sparkles,
@@ -74,7 +105,7 @@ export const STUDENT_NAV_ITEMS = [
   },
   {
     key: "achievements",
-    label: "Achievements & Streaks",
+    label: "Achievements",
     icon: Award,
     route: "/achievements",
     feature: "gamification",

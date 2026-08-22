@@ -194,11 +194,8 @@ const getPublicCollegeBySlug = asyncHandler(async (req, res, next) => {
   res.json({
     success: true,
     data: {
-      collegeId: college._id,
       name: college.name,
       slug: college.slug,
-      logoUrl: college.logoUrl || '',
-      domainWhitelist: college.domainWhitelist || [],
       enabledFeatures,
     },
   });

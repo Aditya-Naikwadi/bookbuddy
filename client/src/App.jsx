@@ -19,6 +19,9 @@ const RegistrationPage = lazy(() => import("./pages/public/RegistrationPage"));
 const CollegeStudentRegister = lazy(
   () => import("./pages/public/CollegeStudentRegister"),
 );
+const CollegeDeepLinkEntry = lazy(
+  () => import("./pages/public/CollegeDeepLinkEntry"),
+);
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 
 // Lazy loaded layout components
@@ -143,7 +146,7 @@ const Downloads = lazy(() => import("./pages/Downloads"));
 const MyShelves = lazy(() => import("./pages/MyShelves"));
 const Feed = lazy(() => import("./pages/Feed"));
 const IncomingShareRequests = lazy(
-  () => import("./pages/dashboards/admin/IncomingShareRequests")
+  () => import("./pages/dashboards/admin/IncomingShareRequests"),
 );
 const CrossCollegeCatalog = lazy(() => import("./pages/CrossCollegeCatalog"));
 
@@ -212,12 +215,20 @@ function App() {
             <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
-                  {/* Public Landing Page & Dual Registration */}
+                  {/* Public Landing Page & Dual Registration & College Deep Links */}
                   <Route path="/" element={<Landing />} />
                   <Route path="/register" element={<RegistrationPage />} />
                   <Route
                     path="/register/:collegeSlug"
                     element={<CollegeStudentRegister />}
+                  />
+                  <Route
+                    path="/c/:collegeSlug/*"
+                    element={<CollegeDeepLinkEntry />}
+                  />
+                  <Route
+                    path="/c/:collegeSlug"
+                    element={<CollegeDeepLinkEntry />}
                   />
                   <Route path="/unauthorized" element={<Unauthorized />} />
 
@@ -483,7 +494,10 @@ function App() {
                       />
                       <Route path="feed" element={<Feed />} />
                       <Route path="campus-feed" element={<Feed />} />
-                      <Route path="cross-college" element={<CrossCollegeCatalog />} />
+                      <Route
+                        path="cross-college"
+                        element={<CrossCollegeCatalog />}
+                      />
                       <Route path="fines" element={<Fines />} />
                       <Route path="checkout" element={<Fines />} />
                       <Route path="downloads" element={<Downloads />} />
@@ -494,7 +508,14 @@ function App() {
                   {/* Standalone Downloads & Reader Routes */}
                   <Route
                     element={
-                      <ProtectedRoute allowedRoles={["student", "general", "college-admin", "super-admin"]} />
+                      <ProtectedRoute
+                        allowedRoles={[
+                          "student",
+                          "general",
+                          "college-admin",
+                          "super-admin",
+                        ]}
+                      />
                     }
                   >
                     <Route path="/downloads" element={<Downloads />} />
