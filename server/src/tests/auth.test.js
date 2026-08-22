@@ -15,6 +15,7 @@ jest.setTimeout(90000);
 const app = require('../app');
 const User = require('../models/User');
 const College = require('../models/College');
+const RefreshToken = require('../models/RefreshToken');
 
 const getCookieFromRes = (res, cookieName) => {
   const cookies = res.headers['set-cookie'];
@@ -214,7 +215,10 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
     // Replay attack: try using oldRefreshToken again outside grace period (must be rejected)
     const { hashToken } = require('../utils/token');
     const oldHash = hashToken(oldRefreshToken);
-    await RefreshToken.updateOne({ tokenHash: oldHash }, { revokedAt: new Date(Date.now() - 31000) });
+    await RefreshToken.updateOne(
+      { tokenHash: oldHash },
+      { revokedAt: new Date(Date.now() - 31000) }
+    );
     const cacheHelper = require('../utils/cacheHelper');
     await cacheHelper.del(`session:${oldHash}`);
 

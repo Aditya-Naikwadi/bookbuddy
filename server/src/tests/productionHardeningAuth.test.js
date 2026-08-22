@@ -115,7 +115,10 @@ describe('ITEM 1 — Auth: httpOnly Cookies, Refresh Token Rotation, Theft Detec
 
     const { hashToken } = require('../utils/token');
     const oldHash = hashToken(firstCookie);
-    await RefreshToken.updateOne({ tokenHash: oldHash }, { revokedAt: new Date(Date.now() - 31000) });
+    await RefreshToken.updateOne(
+      { tokenHash: oldHash },
+      { revokedAt: new Date(Date.now() - 31000) }
+    );
     const cacheHelper = require('../utils/cacheHelper');
     await cacheHelper.del(`session:${oldHash}`);
 
