@@ -36,3 +36,30 @@ try {
 } catch (err) {
   console.error("⚠️ Could not generate version.json:", err.message);
 }
+
+// Automatically sync installed pdfjs-dist worker file into public/pdf.worker.min.mjs
+try {
+  const workerSrc = path.join(
+    __dirname,
+    "..",
+    "node_modules",
+    "pdfjs-dist",
+    "build",
+    "pdf.worker.min.mjs",
+  );
+  const workerDest = path.join(
+    __dirname,
+    "..",
+    "public",
+    "pdf.worker.min.mjs",
+  );
+  if (fs.existsSync(workerSrc)) {
+    fs.copyFileSync(workerSrc, workerDest);
+    console.log(
+      "✅ Synced installed pdfjs-dist worker (v6.2.108) to client/public/pdf.worker.min.mjs",
+    );
+  }
+} catch (err) {
+  console.warn("⚠️ Could not sync pdf.worker.min.mjs:", err.message);
+}
+

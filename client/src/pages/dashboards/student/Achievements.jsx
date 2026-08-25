@@ -21,8 +21,11 @@ const Achievements = () => {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="animate-spin text-indigo-600 mb-4" size={40} />
-        <h2 className="text-slate-600 font-medium tracking-wide">
+        <Loader2
+          className="animate-spin text-indigo-600 dark:text-indigo-400 mb-4"
+          size={40}
+        />
+        <h2 className="text-slate-600 dark:text-slate-300 font-medium tracking-wide">
           Loading Achievements...
         </h2>
       </div>
@@ -32,11 +35,11 @@ const Achievements = () => {
   if (isError) {
     return (
       <div className="max-w-md mx-auto py-12 text-center space-y-4">
-        <AlertCircle className="text-danger mx-auto" size={40} />
-        <h2 className="text-lg font-bold text-slate-800">
+        <AlertCircle className="text-rose-500 mx-auto" size={40} />
+        <h2 className="text-lg font-bold text-slate-900 dark:text-ink">
           Failed to load streak statistics
         </h2>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 dark:text-muted">
           We encountered an issue checking your daily reading streaks. Verify
           your internet connection and try reloading the page.
         </p>
@@ -61,14 +64,14 @@ const Achievements = () => {
     : 100;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 px-4 py-6">
+    <div className="max-w-4xl mx-auto space-y-8 px-4 py-6 text-slate-900 dark:text-ink font-sans">
       {/* Page Header */}
-      <div className="border-b border-slate-200 pb-4 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="border-b border-slate-200 dark:border-edge pb-4 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-4">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-slate-900">
-            Reading Streaks & achievements
+          <h1 className="text-3xl font-serif font-bold text-slate-900 dark:text-ink">
+            Reading Streaks & Achievements
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-muted mt-1">
             Check in once a day, build reading milestones, and unlock customized
             sticker awards.
           </p>
@@ -79,11 +82,11 @@ const Achievements = () => {
         {/* Main Check-In Controls */}
         <div className="md:col-span-2 space-y-6">
           {/* Daily Check-In widget card */}
-          <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center text-center space-y-4">
-            <h2 className="font-serif font-black text-xl text-slate-900">
+          <div className="bg-white dark:bg-surface border border-slate-200 dark:border-edge rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center text-center space-y-4">
+            <h2 className="font-serif font-black text-xl text-slate-900 dark:text-ink">
               Extend Your Reading Pass
             </h2>
-            <p className="text-xs text-slate-500 max-w-sm">
+            <p className="text-xs text-slate-500 dark:text-muted max-w-sm">
               Keep check-in streaks active by logging in once per calendar day.
             </p>
             <CheckInButton
@@ -109,21 +112,21 @@ const Achievements = () => {
         <div className="space-y-6">
           {/* Milestone progress card */}
           {nextMilestone && (
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
-              <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-400">
+            <div className="bg-white dark:bg-surface rounded-3xl border border-slate-200 dark:border-edge p-6 shadow-sm space-y-4">
+              <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                 Next Milestone Progress
               </h3>
               <div className="space-y-2">
-                <div className="flex justify-between text-xs font-bold text-slate-800">
+                <div className="flex justify-between text-xs font-bold text-slate-900 dark:text-ink">
                   <span>
                     {nextMilestone.milestoneThreshold} Day Streak Badge
                   </span>
-                  <span className="text-indigo-600">
+                  <span className="text-indigo-600 dark:text-indigo-400">
                     {nextMilestone.milestoneThreshold - currentStreak} days left
                   </span>
                 </div>
                 {/* Custom Progress Bar */}
-                <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
                   <div
                     className="bg-orange-500 h-full transition-all duration-500 rounded-full"
                     style={{ width: `${progressPercent}%` }}
@@ -133,7 +136,7 @@ const Achievements = () => {
                     aria-valuemax={nextMilestone.milestoneThreshold}
                   />
                 </div>
-                <p className="text-[10px] text-slate-500 leading-normal pt-1">
+                <p className="text-[10px] text-slate-500 dark:text-muted leading-normal pt-1">
                   Cross this milestone to earn a {nextMilestone.rewardType}{" "}
                   unlock!
                 </p>

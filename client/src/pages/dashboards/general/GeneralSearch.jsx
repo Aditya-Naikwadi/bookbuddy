@@ -399,11 +399,17 @@ const GeneralSearch = () => {
       <DigitalReaderModal
         isOpen={Boolean(activeDigitalBook)}
         onClose={() => setActiveDigitalBook(null)}
-        fileUrl={activeDigitalBook?.fileUrl}
+        fileUrl={
+          activeDigitalBook?.fileUrl ||
+          activeDigitalBook?.digitalUrl ||
+          activeDigitalBook?.pdfUrl ||
+          activeDigitalBook?.url
+        }
         fileType={
           activeDigitalBook?.fileType || activeDigitalBook?.format || "pdf"
         }
         title={activeDigitalBook?.title}
+        book={activeDigitalBook}
       />
 
       <CiteThisItemModal

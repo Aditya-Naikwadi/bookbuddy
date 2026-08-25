@@ -1,4 +1,5 @@
-const CACHE_NAME = "bookbuddy-pwa-v1";
+const CACHE_VERSION = "6.2.108";
+const CACHE_NAME = `bookbuddy-pwa-v${CACHE_VERSION}`;
 const STATIC_ASSETS = ["/", "/index.html", "/version.json", "/favicon.ico"];
 
 self.addEventListener("install", (event) => {
@@ -28,12 +29,29 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // Cache-first for e-resources / static assets, network-first for API
+  // Network-first for JavaScript/worker .mjs scripts to prevent stale worker API desynchronization for returning sessions
+  if (url.pathname.endsWith(".mjs") || url.pathname.includes("pdf.worker")) {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request)),
+    );
+    return;
+  }
+
+  // Cache-first for offline media / e-resources / static documents, network-first for API
   if (
     url.pathname.includes("/eresources/") ||
     url.pathname.endsWith(".epub") ||
-    url.pathname.endsWith(".pdf") ||
-    url.pathname.endsWith(".mjs")
+    url.pathname.endsWith(".pdf")
   ) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {

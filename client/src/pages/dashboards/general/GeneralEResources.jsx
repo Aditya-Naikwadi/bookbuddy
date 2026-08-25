@@ -461,6 +461,7 @@ const GeneralEResources = () => {
         fileUrl={activeDigitalResource?.fileUrl}
         fileType={activeDigitalResource?.fileType || "pdf"}
         title={activeDigitalResource?.title}
+        resource={activeDigitalResource}
       />
     </div>
   );

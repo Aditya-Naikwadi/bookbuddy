@@ -78,9 +78,21 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+let isLoggingOut = false;
+
+export const setIsLoggingOut = (val) => {
+  isLoggingOut = Boolean(val);
+};
+
+export const getIsLoggingOut = () => isLoggingOut;
+
 let refreshSingleFlightPromise = null;
 
 export const refreshTokenSingleFlight = async () => {
+  if (isLoggingOut) {
+    return Promise.reject(new Error("Logout in progress"));
+  }
+
   if (refreshSingleFlightPromise) {
     return refreshSingleFlightPromise;
   }
@@ -98,9 +110,11 @@ export const refreshTokenSingleFlight = async () => {
     } catch (err) {
       setInMemoryToken(null);
       localStorage.removeItem("token");
-      broadcastLogout();
-      if (onUnauthorizedCallback) {
-        onUnauthorizedCallback();
+      if (!isLoggingOut) {
+        broadcastLogout();
+        if (onUnauthorizedCallback) {
+          onUnauthorizedCallback();
+        }
       }
       throw err;
     } finally {
@@ -142,7 +156,7 @@ if (authChannel) {
       setInMemoryToken(event.data.token);
     } else if (event.data?.type === "LOGOUT") {
       setInMemoryToken(null);
-      if (onUnauthorizedCallback) {
+      if (onUnauthorizedCallback && !isLoggingOut) {
         onUnauthorizedCallback();
       }
     }
@@ -153,7 +167,7 @@ if (typeof window !== "undefined") {
   window.addEventListener("storage", (event) => {
     if (event.key === "bookbuddy_logout") {
       setInMemoryToken(null);
-      if (onUnauthorizedCallback) {
+      if (onUnauthorizedCallback && !isLoggingOut) {
         onUnauthorizedCallback();
       }
     }
@@ -197,13 +211,15 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Skip 401 refresh logic for auth routes
+    // Skip 401 refresh logic for auth routes or during active logout
     if (
       originalRequest.url?.includes("/auth/refresh") ||
       originalRequest.url?.includes("/auth/login") ||
+      originalRequest.url?.includes("/auth/logout") ||
       originalRequest.url?.includes("/auth/register") ||
       originalRequest.url?.includes("/registration") ||
-      originalRequest.url?.includes("/auth/csrf-token")
+      originalRequest.url?.includes("/auth/csrf-token") ||
+      isLoggingOut
     ) {
       return Promise.reject(error);
     }

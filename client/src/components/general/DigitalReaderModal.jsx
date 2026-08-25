@@ -18,6 +18,10 @@ import {
   BookOpen,
 } from "lucide-react";
 
+import { motion, AnimatePresence } from "framer-motion";
+import { useReducedMotion } from "../../hooks/useReducedMotion";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
 const DEFAULT_FALLBACK_PDF =
   "https://raw.githubusercontent.com/mozilla/pdf.js/master/web/compressed.tracemonkey-pldi-09.pdf";
 
@@ -48,7 +52,8 @@ const extractUrl = (fileUrl, resource, book) => {
     if (typeof url === "string" && url.trim()) return url.trim();
   }
 
-  return DEFAULT_FALLBACK_PDF;
+  // Return null if no file URL exists on target instead of silently serving an unrelated sample paper
+  return null;
 };
 
 /**
@@ -57,9 +62,8 @@ const extractUrl = (fileUrl, resource, book) => {
 const PdfViewerEngine = lazy(async () => {
   const pdfjsLib = await import("pdfjs-dist");
   pdfjsLib.GlobalWorkerOptions.workerSrc =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/pdf.worker.min.mjs`
-      : "/pdf.worker.min.mjs";
+    pdfWorkerUrl ||
+    new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
 
   return {
     default: function PdfEngine({
@@ -77,7 +81,7 @@ const PdfViewerEngine = lazy(async () => {
 
         const loadPdf = async () => {
           try {
-            const pdfUrlString = extractUrl(fileUrl, null, null);
+            const pdfUrlString = fileUrl || DEFAULT_FALLBACK_PDF;
 
             if (!pdfUrlString) {
               throw new Error(
@@ -90,12 +94,21 @@ const PdfViewerEngine = lazy(async () => {
             if (isMounted) {
               onTotalPages(pdfDocInstance.numPages);
               const pageObj = await pdfDocInstance.getPage(page);
-              const viewport = pageObj.getViewport({ scale });
+
+              // High-DPI Retina Display Scaling Fix (Issue 2)
+              const dpr =
+                typeof window !== "undefined"
+                  ? window.devicePixelRatio || 1
+                  : 1;
+              const viewport = pageObj.getViewport({ scale: scale * dpr });
               const canvas = canvasRef.current;
               if (canvas) {
                 const context = canvas.getContext("2d");
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
+                canvas.style.width = `${viewport.width / dpr}px`;
+                canvas.style.height = `${viewport.height / dpr}px`;
+
                 await pageObj.render({ canvasContext: context, viewport })
                   .promise;
               }
@@ -110,6 +123,13 @@ const PdfViewerEngine = lazy(async () => {
 
         return () => {
           isMounted = false;
+          if (fileUrl && fileUrl.startsWith("blob:")) {
+            try {
+              URL.revokeObjectURL(fileUrl);
+            } catch {
+              // Ignore blob URL revocation error
+            }
+          }
         };
       }, [fileUrl, page, scale, onError, onTotalPages]);
 
@@ -246,167 +266,202 @@ const DigitalReaderModal = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isModalOpen, handleNext, handlePrev, onClose]);
 
-  // Reset state on URL change
-  const [prevResolvedUrl, setPrevResolvedUrl] = useState(resolvedUrl);
-  if (prevResolvedUrl !== resolvedUrl) {
-    setPrevResolvedUrl(resolvedUrl);
+  // Reset state on target book/resource or URL change
+  const targetId = activeTarget?._id || activeTarget?.id || resolvedTitle;
+  const resetKey = `${targetId}_${resolvedUrl || "no-url"}`;
+
+  const [prevResetKey, setPrevResetKey] = useState(resetKey);
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey);
     setCurrentPage(1);
-    setError(null);
+    setError(
+      resolvedUrl ? null : "No digital document URL provided for this title.",
+    );
     setScale(1.0);
   }
 
-  if (!isModalOpen) return null;
+  const prefersReducedMotion = useReducedMotion();
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="digital-reader-title"
-      className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
-    >
-      <div
-        ref={modalRef}
-        className="bg-slate-900 rounded-3xl w-full max-w-5xl h-[92vh] flex flex-col overflow-hidden border border-slate-800 shadow-2xl relative"
-      >
-        {/* Reader Header Bar */}
-        <header className="px-4 py-3 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between gap-3 text-white flex-shrink-0">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-xl flex-shrink-0">
-              <BookOpen className="w-4 h-4" />
-            </div>
-            <h2
-              id="digital-reader-title"
-              className="text-xs sm:text-sm font-bold truncate"
-            >
-              {resolvedTitle}
-            </h2>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-800 text-indigo-400 uppercase flex-shrink-0 hidden sm:inline-block">
-              {normalizedType.toUpperCase()}
-            </span>
-          </div>
+    <AnimatePresence>
+      {isModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="digital-reader-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
+        >
+          {/* Backdrop Overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm"
+          />
 
-          {/* Navigation Controls */}
-          {!error && (
-            <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl p-1 px-2 text-xs">
-              <button
-                onClick={handlePrev}
-                disabled={currentPage <= 1}
-                aria-label="Previous Page"
-                className="p-1 text-slate-300 hover:text-white disabled:opacity-30 disabled:hover:text-slate-300"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="text-[11px] font-semibold text-slate-300 px-1">
-                {normalizedType === "pdf"
-                  ? `${currentPage} / ${totalPages}`
-                  : `Page ${currentPage}`}
-              </span>
-              <button
-                onClick={handleNext}
-                disabled={normalizedType === "pdf" && currentPage >= totalPages}
-                aria-label="Next Page"
-                className="p-1 text-slate-300 hover:text-white disabled:opacity-30 disabled:hover:text-slate-300"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+          {/* Modal Container */}
+          <motion.div
+            ref={modalRef}
+            initial={
+              prefersReducedMotion
+                ? { opacity: 0 }
+                : { opacity: 0, scale: 0.95, y: 15 }
+            }
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={
+              prefersReducedMotion
+                ? { opacity: 0 }
+                : { opacity: 0, scale: 0.95, y: 15 }
+            }
+            transition={{ type: "spring", damping: 25, stiffness: 250 }}
+            className="bg-slate-900 rounded-3xl w-full max-w-5xl h-[92vh] flex flex-col overflow-hidden border border-slate-800 shadow-2xl relative z-10"
+          >
+            {/* Reader Header Bar */}
+            <header className="px-4 py-3 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between gap-3 text-white flex-shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-xl flex-shrink-0">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <h2
+                  id="digital-reader-title"
+                  className="text-xs sm:text-sm font-bold truncate"
+                >
+                  {resolvedTitle}
+                </h2>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-800 text-indigo-400 uppercase flex-shrink-0 hidden sm:inline-block">
+                  {normalizedType.toUpperCase()}
+                </span>
+              </div>
 
-              {normalizedType === "pdf" && (
-                <>
-                  <div className="w-px h-3 bg-slate-800 mx-1" />
+              {/* Navigation Controls */}
+              {!error && (
+                <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl p-1 px-2 text-xs">
                   <button
-                    onClick={() => setScale((s) => Math.max(0.75, s - 0.15))}
-                    title="Zoom Out"
-                    className="p-1 text-slate-300 hover:text-white"
+                    onClick={handlePrev}
+                    disabled={currentPage <= 1}
+                    aria-label="Previous Page"
+                    className="p-1 text-slate-300 hover:text-white disabled:opacity-30 disabled:hover:text-slate-300 cursor-pointer"
                   >
-                    <ZoomOut className="w-3.5 h-3.5" />
+                    <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    {Math.round(scale * 100)}%
+                  <span className="text-[11px] font-semibold text-slate-300 px-1">
+                    {normalizedType === "pdf"
+                      ? `${currentPage} / ${totalPages}`
+                      : `Page ${currentPage}`}
                   </span>
                   <button
-                    onClick={() => setScale((s) => Math.min(2.0, s + 0.15))}
-                    title="Zoom In"
-                    className="p-1 text-slate-300 hover:text-white"
+                    onClick={handleNext}
+                    disabled={
+                      normalizedType === "pdf" && currentPage >= totalPages
+                    }
+                    aria-label="Next Page"
+                    className="p-1 text-slate-300 hover:text-white disabled:opacity-30 disabled:hover:text-slate-300 cursor-pointer"
                   >
-                    <ZoomIn className="w-3.5 h-3.5" />
+                    <ChevronRight className="w-4 h-4" />
                   </button>
-                </>
-              )}
-            </div>
-          )}
 
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            aria-label="Close Reader Modal"
-            className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </header>
-
-        {/* Reader Canvas Area */}
-        <div className="flex-1 overflow-auto flex items-center justify-center bg-slate-950 p-2 sm:p-4 relative">
-          {error ? (
-            <div className="bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-800 max-w-md text-center space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto">
-                <AlertCircle className="w-6 h-6" />
-              </div>
-              <h3 className="text-sm font-bold text-white">
-                Unable to Display In-App Digital Reader
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                {error ||
-                  "The digital file URL could not be rendered inside the embedded reader canvas."}
-              </p>
-              <div className="flex items-center justify-center gap-3 pt-2">
-                <a
-                  href={resolvedUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors"
-                >
-                  <span>Open in External Tab</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-                <button
-                  onClick={() => setError(null)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl transition-colors"
-                >
-                  Retry Loading
-                </button>
-              </div>
-            </div>
-          ) : (
-            <Suspense
-              fallback={
-                <div className="flex flex-col items-center justify-center gap-3 text-slate-400 text-xs">
-                  <Loader2 className="w-7 h-7 animate-spin text-indigo-500" />
-                  <span>Loading open-access document engine...</span>
+                  {normalizedType === "pdf" && (
+                    <>
+                      <div className="w-px h-3 bg-slate-800 mx-1" />
+                      <button
+                        onClick={() =>
+                          setScale((s) => Math.max(0.75, s - 0.15))
+                        }
+                        title="Zoom Out"
+                        className="p-1 text-slate-300 hover:text-white cursor-pointer"
+                      >
+                        <ZoomOut className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {Math.round(scale * 100)}%
+                      </span>
+                      <button
+                        onClick={() => setScale((s) => Math.min(2.0, s + 0.15))}
+                        title="Zoom In"
+                        className="p-1 text-slate-300 hover:text-white cursor-pointer"
+                      >
+                        <ZoomIn className="w-3.5 h-3.5" />
+                      </button>
+                    </>
+                  )}
                 </div>
-              }
-            >
-              {normalizedType === "pdf" ? (
-                <PdfViewerEngine
-                  fileUrl={resolvedUrl}
-                  page={currentPage}
-                  scale={scale}
-                  onTotalPages={(total) => setTotalPages(total)}
-                  onError={(msg) => setError(msg)}
-                />
-              ) : (
-                <EpubViewerEngine
-                  fileUrl={resolvedUrl}
-                  page={currentPage}
-                  onLocationChange={() => setTotalPages(100)}
-                  onError={(msg) => setError(msg)}
-                />
               )}
-            </Suspense>
-          )}
+
+              {/* Close Button */}
+              <button
+                onClick={onClose}
+                aria-label="Close Reader Modal"
+                className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </header>
+
+            {/* Reader Canvas Area */}
+            <div className="flex-1 overflow-auto flex items-center justify-center bg-slate-950 p-2 sm:p-4 relative">
+              {error ? (
+                <div className="bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-800 max-w-md text-center space-y-4">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto">
+                    <AlertCircle className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-sm font-bold text-white">
+                    Unable to Display In-App Digital Reader
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {error ||
+                      "The digital file URL could not be rendered inside the embedded reader canvas."}
+                  </p>
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    <a
+                      href={resolvedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors"
+                    >
+                      <span>Open in External Tab</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                    <button
+                      onClick={() => setError(null)}
+                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl transition-colors"
+                    >
+                      Retry Loading
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <Suspense
+                  fallback={
+                    <div className="flex flex-col items-center justify-center gap-3 text-slate-400 text-xs">
+                      <Loader2 className="w-7 h-7 animate-spin text-indigo-500" />
+                      <span>Loading open-access document engine...</span>
+                    </div>
+                  }
+                >
+                  {normalizedType === "pdf" ? (
+                    <PdfViewerEngine
+                      fileUrl={resolvedUrl}
+                      page={currentPage}
+                      scale={scale}
+                      onTotalPages={(total) => setTotalPages(total)}
+                      onError={(msg) => setError(msg)}
+                    />
+                  ) : (
+                    <EpubViewerEngine
+                      fileUrl={resolvedUrl}
+                      page={currentPage}
+                      onLocationChange={() => setTotalPages(100)}
+                      onError={(msg) => setError(msg)}
+                    />
+                  )}
+                </Suspense>
+              )}
+            </div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 };
 

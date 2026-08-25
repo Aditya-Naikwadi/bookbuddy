@@ -23,7 +23,7 @@ describe('Super Admin Database Layer Verification Test Suite', () => {
   describe('STAGE 1 & 2: Schema & Index Verification', () => {
     it('1. should verify indexes on User collection', async () => {
       const indexes = await User.collection.getIndexes();
-      expect(indexes).toHaveProperty('email_1');
+      expect(indexes).toHaveProperty('collegeId_1_email_1');
       expect(indexes).toHaveProperty('role_1_collegeId_1_status_1');
     });
 

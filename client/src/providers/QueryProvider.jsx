@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Configure a highly optimized QueryClient
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // Data remains fresh for 5 minutes (prevents redundant fetches)
@@ -11,6 +11,15 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+export const clearQueryCache = () => {
+  try {
+    queryClient.cancelQueries();
+    queryClient.clear();
+  } catch (err) {
+    console.warn("Error clearing query cache:", err);
+  }
+};
 
 export const QueryProvider = ({ children }) => {
   return (

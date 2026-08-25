@@ -14,11 +14,15 @@ const getSocketUrl = () => {
 const SOCKET_URL = getSocketUrl();
 
 export const useSocket = () => {
-  const { token } = useAuthStore();
+  const { token, isAuthenticated } = useAuthStore();
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
+    if (!token || !isAuthenticated) {
+      return;
+    }
+
     const instance = io(SOCKET_URL, {
       autoConnect: true,
       reconnection: true,
@@ -43,8 +47,10 @@ export const useSocket = () => {
       instance.off("connect", handleConnect);
       instance.off("disconnect", handleDisconnect);
       instance.disconnect();
+      setSocket(null);
+      setIsConnected(false);
     };
-  }, [token]);
+  }, [token, isAuthenticated]);
 
   return {
     socket,

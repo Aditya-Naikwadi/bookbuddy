@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import {
   Bookmark,
   MapPin,
@@ -7,20 +8,24 @@ import {
   XCircle,
   Quote,
 } from "lucide-react";
+import { useReducedMotion } from "../../hooks/useReducedMotion";
 
 const availabilityConfig = {
   Available: {
-    badge: "bg-emerald-950/80 text-emerald-300 border-emerald-800/80",
+    badge:
+      "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/20 dark:border-emerald-800/80",
     icon: CheckCircle2,
     label: "Available",
   },
   "On Hold": {
-    badge: "bg-amber-950/80 text-amber-300 border-amber-800/80",
+    badge:
+      "bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/20 dark:border-amber-800/80",
     icon: Clock,
     label: "On Hold",
   },
   "Checked Out": {
-    badge: "bg-rose-950/80 text-rose-300 border-rose-800/80",
+    badge:
+      "bg-rose-500/10 text-rose-600 dark:text-rose-300 border-rose-500/20 dark:border-rose-800/80",
     icon: XCircle,
     label: "Checked Out",
   },
@@ -35,14 +40,16 @@ const ResultCard = ({
   onCite,
   loading = false,
 }) => {
+  const prefersReducedMotion = useReducedMotion();
+
   if (loading) {
     return (
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-sm overflow-hidden animate-pulse flex flex-col h-full">
-        <div className="h-44 bg-slate-800 w-full"></div>
+      <div className="bg-white dark:bg-surface rounded-2xl border border-slate-200 dark:border-edge shadow-sm overflow-hidden animate-pulse flex flex-col h-full">
+        <div className="h-44 bg-slate-100 dark:bg-slate-800 w-full"></div>
         <div className="p-4 flex-1 space-y-2">
-          <div className="h-4 w-3/4 bg-slate-800 rounded-md"></div>
-          <div className="h-3 w-1/2 bg-slate-800 rounded-md"></div>
-          <div className="h-3 w-1/3 bg-slate-800 rounded-md mt-4"></div>
+          <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-800 rounded-md"></div>
+          <div className="h-3 w-1/2 bg-slate-200 dark:bg-slate-800 rounded-md"></div>
+          <div className="h-3 w-1/3 bg-slate-200 dark:bg-slate-800 rounded-md mt-4"></div>
         </div>
       </div>
     );
@@ -59,9 +66,14 @@ const ResultCard = ({
     book.fileUrl || book.downloadUrl || book.pdfUrl || book.epubUrl;
 
   return (
-    <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-xl hover:border-indigo-500/50 hover:shadow-2xl transition-all duration-200 overflow-hidden flex flex-col group relative">
+    <motion.div
+      whileHover={prefersReducedMotion ? {} : { y: -4 }}
+      whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="bg-white dark:bg-surface rounded-2xl border border-slate-200 dark:border-edge shadow-md hover:shadow-xl hover:border-indigo-500/50 transition-all duration-200 overflow-hidden flex flex-col group relative"
+    >
       {/* Cover / Graphic */}
-      <div className="h-48 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 w-full relative flex items-center justify-center p-4 text-center overflow-hidden border-b border-slate-800/80">
+      <div className="h-48 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 w-full relative flex items-center justify-center p-4 text-center overflow-hidden border-b border-slate-200/80 dark:border-slate-800/80">
         {book.coverUrl ? (
           <img
             src={book.coverUrl}
@@ -114,22 +126,22 @@ const ResultCard = ({
               {status.label}
             </span>
             {book.year && (
-              <span className="text-[11px] font-medium text-slate-400">
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
                 {book.year}
               </span>
             )}
           </div>
 
-          <h3 className="font-bold text-slate-100 text-sm leading-snug line-clamp-2 group-hover:text-indigo-400 transition-colors mb-1">
+          <h3 className="font-bold text-slate-900 dark:text-ink text-sm leading-snug line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-1">
             {book.title}
           </h3>
-          <p className="text-xs text-slate-400 line-clamp-1 mb-3">
+          <p className="text-xs text-slate-500 dark:text-muted line-clamp-1 mb-3">
             By {book.author || "Unknown Author"}
           </p>
         </div>
 
         {/* Footer Actions */}
-        <div className="pt-3 border-t border-slate-800/80 flex items-center gap-2 mt-auto">
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-2 mt-auto">
           {digitalFileUrl && (
             <button
               onClick={() =>
@@ -145,9 +157,9 @@ const ResultCard = ({
 
           <button
             onClick={() => onViewLocation && onViewLocation(book)}
-            className={`${digitalFileUrl ? "w-auto" : "w-full"} text-xs font-semibold py-2 px-3 rounded-xl border border-slate-700/80 bg-slate-800/80 text-slate-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition-all flex items-center justify-center gap-1.5`}
+            className={`${digitalFileUrl ? "w-auto" : "w-full"} text-xs font-semibold py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition-all flex items-center justify-center gap-1.5`}
           >
-            <MapPin className="w-3.5 h-3.5 text-indigo-400 group-hover:text-white" />
+            <MapPin className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 group-hover:text-white" />
             <span>{digitalFileUrl ? "Locate" : "Locate Shelf"}</span>
           </button>
 
@@ -155,14 +167,14 @@ const ResultCard = ({
             <button
               onClick={() => onCite(book)}
               title="Cite this item"
-              className="p-2 text-xs font-semibold rounded-xl border border-slate-700/80 bg-slate-800/80 text-slate-300 hover:text-indigo-400 hover:border-indigo-500 transition-all"
+              className="p-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-500 transition-all"
             >
               <Quote className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

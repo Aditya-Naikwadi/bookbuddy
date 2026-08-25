@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   AlertCircle,
   BookOpen,
+  KeyRound,
 } from "lucide-react";
 import { registrationApi } from "../../api/registrationApi";
 
@@ -35,11 +36,15 @@ export default function CollegeStudentRegister() {
     department: "",
     password: "",
     confirmPassword: "",
-    termsAccepted: false,
   });
 
+  // Step state: 'form' | 'otp' | 'success'
+  const [step, setStep] = useState("form");
+  const [otpCode, setOtpCode] = useState("");
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [devOtpHint, setDevOtpHint] = useState(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [globalError, setGlobalError] = useState("");
 
   useEffect(() => {
@@ -72,6 +77,7 @@ export default function CollegeStudentRegister() {
     loadColleges();
   }, [collegeSlug]);
 
+  // Step 1: Submit Student Registration Details
   const handleSubmit = async (e) => {
     e.preventDefault();
     setGlobalError("");
@@ -83,27 +89,59 @@ export default function CollegeStudentRegister() {
 
     setIsSubmitting(true);
     try {
-      if (collegeData._id) {
-        const fullName =
-          `${studentForm.firstName} ${studentForm.lastName}`.trim();
-        await registrationApi.registerStudent({
-          name: fullName,
-          email: studentForm.email,
-          password: studentForm.password,
-          collegeId: collegeData._id,
-          studentId:
-            studentForm.rollNumber || `STU-${Date.now().toString().slice(-4)}`,
-          department: studentForm.department,
-          phone: studentForm.phone,
-        });
+      const fullName =
+        `${studentForm.firstName} ${studentForm.lastName}`.trim();
+      const res = await registrationApi.registerStudent({
+        name: fullName,
+        email: studentForm.email,
+        password: studentForm.password,
+        confirmPassword: studentForm.confirmPassword,
+        collegeId: collegeData._id,
+        studentId:
+          studentForm.rollNumber || `STU-${Date.now().toString().slice(-4)}`,
+        department: studentForm.department,
+        phone: studentForm.phone,
+        termsAccepted: true,
+      });
+
+      setRegisteredEmail(studentForm.email.toLowerCase().trim());
+      if (res?.data?.devOtp) {
+        setDevOtpHint(res.data.devOtp);
       }
       setIsSubmitting(false);
-      setShowSuccess(true);
+      setStep("otp");
     } catch (err) {
       setIsSubmitting(false);
       setGlobalError(
         err.response?.data?.message ||
           "Registration failed. Please check your information and try again.",
+      );
+    }
+  };
+
+  // Step 2: Submit OTP Verification Code
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setGlobalError("");
+
+    if (!otpCode || otpCode.trim().length !== 6) {
+      setGlobalError("Please enter the 6-digit verification code.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await registrationApi.verifyStudentEmail({
+        email: registeredEmail,
+        otp: otpCode.trim(),
+      });
+      setIsSubmitting(false);
+      setStep("success");
+    } catch (err) {
+      setIsSubmitting(false);
+      setGlobalError(
+        err.response?.data?.message ||
+          "Invalid verification code or email. Please check and try again.",
       );
     }
   };
@@ -126,7 +164,7 @@ export default function CollegeStudentRegister() {
           </p>
         </div>
 
-        {/* Global Error */}
+        {/* Global Error Alert */}
         {globalError && (
           <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
@@ -134,7 +172,8 @@ export default function CollegeStudentRegister() {
           </div>
         )}
 
-        {!showSuccess ? (
+        {/* STEP 1: Registration Form */}
+        {step === "form" && (
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5">
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Name Fields */}
@@ -340,30 +379,99 @@ export default function CollegeStudentRegister() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-4"
+                className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-4 cursor-pointer"
               >
                 {isSubmitting
                   ? "Registering Account..."
-                  : "Register Student Account"}
+                  : "Next: Verify Email OTP"}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
           </div>
-        ) : (
+        )}
+
+        {/* STEP 2: OTP Verification Form */}
+        {step === "otp" && (
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5">
+            <div className="text-center space-y-2">
+              <div className="w-12 h-12 bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto">
+                <KeyRound className="w-6 h-6" />
+              </div>
+              <h2 className="text-lg font-bold text-white">
+                Verify Your Email Address
+              </h2>
+              <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                Enter the 6-digit verification code sent to{" "}
+                <strong className="text-indigo-300 font-mono">
+                  {registeredEmail}
+                </strong>
+              </p>
+              {devOtpHint && (
+                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono">
+                  ⚡ <strong>Development OTP Hint:</strong> {devOtpHint}
+                </div>
+              )}
+            </div>
+
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="otp-code"
+                  className="block text-xs font-mono font-bold uppercase text-slate-400 mb-1 text-center"
+                >
+                  6-Digit Verification Code
+                </label>
+                <input
+                  id="otp-code"
+                  type="text"
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(e) =>
+                    setOtpCode(e.target.value.replace(/\D/g, ""))
+                  }
+                  placeholder="123456"
+                  className="w-full text-center tracking-[0.5em] text-lg font-mono px-4 py-3 rounded-xl border border-slate-800 bg-slate-950 text-indigo-300 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting || otpCode.length !== 6}
+                className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+              >
+                {isSubmitting ? "Verifying Code..." : "Verify & Create Account"}
+                <CheckCircle2 className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStep("form")}
+                className="w-full text-center text-xs text-slate-500 hover:text-slate-400 transition-colors"
+              >
+                ← Back to Edit Details
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* STEP 3: Success Screen */}
+        {step === "success" && (
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl text-center space-y-4">
             <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <h2 className="text-xl font-bold text-white">
-              Student Registration Complete!
+              Account Activated & Saved!
             </h2>
             <p className="text-xs text-slate-400 max-w-xs mx-auto">
-              Your student membership at <strong>{collegeData.name}</strong> is
-              registered.
+              Your email has been verified and your student account at{" "}
+              <strong>{collegeData.name}</strong> is now stored in the database.
             </p>
             <Link
               to="/auth/login"
-              className="inline-flex items-center justify-center gap-2 w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition-colors"
+              className="inline-flex items-center justify-center gap-2 w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition-colors shadow-lg shadow-indigo-600/20"
             >
               <span>Sign In to Student Portal</span>
               <ArrowRight className="w-4 h-4" />

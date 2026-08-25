@@ -4,27 +4,26 @@ import {
   Book,
   LayoutDashboard,
   Search,
-  Globe,
-  Shield,
-  FileCheck,
-  FileSearch,
-  HardDrive,
   LogOut,
   Bookmark,
   FileText,
   X,
-  Users,
-  Building,
-  HelpCircle,
-  Layers,
+  Globe,
+  FileCheck,
+  HardDrive,
 } from "lucide-react";
 
 import NotificationCenter from "../components/student/NotificationCenter";
+import ThemeToggle from "../components/common/ThemeToggle";
 import useAuthStore from "../store/authStore";
 import { useFeatureFlags } from "../hooks/useFeatureFlags";
+import { useReducedMotion } from "../hooks/useReducedMotion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   STUDENT_NAV_ITEMS,
   COLLEGE_ADMIN_NAV_ITEMS,
+  SUPER_ADMIN_NAV_ITEMS,
+  GENERAL_NAV_ITEMS,
 } from "../config/navigation";
 import { cn } from "../utils/cn";
 
@@ -136,51 +135,17 @@ export default function DashboardLayout() {
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                 Administrator
               </p>
-              <NavItem
-                to="/admin-portal/overview"
-                icon={<Globe size={20} />}
-                label="System Overview"
-              />
-              <NavItem
-                to="/admin-portal/users"
-                icon={<Users size={20} />}
-                label="User Directory"
-              />
-              <NavItem
-                to="/admin-portal/college-admins"
-                icon={<Building size={20} />}
-                label="College Tenants"
-              />
-              <NavItem
-                to="/admin-portal/registration-queue"
-                icon={<FileCheck size={20} />}
-                label="Onboarding Queue"
-              />
-              <NavItem
-                to="/admin-portal/moderation"
-                icon={<Shield size={20} />}
-                label="Content Moderation"
-              />
-              <NavItem
-                to="/admin-portal/data-oversight"
-                icon={<Layers size={20} />}
-                label="Data Oversight"
-              />
-              <NavItem
-                to="/admin-portal/support"
-                icon={<HelpCircle size={20} />}
-                label="Support Queue"
-              />
-              <NavItem
-                to="/admin-portal/audit-logs"
-                icon={<FileSearch size={20} />}
-                label="Audit Logs"
-              />
-              <NavItem
-                to="/admin-portal/settings"
-                icon={<HardDrive size={20} />}
-                label="System Settings"
-              />
+              {SUPER_ADMIN_NAV_ITEMS.map((item) => {
+                const IconComp = item.icon;
+                return (
+                  <NavItem
+                    key={item.key}
+                    to={item.route}
+                    icon={<IconComp size={20} />}
+                    label={item.label}
+                  />
+                );
+              })}
             </>
           )}
 
@@ -210,21 +175,17 @@ export default function DashboardLayout() {
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                 General Public
               </p>
-              <NavItem
-                to="/general-dashboard/search"
-                icon={<Search size={20} />}
-                label="Advanced Search"
-              />
-              <NavItem
-                to="/general-dashboard/e-resources"
-                icon={<FileText size={20} />}
-                label="Public E-Resources"
-              />
-              <NavItem
-                to="/general-dashboard/saved"
-                icon={<Bookmark size={20} />}
-                label="Saved Bookmarks"
-              />
+              {GENERAL_NAV_ITEMS.map((item) => {
+                const IconComp = item.icon;
+                return (
+                  <NavItem
+                    key={item.key}
+                    to={item.route}
+                    icon={<IconComp size={20} />}
+                    label={item.label}
+                  />
+                );
+              })}
             </>
           )}
 
@@ -306,6 +267,7 @@ export default function DashboardLayout() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+            <ThemeToggle />
             <NotificationCenter />
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-indigo-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-indigo-700 dark:text-ember font-bold uppercase text-xs">
@@ -315,9 +277,20 @@ export default function DashboardLayout() {
           </div>
         </header>
 
-        {/* Page Content */}
+        {/* Page Content with Smooth Route Transition */}
         <div className="p-4 sm:p-6 flex-1 overflow-auto">
-          <Outlet />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className="min-h-full flex flex-col"
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
 
@@ -362,51 +335,17 @@ export default function DashboardLayout() {
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                 Administrator
               </p>
-              <NavItem
-                to="/admin-portal/overview"
-                icon={<Globe size={20} />}
-                label="System Overview"
-              />
-              <NavItem
-                to="/admin-portal/users"
-                icon={<Users size={20} />}
-                label="User Directory"
-              />
-              <NavItem
-                to="/admin-portal/college-admins"
-                icon={<Building size={20} />}
-                label="College Tenants"
-              />
-              <NavItem
-                to="/admin-portal/registration-queue"
-                icon={<FileCheck size={20} />}
-                label="Onboarding Queue"
-              />
-              <NavItem
-                to="/admin-portal/moderation"
-                icon={<Shield size={20} />}
-                label="Content Moderation"
-              />
-              <NavItem
-                to="/admin-portal/data-oversight"
-                icon={<Layers size={20} />}
-                label="Data Oversight"
-              />
-              <NavItem
-                to="/admin-portal/support"
-                icon={<HelpCircle size={20} />}
-                label="Support Queue"
-              />
-              <NavItem
-                to="/admin-portal/audit-logs"
-                icon={<FileSearch size={20} />}
-                label="Audit Logs"
-              />
-              <NavItem
-                to="/admin-portal/settings"
-                icon={<HardDrive size={20} />}
-                label="System Settings"
-              />
+              {SUPER_ADMIN_NAV_ITEMS.map((item) => {
+                const IconComp = item.icon;
+                return (
+                  <NavItem
+                    key={item.key}
+                    to={item.route}
+                    icon={<IconComp size={20} />}
+                    label={item.label}
+                  />
+                );
+              })}
             </>
           )}
 
@@ -441,26 +380,17 @@ export default function DashboardLayout() {
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                 General Public Portal
               </p>
-              <NavItem
-                to="/general-dashboard"
-                icon={<LayoutDashboard size={20} />}
-                label="Portal Overview"
-              />
-              <NavItem
-                to="/general-dashboard/search"
-                icon={<Search size={20} />}
-                label="Advanced Search"
-              />
-              <NavItem
-                to="/general-dashboard/e-resources"
-                icon={<FileText size={20} />}
-                label="Public E-Resources"
-              />
-              <NavItem
-                to="/general-dashboard/saved"
-                icon={<Bookmark size={20} />}
-                label="Saved Bookmarks"
-              />
+              {GENERAL_NAV_ITEMS.map((item) => {
+                const IconComp = item.icon;
+                return (
+                  <NavItem
+                    key={item.key}
+                    to={item.route}
+                    icon={<IconComp size={20} />}
+                    label={item.label}
+                  />
+                );
+              })}
             </>
           )}
 

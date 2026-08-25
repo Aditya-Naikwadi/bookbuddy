@@ -362,7 +362,7 @@ exports.commitRosterUpload = asyncHandler(async (req, res, next) => {
 /**
  * GET /api/admin/students/export — Export College Roster with Formula Injection Sanitization
  */
-exports.exportRoster = asyncHandler(async (req, res, next) => {
+exports.exportRoster = asyncHandler(async (req, res) => {
   const adminCollegeId = req.user.collegeId;
   const students = await User.find({ collegeId: adminCollegeId, role: 'student' }).lean();
 

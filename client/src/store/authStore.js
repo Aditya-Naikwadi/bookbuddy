@@ -2,11 +2,15 @@ import { create } from "zustand";
 import apiClient, {
   getInMemoryToken,
   setInMemoryToken,
+  setCsrfToken,
+  setIsLoggingOut,
   fetchCsrfToken,
   setOnUnauthorizedCallback,
   broadcastLogout,
   refreshTokenSingleFlight,
 } from "../api/client";
+import { clearQueryCache } from "../providers/QueryProvider";
+import { disconnectSocket } from "../services/socketClient";
 
 const isTokenExpiredOrNearExpiry = (token, thresholdSeconds = 60) => {
   if (!token || typeof token !== "string") return true;
@@ -191,15 +195,29 @@ const useAuthStore = create((set) => {
     },
 
     logout: async (allDevices = false) => {
+      setIsLoggingOut(true);
       try {
         await apiClient.post("/auth/logout", { allDevices });
       } catch (err) {
-        console.error("Logout failed on server", err);
+        console.error("Logout request error on server:", err);
       } finally {
+        // Clear all token & auth states
         setInMemoryToken(null);
+        setCsrfToken(null);
         localStorage.removeItem("token");
         localStorage.removeItem("originalSuperAdminToken");
+        sessionStorage.removeItem("redirectAfterLogin");
+
+        // Synchronously cancel/clear all TanStack query queries & polling
+        clearQueryCache();
+
+        // Explicitly disconnect active Socket.io real-time connection
+        disconnectSocket();
+
+        // Broadcast logout across tabs
         broadcastLogout();
+
+        // Reset auth store state
         set({
           user: null,
           token: null,
@@ -208,6 +226,10 @@ const useAuthStore = create((set) => {
           isImpersonated: false,
           originalSuperAdminToken: null,
         });
+
+        setTimeout(() => {
+          setIsLoggingOut(false);
+        }, 500);
       }
     },
 
@@ -236,7 +258,10 @@ const useAuthStore = create((set) => {
             } else {
               // Unauthenticated state: Stop early to prevent duplicate profile 401 -> refresh cascades
               setInMemoryToken(null);
+              setCsrfToken(null);
               localStorage.removeItem("token");
+              clearQueryCache();
+              disconnectSocket();
               set({
                 user: null,
                 token: null,
@@ -289,8 +314,12 @@ const useAuthStore = create((set) => {
         }
 
         setInMemoryToken(null);
+        setCsrfToken(null);
         localStorage.removeItem("token");
         localStorage.removeItem("originalSuperAdminToken");
+        sessionStorage.removeItem("redirectAfterLogin");
+        clearQueryCache();
+        disconnectSocket();
         broadcastLogout();
         set({
           user: null,

@@ -116,4 +116,47 @@ describe('progressService - Upsert & Fetch Reading Progress', () => {
     expect(current.deviceId).toBe('desktop-device');
     expect(current.percentageComplete).toBe(80);
   });
+
+  test('Three near-simultaneous writes from different devices resolve deterministically to whichever had the latest timestamp', async () => {
+    const t1 = new Date('2026-08-20T12:00:00.000Z');
+    const t2 = new Date('2026-08-20T12:10:00.000Z');
+    const t3 = new Date('2026-08-20T12:05:00.000Z'); // t2 is latest!
+
+    const req1 = upsertProgress({
+      userId,
+      resourceId,
+      resourceType: 'epub',
+      position: { page: 10 },
+      percentageComplete: 10,
+      deviceId: 'device-1',
+      updatedAt: t1,
+    });
+
+    const req2 = upsertProgress({
+      userId,
+      resourceId,
+      resourceType: 'epub',
+      position: { page: 90 },
+      percentageComplete: 90,
+      deviceId: 'device-2-latest',
+      updatedAt: t2,
+    });
+
+    const req3 = upsertProgress({
+      userId,
+      resourceId,
+      resourceType: 'epub',
+      position: { page: 50 },
+      percentageComplete: 50,
+      deviceId: 'device-3',
+      updatedAt: t3,
+    });
+
+    await Promise.all([req1, req2, req3]);
+
+    const finalState = await getProgress(userId, resourceId);
+    expect(finalState.deviceId).toBe('device-2-latest');
+    expect(finalState.percentageComplete).toBe(90);
+    expect(new Date(finalState.updatedAt).getTime()).toBe(t2.getTime());
+  });
 });

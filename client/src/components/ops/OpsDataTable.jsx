@@ -201,17 +201,29 @@ export default function OpsDataTable({
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {isLoading ? (
-              <tr>
-                <td
-                  colSpan={selectable ? columns.length + 1 : columns.length}
-                  className="text-center py-12 text-slate-500 dark:text-slate-400"
+              Array.from({ length: 5 }).map((_, rIdx) => (
+                <tr
+                  key={`skeleton-row-${rIdx}`}
+                  className="animate-pulse border-b border-slate-100 dark:border-slate-800/80"
                 >
-                  <div className="inline-flex items-center gap-2 font-medium">
-                    <RefreshCw className="w-4 h-4 animate-spin text-indigo-600 dark:text-indigo-400" />
-                    <span>Loading dataset records...</span>
-                  </div>
-                </td>
-              </tr>
+                  {selectable && (
+                    <td className="px-4 py-3 text-center">
+                      <div className="w-4 h-4 bg-slate-200 dark:bg-slate-800 rounded mx-auto" />
+                    </td>
+                  )}
+                  {columns.map((col, cIdx) => (
+                    <td key={`skeleton-cell-${cIdx}`} className="px-4 py-3">
+                      <div
+                        className="h-4 bg-slate-200 dark:bg-slate-800 rounded"
+                        style={{
+                          width:
+                            cIdx === 0 ? "70%" : cIdx % 2 === 0 ? "50%" : "85%",
+                        }}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))
             ) : paginatedData.length === 0 ? (
               <tr>
                 <td

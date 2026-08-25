@@ -15,65 +15,44 @@ const upsertProgress = async ({
 }) => {
   const incomingUpdatedAt = updatedAt ? new Date(updatedAt) : new Date();
 
-  // 1. Try atomic update if existing.updatedAt <= incomingUpdatedAt
-  const updated = await ReadingProgress.findOneAndUpdate(
-    {
-      userId,
-      resourceId,
-      $or: [{ updatedAt: { $lte: incomingUpdatedAt } }, { updatedAt: { $exists: false } }],
-    },
-    {
-      $set: {
-        resourceType,
-        position,
-        percentageComplete,
-        deviceId,
-        updatedAt: incomingUpdatedAt,
-      },
-    },
-    { returnDocument: 'after', runValidators: true, timestamps: false }
-  );
-
-  if (updated) {
-    return updated;
-  }
-
-  // 2. If update matched 0 documents (either no document exists or existing is newer):
-  const existing = await ReadingProgress.findOne({ userId, resourceId });
-  if (existing) {
-    // Existing record has a newer timestamp; keep existing
-    return existing;
-  }
-
-  // 3. Insert initial progress document
   try {
-    const [created] = await ReadingProgress.create(
-      [
-        {
-          userId,
-          resourceId,
+    const updated = await ReadingProgress.findOneAndUpdate(
+      {
+        userId,
+        resourceId,
+        $or: [{ updatedAt: { $lte: incomingUpdatedAt } }, { updatedAt: { $exists: false } }],
+      },
+      {
+        $set: {
           resourceType,
           position,
           percentageComplete,
           deviceId,
           updatedAt: incomingUpdatedAt,
         },
-      ],
-      { timestamps: false }
+      },
+      { upsert: true, returnDocument: 'after', runValidators: true, timestamps: false }
     );
-    return created;
+    return updated;
   } catch (err) {
     if (err.code === 11000) {
-      // Race condition safety: if created concurrently, retry upsert
-      return await upsertProgress({
-        userId,
-        resourceId,
-        resourceType,
-        position,
-        percentageComplete,
-        deviceId,
-        updatedAt: incomingUpdatedAt,
-      });
+      const existing = await ReadingProgress.findOne({ userId, resourceId });
+      if (existing && new Date(existing.updatedAt).getTime() <= incomingUpdatedAt.getTime()) {
+        return await ReadingProgress.findOneAndUpdate(
+          { _id: existing._id },
+          {
+            $set: {
+              resourceType,
+              position,
+              percentageComplete,
+              deviceId,
+              updatedAt: incomingUpdatedAt,
+            },
+          },
+          { returnDocument: 'after', runValidators: true, timestamps: false }
+        );
+      }
+      return existing;
     }
     throw err;
   }

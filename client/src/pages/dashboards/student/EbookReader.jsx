@@ -21,11 +21,11 @@ import { TableOfContents } from "../../../components/student/ebook-reader/TableO
 import { ReaderThemeControls } from "../../../components/student/ebook-reader/ReaderThemeControls";
 import { ResumePromptToast } from "../../../components/student/ebook-reader/ResumePromptToast";
 import * as pdfjsLib from "pdfjs-dist";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
-  typeof window !== "undefined"
-    ? `${window.location.origin}/pdf.worker.min.mjs`
-    : "/pdf.worker.min.mjs";
+  pdfWorkerUrl ||
+  new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
 
 const EbookReader = () => {
   const { resourceId } = useParams();

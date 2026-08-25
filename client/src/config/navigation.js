@@ -16,6 +16,15 @@ import {
   Share2,
   Megaphone,
   Download,
+  Globe,
+  Users,
+  Building,
+  FileCheck,
+  Shield,
+  Layers,
+  HelpCircle,
+  FileSearch,
+  HardDrive,
 } from "lucide-react";
 
 export const STUDENT_NAV_ITEMS = [
@@ -153,6 +162,96 @@ export const COLLEGE_ADMIN_NAV_ITEMS = [
     label: "Bulk CSV Student Upload",
     icon: UploadCloud,
     route: "/college-admin/bulk-upload",
+    feature: null,
+  },
+];
+
+export const SUPER_ADMIN_NAV_ITEMS = [
+  {
+    key: "overview",
+    label: "System Overview",
+    icon: Globe,
+    route: "/admin-portal/overview",
+    feature: null,
+  },
+  {
+    key: "users",
+    label: "User Directory",
+    icon: Users,
+    route: "/admin-portal/users",
+    feature: null,
+  },
+  {
+    key: "college-admins",
+    label: "College Tenants",
+    icon: Building,
+    route: "/admin-portal/college-admins",
+    feature: null,
+  },
+  {
+    key: "registration-queue",
+    label: "Onboarding Queue",
+    icon: FileCheck,
+    route: "/admin-portal/registration-queue",
+    feature: null,
+  },
+  {
+    key: "moderation",
+    label: "Content Moderation",
+    icon: Shield,
+    route: "/admin-portal/moderation",
+    feature: null,
+  },
+  {
+    key: "data-oversight",
+    label: "Data Oversight",
+    icon: Layers,
+    route: "/admin-portal/data-oversight",
+    feature: null,
+  },
+  {
+    key: "support",
+    label: "Support Queue",
+    icon: HelpCircle,
+    route: "/admin-portal/support",
+    feature: null,
+  },
+  {
+    key: "audit-logs",
+    label: "Audit Logs",
+    icon: FileSearch,
+    route: "/admin-portal/audit-logs",
+    feature: null,
+  },
+  {
+    key: "settings",
+    label: "System Settings",
+    icon: HardDrive,
+    route: "/admin-portal/settings",
+    feature: null,
+  },
+];
+
+export const GENERAL_NAV_ITEMS = [
+  {
+    key: "search",
+    label: "Advanced Search",
+    icon: Search,
+    route: "/general-dashboard/search",
+    feature: null,
+  },
+  {
+    key: "e-resources",
+    label: "Public E-Resources",
+    icon: FileText,
+    route: "/general-dashboard/e-resources",
+    feature: null,
+  },
+  {
+    key: "saved",
+    label: "Saved Bookmarks",
+    icon: Bookmark,
+    route: "/general-dashboard/saved",
     feature: null,
   },
 ];

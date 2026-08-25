@@ -25,7 +25,18 @@ const DEFAULT_STUDENT_FEATURES = [
  * @access  Private (CollegeAdmin)
  */
 const getMyCollegeConfig = asyncHandler(async (req, res, next) => {
-  const collegeId = req.tenantId || req.user.collegeId;
+  const collegeId = req.tenantId || req.user?.collegeId;
+
+  if (!collegeId) {
+    return res.json({
+      success: true,
+      data: {
+        college: { name: 'System Admin' },
+        enabledFeatures: DEFAULT_STUDENT_FEATURES,
+        pendingRequests: [],
+      },
+    });
+  }
 
   const college = await College.findById(collegeId)
     .select(

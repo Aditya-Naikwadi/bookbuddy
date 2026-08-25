@@ -265,15 +265,21 @@ export default function StudentUploadPage() {
       )}
 
       {isValidating && (
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4">
-          <Loader2 className="w-10 h-10 text-indigo-400 animate-spin" />
-          <h3 className="text-base font-bold text-slate-200">
-            Running Dry-Run File Validation...
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-2xl">
+          <div className="relative">
+            <Loader2 className="w-12 h-12 text-indigo-400 animate-spin mx-auto" />
+            <span className="absolute inset-0 rounded-full border-2 border-indigo-500/30 animate-ping" />
+          </div>
+          <h3 className="text-base font-bold text-slate-100">
+            Running Dry-Run File Validation & Offloaded Parsing...
           </h3>
-          <p className="text-xs text-slate-400">
-            Parsing rows, verifying email format, checking for duplicate student
-            IDs, and calculating diffs.
+          <p className="text-xs text-slate-400 max-w-md">
+            Parsing CSV rows in Web Worker thread to keep main UI smooth,
+            checking formatting, and validating student IDs.
           </p>
+          <div className="w-full max-w-xs bg-slate-950 border border-slate-800 rounded-full h-2 overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 h-full w-3/4 rounded-full animate-pulse" />
+          </div>
         </div>
       )}
 
