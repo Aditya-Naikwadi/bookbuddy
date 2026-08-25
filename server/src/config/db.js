@@ -8,7 +8,9 @@ mongoose.set('strictQuery', true);
 
 // Monitor connection events
 mongoose.connection.on('connected', () => {
-  logger.info('Mongoose connection status: Connected.');
+  const host = mongoose.connection.host || 'unknown-host';
+  const name = mongoose.connection.name || 'unknown-db';
+  logger.info(`Mongoose connection status: Connected to host=${host}, database=${name}`);
 });
 
 mongoose.connection.on('reconnected', () => {
@@ -28,7 +30,7 @@ const connectDB = async () => {
 
   if (!mongoUri) {
     const errorMsg =
-      'MONGO_URI is not set — check Vercel environment variables (Production / Preview / Development) for this environment.';
+      'MONGO_URI is not set — check environment variables (Production / Preview / Development) for this environment.';
     logger.error(`[Database Boot Failure] ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -77,7 +79,9 @@ const connectDB = async () => {
           : uri;
         logger.info(`Attempting MongoDB connection to ${sanitizedUri}...`);
         const mongooseInstance = await mongoose.connect(uri, options);
-        logger.info('MongoDB connected successfully.');
+        const connHost = mongoose.connection.host || 'unknown';
+        const connDb = mongoose.connection.name || 'unknown';
+        logger.info(`MongoDB connected successfully to host [${connHost}], database [${connDb}].`);
         return mongooseInstance;
       } catch (err) {
         lastError = err;
@@ -93,23 +97,10 @@ const connectDB = async () => {
     return cached.conn;
   } catch (err) {
     cached.promise = null;
-    if (isProd) {
-      logger.error(
-        '------------------------------------------------------------------------------------\n' +
-          '❌ FATAL MONGODB CONNECTION ERROR ON RENDER DEPLOYMENT:\n' +
-          `Details: ${err ? err.message : 'Unknown error'}\n\n` +
-          'Required Troubleshooting Steps:\n' +
-          '1. MongoDB Atlas Network Access: Go to MongoDB Atlas -> Network Access -> Add IP Address -> Select "Allow Access from Anywhere" (0.0.0.0/0).\n' +
-          '2. Render Environment Variables: Verify MONGO_URI in your Render service environment settings has correct username/password and format (e.g. mongodb+srv://admin:pass@cluster.mongodb.net/dbname).\n' +
-          '------------------------------------------------------------------------------------'
-      );
-      throw err;
-    } else {
-      logger.warn(
-        'MongoDB connection unavailable. Server running with fallback in-memory state for dev API requests.'
-      );
-      return null;
-    }
+    logger.error(
+      `❌ FATAL MONGODB CONNECTION ERROR (${config.nodeEnv}): ${err ? err.message : 'Unknown error'}`
+    );
+    throw err;
   }
 };
 

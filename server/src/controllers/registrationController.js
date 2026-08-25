@@ -140,6 +140,11 @@ const registerStudent = async (req, res, next) => {
       });
     }
 
+    const logger = require('../utils/logger');
+    logger.info(
+      `[DB WRITE CONFIRMED] Model: RegistrationRequest | _id: ${regRequest._id} | email: ${normalizedEmail} | collegeId: ${college._id} | status: unverified`
+    );
+
     // 7. Send verification OTP email asynchronously
     sendStudentVerificationEmail(normalizedEmail, name, otp).catch(() => {});
 
@@ -211,6 +216,11 @@ const verifyStudentEmail = async (req, res, next) => {
     });
 
     await newUser.save();
+
+    const logger = require('../utils/logger');
+    logger.info(
+      `[DB WRITE CONFIRMED] Model: User | _id: ${newUser._id} | email: ${newUser.email} | collegeId: ${newUser.collegeId} | role: student | status: active`
+    );
 
     // Mark registration request active
     regRequest.status = 'active';

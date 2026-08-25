@@ -56,19 +56,36 @@ const registerUser = async (req, res, next) => {
       collegeId = defaultCollege._id;
     }
 
-    const userExists = await User.findOne({ $or: [{ email }, { studentId }] });
+    const normalizedEmail = email.toLowerCase().trim();
+    const targetCollegeId = role === 'super-admin' ? undefined : collegeId;
+
+    const userExists = await User.findOne({
+      $or: [
+        { email: normalizedEmail },
+        ...(targetCollegeId
+          ? [{ collegeId: targetCollegeId, studentId: studentId.trim() }]
+          : [{ studentId: studentId.trim() }]),
+      ],
+    });
     if (userExists) {
-      return next(new AppError('User with this email or Student ID already exists.', 400));
+      return next(
+        new AppError('User with this email or Student ID already exists for this college.', 400)
+      );
     }
 
     const user = await User.create({
-      studentId,
-      name,
-      email,
+      studentId: studentId.trim(),
+      name: name.trim(),
+      email: normalizedEmail,
       password,
       role: role || 'student',
-      collegeId: role === 'super-admin' ? undefined : collegeId,
+      collegeId: targetCollegeId,
     });
+
+    const logger = require('../utils/logger');
+    logger.info(
+      `[DB WRITE CONFIRMED] Model: User | _id: ${user._id} | email: ${user.email} | collegeId: ${user.collegeId || 'N/A'} | role: ${user.role}`
+    );
 
     const deviceInfo = req.headers['user-agent'] || 'Web Browser';
     const { accessToken, refreshToken } = await sessionService.createSession({ user, deviceInfo });
