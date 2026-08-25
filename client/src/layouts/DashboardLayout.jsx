@@ -17,7 +17,6 @@ import NotificationCenter from "../components/student/NotificationCenter";
 import ThemeToggle from "../components/common/ThemeToggle";
 import useAuthStore from "../store/authStore";
 import { useFeatureFlags } from "../hooks/useFeatureFlags";
-import { useReducedMotion } from "../hooks/useReducedMotion";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   STUDENT_NAV_ITEMS,

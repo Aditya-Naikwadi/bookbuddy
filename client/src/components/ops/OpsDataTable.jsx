@@ -4,7 +4,6 @@ import {
   ChevronDown,
   ChevronUp,
   ArrowUpDown,
-  RefreshCw,
   Download,
 } from "lucide-react";
 import NoAuditEvents from "./illustrations/NoAuditEvents";
