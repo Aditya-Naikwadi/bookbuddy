@@ -1,0 +1,17 @@
+{
+  "short_name": "BookBuddy",
+  "name": "BookBuddy Library Dashboard",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0A0B10",
+  "theme_color": "#0A0B10",
+  "display": "standalone",
+  "orientation": "portrait"
+}

@@ -332,6 +332,7 @@ const GeneralDashboardHome = () => {
                 isLoading={isLoading}
                 isError={isError}
                 onRetry={handleRefresh}
+                collegeName={user?.collegeName}
               >
                 <div className="bg-white dark:bg-surface p-4 rounded-2xl border border-slate-200 dark:border-edge shadow-xl flex items-center justify-between">
                   <div>
@@ -350,7 +351,12 @@ const GeneralDashboardHome = () => {
                       {t("addedThisMonth", "added this month")}
                     </span>
                   </div>
-                  <SparklineChart width={100} height={40} color="#6366F1" />
+                  <SparklineChart
+                    data={stats?.sparklineData || stats?.monthlyTrend || null}
+                    width={100}
+                    height={40}
+                    color="#6366F1"
+                  />
                 </div>
               </BookDataState>
             </DashboardErrorBoundary>
@@ -361,6 +367,7 @@ const GeneralDashboardHome = () => {
                 isLoading={isLoading}
                 isError={isError}
                 onRetry={handleRefresh}
+                collegeName={user?.collegeName}
               >
                 <div className="bg-white dark:bg-surface p-4 rounded-2xl border border-slate-200 dark:border-edge shadow-xl flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-3">
@@ -375,7 +382,7 @@ const GeneralDashboardHome = () => {
                       onClick={() =>
                         navigate("/general-dashboard/search?filter=new")
                       }
-                      className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5"
+                      className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5 cursor-pointer"
                     >
                       <span>{t("viewAll", "View all")}</span>
                       <ChevronRight className="w-3 h-3" />
@@ -383,20 +390,26 @@ const GeneralDashboardHome = () => {
                   </div>
 
                   <div className="grid grid-cols-3 gap-2">
-                    {newArrivals.slice(0, 3).map((item, i) => (
-                      <button
-                        key={item._id || item.id || i}
-                        onClick={() => setSelectedBook(item)}
-                        className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 text-[10px] font-bold h-16 flex flex-col justify-between hover:border-indigo-500/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all shadow-sm text-left relative overflow-hidden group cursor-pointer"
-                      >
-                        <span className="line-clamp-2 leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
-                          {item.title}
-                        </span>
-                        <span className="text-[9px] text-indigo-600 dark:text-indigo-400 uppercase font-bold">
-                          New
-                        </span>
-                      </button>
-                    ))}
+                    {newArrivals.length === 0 ? (
+                      <div className="col-span-3 text-[11px] text-slate-400 dark:text-slate-500 italic p-3 text-center bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                        No new arrivals currently available
+                      </div>
+                    ) : (
+                      newArrivals.slice(0, 3).map((item, i) => (
+                        <button
+                          key={item._id || item.id || i}
+                          onClick={() => setSelectedBook(item)}
+                          className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 text-[10px] font-bold h-16 flex flex-col justify-between hover:border-indigo-500/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all shadow-sm text-left relative overflow-hidden group cursor-pointer"
+                        >
+                          <span className="line-clamp-2 leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
+                            {item.title}
+                          </span>
+                          <span className="text-[9px] text-indigo-600 dark:text-indigo-400 uppercase font-bold">
+                            New
+                          </span>
+                        </button>
+                      ))
+                    )}
                   </div>
                 </div>
               </BookDataState>
@@ -408,6 +421,7 @@ const GeneralDashboardHome = () => {
                 isLoading={isLoading}
                 isError={isError}
                 onRetry={handleRefresh}
+                collegeName={user?.collegeName}
               >
                 <div className="bg-white dark:bg-surface p-4 rounded-2xl border border-slate-200 dark:border-edge shadow-xl flex-1 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
@@ -523,6 +537,7 @@ const GeneralDashboardHome = () => {
                   isError={isError}
                   onRetry={handleRefresh}
                   isEmpty={popularBooks.length === 0}
+                  collegeName={user?.collegeName}
                 >
                   <div
                     ref={carouselRef}

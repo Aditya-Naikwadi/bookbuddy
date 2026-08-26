@@ -65,7 +65,15 @@ const getCollegeDashboard = async (req, res, next) => {
     const tenantFilter = collegeId
       ? { $or: [{ collegeId: new mongoose.Types.ObjectId(collegeId) }, { collegeId: null }] }
       : {};
-    const bookFilter = collegeId ? { collegeId: new mongoose.Types.ObjectId(collegeId) } : {};
+    const bookFilter = collegeId
+      ? {
+          $or: [
+            { collegeId: new mongoose.Types.ObjectId(collegeId) },
+            { isShareableAcrossColleges: true },
+            { collegeId: null },
+          ],
+        }
+      : {};
 
     // 1. Fetch precomputed/cached stats
     const { stats, cacheHit } = await getOrComputeStats(collegeId);

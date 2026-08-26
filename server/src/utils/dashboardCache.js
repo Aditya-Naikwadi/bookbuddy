@@ -69,7 +69,13 @@ const getOrComputeStats = async (collegeId) => {
   // 3. Compute stats directly from MongoDB via live aggregation
   const bookFilter =
     collegeId && mongoose.Types.ObjectId.isValid(String(collegeId))
-      ? { collegeId: new mongoose.Types.ObjectId(collegeId) }
+      ? {
+          $or: [
+            { collegeId: new mongoose.Types.ObjectId(collegeId) },
+            { isShareableAcrossColleges: true },
+            { collegeId: null },
+          ],
+        }
       : {};
 
   const totalCatalogBooks = await Book.countDocuments(bookFilter).read('secondaryPreferred');
@@ -94,10 +100,10 @@ const getOrComputeStats = async (collegeId) => {
   ]).read('secondaryPreferred');
 
   const colors = ['#4F46E5', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#3B82F6'];
-  const totalGrouped = categoryAggregation.reduce((acc, c) => acc + c.count, 0) || 1;
+  const totalGrouped = categoryAggregation.reduce((acc, c) => acc + c.count, 0);
   const categoryBreakdown = categoryAggregation.map((cat, idx) => ({
     label: cat._id || 'Uncategorized',
-    value: Math.round((cat.count / totalGrouped) * 100),
+    value: totalGrouped > 0 ? Math.round((cat.count / totalGrouped) * 100) : 0,
     count: cat.count,
     color: colors[idx % colors.length],
   }));

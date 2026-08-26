@@ -186,11 +186,11 @@ const getCollegeBookStats = asyncHandler(async (req, res) => {
     '#06B6D4',
     '#64748B',
   ];
-  const totalGrouped = categoryAggregation.reduce((acc, c) => acc + c.count, 0) || 1;
+  const totalGrouped = categoryAggregation.reduce((acc, c) => acc + c.count, 0);
 
   const categoryBreakdown = categoryAggregation.map((cat, idx) => ({
     label: cat._id || 'General',
-    value: Math.round((cat.count / totalGrouped) * 100),
+    value: totalGrouped > 0 ? Math.round((cat.count / totalGrouped) * 100) : 0,
     count: cat.count,
     color: colors[idx % colors.length],
   }));

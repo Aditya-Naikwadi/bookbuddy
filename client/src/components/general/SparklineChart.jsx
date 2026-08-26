@@ -1,10 +1,36 @@
 const SparklineChart = ({
-  data = [12, 18, 25, 22, 30, 42, 55, 68, 75, 90],
+  data = null,
   color = "#4F46E5",
   height = 36,
   width = 120,
 }) => {
-  if (!data || data.length < 2) return null;
+  const hasValidData =
+    Array.isArray(data) &&
+    data.length >= 2 &&
+    data.some((val) => val !== 0 && !isNaN(val));
+
+  if (!hasValidData) {
+    const centerY = height / 2;
+    return (
+      <div
+        className="relative inline-flex items-center justify-center text-[10px] text-slate-400 dark:text-slate-500 font-medium"
+        style={{ width, height }}
+      >
+        <svg width={width} height={height} className="overflow-visible">
+          <line
+            x1="0"
+            y1={centerY}
+            x2={width}
+            y2={centerY}
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeDasharray="4 4"
+            className="text-slate-300 dark:text-slate-700"
+          />
+        </svg>
+      </div>
+    );
+  }
 
   const min = Math.min(...data);
   const max = Math.max(...data);

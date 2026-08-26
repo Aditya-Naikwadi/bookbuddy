@@ -22,7 +22,7 @@ const fetchNotifications = async () => {
 
 export const NotificationDrawer = ({ isOpen, onClose }) => {
   const queryClient = useQueryClient();
-  const socket = useSocket();
+  const { socket } = useSocket();
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ["notifications"],
@@ -251,27 +251,36 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
                       </div>
 
                       {/* Direct One-Tap Action for Book Availability / Hold Ready Notifications */}
-                      {(item.type === "book_available" || item.type === "hold_ready" || item.relatedType === "Book") && item.relatedId && (
-                        <div className="mt-2">
-                          <button
-                            type="button"
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              try {
-                                await apiClient.post("/dashboards/student/reservations", {
-                                  bookId: item.relatedId,
-                                });
-                                alert("Hold placed successfully!");
-                              } catch (err) {
-                                alert(err.response?.data?.message || "Failed to place hold.");
-                              }
-                            }}
-                            className="px-3 py-1 text-[11px] font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors"
-                          >
-                            Reserve Now (Place Hold)
-                          </button>
-                        </div>
-                      )}
+                      {(item.type === "book_available" ||
+                        item.type === "hold_ready" ||
+                        item.relatedType === "Book") &&
+                        item.relatedId && (
+                          <div className="mt-2">
+                            <button
+                              type="button"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                try {
+                                  await apiClient.post(
+                                    "/dashboards/student/reservations",
+                                    {
+                                      bookId: item.relatedId,
+                                    },
+                                  );
+                                  alert("Hold placed successfully!");
+                                } catch (err) {
+                                  alert(
+                                    err.response?.data?.message ||
+                                      "Failed to place hold.",
+                                  );
+                                }
+                              }}
+                              className="px-3 py-1 text-[11px] font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors"
+                            >
+                              Reserve Now (Place Hold)
+                            </button>
+                          </div>
+                        )}
                     </div>
 
                     {!item.read && (

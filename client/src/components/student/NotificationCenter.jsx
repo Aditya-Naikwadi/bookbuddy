@@ -35,7 +35,7 @@ const NotificationCenter = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
   const [hasNewAlert, setHasNewAlert] = useState(false);
-  const socket = useSocket();
+  const { socket } = useSocket();
   const prefersReducedMotion = useReducedMotion();
 
   // Listen to Socket.io events

@@ -12,7 +12,7 @@ import {
 import { Flame, Snowflake } from "lucide-react";
 
 export const StreakWidget = () => {
-  const socket = useSocket();
+  const { socket } = useSocket();
   const prefersReducedMotion = useReducedMotion();
   const [justBumped, setJustBumped] = useState(false);
 
