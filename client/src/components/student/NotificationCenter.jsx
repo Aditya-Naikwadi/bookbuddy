@@ -3,40 +3,45 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSocket } from "../../hooks/useSocket";
 import { useReducedMotion } from "../../hooks/useReducedMotion";
-
-const INITIAL_NOTIFICATIONS = [
-  {
-    id: 1,
-    type: "alert",
-    title: "Book Available!",
-    message: '"Clean Code" is now available to borrow.',
-    time: "10 mins ago",
-    read: false,
-  },
-  {
-    id: 2,
-    type: "reminder",
-    title: "Due Date Reminder",
-    message: '"The Pragmatic Programmer" is due in 5 days.',
-    time: "2 hours ago",
-    read: false,
-  },
-  {
-    id: 3,
-    type: "system",
-    title: "Maintenance Notice",
-    message: "Library closed on Friday.",
-    time: "1 day ago",
-    read: true,
-  },
-];
+import apiClient from "../../api/client";
 
 const NotificationCenter = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([]);
   const [hasNewAlert, setHasNewAlert] = useState(false);
   const { socket } = useSocket();
   const prefersReducedMotion = useReducedMotion();
+
+  // Fetch real user notifications on mount
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchNotifications() {
+      try {
+        const { data } = await apiClient.get("/notifications");
+        if (isMounted && data?.data) {
+          const formatted = data.data.map((n) => ({
+            id: n._id || n.id,
+            title: n.title || "Notification",
+            message: n.message || n.content || "",
+            time: n.createdAt
+              ? new Date(n.createdAt).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "Recently",
+            read: Boolean(n.isRead || n.read),
+          }));
+          setNotifications(formatted);
+        }
+      } catch {
+        // Silently handle guest / unauthenticated users
+      }
+    }
+    fetchNotifications();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Listen to Socket.io events
   useEffect(() => {

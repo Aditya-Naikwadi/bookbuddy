@@ -20,11 +20,15 @@ import MobileFilterSheet from "../../../components/general/MobileFilterSheet";
 import DigitalReaderModal from "../../../components/general/DigitalReaderModal";
 import CiteThisItemModal from "../../../components/general/CiteThisItemModal";
 import useAuthStore from "../../../store/authStore";
-import { useBookSearch, useAggregatedBooks } from "../../../hooks/useBookData";
+import {
+  useBookSearch,
+  useAggregatedBooks,
+  useBookCategories,
+} from "../../../hooks/useBookData";
 import useBookAvailability from "../../../hooks/useBookAvailability";
 import BookDataState from "../../../components/common/BookDataState";
 
-const GENRES = [
+const DEFAULT_GENRES = [
   "All",
   "Computer Science",
   "Architecture",
@@ -274,7 +278,9 @@ const GeneralSearch = () => {
     setSearchParams(new URLSearchParams(), { replace: true });
   };
 
-  const filteredGenresList = GENRES.filter((g) =>
+  const { data: genresList = DEFAULT_GENRES } = useBookCategories(collegeId);
+
+  const filteredGenresList = genresList.filter((g) =>
     g.toLowerCase().includes(genreSearch.toLowerCase()),
   );
 

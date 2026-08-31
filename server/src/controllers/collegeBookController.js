@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const Book = require('../models/Book');
+const UnifiedBook = require('../models/UnifiedBook');
 const College = require('../models/College');
 const BookDTO = require('../dtos/BookDTO');
 const cacheHelper = require('../utils/cacheHelper');
@@ -407,12 +408,39 @@ const createCollegeBook = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * @desc    Get distinct book categories dynamically from database for a college
+ * @route   GET /api/v1/college/:id/books/categories
+ * @access  Public / Authenticated
+ */
+const getCollegeBookCategories = asyncHandler(async (req, res) => {
+  const collegeId = await resolveCollegeId(req, req.params.id);
+  const filter = collegeId ? { collegeId: new mongoose.Types.ObjectId(collegeId) } : {};
+
+  const [bookCategories, unifiedCategories] = await Promise.all([
+    Book.distinct('category', filter),
+    UnifiedBook.distinct('sources', {}),
+  ]);
+
+  const rawCategories = Array.from(
+    new Set([...bookCategories, ...unifiedCategories, 'Computer Science', 'General'])
+  ).filter(Boolean);
+
+  const categories = ['All', ...rawCategories.sort()];
+
+  res.json({
+    success: true,
+    data: categories,
+  });
+});
+
 module.exports = {
   getCollegeBooks,
   getCollegeBookStats,
   getCollegeNewArrivals,
   searchCollegeBooks,
   getCollegeBooksBatch,
+  getCollegeBookCategories,
   getCollegeBookById,
   createCollegeBook,
   notifyBookChange,

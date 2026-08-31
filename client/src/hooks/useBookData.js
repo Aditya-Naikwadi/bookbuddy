@@ -227,3 +227,21 @@ export const useAggregatedBooks = (filters = {}) => {
     },
   });
 };
+
+/**
+ * 7. Hook for fetching distinct dynamic book categories/genres for a college
+ */
+export const useBookCategories = (collegeIdParam) => {
+  const collegeId = getEffectiveCollegeId(collegeIdParam);
+
+  return useQuery({
+    queryKey: ["bookCategories", collegeId],
+    queryFn: async () => {
+      const { data } = await apiClient.get(
+        `/college/${collegeId}/books/categories`,
+      );
+      return data?.data || ["All", "Computer Science", "General"];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+};

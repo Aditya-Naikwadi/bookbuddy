@@ -8,6 +8,7 @@ const {
   getCollegeNewArrivals,
   searchCollegeBooks,
   getCollegeBooksBatch,
+  getCollegeBookCategories,
   getCollegeBookById,
   createCollegeBook,
 } = require('../controllers/collegeBookController');
@@ -24,6 +25,7 @@ router.use(optionalAuth);
 
 // Order is critical: Specific named routes before parameterized :bookId route
 router.get('/stats', getCollegeBookStats);
+router.get('/categories', getCollegeBookCategories);
 router.get('/new-arrivals', getCollegeNewArrivals);
 router.get('/search', searchCollegeBooks);
 router.get('/batch', getCollegeBooksBatch);

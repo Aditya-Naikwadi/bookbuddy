@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { BookOpen, DollarSign, Search, Clock } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -60,20 +60,18 @@ export default function GlobalDataOversight() {
   ).length;
 
   const tenantStatusDonutData = [
-    { name: "Active Tenants", value: activeCollegesCount || 8 },
-    { name: "Pending Review", value: pendingCollegesCount || 2 },
-    { name: "Suspended", value: suspendedCollegesCount || 1 },
+    { name: "Active Tenants", value: activeCollegesCount },
+    { name: "Pending Review", value: pendingCollegesCount },
+    { name: "Suspended", value: suspendedCollegesCount },
   ];
   const DONUT_COLORS = ["#10b981", "#f59e0b", "#ef4444"];
 
-  const circulationBarData = [
-    { month: "Jan", loans: 1420, fines: 4500 },
-    { month: "Feb", loans: 1850, fines: 6200 },
-    { month: "Mar", loans: 2100, fines: 7800 },
-    { month: "Apr", loans: 1950, fines: 5400 },
-    { month: "May", loans: 2400, fines: 8900 },
-    { month: "Jun", loans: 2800, fines: 10500 },
-  ];
+  const circulationBarData = useMemo(() => {
+    const totalCount = Array.isArray(data) ? data.length : 0;
+    return [
+      { month: "Current Activity", loans: totalCount, fines: totalCount * 10 },
+    ];
+  }, [data]);
 
   useEffect(() => {
     let isMounted = true;

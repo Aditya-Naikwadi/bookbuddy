@@ -34,57 +34,6 @@ const SORT_OPTIONS = [
   { value: "category", label: "Category" },
 ];
 
-const DEFAULT_PUBLIC_RESOURCES = [
-  {
-    id: "pub-1",
-    title: "Introduction to Computer Science & Algorithms",
-    category: "E-Books",
-    format: "PDF",
-    accessRequirement: "Open Access",
-    description:
-      "Comprehensive foundational text on algorithms, data structures, and computer organization.",
-    source: "MIT OpenCourseWare",
-    fileUrl:
-      "https://raw.githubusercontent.com/mozilla/pdf.js/master/web/compressed.tracemonkey-pldi-09.pdf",
-  },
-  {
-    id: "pub-2",
-    title: "Journal of Open Source Software (JOSS)",
-    category: "Journals",
-    format: "PDF / HTML",
-    accessRequirement: "Open Access",
-    description:
-      "Peer-reviewed developer-friendly academic journal for research software engineers.",
-    source: "Open Source Initiative",
-    fileUrl:
-      "https://raw.githubusercontent.com/mozilla/pdf.js/master/web/compressed.tracemonkey-pldi-09.pdf",
-  },
-  {
-    id: "pub-3",
-    title: "Directory of Open Access Books (DOAB)",
-    category: "Databases",
-    format: "EPUB / PDF",
-    accessRequirement: "Open Access",
-    description:
-      "Index of peer-reviewed open access books and scholarly monographs.",
-    source: "OAPEN Foundation",
-    fileUrl:
-      "https://raw.githubusercontent.com/mozilla/pdf.js/master/web/compressed.tracemonkey-pldi-09.pdf",
-  },
-  {
-    id: "pub-4",
-    title: "Sample Engineering Mathematics Exam Paper",
-    category: "Past Papers",
-    format: "PDF",
-    accessRequirement: "Open Access",
-    description:
-      "Sample university examination paper for linear algebra and multivariable calculus.",
-    source: "Academic Repository",
-    fileUrl:
-      "https://raw.githubusercontent.com/mozilla/pdf.js/master/web/compressed.tracemonkey-pldi-09.pdf",
-  },
-];
-
 const GeneralEResources = () => {
   const { toggleBookmark, isBookmarked } = useLocalBookmarks();
 
@@ -170,8 +119,7 @@ const GeneralEResources = () => {
   }, [searchQuery]);
 
   const allList = useMemo(() => {
-    const combined = [...dbResources, ...apiEbooks];
-    return combined.length > 0 ? combined : DEFAULT_PUBLIC_RESOURCES;
+    return [...dbResources, ...apiEbooks];
   }, [dbResources, apiEbooks]);
 
   const combinedResources = useMemo(() => {
