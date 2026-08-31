@@ -130,13 +130,28 @@ const syncTopic = async (topic) => {
     fetchOpenLibraryBooks(topic),
   ]);
 
+  if (googleRes.status === 'rejected') {
+    logger.warn(
+      `[Aggregator Source Warning] Google Books fetch failed: ${googleRes.reason?.message || googleRes.reason}`
+    );
+  }
+  if (gutendexRes.status === 'rejected') {
+    logger.warn(
+      `[Aggregator Source Warning] Gutendex fetch failed: ${gutendexRes.reason?.message || gutendexRes.reason}`
+    );
+  }
+  if (openLibRes.status === 'rejected') {
+    logger.warn(
+      `[Aggregator Source Warning] OpenLibrary fetch failed: ${openLibRes.reason?.message || openLibRes.reason}`
+    );
+  }
+
   const googleBooks = googleRes.status === 'fulfilled' ? googleRes.value : [];
   const gutendexBooks = gutendexRes.status === 'fulfilled' ? gutendexRes.value : [];
   const openLibBooks = openLibRes.status === 'fulfilled' ? openLibRes.value : [];
 
   const allCandidates = [...googleBooks, ...gutendexBooks, ...openLibBooks];
-  // eslint-disable-next-line no-console
-  console.log(
+  logger.info(
     `[Aggregator] Fetched ${allCandidates.length} total candidates (Google: ${googleBooks.length}, Gutenberg: ${gutendexBooks.length}, OpenLibrary: ${openLibBooks.length})`
   );
 

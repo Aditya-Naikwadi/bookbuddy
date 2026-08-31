@@ -1,7 +1,58 @@
 const crypto = require('crypto');
 const { syncTopic } = require('../services/bookAggregator');
+const UnifiedBook = require('../models/UnifiedBook');
 
 const jobStore = new Map();
+
+/**
+ * @desc    Get aggregated external books (UnifiedBook collection)
+ * @route   GET /api/v1/aggregator
+ * @access  Public / Authenticated (Global - Not Tenant Scoped)
+ */
+const getAggregatedBooks = async (req, res, next) => {
+  try {
+    const { q, query, source, page = 1, limit = 12 } = req.query;
+    const searchTerm = q || query || '';
+    const filter = {};
+
+    if (searchTerm) {
+      filter.$or = [
+        { title: { $regex: searchTerm, $options: 'i' } },
+        { authors: { $regex: searchTerm, $options: 'i' } },
+        { description: { $regex: searchTerm, $options: 'i' } },
+      ];
+    }
+
+    if (source && source !== 'all') {
+      filter.sources = source;
+    }
+
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 12;
+    const skip = (pageNum - 1) * limitNum;
+
+    const books = await UnifiedBook.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
+
+    const total = await UnifiedBook.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: books,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum) || 1,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 /**
  * @desc    Trigger async non-blocking topic sync (HTTP 202 Ack)
@@ -68,6 +119,7 @@ const getJobStatus = async (req, res, next) => {
 };
 
 module.exports = {
+  getAggregatedBooks,
   triggerAsyncSync,
   getJobStatus,
 };

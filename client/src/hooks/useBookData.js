@@ -206,3 +206,24 @@ export const useBatchBookDetails = (collegeIdParam, bookIds = []) => {
     enabled: Boolean(collegeId && joinedIds),
   });
 };
+
+/**
+ * 6. Hook for fetching global aggregated books (Google, Gutenberg, OpenLibrary)
+ */
+export const useAggregatedBooks = (filters = {}) => {
+  const { q = "", query = "", source = "all", page = 1, limit = 12 } = filters;
+  const searchTerm = q || query;
+
+  return useQuery({
+    queryKey: ["aggregatedBooks", { searchTerm, source, page, limit }],
+    queryFn: async () => {
+      const { data } = await apiClient.get("/aggregator", {
+        params: { q: searchTerm, source, page, limit },
+      });
+      return {
+        books: data?.data || [],
+        pagination: data?.pagination || { page: 1, limit, total: 0, pages: 1 },
+      };
+    },
+  });
+};

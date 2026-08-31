@@ -69,6 +69,8 @@ function requireFeature(requiredFeatureId) {
             'facilities_booking',
             'support',
             'gamification',
+            'digital_annotations',
+            'annotations',
           ];
         }
 

@@ -417,6 +417,7 @@ app.use('/api/v1/reader', require('./routes/readerRoutes'));
 app.use('/api/v1/notifications', require('./routes/notificationRoutes'));
 app.use('/api/v1/payments', require('./routes/paymentRoutes'));
 app.use('/api/v1/annotations', require('./routes/annotationRoutes'));
+app.use('/api/v1/books/:bookId/annotations', require('./routes/annotationRoutes'));
 app.use('/api/v1/aggregator', require('./routes/aggregatorRoutes'));
 
 const { getOpenApiSpec } = require('./docs/openapi');

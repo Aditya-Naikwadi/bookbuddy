@@ -121,6 +121,18 @@ const emitSuperAdminSupportEscalation = (ticketData) => {
   }
 };
 
+const emitAnnotationUpsert = (userId, annotation) => {
+  if (io && userId) {
+    io.to(`user:${userId}`).emit('annotation:upserted', annotation);
+  }
+};
+
+const emitAnnotationDelete = (userId, annotationId, bookId) => {
+  if (io && userId) {
+    io.to(`user:${userId}`).emit('annotation:deleted', { annotationId, bookId });
+  }
+};
+
 const isUserConnected = (userId) => {
   if (!io || !io.sockets || !io.sockets.adapter || !io.sockets.adapter.rooms) return false;
   const room = io.sockets.adapter.rooms.get(`user:${userId}`);
@@ -137,4 +149,6 @@ module.exports = {
   emitComplaintUpdate,
   emitSuperAdminSecurityAlert,
   emitSuperAdminSupportEscalation,
+  emitAnnotationUpsert,
+  emitAnnotationDelete,
 };

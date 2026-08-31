@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Configure a highly optimized QueryClient
+// eslint-disable-next-line react-refresh/only-export-components
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -12,6 +13,7 @@ export const queryClient = new QueryClient({
   },
 });
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const clearQueryCache = () => {
   try {
     queryClient.cancelQueries();

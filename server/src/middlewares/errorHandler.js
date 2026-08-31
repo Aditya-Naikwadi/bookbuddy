@@ -54,7 +54,8 @@ const errorHandler = (err, req, res, _next) => {
   const response = {
     success: false,
     message: displayMessage,
-    code: statusCode,
+    code: typeof err.code === 'string' ? err.code : err.errorCode || statusCode,
+    statusCode,
     requestId,
     ...(config.nodeEnv === 'development' && { stack: err.stack }),
   };
