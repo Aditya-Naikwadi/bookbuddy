@@ -20,7 +20,7 @@ import MobileFilterSheet from "../../../components/general/MobileFilterSheet";
 import DigitalReaderModal from "../../../components/general/DigitalReaderModal";
 import CiteThisItemModal from "../../../components/general/CiteThisItemModal";
 import useAuthStore from "../../../store/authStore";
-import { useBookSearch } from "../../../hooks/useBookData";
+import { useBookSearch, useAggregatedBooks } from "../../../hooks/useBookData";
 import useBookAvailability from "../../../hooks/useBookAvailability";
 import BookDataState from "../../../components/common/BookDataState";
 
@@ -135,7 +135,7 @@ const GeneralSearch = () => {
   // Unified React Query Shared Data Layer Hook
   const {
     data: searchData,
-    isLoading,
+    isLoading: isSearchLoading,
     isError,
     error,
     refetch,
@@ -148,12 +148,55 @@ const GeneralSearch = () => {
     limit: 50,
   });
 
+  const { data: aggregatedData, isLoading: isAggregatedLoading } =
+    useAggregatedBooks({
+      q: debouncedQuery,
+      limit: 50,
+    });
+
   useBookAvailability(collegeId, refetch);
 
-  const catalogBooks = useMemo(
-    () => searchData?.books || [],
-    [searchData?.books],
-  );
+  const isLoading = isSearchLoading || isAggregatedLoading;
+
+  const catalogBooks = useMemo(() => {
+    const physical = (searchData?.books || []).map((b) => ({
+      ...b,
+      id: b._id || b.id,
+      sourceType: "physical",
+    }));
+
+    const aggregated = (aggregatedData?.books || []).map((b) => ({
+      ...b,
+      id: b._id || b.id,
+      title: b.title,
+      author: Array.isArray(b.authors)
+        ? b.authors.join(", ")
+        : b.author || "External Author",
+      genre:
+        b.category ||
+        (Array.isArray(b.sources)
+          ? `External (${b.sources.join(", ")})`
+          : "Digital Book"),
+      coverUrl: b.coverImageUrl || b.coverUrl,
+      availabilityStatus: "Available",
+      availableCopies: 1,
+      isDigital: true,
+      fileUrl:
+        b.downloadLinks?.epub ||
+        b.downloadLinks?.pdf ||
+        b.downloadLinks?.readUrl,
+      sourceType: "aggregated",
+    }));
+
+    const seenTitles = new Set(
+      physical.map((p) => p.title?.toLowerCase().trim()),
+    );
+    const uniqueAggregated = aggregated.filter(
+      (a) => !seenTitles.has(a.title?.toLowerCase().trim()),
+    );
+
+    return [...physical, ...uniqueAggregated];
+  }, [searchData?.books, aggregatedData?.books]);
 
   // Compute stat summary metrics
   const stats = useMemo(() => {

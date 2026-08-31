@@ -31,13 +31,20 @@ const getAggregatedBooks = async (req, res, next) => {
     const limitNum = parseInt(limit, 10) || 12;
     const skip = (pageNum - 1) * limitNum;
 
+    let total = await UnifiedBook.countDocuments(filter);
+
+    // Auto-sync fallback: If collection is empty, trigger initial topic sync on demand
+    if (total === 0) {
+      const targetTopic = searchTerm || 'computer science';
+      await syncTopic(targetTopic).catch(() => {});
+      total = await UnifiedBook.countDocuments(filter);
+    }
+
     const books = await UnifiedBook.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum)
       .lean();
-
-    const total = await UnifiedBook.countDocuments(filter);
 
     res.json({
       success: true,
