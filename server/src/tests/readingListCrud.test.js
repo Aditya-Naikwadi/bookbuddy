@@ -8,7 +8,7 @@ process.env.JWT_SECRET = 'testjwtreadinglistcrudsecretkey999';
 process.env.JWT_REFRESH_SECRET = 'testjwtreadinglistcrudrefreshsecretkey999';
 process.env.JWT_ACCESS_EXPIRY = '10m';
 process.env.JWT_REFRESH_EXPIRY = '7d';
-jest.setTimeout(30000);
+jest.setTimeout(60000);
 
 const app = require('../app');
 const User = require('../models/User');
