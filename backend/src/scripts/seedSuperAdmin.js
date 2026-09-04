@@ -23,13 +23,10 @@ async function seedSuperAdmin() {
       console.log('--- EXISTING SUPER ADMIN ACCOUNT ---');
       console.log(`Email: ${superAdmin.email}`);
       console.log(`Role: ${superAdmin.role}`);
-      console.log('Resetting password to: SuperAdmin@123');
-      superAdmin.password = 'SuperAdmin@123';
-      superAdmin.role = 'super-admin';
-      superAdmin.isActive = true;
-      superAdmin.status = 'active';
-      await superAdmin.save();
-      console.log('Password reset successfully!');
+      console.log(
+        'Account already exists. Preserving existing user record and password untouched.'
+      );
+      return;
     } else {
       console.log('--- CREATING NEW SUPER ADMIN ACCOUNT ---');
       superAdmin = await User.create({

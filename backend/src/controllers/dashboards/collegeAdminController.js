@@ -754,6 +754,286 @@ const getFeedback = async (req, res, next) => {
   }
 };
 
+// @desc    Get aggregated staff dashboard widgets (overdue, holds, low stock, activity)
+// @route   GET /api/v1/dashboards/college-admin/staff-widgets
+// @access  Private/CollegeAdmin
+const getStaffDashboardWidgets = async (req, res, next) => {
+  try {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const [
+      overdueLoans,
+      overdueCount,
+      activeHolds,
+      activeHoldsCount,
+      lowStockBooks,
+      lowStockCount,
+      checkoutsToday,
+      returnsToday,
+      holdsToday,
+      popularBooksRaw,
+    ] = await Promise.all([
+      Loan.find({
+        ...req.tenantFilter,
+        status: 'active',
+        dueDate: { $lt: new Date() },
+      })
+        .populate('bookId', 'title author coverImage isbn shelfLocation callNumber')
+        .populate('userId', 'name studentId email')
+        .sort({ dueDate: 1 })
+        .limit(6),
+      Loan.countDocuments({
+        ...req.tenantFilter,
+        status: 'active',
+        dueDate: { $lt: new Date() },
+      }),
+      Reservation.find({
+        ...req.tenantFilter,
+        status: { $in: ['queued', 'ready_for_pickup'] },
+      })
+        .populate('bookId', 'title author coverImage')
+        .populate('userId', 'name studentId email')
+        .sort({ createdAt: 1 })
+        .limit(6),
+      Reservation.countDocuments({
+        ...req.tenantFilter,
+        status: { $in: ['queued', 'ready_for_pickup'] },
+      }),
+      Book.find({
+        ...req.tenantFilter,
+        copiesAvailable: { $lte: 2 },
+      })
+        .select('title author copies copiesAvailable isbn category shelfLocation coverImage')
+        .sort({ copiesAvailable: 1 })
+        .limit(6),
+      Book.countDocuments({
+        ...req.tenantFilter,
+        copiesAvailable: { $lte: 2 },
+      }),
+      Loan.countDocuments({
+        ...req.tenantFilter,
+        createdAt: { $gte: startOfToday },
+      }),
+      Loan.countDocuments({
+        ...req.tenantFilter,
+        returnDate: { $gte: startOfToday },
+      }),
+      Reservation.countDocuments({
+        ...req.tenantFilter,
+        createdAt: { $gte: startOfToday },
+      }),
+      Loan.aggregate([
+        {
+          $match: {
+            collegeId: req.user.collegeId,
+            createdAt: { $gte: sevenDaysAgo },
+          },
+        },
+        { $group: { _id: '$bookId', checkouts: { $sum: 1 } } },
+        { $sort: { checkouts: -1 } },
+        { $limit: 6 },
+        {
+          $lookup: {
+            from: 'books',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'book',
+          },
+        },
+        { $unwind: '$book' },
+        {
+          $project: {
+            _id: '$book._id',
+            title: '$book.title',
+            author: '$book.author',
+            coverImage: '$book.coverImage',
+            copiesAvailable: '$book.copiesAvailable',
+            checkouts: 1,
+          },
+        },
+      ]),
+    ]);
+
+    // Format overdue items with daysOverdue calculation
+    const formattedOverdue = overdueLoans.map((loan) => {
+      const now = new Date();
+      const due = new Date(loan.dueDate);
+      const diffTime = Math.abs(now - due);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return {
+        _id: loan._id,
+        book: loan.bookId,
+        patron: loan.userId,
+        dueDate: loan.dueDate,
+        daysOverdue: diffDays,
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        overdue: {
+          count: overdueCount,
+          items: formattedOverdue,
+        },
+        holds: {
+          count: activeHoldsCount,
+          items: activeHolds,
+        },
+        lowStock: {
+          count: lowStockCount,
+          items: lowStockBooks,
+        },
+        todayActivity: {
+          checkouts: checkoutsToday,
+          returns: returnsToday,
+          holdsPlaced: holdsToday,
+        },
+        popularThisWeek: popularBooksRaw,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Generate report data for export (circulation, popular, overdue, inventory)
+// @route   GET /api/v1/dashboards/college-admin/reports/:type
+// @access  Private/CollegeAdmin
+const getCustomReport = async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    const { startDate, endDate } = req.query;
+
+    let dateFilter = {};
+    if (startDate && endDate) {
+      dateFilter = {
+        createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) },
+      };
+    }
+
+    let reportData = {};
+
+    switch (type) {
+      case 'circulation': {
+        const [totalLoans, activeLoans, returnedLoans, overdueLoans] = await Promise.all([
+          Loan.countDocuments({ ...req.tenantFilter, ...dateFilter }),
+          Loan.countDocuments({ ...req.tenantFilter, status: 'active', ...dateFilter }),
+          Loan.countDocuments({ ...req.tenantFilter, status: 'returned', ...dateFilter }),
+          Loan.countDocuments({
+            ...req.tenantFilter,
+            status: 'active',
+            dueDate: { $lt: new Date() },
+          }),
+        ]);
+        const recentLoans = await Loan.find({ ...req.tenantFilter, ...dateFilter })
+          .populate('bookId', 'title isbn author')
+          .populate('userId', 'name studentId')
+          .sort({ createdAt: -1 })
+          .limit(100);
+
+        reportData = {
+          type: 'circulation',
+          generatedAt: new Date().toISOString(),
+          summary: { totalLoans, activeLoans, returnedLoans, overdueLoans },
+          records: recentLoans,
+        };
+        break;
+      }
+      case 'overdue': {
+        const overdues = await Loan.find({
+          ...req.tenantFilter,
+          status: 'active',
+          dueDate: { $lt: new Date() },
+        })
+          .populate('bookId', 'title isbn author shelfLocation')
+          .populate('userId', 'name studentId email phone')
+          .sort({ dueDate: 1 })
+          .limit(200);
+
+        reportData = {
+          type: 'overdue',
+          generatedAt: new Date().toISOString(),
+          summary: { totalOverdue: overdues.length },
+          records: overdues,
+        };
+        break;
+      }
+      case 'popular': {
+        const topBooks = await Loan.aggregate([
+          { $match: { collegeId: req.user.collegeId, ...dateFilter } },
+          { $group: { _id: '$bookId', checkouts: { $sum: 1 } } },
+          { $sort: { checkouts: -1 } },
+          { $limit: 50 },
+          {
+            $lookup: {
+              from: 'books',
+              localField: '_id',
+              foreignField: '_id',
+              as: 'book',
+            },
+          },
+          { $unwind: '$book' },
+          {
+            $project: {
+              _id: '$book._id',
+              title: '$book.title',
+              author: '$book.author',
+              isbn: '$book.isbn',
+              category: '$book.category',
+              copies: '$book.copies',
+              checkouts: 1,
+            },
+          },
+        ]);
+
+        reportData = {
+          type: 'popular',
+          generatedAt: new Date().toISOString(),
+          summary: { topTitlesCount: topBooks.length },
+          records: topBooks,
+        };
+        break;
+      }
+      case 'inventory': {
+        const books = await Book.find({ ...req.tenantFilter })
+          .select('title author isbn category copies copiesAvailable shelfLocation')
+          .sort({ title: 1 })
+          .limit(300);
+
+        const totalCopies = books.reduce((sum, b) => sum + (b.copies || 0), 0);
+        const availableCopies = books.reduce((sum, b) => sum + (b.copiesAvailable || 0), 0);
+
+        reportData = {
+          type: 'inventory',
+          generatedAt: new Date().toISOString(),
+          summary: {
+            uniqueTitles: books.length,
+            totalCopies,
+            availableCopies,
+            onLoan: totalCopies - availableCopies,
+          },
+          records: books,
+        };
+        break;
+      }
+      default:
+        return next(new AppError(`Invalid report type: ${type}`, 400));
+    }
+
+    res.json({
+      success: true,
+      data: reportData,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createStudent,
   getAllPatrons,
@@ -778,4 +1058,6 @@ module.exports = {
   getBookSuggestions,
   updateBookSuggestion,
   getFeedback,
+  getStaffDashboardWidgets,
+  getCustomReport,
 };

@@ -25,6 +25,8 @@ const {
   getBookSuggestions,
   updateBookSuggestion,
   getFeedback,
+  getStaffDashboardWidgets,
+  getCustomReport,
 } = require('../../controllers/dashboards/collegeAdminController');
 const { protect, requireRole } = require('../../middlewares/auth');
 const scopeToTenant = require('../../middlewares/scopeToTenant');
@@ -122,6 +124,12 @@ router
 
 // Feedback Logs
 router.route('/feedback').get(getFeedback);
+
+// Staff Dashboard ILS Widgets
+router.route('/staff-widgets').get(expensiveRouteLimiter, getStaffDashboardWidgets);
+
+// Custom Reports Generation & Export
+router.route('/reports/:type').get(expensiveRouteLimiter, getCustomReport);
 
 // Analytics
 router.route('/analytics').get(expensiveRouteLimiter, getAnalyticsSummary);

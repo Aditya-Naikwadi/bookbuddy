@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { ArrowRightLeft, UserCheck, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowRightLeft, UserCheck, Loader2, Radio } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
+import socket from "../../../lib/socketClient";
 
 export default function CirculationDesk() {
   const queryClient = useQueryClient();
@@ -9,6 +10,27 @@ export default function CirculationDesk() {
   const [checkoutBookId, setCheckoutBookId] = useState("");
   const [returnLoanId, setReturnLoanId] = useState("");
   const [activeTab, setActiveTab] = useState("loans");
+  const [lastSyncEvent, setLastSyncEvent] = useState(null);
+
+  useEffect(() => {
+    const handleSync = (event) => {
+      queryClient.invalidateQueries({ queryKey: ["circulationQueue"] });
+      setLastSyncEvent(
+        `Real-time sync event received at ${new Date().toLocaleTimeString()}`,
+      );
+      setTimeout(() => setLastSyncEvent(null), 4000);
+    };
+
+    socket.on("loan:checkout", handleSync);
+    socket.on("loan:return", handleSync);
+    socket.on("reservation:created", handleSync);
+
+    return () => {
+      socket.off("loan:checkout", handleSync);
+      socket.off("loan:return", handleSync);
+      socket.off("reservation:created", handleSync);
+    };
+  }, [queryClient]);
 
   const { data: queueData, isLoading } = useQuery({
     queryKey: ["circulationQueue"],
@@ -51,7 +73,24 @@ export default function CirculationDesk() {
             hold queues.
           </p>
         </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-mono">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>OPAC Live Sync Active</span>
+          </div>
+        </div>
       </div>
+
+      {lastSyncEvent && (
+        <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-xs text-indigo-300 font-mono flex items-center gap-2 animate-fadeIn">
+          <Radio size={14} className="text-indigo-400 animate-pulse" />
+          <span>{lastSyncEvent}</span>
+        </div>
+      )}
 
       {/* Quick Action Forms */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

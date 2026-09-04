@@ -25,6 +25,7 @@ import {
   HelpCircle,
   FileSearch,
   HardDrive,
+  ShoppingBag,
 } from "lucide-react";
 
 export const STUDENT_NAV_ITEMS = [
@@ -164,6 +165,13 @@ export const COLLEGE_ADMIN_NAV_ITEMS = [
     route: "/college-admin/bulk-upload",
     feature: null,
   },
+  {
+    key: "acquisitions",
+    label: "Acquisitions Desk",
+    icon: ShoppingBag,
+    route: "/college-admin/acquisitions",
+    feature: "acquisitions",
+  },
 ];
 
 export const SUPER_ADMIN_NAV_ITEMS = [
@@ -233,6 +241,13 @@ export const SUPER_ADMIN_NAV_ITEMS = [
 ];
 
 export const GENERAL_NAV_ITEMS = [
+  {
+    key: "dashboard",
+    label: "Dashboard Home",
+    icon: LayoutDashboard,
+    route: "/general-dashboard",
+    feature: null,
+  },
   {
     key: "search",
     label: "Advanced Search",

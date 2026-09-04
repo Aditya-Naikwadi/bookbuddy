@@ -69,7 +69,10 @@ const GeneralSearch = () => {
   const selectedGenre = searchParams.get("category") || "All";
   const selectedAvailability = searchParams.get("available") || "All";
   const selectedFormat = searchParams.get("format") || "All";
-  const sortBy = searchParams.get("sortBy") || "relevance";
+  const urlFilter = searchParams.get("filter");
+  const sortBy =
+    searchParams.get("sortBy") ||
+    (urlFilter === "new" ? "newest" : "relevance");
 
   const [rawQuery, setRawQuery] = useState(urlQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(urlQuery);
@@ -356,7 +359,22 @@ const GeneralSearch = () => {
   );
 
   return (
-    <div className="flex flex-col min-h-full max-w-7xl mx-auto p-3 sm:p-4 gap-4 font-sans pb-10 text-slate-100">
+    <main
+      id="main-content"
+      aria-label="Online Public Access Catalog Search"
+      className="flex flex-col min-h-full w-full max-w-[1600px] 2xl:max-w-[1760px] mx-auto p-3 sm:p-4 gap-4 font-sans pb-6 text-slate-100"
+    >
+      <h1 className="sr-only">
+        Online Public Access Catalog (OPAC) — Book Search & Discovery
+      </h1>
+
+      {/* Screen Reader Live Status Announcement */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {isLoading
+          ? "Searching library catalog..."
+          : `Catalog updated: ${catalogBooks.length} titles available`}
+      </div>
+
       <StickyControlBar
         searchQuery={rawQuery}
         onSearchChange={setRawQuery}
@@ -479,10 +497,16 @@ const GeneralSearch = () => {
       />
 
       {selectedLocationBook && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="shelf-modal-title"
+          className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        >
           <div className="bg-slate-900 rounded-3xl max-w-md w-full p-5 shadow-2xl border border-slate-800 relative animate-in fade-in zoom-in-95 duration-200 space-y-4 text-slate-100">
             <button
               onClick={() => setSelectedLocationBook(null)}
+              aria-label="Close location guide"
               className="absolute top-4 right-4 p-1.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
             >
               <X className="w-5 h-5" />
@@ -493,7 +517,10 @@ const GeneralSearch = () => {
                 <MapPin className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-100">
+                <h3
+                  id="shelf-modal-title"
+                  className="text-sm font-bold text-slate-100"
+                >
                   {selectedLocationBook.title}
                 </h3>
                 <p className="text-xs text-slate-400">Physical Shelf Mapping</p>
@@ -503,7 +530,7 @@ const GeneralSearch = () => {
             <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-2.5 text-xs">
               <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400 font-medium">Shelf Code</span>
-                <span className="font-bold text-indigo-300">
+                <span className="font-bold text-indigo-300 font-mono">
                   {selectedLocationBook.shelfLocation ||
                     selectedLocationBook.location ||
                     "Main Stacks"}
@@ -513,7 +540,7 @@ const GeneralSearch = () => {
                 <span className="text-slate-400 font-medium">
                   Copies Available
                 </span>
-                <span className="font-bold text-slate-100">
+                <span className="font-bold text-slate-100 font-mono">
                   {selectedLocationBook.availableCopies} Copies
                 </span>
               </div>
@@ -528,7 +555,7 @@ const GeneralSearch = () => {
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 };
 

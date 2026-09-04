@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -71,32 +71,60 @@ const GeneralDashboardHome = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchContainerRef = useRef(null);
 
-  const scrollCarousel = (direction) => {
+  // Close search suggestions on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(e.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Close book details modal on Escape key press
+  useEffect(() => {
+    if (!selectedBook) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setSelectedBook(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedBook]);
+
+  const scrollCarousel = useCallback((direction) => {
     if (carouselRef.current) {
       const scrollAmount = direction === "left" ? -260 : 260;
       carouselRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
     }
-  };
+  }, []);
 
-  // Search Bar Autocomplete Filter
-  const filteredSuggestions = searchQuery.trim()
-    ? [...popularBooks, ...newArrivals]
-        .filter(
-          (b, index, self) =>
-            self.findIndex(
-              (item) => (item._id || item.id) === (b._id || b.id),
-            ) === index,
-        )
-        .filter(
-          (b) =>
-            b.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            b.author?.toLowerCase().includes(searchQuery.toLowerCase()),
-        )
-        .slice(0, 5)
-    : [];
+  // Search Bar Autocomplete Filter (Memoized to avoid array allocation on every render)
+  const filteredSuggestions = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    return [...popularBooks, ...newArrivals]
+      .filter(
+        (b, index, self) =>
+          self.findIndex(
+            (item) => (item._id || item.id) === (b._id || b.id),
+          ) === index,
+      )
+      .filter(
+        (b) =>
+          b.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          b.author?.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+      .slice(0, 5);
+  }, [searchQuery, popularBooks, newArrivals]);
 
-  // Library hours progress calculation (8:00 AM to 5:00 PM)
+  // Library hours progress calculation (Strictly 8:00 AM to 5:00 PM)
   const now = new Date();
   const currentHour = now.getHours() + now.getMinutes() / 60;
   const startHour = 8;
@@ -108,18 +136,18 @@ const GeneralDashboardHome = () => {
   const isOpen = currentHour >= startHour && currentHour < endHour;
 
   return (
-    <div className="flex flex-col min-h-full max-w-7xl mx-auto p-3 sm:p-4 gap-4 font-sans pb-10 text-slate-900 dark:text-ink">
+    <div className="flex flex-col w-full max-w-[1600px] 2xl:max-w-[1760px] mx-auto gap-2.5 sm:gap-3 font-sans pb-2 text-slate-900 dark:text-ink min-h-0">
       {/* Header Row & Scoped Search Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-start gap-4 md:gap-5 bg-white dark:bg-surface p-4 px-5 rounded-2xl border border-slate-200 dark:border-edge shadow-xl flex-shrink-0">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-surface p-3 px-4 rounded-2xl border border-slate-200 dark:border-edge shadow-md flex-shrink-0">
         <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60 rounded-xl flex-shrink-0">
+          <div className="p-2 bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60 rounded-xl flex-shrink-0">
             <BookOpen className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-ink tracking-tight leading-tight">
+            <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-ink tracking-tight leading-tight">
               {t("title", "General Patron Dashboard")}
             </h1>
-            <p className="text-xs text-slate-500 dark:text-muted hidden sm:block">
+            <p className="text-[11px] text-slate-500 dark:text-muted hidden sm:block">
               {t(
                 "subtitle",
                 "Explore library books, e-resources, and operational statistics",
@@ -129,7 +157,10 @@ const GeneralDashboardHome = () => {
         </div>
 
         {/* Scoped Autocomplete Top Search Bar */}
-        <div className="relative flex-1 max-w-md">
+        <div
+          ref={searchContainerRef}
+          className="relative flex-1 max-w-md mx-0 sm:mx-4"
+        >
           <div className="relative">
             <Search
               className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"
@@ -163,9 +194,10 @@ const GeneralDashboardHome = () => {
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery("")}
                 aria-label="Clear search query"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -181,11 +213,12 @@ const GeneralDashboardHome = () => {
               {filteredSuggestions.map((book) => (
                 <button
                   key={book._id || book.id}
+                  type="button"
                   onClick={() => {
                     setSelectedBook(book);
                     setShowSuggestions(false);
                   }}
-                  className="w-full px-3 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center justify-between gap-2 transition-colors border-b last:border-0 border-slate-100 dark:border-edge"
+                  className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center justify-between gap-2 transition-colors border-b last:border-0 border-slate-100 dark:border-edge cursor-pointer"
                 >
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-slate-900 dark:text-ink truncate">
@@ -200,11 +233,23 @@ const GeneralDashboardHome = () => {
                   </span>
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={() => {
+                  navigate(
+                    `/general-dashboard/search?q=${encodeURIComponent(searchQuery)}`,
+                  );
+                  setShowSuggestions(false);
+                }}
+                className="w-full px-3 py-2 text-center text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/40 hover:bg-indigo-50 dark:hover:bg-indigo-950/70 transition-colors cursor-pointer border-t border-slate-100 dark:border-edge"
+              >
+                View all results for "{searchQuery}" →
+              </button>
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-3 flex-shrink-0 self-end md:self-auto ml-auto">
+        <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto ml-auto">
           <button
             onClick={handleRefresh}
             disabled={isLoading}
@@ -254,10 +299,10 @@ const GeneralDashboardHome = () => {
 
       {/* First-Visit / Guidance Banner */}
       {bookmarks.length === 0 && (
-        <div className="bg-gradient-to-r from-indigo-900 via-indigo-950 to-slate-900 text-white p-3.5 px-4 rounded-2xl border border-indigo-500/30 flex items-center justify-between gap-3 shadow-xl flex-shrink-0 animate-in fade-in duration-300">
-          <div className="flex items-center gap-2.5">
+        <div className="bg-gradient-to-r from-indigo-900 via-indigo-950 to-slate-900 text-white py-2 px-3.5 rounded-xl border border-indigo-500/30 flex items-center justify-between gap-3 shadow-md flex-shrink-0 animate-in fade-in duration-300">
+          <div className="flex items-center gap-2.5 min-w-0">
             <Info className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-            <p className="text-xs font-medium text-slate-200">
+            <p className="text-xs font-medium text-slate-200 truncate">
               <span className="font-bold text-white">
                 {t("welcomeTitle", "Welcome to BookBuddy")}:{" "}
               </span>
@@ -269,7 +314,7 @@ const GeneralDashboardHome = () => {
           </div>
           <button
             onClick={() => navigate("/general-dashboard/search")}
-            className="text-[11px] font-bold px-3 py-1.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors flex-shrink-0 shadow-md"
+            className="text-[11px] font-bold px-3 py-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors flex-shrink-0 shadow-sm cursor-pointer whitespace-nowrap"
           >
             Explore Catalog
           </button>
@@ -277,91 +322,94 @@ const GeneralDashboardHome = () => {
       )}
 
       {/* Desktop Main Grid */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-3 min-h-0 overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 min-h-0">
         {/* Left Column (Stats & Visual Breakdown) */}
         {(activeTab === "overview" || activeTab === "notices") && (
-          <div className="md:col-span-4 flex flex-col gap-3 min-h-0 overflow-y-auto pr-1">
-            {/* Library Hours Card */}
-            <DashboardErrorBoundary widgetName="Library Hours">
-              <div className="bg-white dark:bg-surface p-4 rounded-2xl border border-slate-200 dark:border-edge shadow-xl flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
-                    <span className="text-xs font-bold text-slate-900 dark:text-ink">
-                      {t("libraryHours", "Library Hours")}
-                    </span>
-                  </div>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                      isOpen && !libraryHours.isClosedToday
-                        ? "bg-emerald-50 dark:bg-emerald-950/90 text-emerald-600 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/80"
-                        : "bg-rose-50 dark:bg-rose-950/90 text-rose-600 dark:text-rose-300 border-rose-200 dark:border-rose-800/80"
-                    }`}
-                  >
-                    {isOpen && !libraryHours.isClosedToday
-                      ? t("openNow", "Open Now")
-                      : t("closed", "Closed")}
-                  </span>
-                </div>
-                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
-                  {libraryHours.openingHour} - {libraryHours.closingHour}
-                </p>
-                <div>
-                  <div className="flex justify-between text-[10px] text-slate-500 dark:text-muted font-medium mb-1">
-                    <span>{libraryHours.openingHour}</span>
-                    <span>
+          <div className="lg:col-span-5 flex flex-col gap-3 min-h-0">
+            {/* Row 1: Library Hours & Catalog Stat Cards Side-by-Side */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Library Hours Card */}
+              <DashboardErrorBoundary widgetName="Library Hours">
+                <div className="bg-white dark:bg-surface p-3.5 rounded-2xl border border-slate-200 dark:border-edge shadow-md flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
+                      <span className="text-xs font-bold text-slate-900 dark:text-ink">
+                        {t("libraryHours", "Library Hours")}
+                      </span>
+                    </div>
+                    <span
+                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                        isOpen && !libraryHours.isClosedToday
+                          ? "bg-emerald-50 dark:bg-emerald-950/90 text-emerald-600 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/80"
+                          : "bg-rose-50 dark:bg-rose-950/90 text-rose-600 dark:text-rose-300 border-rose-200 dark:border-rose-800/80"
+                      }`}
+                    >
                       {isOpen && !libraryHours.isClosedToday
-                        ? `${Math.round(progressPct)}% ${t("dayElapsed", "day elapsed")}`
+                        ? t("openNow", "Open Now")
                         : t("closed", "Closed")}
                     </span>
-                    <span>{libraryHours.closingHour}</span>
                   </div>
-                  <div className="w-full bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className="bg-indigo-500 h-full rounded-full transition-all duration-500 shadow-sm"
-                      style={{ width: `${progressPct}%` }}
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
+                    {libraryHours.openingHour} - {libraryHours.closingHour}
+                  </p>
+                  <div>
+                    <div className="flex justify-between text-[10px] text-slate-500 dark:text-muted font-medium mb-1">
+                      <span>{libraryHours.openingHour}</span>
+                      <span>
+                        {isOpen && !libraryHours.isClosedToday
+                          ? `${Math.round(progressPct)}% ${t("dayElapsed", "day elapsed")}`
+                          : t("closed", "Closed")}
+                      </span>
+                      <span>{libraryHours.closingHour}</span>
+                    </div>
+                    <div className="w-full bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-indigo-500 h-full rounded-full transition-all duration-500 shadow-sm"
+                        style={{ width: `${progressPct}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </DashboardErrorBoundary>
+
+              {/* Total Books Stat + Sparkline */}
+              <DashboardErrorBoundary widgetName="Catalog Metrics">
+                <BookDataState
+                  isLoading={isLoading}
+                  isError={isError}
+                  onRetry={handleRefresh}
+                  collegeName={user?.collegeName}
+                >
+                  <div className="bg-white dark:bg-surface p-3.5 rounded-2xl border border-slate-200 dark:border-edge shadow-md flex items-center justify-between">
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-slate-500 dark:text-muted block truncate">
+                        {t("totalCatalogBooks", "Total Catalog Books")}
+                      </span>
+                      <span className="text-2xl font-bold text-slate-900 dark:text-ink">
+                        {(
+                          stats?.totalCatalogBooks ||
+                          stats?.totalBooks ||
+                          0
+                        ).toLocaleString()}
+                      </span>
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold block mt-0.5">
+                        +{stats?.addedThisMonth || stats?.newArrivalsCount || 0}{" "}
+                        {t("addedThisMonth", "added this month")}
+                      </span>
+                    </div>
+                    <SparklineChart
+                      data={stats?.sparklineData || stats?.monthlyTrend || null}
+                      width={80}
+                      height={36}
+                      color="#6366F1"
                     />
                   </div>
-                </div>
-              </div>
-            </DashboardErrorBoundary>
+                </BookDataState>
+              </DashboardErrorBoundary>
+            </div>
 
-            {/* Total Books Stat + Sparkline */}
-            <DashboardErrorBoundary widgetName="Catalog Metrics">
-              <BookDataState
-                isLoading={isLoading}
-                isError={isError}
-                onRetry={handleRefresh}
-                collegeName={user?.collegeName}
-              >
-                <div className="bg-white dark:bg-surface p-4 rounded-2xl border border-slate-200 dark:border-edge shadow-xl flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-bold text-slate-500 dark:text-muted block">
-                      {t("totalCatalogBooks", "Total Catalog Books")}
-                    </span>
-                    <span className="text-2xl font-bold text-slate-900 dark:text-ink">
-                      {(
-                        stats?.totalCatalogBooks ||
-                        stats?.totalBooks ||
-                        0
-                      ).toLocaleString()}
-                    </span>
-                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold block mt-0.5">
-                      +{stats?.addedThisMonth || stats?.newArrivalsCount || 0}{" "}
-                      {t("addedThisMonth", "added this month")}
-                    </span>
-                  </div>
-                  <SparklineChart
-                    data={stats?.sparklineData || stats?.monthlyTrend || null}
-                    width={100}
-                    height={40}
-                    color="#6366F1"
-                  />
-                </div>
-              </BookDataState>
-            </DashboardErrorBoundary>
-
-            {/* New Arrivals Row Card */}
+            {/* Row 2: New Arrivals Row Card */}
             <DashboardErrorBoundary widgetName="New Arrivals">
               <BookDataState
                 isLoading={isLoading}
@@ -369,8 +417,8 @@ const GeneralDashboardHome = () => {
                 onRetry={handleRefresh}
                 collegeName={user?.collegeName}
               >
-                <div className="bg-white dark:bg-surface p-4 rounded-2xl border border-slate-200 dark:border-edge shadow-xl flex flex-col justify-between">
-                  <div className="flex items-center justify-between mb-3">
+                <div className="bg-white dark:bg-surface p-3.5 rounded-2xl border border-slate-200 dark:border-edge shadow-md flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-1.5">
                       <Sparkles className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                       <span className="text-xs font-bold text-slate-900 dark:text-ink">
@@ -380,7 +428,7 @@ const GeneralDashboardHome = () => {
                     </div>
                     <button
                       onClick={() =>
-                        navigate("/general-dashboard/search?filter=new")
+                        navigate("/general-dashboard/search?sortBy=newest")
                       }
                       className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5 cursor-pointer"
                     >
@@ -391,7 +439,7 @@ const GeneralDashboardHome = () => {
 
                   <div className="grid grid-cols-3 gap-2">
                     {newArrivals.length === 0 ? (
-                      <div className="col-span-3 text-[11px] text-slate-400 dark:text-slate-500 italic p-3 text-center bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                      <div className="col-span-3 text-[11px] text-slate-400 dark:text-slate-500 italic p-2.5 text-center bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/60 dark:border-slate-800">
                         No new arrivals currently available
                       </div>
                     ) : (
@@ -399,7 +447,7 @@ const GeneralDashboardHome = () => {
                         <button
                           key={item._id || item.id || i}
                           onClick={() => setSelectedBook(item)}
-                          className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 text-[10px] font-bold h-16 flex flex-col justify-between hover:border-indigo-500/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all shadow-sm text-left relative overflow-hidden group cursor-pointer"
+                          className="bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-edge text-slate-900 dark:text-ink text-[10px] font-bold h-14 flex flex-col justify-between hover:border-indigo-500/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all shadow-xs text-left relative overflow-hidden group cursor-pointer"
                         >
                           <span className="line-clamp-2 leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
                             {item.title}
@@ -415,7 +463,7 @@ const GeneralDashboardHome = () => {
               </BookDataState>
             </DashboardErrorBoundary>
 
-            {/* Category Breakdown Donut Chart */}
+            {/* Row 3: Category Breakdown Donut Chart */}
             <DashboardErrorBoundary widgetName="Category Breakdown">
               <BookDataState
                 isLoading={isLoading}
@@ -423,7 +471,7 @@ const GeneralDashboardHome = () => {
                 onRetry={handleRefresh}
                 collegeName={user?.collegeName}
               >
-                <div className="bg-white dark:bg-surface p-4 rounded-2xl border border-slate-200 dark:border-edge shadow-xl flex-1 flex flex-col justify-between">
+                <div className="bg-white dark:bg-surface p-3.5 rounded-2xl border border-slate-200 dark:border-edge shadow-md flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-slate-900 dark:text-ink">
                       {t("categoryDistribution", "Category Distribution")}
@@ -435,8 +483,8 @@ const GeneralDashboardHome = () => {
                   </div>
                   <DonutChart
                     data={stats?.categoryBreakdown || []}
-                    size={84}
-                    strokeWidth={12}
+                    size={76}
+                    strokeWidth={11}
                   />
                 </div>
               </BookDataState>
@@ -446,54 +494,60 @@ const GeneralDashboardHome = () => {
 
         {/* Right Column (Popular Carousel & Compact Action Bar) */}
         {(activeTab === "overview" || activeTab === "actions") && (
-          <div className="md:col-span-8 flex flex-col gap-3 min-h-0 overflow-hidden">
+          <div className="lg:col-span-7 flex flex-col gap-3 min-h-0">
             {/* Quick Action Button Row */}
-            <div className="bg-white dark:bg-surface p-3 rounded-2xl border border-slate-200 dark:border-edge shadow-xl flex-shrink-0">
+            <div className="bg-white dark:bg-surface p-2.5 rounded-2xl border border-slate-200 dark:border-edge shadow-md flex-shrink-0">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button
                   onClick={() => navigate("/general-dashboard/search")}
-                  className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-indigo-500/50 transition-all text-xs font-bold shadow-md cursor-pointer"
+                  className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-edge text-slate-900 dark:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-indigo-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
                 >
-                  <Search className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                  <Search className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
                   <span>Search Catalog</span>
                 </button>
 
                 <button
                   onClick={() => navigate("/general-dashboard/e-resources")}
-                  className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-emerald-500/50 transition-all text-xs font-bold shadow-md cursor-pointer"
+                  className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-edge text-slate-900 dark:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-emerald-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
                 >
-                  <FileText className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                  <FileText className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
                   <span>E-Resources</span>
                 </button>
 
                 <button
                   onClick={() => navigate("/general-dashboard/saved")}
-                  className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-purple-500/50 transition-all text-xs font-bold shadow-md cursor-pointer"
+                  className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-edge text-slate-900 dark:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-purple-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
                 >
-                  <Bookmark className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+                  <Bookmark className="w-4 h-4 text-purple-500 dark:text-purple-400 shrink-0" />
                   <span>My Bookmarks</span>
                 </button>
 
                 {user?.role === "college-admin" ||
                 user?.role === "super-admin" ? (
                   <button
-                    onClick={() =>
-                      navigate(
-                        `/college/${user.collegeId}/students/bulk-upload`,
-                      )
-                    }
-                    className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-amber-500/50 transition-all text-xs font-bold shadow-md cursor-pointer"
+                    onClick={() => navigate("/college-admin/bulk-upload")}
+                    className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-edge text-slate-900 dark:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-amber-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
                   >
-                    <Upload className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                    <Upload className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" />
                     <span>Upload Students</span>
+                  </button>
+                ) : user?.role === "student" ? (
+                  <button
+                    onClick={() => navigate("/lab-booking")}
+                    className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-edge text-slate-900 dark:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-sky-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
+                  >
+                    <FlaskConical className="w-4 h-4 text-sky-500 dark:text-sky-400 shrink-0" />
+                    <span>Lab Booking</span>
                   </button>
                 ) : (
                   <button
-                    onClick={() => navigate("/lab")}
-                    className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-sky-500/50 transition-all text-xs font-bold shadow-md cursor-pointer"
+                    onClick={() =>
+                      navigate("/general-dashboard/search?sortBy=newest")
+                    }
+                    className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-edge text-slate-900 dark:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-indigo-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
                   >
-                    <FlaskConical className="w-4 h-4 text-sky-500 dark:text-sky-400" />
-                    <span>Lab Booking</span>
+                    <Sparkles className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
+                    <span>Latest Arrivals</span>
                   </button>
                 )}
               </div>
@@ -501,8 +555,8 @@ const GeneralDashboardHome = () => {
 
             {/* Popular Books Horizontal Carousel */}
             <DashboardErrorBoundary widgetName="Popular Carousel">
-              <div className="bg-white dark:bg-surface p-4 rounded-2xl border border-slate-200 dark:border-edge shadow-xl flex-1 flex flex-col justify-between min-h-0 overflow-hidden">
-                <div className="flex items-center justify-between mb-3 flex-shrink-0">
+              <div className="bg-white dark:bg-surface p-3.5 sm:p-4 rounded-2xl border border-slate-200 dark:border-edge shadow-md flex-1 flex flex-col justify-between min-h-0">
+                <div className="flex items-center justify-between mb-2.5 flex-shrink-0">
                   <div>
                     <h2 className="text-sm font-bold text-slate-900 dark:text-ink">
                       {t("popularThisWeek", "Popular This Week")}
@@ -518,12 +572,14 @@ const GeneralDashboardHome = () => {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => scrollCarousel("left")}
+                      aria-label="Scroll left"
                       className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => scrollCarousel("right")}
+                      aria-label="Scroll right"
                       className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
                     >
                       <ChevronRight className="w-4 h-4" />
@@ -541,7 +597,7 @@ const GeneralDashboardHome = () => {
                 >
                   <div
                     ref={carouselRef}
-                    className="flex gap-4 overflow-x-auto pb-2 pt-1 scrollbar-none snap-x snap-mandatory scroll-smooth min-h-0 flex-1"
+                    className="flex gap-3.5 overflow-x-auto pb-1 pt-1 scrollbar-none snap-x snap-mandatory scroll-smooth min-h-0 flex-1"
                   >
                     {popularBooks.map((book) => {
                       const bookmarked = isBookmarked(book._id || book.id);
@@ -549,25 +605,30 @@ const GeneralDashboardHome = () => {
                         <motion.div
                           key={book._id || book.id}
                           whileHover={
-                            prefersReducedMotion ? {} : { y: -4, scale: 1.02 }
+                            prefersReducedMotion ? {} : { y: -3, scale: 1.01 }
                           }
                           transition={{ duration: 0.15 }}
-                          className="w-64 flex-shrink-0 bg-slate-50 dark:bg-slate-950/90 rounded-2xl border border-slate-200 dark:border-slate-800/90 p-3.5 snap-start hover:shadow-2xl hover:border-indigo-500/50 transition-all duration-200 flex flex-col justify-between group"
+                          className="w-56 sm:w-60 flex-shrink-0 bg-slate-50 dark:bg-slate-950/90 rounded-2xl border border-slate-200 dark:border-slate-800/90 p-3 snap-start hover:shadow-xl hover:border-indigo-500/50 transition-all duration-200 flex flex-col justify-between group"
                         >
                           <div>
-                            <div className="relative mb-2.5">
+                            <div className="relative mb-2">
                               <BookCoverImage
                                 src={book.coverUrl}
                                 fallbackTitle={book.title}
                                 fallbackCategory={book.category}
-                                aspectRatio="h-28"
+                                aspectRatio="h-24 sm:h-28"
                               />
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toggleBookmark(book);
                                 }}
-                                className={`absolute top-2.5 right-2.5 p-1.5 rounded-lg backdrop-blur-md transition-all cursor-pointer ${
+                                aria-label={
+                                  bookmarked
+                                    ? "Remove bookmark"
+                                    : "Bookmark this book"
+                                }
+                                className={`absolute top-2 right-2 p-1.5 rounded-lg backdrop-blur-md transition-all cursor-pointer ${
                                   bookmarked
                                     ? "bg-amber-500 text-white shadow-amber-500/30"
                                     : "bg-slate-900/80 text-slate-300 hover:text-white border border-slate-700"
@@ -582,7 +643,7 @@ const GeneralDashboardHome = () => {
                             <h3 className="font-bold text-slate-900 dark:text-slate-100 text-xs line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                               {book.title}
                             </h3>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                               {book.author}
                             </p>
                           </div>
@@ -622,13 +683,19 @@ const GeneralDashboardHome = () => {
       {/* Book Details Modal */}
       <AnimatePresence>
         {selectedBook && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="book-modal-title"
+          >
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedBook(null)}
-              className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
+              className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs"
+              aria-hidden="true"
             />
             <motion.div
               initial={
@@ -643,41 +710,46 @@ const GeneralDashboardHome = () => {
                   : { opacity: 0, scale: 0.95, y: 15 }
               }
               transition={{ type: "spring", damping: 25, stiffness: 250 }}
-              className="bg-white dark:bg-surface rounded-3xl max-w-md w-full p-5 shadow-2xl border border-slate-200 dark:border-edge relative z-10 text-slate-900 dark:text-slate-100 font-sans"
+              className="bg-white dark:bg-surface rounded-3xl max-w-md w-full p-5 shadow-2xl border border-slate-200 dark:border-edge relative z-10 text-slate-900 dark:text-ink font-sans"
             >
               <button
+                type="button"
                 onClick={() => setSelectedBook(null)}
+                aria-label="Close modal"
                 className="absolute top-4 right-4 p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950 border border-indigo-200 dark:border-indigo-800/60 px-2.5 py-1 rounded-lg inline-block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800/60 px-2.5 py-1 rounded-lg inline-block">
                 {selectedBook.category || selectedBook.genre}
               </span>
 
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mt-2 mb-1">
+              <h3
+                id="book-modal-title"
+                className="text-base font-bold text-slate-900 dark:text-ink mt-2 mb-1"
+              >
                 {selectedBook.title}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+              <p className="text-xs text-slate-500 dark:text-muted mb-3">
                 By {selectedBook.author}
               </p>
 
               <div className="grid grid-cols-2 gap-3 mb-5 text-xs">
-                <div className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                  <span className="text-slate-500 dark:text-slate-400 block mb-0.5 text-[10px]">
+                <div className="bg-slate-50 dark:bg-slate-900/90 p-2.5 rounded-xl border border-slate-200 dark:border-edge">
+                  <span className="text-slate-500 dark:text-muted block mb-0.5 text-[10px]">
                     Availability
                   </span>
-                  <span className="font-bold text-slate-900 dark:text-slate-100 text-xs">
-                    {selectedBook.availableCopies} of {selectedBook.totalCopies}{" "}
-                    in library
+                  <span className="font-bold text-slate-900 dark:text-ink text-xs">
+                    {selectedBook.availableCopies ?? 0} of{" "}
+                    {selectedBook.totalCopies ?? 0} in library
                   </span>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                  <span className="text-slate-500 dark:text-slate-400 block mb-0.5 text-[10px]">
+                <div className="bg-slate-50 dark:bg-slate-900/90 p-2.5 rounded-xl border border-slate-200 dark:border-edge">
+                  <span className="text-slate-500 dark:text-muted block mb-0.5 text-[10px]">
                     Location
                   </span>
-                  <span className="font-bold text-slate-900 dark:text-slate-100 text-xs flex items-center gap-1">
+                  <span className="font-bold text-slate-900 dark:text-ink text-xs flex items-center gap-1">
                     <MapPin className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />
                     <span className="truncate">
                       {selectedBook.shelfLocation || "Main Stacks"}
@@ -688,6 +760,7 @@ const GeneralDashboardHome = () => {
 
               <div className="flex gap-2">
                 <button
+                  type="button"
                   onClick={() => {
                     toggleBookmark(selectedBook);
                     setSelectedBook(null);
@@ -707,13 +780,17 @@ const GeneralDashboardHome = () => {
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => {
+                    const titleQuery = selectedBook.title;
                     setSelectedBook(null);
-                    navigate("/general-dashboard/search");
+                    navigate(
+                      `/general-dashboard/search?q=${encodeURIComponent(titleQuery)}`,
+                    );
                   }}
-                  className="py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                  className="py-2.5 px-3 rounded-xl border border-slate-200 dark:border-edge bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                 >
-                  Catalog Search
+                  Search in Catalog
                 </button>
               </div>
             </motion.div>
@@ -724,4 +801,4 @@ const GeneralDashboardHome = () => {
   );
 };
 
-export default GeneralDashboardHome;
+export default memo(GeneralDashboardHome);

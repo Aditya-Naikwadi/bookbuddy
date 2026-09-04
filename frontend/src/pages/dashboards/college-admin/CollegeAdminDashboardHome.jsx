@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Link } from "react-router-dom";
 import {
   UploadCloud,
@@ -14,6 +14,7 @@ import {
   ArrowRight,
   Package,
   ShieldCheck,
+  ShoppingBag,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import useAuthStore from "../../../store/authStore";
@@ -21,8 +22,10 @@ import featureApi from "../../../api/featureApi";
 import collegeAdminApi from "../../../api/collegeAdminApi";
 import { getEnabledFeaturesList } from "../../../config/featureRegistry";
 import CollegeAdminOnboardingWizard from "../../../components/admin/CollegeAdminOnboardingWizard";
+import StaffDashboardWidgets from "../../../components/admin/StaffDashboardWidgets";
+import PermissionGate from "../../../components/common/PermissionGate";
 
-export default function CollegeAdminDashboardHome() {
+function CollegeAdminDashboardHome() {
   const { user, updateUser } = useAuthStore();
 
   // Fetch Feature Config
@@ -152,6 +155,16 @@ export default function CollegeAdminDashboardHome() {
         "Physical stock distribution, low-stock warnings, and subject categorization metrics.",
     },
     {
+      id: "acquisitions",
+      name: "Acquisitions & Serials Desk",
+      path: "/college-admin/acquisitions",
+      icon: <ShoppingBag className="w-6 h-6 text-purple-400" />,
+      badge: "PROCUREMENT & ORDERS",
+      permission: "canManageAcquisitions",
+      description:
+        "Manage book purchase orders, vendor invoices, budget code tracking, and serial receiving flows.",
+    },
+    {
       id: "digital-assets",
       name: "Digital Assets & Moderation",
       path: "/college-admin/digital-assets",
@@ -199,7 +212,7 @@ export default function CollegeAdminDashboardHome() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-mono p-4 sm:p-6 lg:p-8 space-y-8">
+    <div className="min-h-full w-full max-w-[1600px] 2xl:max-w-[1760px] mx-auto bg-slate-950 text-slate-100 font-mono p-4 sm:p-6 lg:p-8 space-y-8">
       {/* Top Header Banner */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="space-y-2">
@@ -290,6 +303,15 @@ export default function CollegeAdminDashboardHome() {
         </div>
       </div>
 
+      {/* Real-Time ILS Staff Operations & Widgets */}
+      <div className="space-y-4">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-indigo-400" />
+          <span>ILS Operational Center & Live Alerts</span>
+        </h2>
+        <StaffDashboardWidgets collegeId={user?.collegeId} />
+      </div>
+
       {/* Module Navigation Grid */}
       <div className="space-y-4">
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
@@ -298,38 +320,51 @@ export default function CollegeAdminDashboardHome() {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {modules.map((mod) => (
-            <Link
-              key={mod.id}
-              to={mod.path}
-              className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between transition-all hover:-translate-y-1 hover:border-indigo-500/50 shadow-lg group"
-            >
-              <div>
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-                  <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl group-hover:scale-105 transition-transform">
-                    {mod.icon}
+          {modules.map((mod) => {
+            const card = (
+              <Link
+                key={mod.id}
+                to={mod.path}
+                className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between transition-all hover:-translate-y-1 hover:border-indigo-500/50 shadow-lg group"
+              >
+                <div>
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                    <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl group-hover:scale-105 transition-transform">
+                      {mod.icon}
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                      {mod.badge}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                    {mod.badge}
+                  <h3 className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">
+                    {mod.name}
+                  </h3>
+                  <p className="text-xs font-sans text-slate-400 mt-2 leading-relaxed">
+                    {mod.description}
+                  </p>
+                </div>
+
+                <div className="pt-4 border-t border-slate-800/80 mt-4 flex items-center justify-end">
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-indigo-400 group-hover:translate-x-1 transition-transform">
+                    Open Desk <ArrowRight size={14} />
                   </span>
                 </div>
-                <h3 className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">
-                  {mod.name}
-                </h3>
-                <p className="text-xs font-sans text-slate-400 mt-2 leading-relaxed">
-                  {mod.description}
-                </p>
-              </div>
+              </Link>
+            );
 
-              <div className="pt-4 border-t border-slate-800/80 mt-4 flex items-center justify-end">
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-indigo-400 group-hover:translate-x-1 transition-transform">
-                  Open Desk <ArrowRight size={14} />
-                </span>
-              </div>
-            </Link>
-          ))}
+            if (mod.permission) {
+              return (
+                <PermissionGate key={mod.id} permission={mod.permission}>
+                  {card}
+                </PermissionGate>
+              );
+            }
+            return card;
+          })}
         </div>
       </div>
     </div>
   );
 }
+
+export default memo(CollegeAdminDashboardHome);

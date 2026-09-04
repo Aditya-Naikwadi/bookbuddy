@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useStudentOverview } from "../../../hooks/useStudentOverview";
 import useAuthStore from "../../../store/authStore";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -180,7 +180,7 @@ export const StudentDashboardHome = () => {
   }
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto px-2 sm:px-4 py-4">
+    <div className="space-y-8 w-full max-w-[1600px] 2xl:max-w-[1760px] mx-auto px-2 sm:px-4 py-4">
       {/* Slide-over Notification Drawer */}
       <NotificationDrawer
         isOpen={isNotificationOpen}
@@ -860,7 +860,7 @@ export const StudentDashboardHome = () => {
 
 // Animated Skeleton Loading State for Zero Layout Shift
 const DashboardSkeleton = () => (
-  <div className="space-y-8 max-w-7xl mx-auto px-2 sm:px-4 py-4 animate-pulse">
+  <div className="space-y-8 w-full max-w-[1600px] 2xl:max-w-[1760px] mx-auto px-2 sm:px-4 py-4 animate-pulse">
     {/* Hero Banner Skeleton */}
     <div className="h-48 bg-slate-200 dark:bg-slate-800 rounded-3xl w-full" />
 
@@ -888,4 +888,4 @@ const DashboardSkeleton = () => (
   </div>
 );
 
-export default StudentDashboardHome;
+export default memo(StudentDashboardHome);

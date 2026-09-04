@@ -155,7 +155,13 @@ const getCollegeDashboard = async (req, res, next) => {
       isbn: b.isbn,
       title: b.title,
       author: b.author,
+      genre: b.category || b.genre || 'General',
       category: b.category || b.genre || 'General',
+      availableCopies: Number(b.copiesAvailable !== undefined ? b.copiesAvailable : 0),
+      totalCopies: Number(b.copiesTotal !== undefined ? b.copiesTotal : 0),
+      shelfLocation: b.shelfLocation || 'Main Stacks',
+      description: b.description || 'Catalog item.',
+      coverUrl: b.coverImageUrl || b.coverUrl || null,
       createdAt: b.createdAt ? new Date(b.createdAt).toISOString() : null,
     }));
 

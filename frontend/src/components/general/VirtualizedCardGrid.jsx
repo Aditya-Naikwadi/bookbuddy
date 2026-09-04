@@ -25,13 +25,15 @@ const VirtualizedCardGrid = ({
     if (!el) return;
     setContainerHeight(el.clientHeight || 600);
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContainerHeight(entry.contentRect.height || 600);
-      }
-    });
-    resizeObserver.observe(el);
-    return () => resizeObserver.disconnect();
+    if (typeof ResizeObserver !== "undefined") {
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setContainerHeight(entry.contentRect.height || 600);
+        }
+      });
+      resizeObserver.observe(el);
+      return () => resizeObserver.disconnect();
+    }
   }, []);
 
   if (loading) {

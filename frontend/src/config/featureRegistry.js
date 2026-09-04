@@ -10,6 +10,7 @@ import {
   Sparkles,
   BarChart3,
   HelpCircle,
+  ShoppingBag,
 } from "lucide-react";
 
 export const FEATURE_CATEGORIES = {
@@ -154,6 +155,16 @@ export const FEATURE_REGISTRY = {
     description:
       "Export circulation statistics, peak library usage hours, and monthly reports.",
     icon: BarChart3,
+    isCore: false,
+    requires: [],
+  },
+  acquisitions: {
+    id: "acquisitions",
+    name: "Acquisitions & Serials Procurement",
+    category: FEATURE_CATEGORIES.FINANCIALS.key,
+    description:
+      "Purchase orders, vendor invoice management, budget code allocation, and receiving workflows.",
+    icon: ShoppingBag,
     isCore: false,
     requires: [],
   },

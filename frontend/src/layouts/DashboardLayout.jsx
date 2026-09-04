@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Book,
   LayoutDashboard,
@@ -176,17 +177,19 @@ export default function DashboardLayout() {
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                 General Public
               </p>
-              {GENERAL_NAV_ITEMS.map((item) => {
-                const IconComp = item.icon;
-                return (
-                  <NavItem
-                    key={item.key}
-                    to={item.route}
-                    icon={<IconComp size={20} />}
-                    label={item.label}
-                  />
-                );
-              })}
+              {GENERAL_NAV_ITEMS.filter((item) => item.key !== "dashboard").map(
+                (item) => {
+                  const IconComp = item.icon;
+                  return (
+                    <NavItem
+                      key={item.key}
+                      to={item.route}
+                      icon={<IconComp size={20} />}
+                      label={item.label}
+                    />
+                  );
+                },
+              )}
             </>
           )}
 
@@ -381,17 +384,24 @@ export default function DashboardLayout() {
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                 General Public Portal
               </p>
-              {GENERAL_NAV_ITEMS.map((item) => {
-                const IconComp = item.icon;
-                return (
-                  <NavItem
-                    key={item.key}
-                    to={item.route}
-                    icon={<IconComp size={20} />}
-                    label={item.label}
-                  />
-                );
-              })}
+              <NavItem
+                to="/general-dashboard"
+                icon={<LayoutDashboard size={20} />}
+                label="Dashboard Home"
+              />
+              {GENERAL_NAV_ITEMS.filter((item) => item.key !== "dashboard").map(
+                (item) => {
+                  const IconComp = item.icon;
+                  return (
+                    <NavItem
+                      key={item.key}
+                      to={item.route}
+                      icon={<IconComp size={20} />}
+                      label={item.label}
+                    />
+                  );
+                },
+              )}
             </>
           )}
 
@@ -530,12 +540,38 @@ export default function DashboardLayout() {
 
 const NavItem = ({ to, icon, label }) => {
   const location = useLocation();
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const isActive =
     location.pathname === to ||
     (to !== "/admin-portal" && location.pathname.startsWith(to));
+
+  const handlePrefetch = useCallback(() => {
+    if (!queryClient) return;
+    const collegeId = user?.collegeId || "default";
+
+    if (to === "/general-dashboard") {
+      queryClient.prefetchQuery({
+        queryKey: ["generalDashboard", collegeId],
+        staleTime: 5 * 60 * 1000,
+      });
+    } else if (
+      to.includes("books") ||
+      to.includes("catalog") ||
+      to.includes("search")
+    ) {
+      queryClient.prefetchQuery({
+        queryKey: ["bookCategories", collegeId],
+        staleTime: 10 * 60 * 1000,
+      });
+    }
+  }, [queryClient, user?.collegeId, to]);
+
   return (
     <Link
       to={to}
+      onMouseEnter={handlePrefetch}
+      onTouchStart={handlePrefetch}
       className={cn(
         "flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all text-xs",
         isActive
@@ -549,12 +585,30 @@ const NavItem = ({ to, icon, label }) => {
   );
 };
 
-const MobileNavItem = ({ to, icon, label }) => (
-  <Link
-    to={to}
-    className="flex flex-col items-center gap-1 text-slate-600 hover:text-indigo-600 text-xs font-medium"
-  >
-    {icon}
-    <span>{label}</span>
-  </Link>
-);
+const MobileNavItem = ({ to, icon, label }) => {
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+
+  const handlePrefetch = useCallback(() => {
+    if (!queryClient) return;
+    const collegeId = user?.collegeId || "default";
+    if (to === "/general-dashboard") {
+      queryClient.prefetchQuery({
+        queryKey: ["generalDashboard", collegeId],
+        staleTime: 5 * 60 * 1000,
+      });
+    }
+  }, [queryClient, user?.collegeId, to]);
+
+  return (
+    <Link
+      to={to}
+      onMouseEnter={handlePrefetch}
+      onTouchStart={handlePrefetch}
+      className="flex flex-col items-center gap-1 text-slate-600 hover:text-indigo-600 text-xs font-medium"
+    >
+      {icon}
+      <span>{label}</span>
+    </Link>
+  );
+};

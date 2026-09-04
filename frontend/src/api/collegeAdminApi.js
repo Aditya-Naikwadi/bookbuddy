@@ -104,6 +104,21 @@ export const getAnalyticsSummary = async () => {
   return data;
 };
 
+export const getStaffDashboardWidgets = async () => {
+  const { data } = await apiClient.get(
+    "/dashboards/college-admin/staff-widgets",
+  );
+  return data;
+};
+
+export const getCustomReport = async (type, params = {}) => {
+  const { data } = await apiClient.get(
+    `/dashboards/college-admin/reports/${type}`,
+    { params },
+  );
+  return data;
+};
+
 const collegeAdminApi = {
   getCirculationQueue,
   checkoutBook,
@@ -120,6 +135,8 @@ const collegeAdminApi = {
   getHelpdeskTickets,
   resolveHelpdeskTicket,
   getAnalyticsSummary,
+  getStaffDashboardWidgets,
+  getCustomReport,
 };
 
 export default collegeAdminApi;

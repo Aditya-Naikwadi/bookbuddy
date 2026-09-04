@@ -236,7 +236,7 @@ const GeneralEResources = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-full max-w-7xl mx-auto p-3 sm:p-4 gap-4 font-sans pb-10 text-slate-100">
+    <div className="flex flex-col min-h-full w-full max-w-[1600px] 2xl:max-w-[1760px] mx-auto p-3 sm:p-4 gap-4 font-sans pb-6 text-slate-100">
       {/* Sticky Control Bar */}
       <StickyControlBar
         searchQuery={rawSearch}
@@ -346,6 +346,9 @@ const GeneralEResources = () => {
                     <button
                       onClick={() => toggleBookmark(item)}
                       title={
+                        bookmarked ? "Remove bookmark" : "Bookmark resource"
+                      }
+                      aria-label={
                         bookmarked ? "Remove bookmark" : "Bookmark resource"
                       }
                       className={`p-1.5 rounded-xl border transition-all ${

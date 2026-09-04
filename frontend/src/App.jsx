@@ -104,6 +104,9 @@ const HelpdeskDesk = lazy(
 const AnalyticsOverview = lazy(
   () => import("./pages/dashboards/college-admin/AnalyticsOverview"),
 );
+const AcquisitionsDesk = lazy(
+  () => import("./pages/dashboards/college-admin/AcquisitionsDesk"),
+);
 
 // Lazy loaded General Dashboard Features
 const GeneralDashboardHome = lazy(
@@ -177,12 +180,10 @@ const AuthRedirect = ({ children }) => {
   return children;
 };
 
-// Simple fallback loader for suspense
-const PageLoader = () => (
-  <div className="min-h-screen w-full flex items-center justify-center bg-void">
-    <div className="w-12 h-12 border-4 border-ember border-t-transparent rounded-full animate-spin"></div>
-  </div>
-);
+import DashboardPageSkeleton from "./components/common/DashboardSkeleton";
+
+// Simple fallback loader for suspense with instant skeleton feedback
+const PageLoader = () => <DashboardPageSkeleton />;
 
 import { QueryProvider } from "./providers/QueryProvider";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -383,11 +384,28 @@ function App() {
                         path="college-admin/analytics"
                         element={<AnalyticsOverview />}
                       />
+                      <Route
+                        path="college-admin/acquisitions"
+                        element={<AcquisitionsDesk />}
+                      />
                     </Route>
 
                     {/* General Dashboard Routes */}
                     <Route
-                      element={<ProtectedRoute allowedRoles={["general"]} />}
+                      element={
+                        <ProtectedRoute
+                          allowedRoles={[
+                            "general",
+                            "student",
+                            "college-admin",
+                            "college_admin",
+                            "admin",
+                            "librarian",
+                            "super-admin",
+                            "super_admin",
+                          ]}
+                        />
+                      }
                     >
                       <Route
                         path="general-dashboard"

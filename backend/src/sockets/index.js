@@ -139,6 +139,38 @@ const isUserConnected = (userId) => {
   return !!(room && room.size > 0);
 };
 
+// === ILS Real-Time Emitters ===
+
+const emitLoanCheckout = (collegeId, data) => {
+  if (io && collegeId) {
+    io.to(`college:${collegeId}`).emit(events.LOAN_CHECKOUT, data);
+  }
+};
+
+const emitLoanReturn = (collegeId, data) => {
+  if (io && collegeId) {
+    io.to(`college:${collegeId}`).emit(events.LOAN_RETURN, data);
+  }
+};
+
+const emitReservationCreated = (collegeId, data) => {
+  if (io && collegeId) {
+    io.to(`college:${collegeId}`).emit(events.RESERVATION_CREATED, data);
+  }
+};
+
+const emitReservationReady = (userId, data) => {
+  if (io && userId) {
+    io.to(`user:${userId}`).emit(events.RESERVATION_READY, data);
+  }
+};
+
+const emitAcquisitionUpdated = (collegeId, data) => {
+  if (io && collegeId) {
+    io.to(`college:${collegeId}`).emit(events.ACQUISITION_UPDATED, data);
+  }
+};
+
 module.exports = {
   initSockets,
   getIo,
@@ -151,4 +183,9 @@ module.exports = {
   emitSuperAdminSupportEscalation,
   emitAnnotationUpsert,
   emitAnnotationDelete,
+  emitLoanCheckout,
+  emitLoanReturn,
+  emitReservationCreated,
+  emitReservationReady,
+  emitAcquisitionUpdated,
 };

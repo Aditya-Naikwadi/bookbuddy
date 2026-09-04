@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import {
   Search,
   ChevronDown,
@@ -13,7 +13,7 @@ import NoAuditEvents from "./illustrations/NoAuditEvents";
  * High-density, keyboard-accessible, sortable & filterable tabular component
  * tailored for BookBuddy internal operations tools.
  */
-export default function OpsDataTable({
+function OpsDataTable({
   columns = [],
   data = [],
   isLoading = false,
@@ -310,3 +310,5 @@ export default function OpsDataTable({
     </div>
   );
 }
+
+export default memo(OpsDataTable);

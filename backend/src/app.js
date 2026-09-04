@@ -438,6 +438,7 @@ app.use('/api/v1/google-books', require('./routes/googleBooksRoutes'));
 app.use('/api/v1/streak', require('./routes/streakRoutes'));
 app.use('/api/v1/leaderboard', require('./routes/leaderboardRoutes'));
 app.use('/api/v1/stickers', require('./routes/stickerRoutes'));
+app.use('/api/v1/acquisitions', require('./routes/acquisitionRoutes'));
 app.use('/api/v1/shelves', require('./routes/shelfRoutes'));
 app.use('/api/v1/book-requests', require('./routes/bookRequestRoutes'));
 app.use('/api/v1/item-reports', require('./routes/itemReportRoutes'));
@@ -481,6 +482,7 @@ app.use('/api/recommendations', deprecationWarning, require('./routes/recommenda
 app.use('/api/eresources', deprecationWarning, require('./routes/eresourceRoutes'));
 app.use('/api/reader', deprecationWarning, require('./routes/readerRoutes'));
 app.use('/api/notifications', deprecationWarning, require('./routes/notificationRoutes'));
+app.use('/api/acquisitions', deprecationWarning, require('./routes/acquisitionRoutes'));
 app.use('/api/tags', deprecationWarning, require('./routes/tagRoutes'));
 app.use('/api/payments', deprecationWarning, require('./routes/paymentRoutes'));
 app.use('/api/v1/checkout-session', (req, res, next) => {

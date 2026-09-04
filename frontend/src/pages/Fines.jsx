@@ -48,32 +48,11 @@ export const Fines = () => {
       if (res.ok && data.success) {
         setFines(data.data || []);
       } else {
-        // Fallback demo fine list if endpoint is unseeded
-        setFines([
-          {
-            _id: "fine_demo_1",
-            amount: 50.0,
-            overdueDays: 5,
-            status: "unpaid",
-            loanId: {
-              bookId: {
-                title: "Clean Code: Handbook of Software Craftsmanship",
-              },
-            },
-          },
-          {
-            _id: "fine_demo_2",
-            amount: 75.0,
-            overdueDays: 10,
-            status: "unpaid",
-            loanId: {
-              bookId: { title: "Introduction to Algorithms (4th Edition)" },
-            },
-          },
-        ]);
+        setFines([]);
       }
     } catch (err) {
       console.error("Error fetching fines:", err);
+      setFines([]);
     } finally {
       setLoading(false);
     }

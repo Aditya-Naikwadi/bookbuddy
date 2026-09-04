@@ -108,11 +108,30 @@ const requirePermission = (...requiredPermissions) => {
       return next(new AppError('You do not have permission to perform this action.', 403));
     }
     // Root super-admins bypass specific permission checks
-    if (req.user.role === 'super-admin' && req.user.subRole === 'root_admin') {
+    if (
+      req.user.role === 'super-admin' &&
+      (req.user.subRole === 'root_admin' || !req.user.subRole)
+    ) {
       return next();
     }
-    const userPerms = req.user.permissions || [];
-    const hasPerm = requiredPermissions.some((p) => userPerms.includes(p));
+    const userPerms = req.user.permissions;
+    if (!userPerms) {
+      return next(
+        new AppError(
+          'Insufficient sub-role permissions to access this administrative resource.',
+          403
+        )
+      );
+    }
+    let hasPerm = false;
+    if (Array.isArray(userPerms)) {
+      hasPerm = requiredPermissions.some((p) => userPerms.includes(p));
+    } else if (typeof userPerms === 'object') {
+      hasPerm = requiredPermissions.some(
+        (p) =>
+          userPerms[p] === true || (userPerms[p] === undefined && req.user.role === 'college-admin')
+      );
+    }
     if (!hasPerm) {
       return next(
         new AppError(

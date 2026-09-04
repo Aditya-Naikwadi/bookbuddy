@@ -166,6 +166,7 @@ export const useBookSearch = (collegeIdParam, filters = {}) => {
       };
     },
     enabled: Boolean(collegeId),
+    placeholderData: (previousData) => previousData,
   });
 };
 
@@ -231,6 +232,7 @@ export const useAggregatedBooks = (filters = {}) => {
         pagination: data?.pagination || { page: 1, limit, total: 0, pages: 1 },
       };
     },
+    placeholderData: (previousData) => previousData,
   });
 };
 

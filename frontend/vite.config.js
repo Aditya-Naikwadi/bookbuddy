@@ -81,6 +81,9 @@ export default defineConfig({
             if (id.includes("epubjs")) {
               return "vendor-epubjs";
             }
+            if (id.includes("recharts")) {
+              return "vendor-recharts";
+            }
             if (id.includes("lucide-react")) {
               return "vendor-lucide";
             }

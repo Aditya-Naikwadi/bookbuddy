@@ -168,12 +168,16 @@ const userSchema = new mongoose.Schema(
       enum: ['root_admin', 'support_agent', 'content_moderator', 'security_auditor'],
       default: 'root_admin',
     },
-    permissions: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
+    permissions: {
+      type: mongoose.Schema.Types.Mixed,
+      default: () => [
+        'canManageAcquisitions',
+        'canViewAnalytics',
+        'canManagePatrons',
+        'canManageCirculation',
+        'canManageCatalog',
+      ],
+    },
     points: {
       type: Number,
       default: 0,
