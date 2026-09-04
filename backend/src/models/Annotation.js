@@ -94,9 +94,6 @@ annotationSchema
 // Compound index for user book type queries
 annotationSchema.index({ userId: 1, collegeId: 1, bookId: 1, type: 1 });
 
-// Sparse unique index on clientId for offline sync idempotency
-annotationSchema.index({ clientId: 1 }, { unique: true, sparse: true });
-
 // Full-text search index
 annotationSchema.index(
   { highlightText: 'text', noteText: 'text', label: 'text', tags: 'text' },

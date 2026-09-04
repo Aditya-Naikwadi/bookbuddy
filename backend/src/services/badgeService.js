@@ -146,7 +146,11 @@ const evaluateBadges = async (userId, eventType, eventPayload = {}) => {
         const pointsToAdd = getBadgePoints(badge);
 
         // Increment User.points on successful new award
-        await User.findByIdAndUpdate(userId, { $inc: { points: pointsToAdd } }, { new: true });
+        await User.findByIdAndUpdate(
+          userId,
+          { $inc: { points: pointsToAdd } },
+          { returnDocument: 'after' }
+        );
 
         // Emit Socket.io badge:earned event if available
         try {

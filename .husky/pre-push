@@ -1,6 +1,3 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh" 2>/dev/null || true
-
 echo "🛡️  RUNNING PRE-PUSH CODE QUALITY GATE..."
 echo "-----------------------------------------------------"
 

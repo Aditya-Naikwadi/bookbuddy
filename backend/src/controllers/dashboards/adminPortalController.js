@@ -1387,7 +1387,7 @@ const updateSystemSettings = async (req, res, next) => {
       await SystemSetting.findOneAndUpdate(
         { key },
         { key, value, updatedBy: req.user.id },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
     }
 
