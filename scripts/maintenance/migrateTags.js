@@ -1,5 +1,8 @@
+const fs = require('fs');
 const path = require('path');
-const serverDir = path.join(__dirname, '../server');
+const serverDir = fs.existsSync(path.join(__dirname, '../../backend'))
+  ? path.join(__dirname, '../../backend')
+  : path.join(__dirname, '../server');
 
 let dotenv;
 try {

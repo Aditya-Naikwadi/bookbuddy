@@ -11,7 +11,7 @@ const Tag = require('../models/Tag');
 const College = require('../models/College');
 const { normalizeTag } = require('../utils/tagUtils');
 const path = require('path');
-const migrateTags = require(path.resolve(__dirname, '../../../scripts/migrateTags'));
+const migrateTags = require(path.resolve(__dirname, '../../../scripts/maintenance/migrateTags'));
 
 describe('Book Tags Normalization & Migration Acceptance Test Suite', () => {
   let testCollege;
