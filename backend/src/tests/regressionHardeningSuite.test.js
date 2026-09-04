@@ -12,7 +12,7 @@ describe('Permanent Regression Hardening Test Suite (All 6 Codebase Problems)', 
   /* PROBLEM 1 REGRESSION TEST: Vite Environment Node Globals                   */
   /* -------------------------------------------------------------------------- */
   test('Problem 1: Client source code must NOT use process.env.NODE_ENV (must use import.meta.env.MODE)', () => {
-    const clientSrcPath = path.resolve(__dirname, '../../../client/src');
+    const clientSrcPath = path.resolve(__dirname, '../../../frontend/src');
 
     function scanFiles(dir) {
       let forbiddenMatches = [];
@@ -117,11 +117,11 @@ describe('Permanent Regression Hardening Test Suite (All 6 Codebase Problems)', 
   /* -------------------------------------------------------------------------- */
   test('Problem 5: Standardized API endpoints must use /api/v1 prefix and canonical paths', () => {
     const readingListApiContent = fs.readFileSync(
-      path.resolve(__dirname, '../../../client/src/api/readingListApi.js'),
+      path.resolve(__dirname, '../../../frontend/src/api/readingListApi.js'),
       'utf8'
     );
     const recommendationApiContent = fs.readFileSync(
-      path.resolve(__dirname, '../../../client/src/api/recommendationApi.js'),
+      path.resolve(__dirname, '../../../frontend/src/api/recommendationApi.js'),
       'utf8'
     );
 
