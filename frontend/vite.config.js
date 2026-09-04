@@ -49,6 +49,20 @@ export default defineConfig({
         ws: true,
         changeOrigin: true,
         secure: false,
+        configure: (proxy) => {
+          proxy.on("error", (err, _req, res) => {
+            if (res && !res.headersSent) {
+              res.writeHead(502, { "Content-Type": "application/json" });
+              res.end(
+                JSON.stringify({
+                  error:
+                    "Backend Socket.io server (http://127.0.0.1:5000) is offline or starting up.",
+                  message: err.message,
+                }),
+              );
+            }
+          });
+        },
       },
     },
   },

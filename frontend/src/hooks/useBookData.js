@@ -117,9 +117,6 @@ export const useNewArrivals = (collegeIdParam, limit = 8) => {
  * 3. Hook for catalog search and paginated list queries
  */
 export const useBookSearch = (collegeIdParam, filters = {}) => {
-  const collegeId = getEffectiveCollegeId(collegeIdParam);
-  useBookRealtimeSync(collegeId);
-
   const {
     q = "",
     search = "",
@@ -129,7 +126,15 @@ export const useBookSearch = (collegeIdParam, filters = {}) => {
     sortBy = "newest",
     page = 1,
     limit = 12,
+    scope = "college",
   } = filters;
+
+  const collegeId =
+    scope === "public"
+      ? collegeIdParam || "public"
+      : getEffectiveCollegeId(collegeIdParam);
+
+  useBookRealtimeSync(scope === "public" ? null : collegeId);
 
   const searchQuery = q || search;
 
@@ -137,7 +142,7 @@ export const useBookSearch = (collegeIdParam, filters = {}) => {
     queryKey: [
       "books",
       collegeId,
-      { searchQuery, category, format, available, sortBy, page, limit },
+      { searchQuery, category, format, available, sortBy, page, limit, scope },
     ],
     queryFn: async () => {
       const { data } = await apiClient.get(
@@ -151,6 +156,7 @@ export const useBookSearch = (collegeIdParam, filters = {}) => {
             sortBy,
             page,
             limit,
+            scope,
           },
         },
       );

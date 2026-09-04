@@ -115,7 +115,7 @@ const getCollegeDashboard = async (req, res, next) => {
     if (!librarySettings) {
       librarySettings = {
         openingHour: '08:00 AM',
-        closingHour: '10:00 PM',
+        closingHour: '05:00 PM',
         timezone: 'UTC',
         isClosedToday: false,
         monthlyGrowthGoal: 0,

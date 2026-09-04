@@ -84,6 +84,15 @@ const resetFailedLogins = async (req) => {
   } catch {
     // Ignore rate limiter delete error
   }
+  try {
+    const { limiters } = require('./rateLimiters');
+    const email = (req.body?.email || req.body?.studentId || '').toLowerCase().trim();
+    if (email && limiters?.authEmail?.delete) {
+      await limiters.authEmail.delete(email);
+    }
+  } catch {
+    // Ignore rate limiter delete error
+  }
 };
 
 module.exports = {

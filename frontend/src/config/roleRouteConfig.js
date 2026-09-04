@@ -1,13 +1,16 @@
 // Single source of truth mapping frontend routes to required roles
 export const ROLE_ROUTE_MAP = {
   // Super Admin Routes
-  "/admin-portal": ["super-admin"],
-  "/admin-portal/overview": ["super-admin"],
-  "/admin-portal/college-admins": ["super-admin"],
-  "/admin-portal/registration-queue": ["super-admin"],
-  "/admin-portal/moderation": ["super-admin"],
-  "/admin-portal/audit-logs": ["super-admin"],
-  "/admin-portal/settings": ["super-admin"],
+  "/admin-portal": ["super-admin", "super_admin"],
+  "/admin-portal/overview": ["super-admin", "super_admin"],
+  "/admin-portal/college-admins": ["super-admin", "super_admin"],
+  "/admin-portal/registration-queue": ["super-admin", "super_admin"],
+  "/admin-portal/moderation": ["super-admin", "super_admin"],
+  "/admin-portal/audit-logs": ["super-admin", "super_admin"],
+  "/admin-portal/settings": ["super-admin", "super_admin"],
+  "/admin-portal/users": ["super-admin", "super_admin"],
+  "/admin-portal/data-oversight": ["super-admin", "super_admin"],
+  "/admin-portal/support": ["super-admin", "super_admin"],
 
   // College Admin Routes
   "/college-admin": ["college-admin", "admin", "librarian"],

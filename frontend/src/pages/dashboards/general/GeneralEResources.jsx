@@ -10,7 +10,7 @@ import {
   Lock,
 } from "lucide-react";
 import useLocalBookmarks from "../../../hooks/useLocalBookmarks";
-import { searchEbooks } from "../../../api/eresourcesApi";
+import { useBookSearch, useAggregatedBooks } from "../../../hooks/useBookData";
 import StickyControlBar from "../../../components/general/StickyControlBar";
 import StatSummaryStrip from "../../../components/general/StatSummaryStrip";
 import VirtualizedCardGrid from "../../../components/general/VirtualizedCardGrid";
@@ -44,12 +44,34 @@ const GeneralEResources = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("relevance");
   const [viewMode, setViewMode] = useState("grid");
-  const [loading, setLoading] = useState(false);
   const [dbResources, setDbResources] = useState([]);
-  const [apiEbooks, setApiEbooks] = useState([]);
   const [activeDigitalResource, setActiveDigitalResource] = useState(null);
 
-  // Fetch e-resources from MongoDB API
+  // Debounce search query changes (~300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(rawSearch);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [rawSearch]);
+
+  // 1. Fetch public-eligible catalog books via shared search service
+  const { data: publicCatalogData, isLoading: isCatalogLoading } =
+    useBookSearch("public", {
+      q: searchQuery,
+      scope: "public",
+      limit: 50,
+      sortBy,
+    });
+
+  // 2. Fetch global educational aggregated books (Gutenberg, OpenLibrary, Google Books)
+  const { data: aggregatedData, isLoading: isAggregatedLoading } =
+    useAggregatedBooks({
+      q: searchQuery,
+      limit: 50,
+    });
+
+  // 3. Fetch approved open e-resources from MongoDB API
   useEffect(() => {
     let isMounted = true;
     const fetchDbResources = async () => {
@@ -78,51 +100,49 @@ const GeneralEResources = () => {
     };
   }, []);
 
-  // Debounce search query changes (~300ms)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchQuery(rawSearch);
-      setLoading(false);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [rawSearch]);
+  // Map public catalog books to uniform card format
+  const catalogBooks = useMemo(() => {
+    return (publicCatalogData?.books || []).map((b) => ({
+      id: `catalog-${b.id || b._id}`,
+      title: b.title,
+      category: b.category || "E-Books",
+      format: b.format === "digital" ? "EPUB / Digital" : "Physical Book",
+      accessRequirement: "Open Access",
+      description: `Author: ${b.author || "Unknown"}. Category: ${b.category || "General"}.${b.collegeId?.name ? ` Institution: ${b.collegeId.name}` : ""}`,
+      source: b.collegeId?.name
+        ? `${b.collegeId.name} Public Catalog`
+        : "Public Library Catalog",
+      fileUrl: b.fileUrl || b.digitalUrl || null,
+      book: b,
+    }));
+  }, [publicCatalogData]);
 
-  // Fetch Gutenberg public ebooks if backend DB has no resources
-  useEffect(() => {
-    let isMounted = true;
-    const fetchApiResources = async () => {
-      try {
-        const data = await searchEbooks({
-          search: searchQuery || "science",
-          page: 1,
-        });
-        if (isMounted && data && Array.isArray(data.books)) {
-          const mapped = data.books.slice(0, 6).map((b) => ({
-            id: `gt-${b.id}`,
-            title: b.title,
-            category: "E-Books",
-            format: "EPUB / HTML",
-            accessRequirement: "Open Access",
-            description: `Author: ${b.authors?.map((a) => a.name).join(", ") || "Public Domain"}. Language: ${b.languages?.join(", ").toUpperCase() || "EN"}.`,
-            source: "Project Gutenberg",
-            gutenbergId: b.id,
-          }));
-          setApiEbooks(mapped);
-        }
-      } catch {
-        // Silently handle offline Gutenberg API
-      }
-    };
-
-    fetchApiResources();
-    return () => {
-      isMounted = false;
-    };
-  }, [searchQuery]);
+  // Map aggregated external books to uniform card format
+  const aggregatedBooks = useMemo(() => {
+    return (aggregatedData?.books || []).map((b) => ({
+      id: `agg-${b._id || b.id}`,
+      title: b.title,
+      category: "E-Books",
+      format: "EPUB / Digital",
+      accessRequirement: "Open Access",
+      description: `Author: ${Array.isArray(b.authors) ? b.authors.join(", ") : b.author || "Public Domain"}.`,
+      source:
+        Array.isArray(b.sources) && b.sources.length > 0
+          ? `External (${b.sources.join(", ")})`
+          : "Project Gutenberg / Open Access",
+      gutenbergId: b.externalId || null,
+      fileUrl:
+        b.downloadLinks?.epub ||
+        b.downloadLinks?.readUrl ||
+        b.downloadLinks?.pdf ||
+        null,
+      book: b,
+    }));
+  }, [aggregatedData]);
 
   const allList = useMemo(() => {
-    return [...dbResources, ...apiEbooks];
-  }, [dbResources, apiEbooks]);
+    return [...catalogBooks, ...aggregatedBooks, ...dbResources];
+  }, [catalogBooks, aggregatedBooks, dbResources]);
 
   const combinedResources = useMemo(() => {
     return allList
@@ -268,7 +288,7 @@ const GeneralEResources = () => {
       {/* Virtualized Cards Grid Container */}
       <VirtualizedCardGrid
         items={combinedResources}
-        loading={loading}
+        loading={isCatalogLoading || isAggregatedLoading}
         viewMode={viewMode}
         columns="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
         emptyState={

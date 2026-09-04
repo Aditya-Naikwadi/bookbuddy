@@ -79,7 +79,7 @@ const getLimiter = (keyPrefix, points, durationSeconds) => {
     });
   }
 
-  return async (key) => {
+  const limiterFn = async (key) => {
     // Evaluate dynamically at runtime to handle Jest module caching of the mock class
     const isMocked = RateLimiterRedis.name === 'MockRateLimiterRedis';
     if ((redisReady || isMocked) && redisLimiter) {
@@ -98,6 +98,23 @@ const getLimiter = (keyPrefix, points, durationSeconds) => {
       return await memoryLimiter.consume(key);
     }
   };
+
+  limiterFn.delete = async (key) => {
+    if (redisLimiter) {
+      try {
+        await redisLimiter.delete(key);
+      } catch (_err) {
+        // Ignore deletion errors (e.g. key non-existent or Redis disconnected)
+      }
+    }
+    try {
+      await memoryLimiter.delete(key);
+    } catch (_err) {
+      // Ignore deletion errors (e.g. key non-existent)
+    }
+  };
+
+  return limiterFn;
 };
 
 // Initialize limiters

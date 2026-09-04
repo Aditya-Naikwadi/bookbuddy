@@ -115,19 +115,26 @@ const loginUser = async (req, res, next) => {
     const { email, studentId, password, totpCode, collegeSlug, collegeId: reqCollegeId } = req.body;
     const credential = (email || studentId || '').trim();
     const normalizedEmail = credential.toLowerCase();
+    const effectiveSlug = collegeSlug || req.headers['x-college-slug'];
+    let targetCollegeId = reqCollegeId || req.headers['x-college-id'];
 
-    // Resolve target collegeId if collegeSlug or collegeId is provided in request context
-    let targetCollegeId = reqCollegeId;
-    if (!targetCollegeId && collegeSlug) {
-      const college = await College.findOne({ slug: collegeSlug });
+    // Resolve target collegeId if collegeSlug is provided in request context
+    if (!targetCollegeId && effectiveSlug) {
+      const college = await College.findOne({ slug: effectiveSlug });
       if (college) {
         targetCollegeId = college._id;
       }
     }
 
-    // Build tenant-scoped query
+    // Build tenant-scoped query matching email or studentId (handling case variations)
     const query = {
-      $or: [{ email: normalizedEmail }, { email: credential }, { studentId: credential }],
+      $or: [
+        { email: normalizedEmail },
+        { email: credential },
+        { studentId: credential },
+        { studentId: credential.toUpperCase() },
+        { studentId: credential.toLowerCase() },
+      ],
     };
 
     // Hard Rule: If college context is present, ALWAYS scope by collegeId
@@ -170,6 +177,10 @@ const loginUser = async (req, res, next) => {
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      const logger = require('../utils/logger');
+      logger.warn(
+        `[Auth Comparison] Password mismatch for user id: ${user._id} | email: ${user.email}`
+      );
       await consumeFailedLogin(req);
       return next(new AppError('Invalid credentials.', 401));
     }

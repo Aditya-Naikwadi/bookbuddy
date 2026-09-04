@@ -6,6 +6,7 @@ const BookDTO = require('../dtos/BookDTO');
 const cacheHelper = require('../utils/cacheHelper');
 const { getIo } = require('../sockets');
 const mongoose = require('mongoose');
+const { searchCatalogBooks } = require('../services/catalogSearchService');
 
 /**
  * Validates requested collegeId path param against authenticated user's tenant scope.
@@ -32,6 +33,13 @@ const validateTenantAccess = (req, targetCollegeId) => {
  * Resolves a valid ObjectId for college filtering (handles 'default', null, or invalid strings gracefully)
  */
 const resolveCollegeId = async (req, targetCollegeId) => {
+  if (targetCollegeId === 'public' || req.query?.scope === 'public') {
+    if (targetCollegeId && mongoose.Types.ObjectId.isValid(String(targetCollegeId))) {
+      return String(targetCollegeId);
+    }
+    return null;
+  }
+
   const requestedId = validateTenantAccess(req, targetCollegeId);
 
   if (mongoose.Types.ObjectId.isValid(requestedId)) {
@@ -231,56 +239,30 @@ const getCollegeNewArrivals = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Search books for a college
+// @desc    Search books for a college or public catalog
 // @route   GET /api/v1/college/:id/books/search
-// @access  Public / Protected (Tenant Scoped)
+// @access  Public / Protected (Tenant Scoped or Public Eligible)
 const searchCollegeBooks = asyncHandler(async (req, res) => {
+  const isPublicScope = req.query.scope === 'public' || req.params.id === 'public';
+  const scope = isPublicScope ? 'public' : 'college';
   const collegeId = await resolveCollegeId(req, req.params.id);
-  const q = req.query.q || req.query.query || '';
-  const category = req.query.category;
-  const available = req.query.available;
-  const format = req.query.format;
-  const page = Math.max(1, Number(req.query.page) || 1);
-  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 12));
-  const skip = (page - 1) * limit;
 
-  const filter = collegeId ? { collegeId: new mongoose.Types.ObjectId(collegeId) } : {};
-
-  if (q.trim()) {
-    filter.$or = [
-      { title: { $regex: q.trim(), $options: 'i' } },
-      { author: { $regex: q.trim(), $options: 'i' } },
-      { isbn: { $regex: q.trim(), $options: 'i' } },
-      { category: { $regex: q.trim(), $options: 'i' } },
-    ];
-  }
-
-  if (category && category !== 'All' && category !== 'all') {
-    filter.category = category;
-  }
-
-  if (format && format !== 'All' && format !== 'all') {
-    filter.format = format;
-  }
-
-  if (available === 'true' || available === 'Available') {
-    filter.$or = [{ copiesAvailable: { $gt: 0 } }, { availableCopies: { $gt: 0 } }];
-  }
-
-  const [total, books] = await Promise.all([
-    Book.countDocuments(filter),
-    Book.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-  ]);
+  const result = await searchCatalogBooks({
+    scope,
+    collegeId,
+    q: req.query.q || req.query.query || '',
+    category: req.query.category,
+    available: req.query.available,
+    format: req.query.format,
+    sortBy: req.query.sortBy,
+    page: req.query.page,
+    limit: req.query.limit,
+  });
 
   res.json({
     success: true,
-    data: BookDTO.transformMany(books),
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit) || 1,
-    },
+    data: result.books,
+    pagination: result.pagination,
   });
 });
 

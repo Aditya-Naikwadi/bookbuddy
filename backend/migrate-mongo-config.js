@@ -1,3 +1,4 @@
+const path = require('path');
 const config = require('./src/config');
 
 module.exports = {
@@ -5,7 +6,7 @@ module.exports = {
     url: process.env.MONGO_URI || config.mongoUri || 'mongodb://127.0.0.1:27017/bookbuddy',
     options: {},
   },
-  migrationsDir: 'migrations',
+  migrationsDir: path.join(__dirname, '../database/migrations'),
   changelogCollectionName: 'changelog',
   migrationFileExtension: '.js',
   useFileHash: false,

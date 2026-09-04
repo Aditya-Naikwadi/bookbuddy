@@ -95,7 +95,12 @@ const useAuthStore = create((set) => {
       }
     },
 
-    login: async (identifier, password, totpCode = null) => {
+    login: async (
+      identifier,
+      password,
+      totpCode = null,
+      collegeSlug = null,
+    ) => {
       set({ isLoading: true, error: null, mfaRequired: false });
       try {
         await fetchCsrfToken();
@@ -105,6 +110,7 @@ const useAuthStore = create((set) => {
             ? { email: identifier.trim() }
             : { studentId: identifier.trim(), email: identifier.trim() }),
           ...(totpCode ? { totpCode: totpCode.trim() } : {}),
+          ...(collegeSlug ? { collegeSlug: collegeSlug.trim() } : {}),
         };
 
         const { data } = await apiClient.post("/auth/login", payload);
@@ -290,7 +296,10 @@ const useAuthStore = create((set) => {
             localStorage.getItem("originalSuperAdminToken") || null,
         });
         return true;
-      } catch {
+      } catch (err) {
+        const status = err?.response?.status;
+        const isAuthFailure = status === 401 || status === 403;
+
         // Fallback: If stored token or refresh failed but originalSuperAdminToken exists, attempt to restore super admin
         const origToken = localStorage.getItem("originalSuperAdminToken");
         if (origToken) {
@@ -311,6 +320,12 @@ const useAuthStore = create((set) => {
           } catch {
             // Fall through to unauthenticated logout reset
           }
+        }
+
+        // On network failure or 5xx server downtime, keep tokens and do not force-logout
+        if (!isAuthFailure && (!err?.response || status >= 500)) {
+          set({ isLoading: false });
+          return false;
         }
 
         setInMemoryToken(null);

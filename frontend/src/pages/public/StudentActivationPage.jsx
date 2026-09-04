@@ -92,7 +92,7 @@ export default function StudentActivationPage() {
       }
 
       if (data.token) {
-        localStorage.setItem("accessToken", data.token);
+        localStorage.setItem("token", data.token);
         await checkAuth();
       }
 

@@ -83,7 +83,7 @@ export default function Login() {
       defaultRoute = "/college-admin";
     } else if (user?.role === "general") {
       defaultRoute = "/general-dashboard";
-    } else if (user?.role === "super-admin") {
+    } else if (user?.role === "super-admin" || user?.role === "super_admin") {
       defaultRoute = "/admin-portal";
     }
 
@@ -93,8 +93,14 @@ export default function Login() {
         ? savedPath
         : defaultRoute;
 
-    // Show transition overlay for 1.2s to orient student/user to their college portal
-    setRedirectingMsg(`Taking you to ${collegeName}'s library...`);
+    const isSuper =
+      user?.role === "super-admin" || user?.role === "super_admin";
+    // Show transition overlay for 1.2s to orient student/user to their portal
+    setRedirectingMsg(
+      isSuper
+        ? "Taking you to Super Admin Portal..."
+        : `Taking you to ${collegeName}'s library...`,
+    );
     setTimeout(() => {
       navigate(targetPath, { replace: true });
     }, 1200);
@@ -102,10 +108,17 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const queryParams = new URLSearchParams(location.search);
+    const collegeSlug =
+      location.state?.collegeSlug ||
+      queryParams.get("tenant") ||
+      queryParams.get("collegeSlug");
+
     const result = await login(
       email,
       password,
       showMfaField || mfaRequired ? totpCode : null,
+      collegeSlug,
     );
     if (result === true) {
       handlePostAuthNavigate();

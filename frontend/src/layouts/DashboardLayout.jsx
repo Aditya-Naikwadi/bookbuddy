@@ -49,8 +49,10 @@ export default function DashboardLayout() {
 
   const { isFeatureEnabled } = useFeatureFlags();
 
-  const isAdminPortal = user?.role === "super-admin";
-  const isCollegeAdmin = user?.role === "college-admin";
+  const isAdminPortal =
+    user?.role === "super-admin" || user?.role === "super_admin";
+  const isCollegeAdmin =
+    user?.role === "college-admin" || user?.role === "college_admin";
   const isGeneralDashboard = user?.role === "general";
   const isStudent = user?.role === "student";
 

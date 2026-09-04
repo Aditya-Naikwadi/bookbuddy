@@ -170,7 +170,7 @@ const AuthRedirect = ({ children }) => {
       return <Navigate to="/college-admin" replace />;
     if (user.role === "general")
       return <Navigate to="/general-dashboard" replace />;
-    if (user.role === "super-admin")
+    if (user.role === "super-admin" || user.role === "super_admin")
       return <Navigate to="/admin-portal" replace />;
     return <Navigate to="/student-dashboard" replace />;
   }
@@ -271,7 +271,9 @@ function App() {
                     {/* Admin Portal (Super Admin) Routes */}
                     <Route
                       element={
-                        <ProtectedRoute allowedRoles={["super-admin"]} />
+                        <ProtectedRoute
+                          allowedRoles={["super-admin", "super_admin"]}
+                        />
                       }
                     >
                       <Route

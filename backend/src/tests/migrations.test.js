@@ -1,3 +1,4 @@
+const path = require('path');
 const migrateMongo = require('migrate-mongo');
 const mongoose = require('mongoose');
 
@@ -10,7 +11,7 @@ describe('Database Migration Integration & Idempotency Tests', () => {
         url: dbUri,
         options: {},
       },
-      migrationsDir: 'migrations',
+      migrationsDir: path.join(__dirname, '../../../database/migrations'),
       changelogCollectionName: 'changelog',
       migrationFileExtension: '.js',
       useFileHash: false,

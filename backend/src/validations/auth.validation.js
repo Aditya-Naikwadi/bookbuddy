@@ -24,6 +24,11 @@ const loginSchema = z.object({
       studentId: z.string().trim().optional(),
       password: z.string().min(1, 'Password is required'),
       totpCode: z.string().optional(),
+      collegeSlug: z.string().trim().optional(),
+      collegeId: z
+        .string()
+        .regex(/^[0-9a-fA-F]{24}$/, 'Invalid College ID format')
+        .optional(),
     })
     .refine((data) => data.email || data.studentId, {
       message: 'Either email or studentId must be provided',

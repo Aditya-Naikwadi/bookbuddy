@@ -63,7 +63,7 @@ const GeneralDashboardHome = () => {
   const announcements = dashboardPayload?.announcements || [];
   const libraryHours = dashboardPayload?.librarySettings || {
     openingHour: "08:00 AM",
-    closingHour: "10:00 PM",
+    closingHour: "05:00 PM",
     isClosedToday: false,
   };
 
@@ -96,11 +96,11 @@ const GeneralDashboardHome = () => {
         .slice(0, 5)
     : [];
 
-  // Library hours progress calculation
+  // Library hours progress calculation (8:00 AM to 5:00 PM)
   const now = new Date();
   const currentHour = now.getHours() + now.getMinutes() / 60;
   const startHour = 8;
-  const endHour = 22;
+  const endHour = 17;
   const progressPct = Math.min(
     Math.max(((currentHour - startHour) / (endHour - startHour)) * 100, 0),
     100,

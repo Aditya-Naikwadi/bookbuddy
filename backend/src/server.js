@@ -13,10 +13,32 @@ const { initSentry, captureException } = require('./utils/sentry');
 
 // Handle uncaught exceptions immediately at boot
 process.on('uncaughtException', (err) => {
+  const code = err && (err.code || err.name);
+  const isRecoverableStreamError = [
+    'ECONNRESET',
+    'EPIPE',
+    'ERR_STREAM_PREMATURE_CLOSE',
+    'ECANCELED',
+    'ECONNABORTED',
+  ].includes(code);
+
+  if (isRecoverableStreamError) {
+    logger.warn(`[Recoverable Network/Stream Exception Ignored]: ${err.message}`, { code });
+    return;
+  }
+
   captureException(err, { context: 'uncaughtException' });
   // eslint-disable-next-line no-console
   console.error(`UNCAUGHT EXCEPTION: ${err.message}\n`, err.stack);
   process.exit(1);
+});
+
+// Top-level unhandled rejection safety net
+process.on('unhandledRejection', (err) => {
+  logger.error(`UNHANDLED REJECTION: ${err ? err.message || err : 'Unknown rejection'}`, {
+    stack: err ? err.stack : undefined,
+  });
+  captureException(err, { context: 'unhandledRejection' });
 });
 
 let serverInstance;
@@ -69,14 +91,6 @@ const startServer = async () => {
     });
     captureException(err, { context: 'serverStartup' });
   }
-
-  // Handle unhandled promise rejections as safety net
-  process.on('unhandledRejection', (err) => {
-    logger.error(`UNHANDLED REJECTION: ${err ? err.message || err : 'Unknown rejection'}`, {
-      stack: err ? err.stack : undefined,
-    });
-    captureException(err, { context: 'unhandledRejection' });
-  });
 
   // Periodic memory usage monitoring (enabled via ENABLE_MEMORY_LOGGING=true)
   if (process.env.ENABLE_MEMORY_LOGGING === 'true') {

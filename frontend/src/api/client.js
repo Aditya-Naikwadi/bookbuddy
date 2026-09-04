@@ -108,12 +108,16 @@ export const refreshTokenSingleFlight = async () => {
       }
       return data;
     } catch (err) {
-      setInMemoryToken(null);
-      localStorage.removeItem("token");
-      if (!isLoggingOut) {
-        broadcastLogout();
-        if (onUnauthorizedCallback) {
-          onUnauthorizedCallback();
+      const status = err?.response?.status;
+      // Only clear credentials & trigger forced logout on genuine 401/403 authorization failure
+      if (status === 401 || status === 403) {
+        setInMemoryToken(null);
+        localStorage.removeItem("token");
+        if (!isLoggingOut) {
+          broadcastLogout();
+          if (onUnauthorizedCallback) {
+            onUnauthorizedCallback();
+          }
         }
       }
       throw err;

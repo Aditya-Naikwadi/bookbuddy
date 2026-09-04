@@ -16,7 +16,7 @@ const librarySettingsSchema = new mongoose.Schema(
     },
     closingHour: {
       type: String,
-      default: '22:00',
+      default: '17:00',
       trim: true,
     },
     timezone: {
