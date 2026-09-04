@@ -153,7 +153,7 @@ function validateEnv() {
       .join('; ');
 
     // If running unit tests expecting error throwing or process.exit
-    if (process.env.NODE_ENV === 'test') {
+    if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined) {
       throw new Error(`Environment validation failed: ${errorDetails}`);
     }
 
