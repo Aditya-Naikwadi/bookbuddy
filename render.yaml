@@ -2,7 +2,7 @@ services:
   - type: web
     name: bookbuddy-backend
     env: node
-    rootDir: server
+    rootDir: backend
     buildCommand: npm install --legacy-peer-deps
     startCommand: node src/server.js
     healthCheckPath: /health
