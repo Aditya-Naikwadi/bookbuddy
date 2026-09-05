@@ -39,6 +39,7 @@ import {
   queueOfflineAnnotation,
   flushOfflineQueue,
 } from "../../utils/annotationOfflineStore";
+import socket from "../../lib/socketClient";
 
 const DEFAULT_FALLBACK_PDF =
   "https://raw.githubusercontent.com/mozilla/pdf.js/master/web/compressed.tracemonkey-pldi-09.pdf";
@@ -618,7 +619,14 @@ const DigitalReaderModal = ({
 
   const modalRef = useRef(null);
   const activeTarget = resource || book;
-  const targetId = activeTarget?._id || activeTarget?.id;
+  const targetId =
+    activeTarget?._id ||
+    activeTarget?.id ||
+    activeTarget?.bookId ||
+    resource?._id ||
+    resource?.id ||
+    book?._id ||
+    book?.id;
   const resolvedTitle =
     title || activeTarget?.title || activeTarget?.name || "Digital E-Book";
   const resolvedFileType =
@@ -630,6 +638,48 @@ const DigitalReaderModal = ({
   const normalizedType = resolvedFileType?.toLowerCase().includes("epub")
     ? "epub"
     : "pdf";
+
+  // Real-time socket sync for annotations
+  useEffect(() => {
+    if (!isModalOpen || !targetId) return;
+
+    const handleUpsert = (ann) => {
+      const annBookId = String(ann.bookId || ann.resourceId || "");
+      if (annBookId === String(targetId)) {
+        setAnnotations((prev) => {
+          const exists = prev.some(
+            (a) => (a._id || a.id) === (ann._id || ann.id),
+          );
+          if (exists) {
+            return prev.map((a) =>
+              (a._id || a.id) === (ann._id || ann.id) ? ann : a,
+            );
+          }
+          return [ann, ...prev];
+        });
+      }
+    };
+
+    const handleDelete = (data) => {
+      if (String(data.bookId) === String(targetId)) {
+        setAnnotations((prev) =>
+          prev.filter(
+            (a) =>
+              (a._id || a.id) !== data.annotationId &&
+              a.clientId !== data.annotationId,
+          ),
+        );
+      }
+    };
+
+    socket.on("annotation:upserted", handleUpsert);
+    socket.on("annotation:deleted", handleDelete);
+
+    return () => {
+      socket.off("annotation:upserted", handleUpsert);
+      socket.off("annotation:deleted", handleDelete);
+    };
+  }, [isModalOpen, targetId]);
 
   // Load annotations on mount / open
   useEffect(() => {

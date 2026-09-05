@@ -12,6 +12,7 @@ import { SplashScreen } from "./components/ui/SplashScreen";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import ImpersonationBanner from "./components/ImpersonationBanner";
+import ToastContainer from "./components/common/ToastContainer";
 
 // Lazy loaded public pages
 const Landing = lazy(() => import("./pages/public/Landing"));
@@ -211,6 +212,7 @@ function App() {
     <ThemeProvider>
       <QueryProvider>
         <FeatureFlagProvider>
+          <ToastContainer />
           <AnimatePresence>
             {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
           </AnimatePresence>

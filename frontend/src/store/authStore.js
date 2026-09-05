@@ -11,6 +11,7 @@ import apiClient, {
 } from "../api/client";
 import { clearQueryCache } from "../providers/QueryProvider";
 import { disconnectSocket } from "../lib/socketClient";
+import { toast } from "./toastStore";
 
 const isTokenExpiredOrNearExpiry = (token, thresholdSeconds = 60) => {
   if (!token || typeof token !== "string") return true;
@@ -34,15 +35,27 @@ const isTokenExpiredOrNearExpiry = (token, thresholdSeconds = 60) => {
   }
 };
 
+const initialToken =
+  typeof window !== "undefined" ? localStorage.getItem("token") : null;
+const initialSuperAdminToken =
+  typeof window !== "undefined"
+    ? localStorage.getItem("originalSuperAdminToken")
+    : null;
+
 const useAuthStore = create((set) => {
   setOnUnauthorizedCallback(() => {
     set({ user: null, token: null, isAuthenticated: false, isLoading: false });
   });
 
   return {
-    isImpersonated: !!localStorage.getItem("originalSuperAdminToken"),
-    originalSuperAdminToken:
-      localStorage.getItem("originalSuperAdminToken") || null,
+    user: null,
+    token: initialToken,
+    isAuthenticated: false,
+    isLoading: !!initialToken,
+    error: null,
+    mfaRequired: false,
+    isImpersonated: !!initialSuperAdminToken,
+    originalSuperAdminToken: initialSuperAdminToken || null,
 
     startImpersonating: async (targetToken, targetUser) => {
       const currentToken = localStorage.getItem("token") || getInMemoryToken();
@@ -127,17 +140,20 @@ const useAuthStore = create((set) => {
           isImpersonated: false,
           originalSuperAdminToken: null,
         });
+        toast.success("Welcome back!", `Logged in as ${data.user.name || data.user.email}`);
         return true;
       } catch (error) {
         const responseData = error.response?.data;
         const isMfaRequired = !!responseData?.mfaRequired;
+        const errMsg =
+          responseData?.message ||
+          "Login failed. Please verify your credentials or server connection.";
         set({
           mfaRequired: isMfaRequired,
-          error:
-            responseData?.message ||
-            "Login failed. Please verify your credentials or server connection.",
+          error: errMsg,
           isLoading: false,
         });
+        toast.error("Login Failed", errMsg);
         return isMfaRequired ? { mfaRequired: true } : false;
       }
     },
@@ -157,14 +173,15 @@ const useAuthStore = create((set) => {
           isAuthenticated: true,
           isLoading: false,
         });
+        toast.success("Google Login", `Welcome ${data.user.name || data.user.email}`);
         return true;
       } catch (error) {
+        const errMsg = error.response?.data?.message || "Google Login failed. Please try again.";
         set({
-          error:
-            error.response?.data?.message ||
-            "Google Login failed. Please try again.",
+          error: errMsg,
           isLoading: false,
         });
+        toast.error("Google Login Failed", errMsg);
         return false;
       }
     },
@@ -190,12 +207,15 @@ const useAuthStore = create((set) => {
           isAuthenticated: true,
           isLoading: false,
         });
+        toast.success("Registration Successful", "Your account has been created!");
         return true;
       } catch (error) {
+        const errMsg = error.response?.data?.message || "Registration failed";
         set({
-          error: error.response?.data?.message || "Registration failed",
+          error: errMsg,
           isLoading: false,
         });
+        toast.error("Registration Failed", errMsg);
         return false;
       }
     },
@@ -232,6 +252,8 @@ const useAuthStore = create((set) => {
           isImpersonated: false,
           originalSuperAdminToken: null,
         });
+
+        toast.info("Logged Out", "You have been logged out successfully.");
 
         setTimeout(() => {
           setIsLoggingOut(false);

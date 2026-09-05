@@ -113,10 +113,19 @@ const getCollegeDashboard = async (req, res, next) => {
       librarySettings = await retryRead(() => LibrarySettings.findOne({}).lean());
     }
     if (!librarySettings) {
+      let collegeTimezone = 'Asia/Kolkata';
+      if (collegeId) {
+        const collegeObj = await retryRead(() =>
+          College.findById(collegeId).select('timezone').lean()
+        );
+        if (collegeObj?.timezone) {
+          collegeTimezone = collegeObj.timezone;
+        }
+      }
       librarySettings = {
         openingHour: '08:00 AM',
         closingHour: '05:00 PM',
-        timezone: 'UTC',
+        timezone: collegeTimezone,
         isClosedToday: false,
         monthlyGrowthGoal: 0,
       };

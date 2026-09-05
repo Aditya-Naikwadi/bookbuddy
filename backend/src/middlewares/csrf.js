@@ -69,7 +69,7 @@ const validateCsrf = (req, res, next) => {
   const csrfCookie = req.cookies?._csrf;
   const csrfHeader = req.headers['x-csrf-token'] || req.body?._csrf;
 
-  if (isExempt && !csrfCookie && !csrfHeader) {
+  if (isExempt && (!csrfCookie || !csrfHeader)) {
     return next();
   }
 

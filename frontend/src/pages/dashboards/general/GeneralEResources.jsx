@@ -285,6 +285,13 @@ const GeneralEResources = () => {
         onResetAll={handleResetAll}
       />
 
+      {isAggregatedLoading && (
+        <div className="bg-indigo-950/60 border border-indigo-800/60 p-2.5 px-4 rounded-xl text-xs font-semibold text-indigo-300 flex items-center gap-2 animate-pulse">
+          <div className="w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
+          <span>Fetching public domain e-resources from external archives (Gutenberg & OpenLibrary)...</span>
+        </div>
+      )}
+
       {/* Virtualized Cards Grid Container */}
       <VirtualizedCardGrid
         items={combinedResources}

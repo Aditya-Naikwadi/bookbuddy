@@ -20,6 +20,7 @@ import useAuthStore from "../../../store/authStore";
 import { useBatchBookDetails } from "../../../hooks/useBookData";
 import BookDataState from "../../../components/common/BookDataState";
 import BookCoverImage from "../../../components/common/BookCoverImage";
+import { toast } from "../../../store/toastStore";
 
 const SORT_OPTIONS = [
   { value: "recent", label: "Sort: Recently Saved" },
@@ -365,6 +366,10 @@ const GeneralSaved = () => {
                           "_blank",
                         );
                       } else {
+                        toast.info(
+                          "Catalog Search",
+                          `Searching physical catalog for "${item.title}"...`,
+                        );
                         navigate(
                           `/general-dashboard/search?q=${encodeURIComponent(item.title)}`,
                         );

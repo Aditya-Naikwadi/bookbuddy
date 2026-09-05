@@ -103,16 +103,51 @@ const GeneralDashboardHome = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close book details modal on Escape key press
+  const modalRef = useRef(null);
+
+  // Close book details modal on Escape key press and trap focus inside modal
   useEffect(() => {
     if (!selectedBook) return;
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
         setSelectedBook(null);
+        return;
+      }
+      if (e.key === "Tab" && modalRef.current) {
+        const focusables = modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            last.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === last) {
+            first.focus();
+            e.preventDefault();
+          }
+        }
       }
     };
+
+    const timer = setTimeout(() => {
+      if (modalRef.current) {
+        const firstFocusable = modalRef.current.querySelector(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (firstFocusable) firstFocusable.focus();
+      }
+    }, 50);
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [selectedBook]);
 
   const scrollCarousel = useCallback((direction) => {
@@ -244,7 +279,7 @@ const GeneralDashboardHome = () => {
                       By {book.author}
                     </div>
                   </div>
-                  <span className="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 flex-shrink-0">
+                  <span className="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 flex-shrink-0">
                     {book.category || book.genre}
                   </span>
                 </button>
@@ -471,7 +506,7 @@ const GeneralDashboardHome = () => {
                           <span className="line-clamp-2 leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
                             {item.title}
                           </span>
-                          <span className="text-[9px] text-indigo-600 dark:text-indigo-400 uppercase font-bold">
+                          <span className="text-[9px] text-indigo-700 dark:text-indigo-300 uppercase font-bold">
                             New
                           </span>
                         </button>
@@ -717,6 +752,7 @@ const GeneralDashboardHome = () => {
               aria-hidden="true"
             />
             <motion.div
+              ref={modalRef}
               initial={
                 prefersReducedMotion
                   ? { opacity: 0 }
@@ -740,7 +776,7 @@ const GeneralDashboardHome = () => {
                 <X className="w-5 h-5" />
               </button>
 
-              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800/60 px-2.5 py-1 rounded-lg inline-block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800/60 px-2.5 py-1 rounded-lg inline-block">
                 {selectedBook.category || selectedBook.genre}
               </span>
 

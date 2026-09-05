@@ -14,6 +14,7 @@ const { paramIdSchema } = require('../validations/common.validation');
 
 router.use(protect);
 
+router.route('/').get(getMyNotifications);
 router.route('/me').get(getMyNotifications);
 router.route('/history').get(getNotificationHistory);
 router.route('/read-all').patch(markAllAsRead);

@@ -556,6 +556,11 @@ const initCronJobs = () => {
     runJob('Daily Payment Reconciliation', runDailyPaymentReconciliation);
   });
 
+  // Stale Registration Cleanup: Daily at 4:00 AM
+  cron.schedule('0 4 * * *', () => {
+    runJob('Stale Registration Cleanup', runRegistrationCleanup);
+  });
+
   logger.info('Cron jobs initialized successfully.');
 };
 
@@ -714,6 +719,21 @@ const runDailyPaymentReconciliation = async (options = {}) => {
   };
 };
 
+/**
+ * JOB 10: Stale Registration Cleanup (Issue 6.2)
+ * Prunes unverified registration requests older than 7 days.
+ */
+const runRegistrationCleanup = async () => {
+  const RegistrationRequest = require('../models/RegistrationRequest');
+  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const result = await RegistrationRequest.deleteMany({
+    status: 'unverified',
+    createdAt: { $lt: cutoff },
+  });
+  logger.info(`Pruned ${result.deletedCount || 0} stale unverified registration requests.`);
+  return result.deletedCount || 0;
+};
+
 module.exports = {
   initCronJobs,
   runJob,
@@ -726,4 +746,5 @@ module.exports = {
   runWeeklyLeaderboardSnapshot,
   runNightlyRecommendations,
   runDailyPaymentReconciliation,
+  runRegistrationCleanup,
 };

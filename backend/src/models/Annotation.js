@@ -15,8 +15,7 @@ const annotationSchema = new mongoose.Schema(
       index: true,
     },
     bookId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'EResource',
+      type: mongoose.Schema.Types.Mixed,
       required: true,
       index: true,
     },

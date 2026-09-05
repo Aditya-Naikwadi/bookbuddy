@@ -4,7 +4,7 @@ const DashboardStatsSnapshot = require('../models/DashboardStatsSnapshot');
 const mongoose = require('mongoose');
 const logger = require('./logger');
 
-const STATS_CACHE_TTL = 300; // 5 minutes
+const STATS_CACHE_TTL = 60; // 60 seconds
 
 const getCacheKey = (collegeId) => `dashboard:stats:${collegeId || 'global'}`;
 
@@ -150,13 +150,15 @@ const getOrComputeStats = async (collegeId) => {
 
 // Invalidate precomputed stats cache on book mutations
 const invalidateStatsCache = async (collegeId) => {
-  const cacheKey = getCacheKey(collegeId);
   if (redisClient && redisClient.status === 'ready') {
     try {
-      await redisClient.del(cacheKey);
-      logger.info(`Invalidated dashboard stats cache for key: ${cacheKey}`);
+      const keys = Array.from(new Set([getCacheKey(collegeId), getCacheKey('global')]));
+      for (const key of keys) {
+        await redisClient.del(key);
+      }
+      logger.info(`Invalidated dashboard stats cache for keys: ${keys.join(', ')}`);
     } catch (err) {
-      logger.warn(`Failed to invalidate dashboard stats cache for key ${cacheKey}:`, err);
+      logger.warn(`Failed to invalidate dashboard stats cache:`, err);
     }
   }
 };

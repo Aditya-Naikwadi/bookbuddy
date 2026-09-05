@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "../store/toastStore";
 
 const LOCAL_STORAGE_KEY = "bookbuddy_public_bookmarks";
 
@@ -23,12 +24,14 @@ export const useLocalBookmarks = () => {
   const addBookmark = (item) => {
     setBookmarks((prev) => {
       if (prev.some((b) => b.id === item.id || b._id === item._id)) return prev;
+      toast.success("Bookmark Saved", `Saved "${item.title || "Item"}" to your collection.`);
       return [...prev, { ...item, savedAt: new Date().toISOString() }];
     });
   };
 
   const removeBookmark = (id) => {
     setBookmarks((prev) => prev.filter((b) => (b.id || b._id) !== id));
+    toast.info("Bookmark Removed", "Item removed from saved collection.");
   };
 
   const toggleBookmark = (item) => {
@@ -46,6 +49,7 @@ export const useLocalBookmarks = () => {
 
   const clearBookmarks = () => {
     setBookmarks([]);
+    toast.info("Collection Cleared", "All saved items removed.");
   };
 
   return {

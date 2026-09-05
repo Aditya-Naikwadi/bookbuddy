@@ -43,9 +43,19 @@ const NotificationCenter = () => {
     };
   }, []);
 
-  // Listen to Socket.io events
+  const [isSocketConnected, setIsSocketConnected] = useState(
+    () => (socket ? socket.connected : true),
+  );
+
+  // Listen to Socket.io events & connection state
   useEffect(() => {
     if (!socket) return;
+
+    const handleConnect = () => setIsSocketConnected(true);
+    const handleDisconnect = () => setIsSocketConnected(false);
+
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
 
     const handleNewNotification = (newNotif) => {
       setNotifications((prev) => [
@@ -67,6 +77,8 @@ const NotificationCenter = () => {
     socket.on("loan:updated", handleNewNotification);
 
     return () => {
+      socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
       socket.off("notification:new", handleNewNotification);
       socket.off("streak:updated", handleNewNotification);
       socket.off("loan:updated", handleNewNotification);
@@ -137,6 +149,13 @@ const NotificationCenter = () => {
                 </button>
               )}
             </div>
+
+            {!isSocketConnected && (
+              <div className="px-3 py-1.5 bg-amber-500/10 dark:bg-amber-950/40 border-b border-amber-500/20 text-[10px] font-semibold text-amber-600 dark:text-amber-300 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                <span>Reconnecting live updates...</span>
+              </div>
+            )}
 
             <div className="max-h-[300px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
               {notifications.length === 0 ? (

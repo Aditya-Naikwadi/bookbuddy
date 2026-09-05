@@ -1,4 +1,5 @@
 import { io } from "socket.io-client";
+import { getInMemoryToken } from "../api/client";
 
 const getSocketUrl = () => {
   const envUrl =
@@ -12,9 +13,17 @@ const getSocketUrl = () => {
 const SOCKET_URL = getSocketUrl();
 
 const socket = io(SOCKET_URL, {
-  autoConnect: false, // Connected manually upon authentication
+  autoConnect: false,
   reconnectionAttempts: 5,
   reconnectionDelay: 1000,
+  auth: (cb) => {
+    const token =
+      getInMemoryToken() ||
+      (typeof localStorage !== "undefined"
+        ? localStorage.getItem("token")
+        : null);
+    cb({ token: token || undefined });
+  },
 });
 
 socket.on("connect_error", (err) => {
@@ -24,6 +33,12 @@ socket.on("connect_error", (err) => {
 });
 
 export const connectSocket = () => {
+  const token =
+    getInMemoryToken() ||
+    (typeof localStorage !== "undefined"
+      ? localStorage.getItem("token")
+      : null);
+  socket.auth = { token: token || undefined };
   if (!socket.connected) {
     socket.connect();
   }

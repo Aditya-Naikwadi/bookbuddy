@@ -214,6 +214,17 @@ const GeneralSearch = () => {
     return [...physical, ...uniqueAggregated];
   }, [searchData?.books, aggregatedData?.books]);
 
+  // Auto-cap out-of-bounds page parameter if filters reduce result count
+  useEffect(() => {
+    const pageParam = parseInt(searchParams.get("page") || "1", 10);
+    const totalPages = Math.max(1, Math.ceil(catalogBooks.length / 50));
+    if (pageParam > totalPages) {
+      const next = new URLSearchParams(searchParams);
+      next.set("page", "1");
+      setSearchParams(next, { replace: true });
+    }
+  }, [catalogBooks.length, searchParams, setSearchParams]);
+
   // Compute stat summary metrics
   const stats = useMemo(() => {
     const available = catalogBooks.filter(

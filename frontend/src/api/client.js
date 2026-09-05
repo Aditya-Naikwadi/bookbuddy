@@ -1,6 +1,7 @@
 import axios from "axios";
 
-let inMemoryAccessToken = null;
+let inMemoryAccessToken =
+  typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
 let inMemoryCsrfToken = null;
 
 export const getInMemoryToken = () => inMemoryAccessToken;
@@ -27,6 +28,14 @@ const rawBaseUrl =
 
 const getBaseUrl = (raw) => {
   if (!raw) return "/api/v1";
+  // Enforce relative Vite proxy path in local dev to avoid cross-port cookie drops
+  if (
+    typeof window !== "undefined" &&
+    (raw.includes("localhost:5000") || raw.includes("127.0.0.1:5000")) &&
+    window.location.hostname === "localhost"
+  ) {
+    return "/api/v1";
+  }
   if (raw.startsWith("/")) return raw;
   const trimmed = raw.replace(/\/$/, "");
   return trimmed.endsWith("/api/v1") ? trimmed : `${trimmed}/api/v1`;
@@ -60,8 +69,13 @@ export const fetchCsrfToken = async () => {
 // Request Interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    if (inMemoryAccessToken) {
-      config.headers.Authorization = `Bearer ${inMemoryAccessToken}`;
+    const token =
+      inMemoryAccessToken ||
+      (typeof localStorage !== "undefined"
+        ? localStorage.getItem("token")
+        : null);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     // Attach CSRF header on state-changing requests

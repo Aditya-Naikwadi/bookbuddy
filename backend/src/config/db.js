@@ -27,7 +27,7 @@ mongoose.connection.on('disconnected', () => {
 });
 
 const connectDB = async () => {
-  const mongoUri = env.MONGO_URI;
+  const mongoUri = process.env.MONGO_URI;
 
   if (!mongoUri) {
     const errorMsg =
@@ -67,7 +67,9 @@ const connectDB = async () => {
 
   const isProd = config.nodeEnv === 'production' || !!env.RENDER;
   const primaryUri = mongoUri || config.mongoUri;
-  const fallbackUris = isProd ? [] : ['mongodb://localhost:27017/bookbuddy'];
+  // Fall back to local MongoDB ONLY if no explicit MONGO_URI was specified in environment variables
+  const allowLocalFallback = !mongoUri && !isProd;
+  const fallbackUris = allowLocalFallback ? ['mongodb://localhost:27017/bookbuddy'] : [];
 
   const targetUris = Array.from(new Set([primaryUri, ...fallbackUris])).filter(Boolean);
 

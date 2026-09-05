@@ -4,6 +4,7 @@ import {
   fireEvent,
   waitFor,
   within,
+  act,
 } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
@@ -13,6 +14,14 @@ import * as bookDataHooks from "../../hooks/useBookData";
 import useAuthStore from "../../store/authStore";
 
 const mockNavigate = vi.fn();
+
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key, defaultValue) => defaultValue || key,
+    i18n: { changeLanguage: () => Promise.resolve() },
+  }),
+  I18nextProvider: ({ children }) => children,
+}));
 
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
@@ -200,13 +209,15 @@ describe("GeneralDashboardHome Component & Navigation Integrity", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/college-admin/bulk-upload");
 
     // B. Student user
-    useAuthStore.setState({
-      user: {
-        _id: "user-stu-1",
-        name: "Student",
-        role: "student",
-        collegeId: "col-1",
-      },
+    act(() => {
+      useAuthStore.setState({
+        user: {
+          _id: "user-stu-1",
+          name: "Student",
+          role: "student",
+          collegeId: "col-1",
+        },
+      });
     });
 
     rerender(
