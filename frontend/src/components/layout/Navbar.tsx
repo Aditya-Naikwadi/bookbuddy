@@ -6,11 +6,10 @@ import { ThemeToggle } from "../common/ThemeToggle";
 
 const NAV_ITEMS = [
   { label: "Features", target: "#features" },
-  { label: "E-Books", target: "#e-books" },
-  { label: "Streaks", target: "#streak" },
+  { label: "E-Resources", target: "#e-resources" },
+  { label: "Catalog Search", target: "#catalog-search" },
+  { label: "Streaks", target: "#streaks" },
   { label: "How It Works", target: "#how-it-works" },
-  { label: "E-Resources", target: "/general-dashboard/e-resources" },
-  { label: "Catalog Search", target: "/general-dashboard/search" },
 ];
 
 const NavbarComponent = () => {
@@ -68,10 +67,32 @@ const NavbarComponent = () => {
 
   const handleNavClick = (target: string) => {
     closeMenu();
+    if (target === "#" || target === "") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     if (target.startsWith("#")) {
-      const element = document.querySelector(target);
+      const id = target.substring(1);
+      const element =
+        document.getElementById(id) ||
+        document.querySelector(target) ||
+        (id === "library" || id === "catalog"
+          ? document.getElementById("catalog-search")
+          : null) ||
+        (id === "e-books"
+          ? document.getElementById("e-resources")
+          : null) ||
+        (id === "streak"
+          ? document.getElementById("streaks")
+          : null);
+
       if (element) {
         element.scrollIntoView({ behavior: "smooth" });
+      } else {
+        const queryEl = document.querySelector(`[data-section="${id}"]`);
+        if (queryEl) {
+          queryEl.scrollIntoView({ behavior: "smooth" });
+        }
       }
     } else {
       navigate(target);

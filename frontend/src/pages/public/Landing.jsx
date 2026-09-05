@@ -7,6 +7,7 @@ import { Footer } from "../../components/layout/Footer";
 import { Hero } from "../../sections/Hero";
 import { Features } from "../../sections/Features";
 import { EResources } from "../../sections/EResources";
+import { CatalogSearch } from "../../sections/CatalogSearch";
 import { StreakShowcase } from "../../sections/StreakShowcase";
 import { HowItWorks } from "../../sections/HowItWorks";
 import { PatronCardSection } from "../../sections/PatronCard";
@@ -48,6 +49,7 @@ const Landing = () => {
       <Hero />
       <Features />
       <EResources />
+      <CatalogSearch />
       <StreakShowcase />
       <HowItWorks />
       <PatronCardSection />
