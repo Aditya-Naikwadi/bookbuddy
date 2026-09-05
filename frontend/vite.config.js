@@ -31,7 +31,7 @@ export default defineConfig({
         ws: true,
         configure: (proxy) => {
           proxy.on("error", (err, _req, res) => {
-            if (res && !res.headersSent) {
+            if (res && typeof res.writeHead === "function" && !res.headersSent) {
               res.writeHead(502, { "Content-Type": "application/json" });
               res.end(
                 JSON.stringify({
@@ -51,7 +51,7 @@ export default defineConfig({
         secure: false,
         configure: (proxy) => {
           proxy.on("error", (err, _req, res) => {
-            if (res && !res.headersSent) {
+            if (res && typeof res.writeHead === "function" && !res.headersSent) {
               res.writeHead(502, { "Content-Type": "application/json" });
               res.end(
                 JSON.stringify({

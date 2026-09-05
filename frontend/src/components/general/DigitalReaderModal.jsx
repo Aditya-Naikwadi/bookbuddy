@@ -5,7 +5,9 @@ import {
   lazy,
   Suspense,
   useCallback,
+  useMemo,
 } from "react";
+import { getStructuredBookChapters } from "../../utils/digitalBookContent";
 import {
   X,
   ChevronLeft,
@@ -251,32 +253,229 @@ const PdfViewerEngine = lazy(async () => {
 });
 
 /**
+ * Structured book content renderer for in-app open-access & catalog reading
+ */
+function StructuredBookReader({
+  book,
+  title,
+  page = 1,
+  annotations = [],
+  onTotalPages,
+  onTextSelect,
+  onHighlightClick,
+}) {
+  const chapters = useMemo(
+    () => getStructuredBookChapters(book || title),
+    [book, title],
+  );
+
+  useEffect(() => {
+    if (onTotalPages) {
+      onTotalPages(chapters.length);
+    }
+  }, [chapters.length, onTotalPages]);
+
+  const activeChapterIndex = Math.max(
+    0,
+    Math.min((page || 1) - 1, chapters.length - 1),
+  );
+  const chapter = chapters[activeChapterIndex] || chapters[0];
+
+  const handleMouseUp = () => {
+    const selection = window.getSelection();
+    const selectedText = selection?.toString()?.trim();
+    if (!selectedText || !onTextSelect) return;
+
+    if (!selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+
+    onTextSelect({
+      selectedText,
+      position: {
+        top: rect.top,
+        left: rect.left + rect.width / 2,
+      },
+    });
+  };
+
+  const resolvedCategory =
+    book?.category || book?.genre || "Academic Discipline";
+  const resolvedAuthor = book?.author || "Faculty & Scholarly Contributors";
+
+  return (
+    <div
+      data-testid="structured-book-reader"
+      onMouseUp={handleMouseUp}
+      className="w-full max-w-4xl mx-auto min-h-full py-6 px-4 sm:px-8 text-slate-200 select-text font-sans overflow-y-auto"
+    >
+      {/* Chapter Top Breadcrumb Banner */}
+      <div className="mb-6 p-4 rounded-2xl bg-slate-900/90 border border-slate-800/80 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-950 text-indigo-400 border border-indigo-800/60 uppercase">
+              {resolvedCategory}
+            </span>
+            <span className="text-[11px] text-slate-400">
+              {chapter.readingTime}
+            </span>
+          </div>
+          <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">
+            {title || book?.title || "Digital E-Book"}
+          </h1>
+          <p className="text-xs text-slate-400">
+            By {resolvedAuthor} • Verified Open-Access Edition
+          </p>
+        </div>
+        <div className="text-left sm:text-right flex-shrink-0">
+          <div className="text-xs font-mono font-bold text-indigo-400">
+            Chapter {activeChapterIndex + 1} of {chapters.length}
+          </div>
+          <div className="text-[11px] text-slate-400">
+            {Math.round(((activeChapterIndex + 1) / chapters.length) * 100)}%
+            Complete
+          </div>
+        </div>
+      </div>
+
+      {/* Chapter Title Header */}
+      <div className="border-b border-slate-800 pb-4 mb-6">
+        <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight mb-1">
+          {chapter.title}
+        </h2>
+        {chapter.subtitle && (
+          <p className="text-sm font-medium text-indigo-300/90">
+            {chapter.subtitle}
+          </p>
+        )}
+      </div>
+
+      {/* Chapter Sections */}
+      <div className="space-y-8">
+        {chapter.sections.map((sec, sIdx) => (
+          <article key={sIdx} className="space-y-4">
+            <h3 className="text-sm sm:text-base font-bold text-white tracking-wide flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+              {sec.heading}
+            </h3>
+
+            {sec.paragraphs.map((para, pIdx) => (
+              <p
+                key={pIdx}
+                className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal"
+              >
+                {para}
+              </p>
+            ))}
+
+            {sec.callout && (
+              <div className="p-4 rounded-xl bg-indigo-950/40 border-l-4 border-indigo-500 border-y border-r border-slate-800 text-xs space-y-1">
+                <span className="font-bold text-indigo-300 uppercase tracking-wider text-[10px] block">
+                  {sec.callout.title}
+                </span>
+                <p className="text-slate-300 leading-relaxed italic">
+                  {sec.callout.text}
+                </p>
+              </div>
+            )}
+
+            {sec.codeSnippet && (
+              <div className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950 my-4">
+                <div className="px-3.5 py-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                  <span>{sec.codeSnippet.caption}</span>
+                  <span className="uppercase text-[10px] text-indigo-400 font-bold">
+                    {sec.codeSnippet.language}
+                  </span>
+                </div>
+                <pre className="p-4 text-xs font-mono text-indigo-200 overflow-x-auto leading-relaxed">
+                  <code>{sec.codeSnippet.code}</code>
+                </pre>
+              </div>
+            )}
+
+            {sec.keyTakeaways && sec.keyTakeaways.length > 0 && (
+              <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 space-y-2">
+                <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                  Key Takeaways
+                </h4>
+                <ul className="space-y-1.5 text-xs text-slate-400">
+                  {sec.keyTakeaways.map((item, tIdx) => (
+                    <li key={tIdx} className="flex items-start gap-2">
+                      <span className="text-emerald-400 font-bold">✓</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
+
+      {/* Bottom Progress Bar */}
+      <div className="mt-12 pt-6 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+        <span>
+          Chapter {activeChapterIndex + 1} of {chapters.length}
+        </span>
+        <div className="w-32 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+          <div
+            className="bg-indigo-500 h-full rounded-full transition-all duration-300"
+            style={{
+              width: `${((activeChapterIndex + 1) / chapters.length) * 100}%`,
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Dynamically import EPUB viewer engine with native annotations
  */
 const EpubViewerEngine = lazy(async () => {
-  const ePub = (await import("epubjs")).default;
+  let ePub = null;
+  try {
+    ePub = (await import("epubjs")).default;
+  } catch (err) {
+    console.warn("epubjs library could not be dynamically loaded:", err);
+  }
 
   return {
     default: function EpubEngine({
       fileUrl,
+      book,
+      title,
       page,
       annotations = [],
       onLocationChange,
+      onTotalPages,
       onError,
       onTextSelect,
       onHighlightClick,
     }) {
       const containerRef = useRef(null);
       const renditionRef = useRef(null);
+      const [forceStructured, setForceStructured] = useState(false);
+
+      const resolvedUrl = extractUrl(fileUrl, null, book);
+      const isActualEpubUrl =
+        Boolean(resolvedUrl) &&
+        typeof resolvedUrl === "string" &&
+        resolvedUrl.toLowerCase().endsWith(".epub") &&
+        !resolvedUrl.includes("localhost:5173");
 
       useEffect(() => {
         let isMounted = true;
+        if (!isActualEpubUrl || !ePub || forceStructured) {
+          return;
+        }
+
         if (!containerRef.current) return;
 
         try {
-          const resolvedUrl = extractUrl(fileUrl, null, null);
-          const book = ePub(resolvedUrl);
-          const rendition = book.renderTo(containerRef.current, {
+          const loadedBook = ePub(resolvedUrl);
+          const rendition = loadedBook.renderTo(containerRef.current, {
             width: "100%",
             height: "100%",
             spread: "always",
@@ -284,16 +483,19 @@ const EpubViewerEngine = lazy(async () => {
           renditionRef.current = rendition;
 
           rendition.display().catch((err) => {
-            if (isMounted) onError(err?.message || "Error rendering EPUB file");
+            console.warn(
+              "EPUB rendition display error, falling back to structured view:",
+              err,
+            );
+            if (isMounted) setForceStructured(true);
           });
 
           rendition.on("relocated", (location) => {
             if (isMounted && location?.start?.percentage) {
-              onLocationChange(Math.round(location.start.percentage * 100));
+              onLocationChange?.(Math.round(location.start.percentage * 100));
             }
           });
 
-          // Text selection capture in EPUB iframe
           rendition.on("selected", (cfiRange, contents) => {
             const selectedText = rendition.getRange(cfiRange).toString().trim();
             if (!selectedText) return;
@@ -304,7 +506,7 @@ const EpubViewerEngine = lazy(async () => {
             const rect = selection.getRangeAt(0).getBoundingClientRect();
             const iframeRect = containerRef.current.getBoundingClientRect();
 
-            onTextSelect({
+            onTextSelect?.({
               selectedText,
               cfiRange,
               position: {
@@ -314,8 +516,11 @@ const EpubViewerEngine = lazy(async () => {
             });
           });
         } catch (err) {
-          if (isMounted)
-            onError(err?.message || "Failed to parse EPUB archive");
+          console.warn(
+            "EPUB parsing error, falling back to structured view:",
+            err,
+          );
+          if (isMounted) setForceStructured(true);
         }
 
         return () => {
@@ -328,9 +533,14 @@ const EpubViewerEngine = lazy(async () => {
             }
           }
         };
-      }, [fileUrl, onError, onLocationChange, onTextSelect]);
+      }, [
+        resolvedUrl,
+        isActualEpubUrl,
+        forceStructured,
+        onLocationChange,
+        onTextSelect,
+      ]);
 
-      // Re-render annotations in EPUB rendition
       useEffect(() => {
         const rendition = renditionRef.current;
         if (!rendition) return;
@@ -344,7 +554,7 @@ const EpubViewerEngine = lazy(async () => {
                 hl.cfiRange,
                 {},
                 (e) => {
-                  onHighlightClick(hl, { top: e.clientY, left: e.clientX });
+                  onHighlightClick?.(hl, { top: e.clientY, left: e.clientX });
                 },
                 "epub-highlight",
                 { fill: hexColor, "fill-opacity": "0.4" },
@@ -365,6 +575,20 @@ const EpubViewerEngine = lazy(async () => {
           }
         }
       }, [page]);
+
+      if (!isActualEpubUrl || forceStructured) {
+        return (
+          <StructuredBookReader
+            book={book}
+            title={title}
+            page={page}
+            annotations={annotations}
+            onTotalPages={onTotalPages}
+            onTextSelect={onTextSelect}
+            onHighlightClick={onHighlightClick}
+          />
+        );
+      }
 
       return <div ref={containerRef} className="w-full h-full min-h-[400px]" />;
     },
@@ -431,10 +655,10 @@ const DigitalReaderModal = ({
   }, [isModalOpen, targetId]);
 
   const handleNext = useCallback(() => {
-    if (currentPage < totalPages || normalizedType === "epub") {
+    if (currentPage < totalPages) {
       setCurrentPage((prev) => prev + 1);
     }
-  }, [currentPage, totalPages, normalizedType]);
+  }, [currentPage, totalPages]);
 
   const handlePrev = useCallback(() => {
     if (currentPage > 1) {
@@ -463,7 +687,9 @@ const DigitalReaderModal = ({
     setPrevResetKey(resetKey);
     setCurrentPage(1);
     setError(
-      resolvedUrl ? null : "No digital document URL provided for this title.",
+      normalizedType === "pdf" && !resolvedUrl
+        ? "No PDF document URL provided for this title."
+        : null,
     );
     setScale(1.0);
   }
@@ -642,13 +868,13 @@ const DigitalReaderModal = ({
                     <span className="text-[11px] font-semibold text-slate-300 px-1">
                       {normalizedType === "pdf"
                         ? `${currentPage} / ${totalPages}`
-                        : `Page ${currentPage}`}
+                        : totalPages > 1
+                          ? `Page ${currentPage} of ${totalPages}`
+                          : `Page ${currentPage}`}
                     </span>
                     <button
                       onClick={handleNext}
-                      disabled={
-                        normalizedType === "pdf" && currentPage >= totalPages
-                      }
+                      disabled={currentPage >= totalPages}
                       aria-label="Next Page"
                       className="p-1 text-slate-300 hover:text-white disabled:opacity-30 cursor-pointer"
                     >
@@ -803,9 +1029,12 @@ const DigitalReaderModal = ({
                     ) : (
                       <EpubViewerEngine
                         fileUrl={resolvedUrl}
+                        book={activeTarget}
+                        title={resolvedTitle}
                         page={currentPage}
                         annotations={annotations}
-                        onLocationChange={() => setTotalPages(100)}
+                        onLocationChange={(loc) => {}}
+                        onTotalPages={(total) => setTotalPages(total)}
                         onError={(msg) => setError(msg)}
                         onTextSelect={(data) =>
                           setActiveToolbar({

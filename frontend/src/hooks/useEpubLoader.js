@@ -11,7 +11,10 @@ export const useEpubLoader = (url, viewerRef) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!url || !viewerRef.current) return;
+    if (!url || !viewerRef.current) {
+      setIsLoading(false);
+      return;
+    }
 
     let active = true;
 

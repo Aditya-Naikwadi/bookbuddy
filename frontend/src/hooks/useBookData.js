@@ -167,6 +167,8 @@ export const useBookSearch = (collegeIdParam, filters = {}) => {
     },
     enabled: Boolean(collegeId),
     placeholderData: (previousData) => previousData,
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
 
@@ -186,6 +188,8 @@ export const useBookDetail = (collegeIdParam, bookId) => {
       return data?.data || null;
     },
     enabled: Boolean(collegeId && bookId),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 };
 
@@ -211,6 +215,8 @@ export const useBatchBookDetails = (collegeIdParam, bookIds = []) => {
       return data?.data || [];
     },
     enabled: Boolean(collegeId && joinedIds),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 };
 
@@ -233,6 +239,8 @@ export const useAggregatedBooks = (filters = {}) => {
       };
     },
     placeholderData: (previousData) => previousData,
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
 

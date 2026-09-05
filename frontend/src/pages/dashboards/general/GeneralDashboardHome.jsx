@@ -1,4 +1,13 @@
-import { useState, useRef, useEffect, useMemo, useCallback, memo } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+  memo,
+  lazy,
+  Suspense,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -30,6 +39,10 @@ import { useTranslation } from "react-i18next";
 import { initWebVitalsTelemetry } from "../../../utils/webVitalsTelemetry";
 import useBookAvailability from "../../../hooks/useBookAvailability";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
+
+const DigitalReaderModal = lazy(
+  () => import("../../../components/general/DigitalReaderModal"),
+);
 
 const GeneralDashboardHome = () => {
   const navigate = useNavigate();
@@ -68,6 +81,7 @@ const GeneralDashboardHome = () => {
   };
 
   const [selectedBook, setSelectedBook] = useState(null);
+  const [activeDigitalBook, setActiveDigitalBook] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -138,7 +152,7 @@ const GeneralDashboardHome = () => {
   return (
     <div className="flex flex-col w-full max-w-[1600px] 2xl:max-w-[1760px] mx-auto gap-2.5 sm:gap-3 font-sans pb-2 text-slate-900 dark:text-ink min-h-0">
       {/* Header Row & Scoped Search Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-surface p-3 px-4 rounded-2xl border border-slate-200 dark:border-edge shadow-md flex-shrink-0">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white/95 dark:bg-surface/95 backdrop-blur-md p-3 px-4 rounded-2xl border border-slate-200/80 dark:border-edge/80 shadow-xs flex-shrink-0">
         <div className="flex items-center gap-3 flex-shrink-0">
           <div className="p-2 bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60 rounded-xl flex-shrink-0">
             <BookOpen className="w-5 h-5" />
@@ -254,7 +268,7 @@ const GeneralDashboardHome = () => {
             onClick={handleRefresh}
             disabled={isLoading}
             title="Refresh dashboard data"
-            className="p-2 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition-all disabled:opacity-50"
+            className="p-2 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition-all disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw
               className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
@@ -330,7 +344,7 @@ const GeneralDashboardHome = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Library Hours Card */}
               <DashboardErrorBoundary widgetName="Library Hours">
-                <div className="bg-white dark:bg-surface p-3.5 rounded-2xl border border-slate-200 dark:border-edge shadow-md flex flex-col justify-between">
+                <div className="bg-white dark:bg-surface p-3.5 rounded-2xl border border-slate-200/80 dark:border-edge/80 shadow-xs hover:border-slate-300 dark:hover:border-slate-700/80 transition-all duration-200 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
@@ -339,12 +353,15 @@ const GeneralDashboardHome = () => {
                       </span>
                     </div>
                     <span
-                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full border inline-flex items-center gap-1.5 ${
                         isOpen && !libraryHours.isClosedToday
-                          ? "bg-emerald-50 dark:bg-emerald-950/90 text-emerald-600 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/80"
-                          : "bg-rose-50 dark:bg-rose-950/90 text-rose-600 dark:text-rose-300 border-rose-200 dark:border-rose-800/80"
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                          : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30"
                       }`}
                     >
+                      {isOpen && !libraryHours.isClosedToday && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      )}
                       {isOpen && !libraryHours.isClosedToday
                         ? t("openNow", "Open Now")
                         : t("closed", "Closed")}
@@ -365,7 +382,7 @@ const GeneralDashboardHome = () => {
                     </div>
                     <div className="w-full bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-full h-1.5 overflow-hidden">
                       <div
-                        className="bg-indigo-500 h-full rounded-full transition-all duration-500 shadow-sm"
+                        className="bg-gradient-to-r from-indigo-500 to-indigo-400 h-full rounded-full transition-all duration-500 shadow-xs"
                         style={{ width: `${progressPct}%` }}
                       />
                     </div>
@@ -381,19 +398,19 @@ const GeneralDashboardHome = () => {
                   onRetry={handleRefresh}
                   collegeName={user?.collegeName}
                 >
-                  <div className="bg-white dark:bg-surface p-3.5 rounded-2xl border border-slate-200 dark:border-edge shadow-md flex items-center justify-between">
+                  <div className="bg-white dark:bg-surface p-3.5 rounded-2xl border border-slate-200/80 dark:border-edge/80 shadow-xs hover:border-slate-300 dark:hover:border-slate-700/80 transition-all duration-200 flex items-center justify-between">
                     <div className="min-w-0">
                       <span className="text-xs font-bold text-slate-500 dark:text-muted block truncate">
                         {t("totalCatalogBooks", "Total Catalog Books")}
                       </span>
-                      <span className="text-2xl font-bold text-slate-900 dark:text-ink">
+                      <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-ink tracking-tight">
                         {(
                           stats?.totalCatalogBooks ||
                           stats?.totalBooks ||
                           0
                         ).toLocaleString()}
                       </span>
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold block mt-0.5">
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">
                         +{stats?.addedThisMonth || stats?.newArrivalsCount || 0}{" "}
                         {t("addedThisMonth", "added this month")}
                       </span>
@@ -417,7 +434,7 @@ const GeneralDashboardHome = () => {
                 onRetry={handleRefresh}
                 collegeName={user?.collegeName}
               >
-                <div className="bg-white dark:bg-surface p-3.5 rounded-2xl border border-slate-200 dark:border-edge shadow-md flex flex-col justify-between">
+                <div className="bg-white dark:bg-surface p-3.5 rounded-2xl border border-slate-200/80 dark:border-edge/80 shadow-xs hover:border-slate-300 dark:hover:border-slate-700/80 transition-all duration-200 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-1.5">
                       <Sparkles className="w-4 h-4 text-amber-500 dark:text-amber-400" />
@@ -447,7 +464,7 @@ const GeneralDashboardHome = () => {
                         <button
                           key={item._id || item.id || i}
                           onClick={() => setSelectedBook(item)}
-                          className="bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-edge text-slate-900 dark:text-ink text-[10px] font-bold h-14 flex flex-col justify-between hover:border-indigo-500/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all shadow-xs text-left relative overflow-hidden group cursor-pointer"
+                          className="bg-slate-50/80 dark:bg-slate-900/80 p-2 rounded-xl border border-slate-200/80 dark:border-edge text-slate-900 dark:text-ink text-[10px] font-bold h-14 flex flex-col justify-between hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800/90 transition-all duration-150 shadow-xs text-left relative overflow-hidden group cursor-pointer hover:-translate-y-0.5"
                         >
                           <span className="line-clamp-2 leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
                             {item.title}
@@ -471,7 +488,7 @@ const GeneralDashboardHome = () => {
                 onRetry={handleRefresh}
                 collegeName={user?.collegeName}
               >
-                <div className="bg-white dark:bg-surface p-3.5 rounded-2xl border border-slate-200 dark:border-edge shadow-md flex flex-col justify-between">
+                <div className="bg-white dark:bg-surface p-3.5 rounded-2xl border border-slate-200/80 dark:border-edge/80 shadow-xs hover:border-slate-300 dark:hover:border-slate-700/80 transition-all duration-200 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-slate-900 dark:text-ink">
                       {t("categoryDistribution", "Category Distribution")}
@@ -496,11 +513,11 @@ const GeneralDashboardHome = () => {
         {(activeTab === "overview" || activeTab === "actions") && (
           <div className="lg:col-span-7 flex flex-col gap-3 min-h-0">
             {/* Quick Action Button Row */}
-            <div className="bg-white dark:bg-surface p-2.5 rounded-2xl border border-slate-200 dark:border-edge shadow-md flex-shrink-0">
+            <div className="bg-white dark:bg-surface p-2.5 rounded-2xl border border-slate-200/80 dark:border-edge/80 shadow-xs flex-shrink-0">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button
                   onClick={() => navigate("/general-dashboard/search")}
-                  className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-edge text-slate-900 dark:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-indigo-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
+                  className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-edge text-slate-900 dark:text-ink hover:bg-white dark:hover:bg-slate-800 hover:border-indigo-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
                 >
                   <Search className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
                   <span>Search Catalog</span>
@@ -508,7 +525,7 @@ const GeneralDashboardHome = () => {
 
                 <button
                   onClick={() => navigate("/general-dashboard/e-resources")}
-                  className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-edge text-slate-900 dark:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-emerald-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
+                  className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-edge text-slate-900 dark:text-ink hover:bg-white dark:hover:bg-slate-800 hover:border-emerald-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
                 >
                   <FileText className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
                   <span>E-Resources</span>
@@ -516,7 +533,7 @@ const GeneralDashboardHome = () => {
 
                 <button
                   onClick={() => navigate("/general-dashboard/saved")}
-                  className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-edge text-slate-900 dark:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-purple-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
+                  className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-edge text-slate-900 dark:text-ink hover:bg-white dark:hover:bg-slate-800 hover:border-purple-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
                 >
                   <Bookmark className="w-4 h-4 text-purple-500 dark:text-purple-400 shrink-0" />
                   <span>My Bookmarks</span>
@@ -526,7 +543,7 @@ const GeneralDashboardHome = () => {
                 user?.role === "super-admin" ? (
                   <button
                     onClick={() => navigate("/college-admin/bulk-upload")}
-                    className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-edge text-slate-900 dark:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-amber-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
+                    className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-edge text-slate-900 dark:text-ink hover:bg-white dark:hover:bg-slate-800 hover:border-amber-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
                   >
                     <Upload className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" />
                     <span>Upload Students</span>
@@ -534,7 +551,7 @@ const GeneralDashboardHome = () => {
                 ) : user?.role === "student" ? (
                   <button
                     onClick={() => navigate("/lab-booking")}
-                    className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-edge text-slate-900 dark:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-sky-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
+                    className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-edge text-slate-900 dark:text-ink hover:bg-white dark:hover:bg-slate-800 hover:border-sky-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
                   >
                     <FlaskConical className="w-4 h-4 text-sky-500 dark:text-sky-400 shrink-0" />
                     <span>Lab Booking</span>
@@ -544,7 +561,7 @@ const GeneralDashboardHome = () => {
                     onClick={() =>
                       navigate("/general-dashboard/search?sortBy=newest")
                     }
-                    className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-edge text-slate-900 dark:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-indigo-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
+                    className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-edge text-slate-900 dark:text-ink hover:bg-white dark:hover:bg-slate-800 hover:border-indigo-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"
                   >
                     <Sparkles className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
                     <span>Latest Arrivals</span>
@@ -555,7 +572,7 @@ const GeneralDashboardHome = () => {
 
             {/* Popular Books Horizontal Carousel */}
             <DashboardErrorBoundary widgetName="Popular Carousel">
-              <div className="bg-white dark:bg-surface p-3.5 sm:p-4 rounded-2xl border border-slate-200 dark:border-edge shadow-md flex-1 flex flex-col justify-between min-h-0">
+              <div className="bg-white dark:bg-surface p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-edge/80 shadow-xs hover:border-slate-300 dark:hover:border-slate-700/80 transition-all duration-200 flex-1 flex flex-col justify-between min-h-0">
                 <div className="flex items-center justify-between mb-2.5 flex-shrink-0">
                   <div>
                     <h2 className="text-sm font-bold text-slate-900 dark:text-ink">
@@ -608,7 +625,7 @@ const GeneralDashboardHome = () => {
                             prefersReducedMotion ? {} : { y: -3, scale: 1.01 }
                           }
                           transition={{ duration: 0.15 }}
-                          className="w-56 sm:w-60 flex-shrink-0 bg-slate-50 dark:bg-slate-950/90 rounded-2xl border border-slate-200 dark:border-slate-800/90 p-3 snap-start hover:shadow-xl hover:border-indigo-500/50 transition-all duration-200 flex flex-col justify-between group"
+                          className="w-56 sm:w-60 flex-shrink-0 bg-slate-50/90 dark:bg-slate-950/90 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-3 snap-start hover:shadow-lg hover:border-indigo-500/40 transition-all duration-200 flex flex-col justify-between group"
                         >
                           <div>
                             <div className="relative mb-2">
@@ -758,7 +775,27 @@ const GeneralDashboardHome = () => {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap sm:flex-nowrap gap-2">
+                {(selectedBook.format === "digital" ||
+                  selectedBook.isDigital ||
+                  selectedBook.fileUrl ||
+                  selectedBook.category?.toLowerCase().includes("epub") ||
+                  selectedBook.genre?.toLowerCase().includes("epub") ||
+                  selectedBook.title?.toLowerCase().includes("epub")) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const bookToOpen = selectedBook;
+                      setSelectedBook(null);
+                      setActiveDigitalBook(bookToOpen);
+                    }}
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 cursor-pointer whitespace-nowrap"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>Read Online</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => {
@@ -788,7 +825,7 @@ const GeneralDashboardHome = () => {
                       `/general-dashboard/search?q=${encodeURIComponent(titleQuery)}`,
                     );
                   }}
-                  className="py-2.5 px-3 rounded-xl border border-slate-200 dark:border-edge bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                  className="py-2.5 px-3 rounded-xl border border-slate-200 dark:border-edge bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer whitespace-nowrap"
                 >
                   Search in Catalog
                 </button>
@@ -797,6 +834,25 @@ const GeneralDashboardHome = () => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* In-App Open Access Digital Reader Modal */}
+      <Suspense fallback={null}>
+        <DigitalReaderModal
+          isOpen={Boolean(activeDigitalBook)}
+          onClose={() => setActiveDigitalBook(null)}
+          fileUrl={
+            activeDigitalBook?.fileUrl ||
+            activeDigitalBook?.digitalUrl ||
+            activeDigitalBook?.pdfUrl ||
+            activeDigitalBook?.url
+          }
+          fileType={
+            activeDigitalBook?.fileType || activeDigitalBook?.format || "epub"
+          }
+          title={activeDigitalBook?.title}
+          book={activeDigitalBook}
+        />
+      </Suspense>
     </div>
   );
 };
