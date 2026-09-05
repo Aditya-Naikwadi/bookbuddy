@@ -40,6 +40,8 @@ import { initWebVitalsTelemetry } from "../../../utils/webVitalsTelemetry";
 import useBookAvailability from "../../../hooks/useBookAvailability";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
 
+const EMPTY_ARRAY = [];
+
 const DigitalReaderModal = lazy(
   () => import("../../../components/general/DigitalReaderModal"),
 );
@@ -71,8 +73,8 @@ const GeneralDashboardHome = () => {
   useBookAvailability(collegeId, handleRefresh);
 
   const stats = dashboardPayload?.stats || null;
-  const newArrivals = dashboardPayload?.newArrivals || [];
-  const popularBooks = dashboardPayload?.popularBooks || [];
+  const newArrivals = dashboardPayload?.newArrivals || EMPTY_ARRAY;
+  const popularBooks = dashboardPayload?.popularBooks || EMPTY_ARRAY;
   const announcements = dashboardPayload?.announcements || [];
   const libraryHours = dashboardPayload?.librarySettings || {
     openingHour: "08:00 AM",

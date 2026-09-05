@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import DigitalReaderModal from "../../components/general/DigitalReaderModal";
 import GeneralDashboardHome from "../../pages/dashboards/general/GeneralDashboardHome";
 import * as bookDataHooks from "../../hooks/useBookData";
-import useAuthStore from "../../store/authStore";
 
 // Mock router navigation
 const mockNavigate = vi.fn();

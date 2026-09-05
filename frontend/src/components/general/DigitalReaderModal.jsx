@@ -259,10 +259,10 @@ function StructuredBookReader({
   book,
   title,
   page = 1,
-  annotations = [],
+  _annotations = [],
   onTotalPages,
   onTextSelect,
-  onHighlightClick,
+  _onHighlightClick,
 }) {
   const chapters = useMemo(
     () => getStructuredBookChapters(book || title),
@@ -450,7 +450,7 @@ const EpubViewerEngine = lazy(async () => {
       annotations = [],
       onLocationChange,
       onTotalPages,
-      onError,
+      _onError,
       onTextSelect,
       onHighlightClick,
     }) {
@@ -1033,7 +1033,7 @@ const DigitalReaderModal = ({
                         title={resolvedTitle}
                         page={currentPage}
                         annotations={annotations}
-                        onLocationChange={(loc) => {}}
+                        onLocationChange={(_loc) => {}}
                         onTotalPages={(total) => setTotalPages(total)}
                         onError={(msg) => setError(msg)}
                         onTextSelect={(data) =>

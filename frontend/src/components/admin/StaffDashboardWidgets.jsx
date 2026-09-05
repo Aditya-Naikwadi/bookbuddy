@@ -7,11 +7,8 @@ import {
   BookOpen,
   TrendingUp,
   ArrowRight,
-  Sparkles,
   CheckCircle2,
   Bookmark,
-  Layers,
-  ShoppingBag,
   RotateCcw,
 } from "lucide-react";
 import { getStaffDashboardWidgets } from "../../api/collegeAdminApi";

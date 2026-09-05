@@ -5,17 +5,15 @@ import {
   Eye,
   EyeOff,
   Search,
-  Users,
-  CheckCircle2,
-  AlertTriangle,
   X,
   BookOpen,
   Receipt,
-  FileText,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
 import apiClient from "../../../api/client";
+
+const EMPTY_ARRAY = [];
 
 export default function PatronsDesk() {
   const queryClient = useQueryClient();
@@ -61,7 +59,7 @@ export default function PatronsDesk() {
     },
   });
 
-  const patrons = patronsData?.data || [];
+  const patrons = patronsData?.data || EMPTY_ARRAY;
 
   const filteredPatrons = useMemo(() => {
     return patrons.filter((p) => {

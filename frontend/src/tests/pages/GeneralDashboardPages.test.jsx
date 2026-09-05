@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -7,7 +7,6 @@ import GeneralSaved from "../../pages/dashboards/general/GeneralSaved";
 import GeneralEResources from "../../pages/dashboards/general/GeneralEResources";
 import * as bookDataHooks from "../../hooks/useBookData";
 import useAuthStore from "../../store/authStore";
-import useLocalBookmarks from "../../hooks/useLocalBookmarks";
 
 const mockNavigate = vi.fn();
 

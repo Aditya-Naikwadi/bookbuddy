@@ -9,9 +9,7 @@ import {
   Download,
   FileSpreadsheet,
   Printer,
-  Calendar,
   Filter,
-  CheckCircle2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";

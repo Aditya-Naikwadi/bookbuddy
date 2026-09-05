@@ -1,5 +1,3 @@
-import React from "react";
-
 export const TableSkeleton = ({ rows = 5, cols = 4 }) => (
   <div className="w-full bg-white dark:bg-surface rounded-2xl border border-slate-200 dark:border-edge p-4 shadow-sm animate-pulse space-y-3">
     <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-edge">

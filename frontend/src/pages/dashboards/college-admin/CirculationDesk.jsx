@@ -13,7 +13,7 @@ export default function CirculationDesk() {
   const [lastSyncEvent, setLastSyncEvent] = useState(null);
 
   useEffect(() => {
-    const handleSync = (event) => {
+    const handleSync = (_event) => {
       queryClient.invalidateQueries({ queryKey: ["circulationQueue"] });
       setLastSyncEvent(
         `Real-time sync event received at ${new Date().toLocaleTimeString()}`,

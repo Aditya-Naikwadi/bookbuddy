@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  BookPlus,
-  Loader2,
-  Sparkles,
-  CheckCircle2,
-  AlertCircle,
-} from "lucide-react";
+import { BookPlus, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
 import apiClient from "../../../api/client";
