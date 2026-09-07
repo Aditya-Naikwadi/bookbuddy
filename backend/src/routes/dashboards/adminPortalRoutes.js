@@ -34,11 +34,19 @@ const {
   updateCollegeTier,
   getPredictiveDemandForecast,
   triggerDatabaseRestore,
+  revokeImpersonationToken,
 } = require('../../controllers/dashboards/adminPortalController');
 const { protect, requireRole } = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 const auditLog = require('../../middlewares/auditLog');
-const { createCollegeSchema, createAdminSchema } = require('../../validations/admin.validation');
+const {
+  createCollegeSchema,
+  createAdminSchema,
+  updateUserStatusSchema,
+  updateUserRoleSchema,
+  resetPasswordSchema,
+  updateSystemSettingsSchema,
+} = require('../../validations/admin.validation');
 const { rejectOnboardingSchema } = require('../../validations/registration.validation');
 const { paramIdSchema } = require('../../validations/common.validation');
 
@@ -57,7 +65,7 @@ router
 
 router
   .route('/colleges')
-  .get(listColleges)
+  .get(expensiveRouteLimiter, listColleges)
   .post(validate(createCollegeSchema), auditLog('college.create'), createCollege);
 
 router
@@ -88,10 +96,11 @@ router
 router.route('/onboardings/pending').get(getPendingOnboardings);
 router
   .route('/onboardings/:requestId/approve')
-  .post(auditLog('tenant_onboarding.approve'), approveTenantOnboarding);
+  .post(validate(paramIdSchema), auditLog('tenant_onboarding.approve'), approveTenantOnboarding);
 router
   .route('/onboardings/:requestId/reject')
   .post(
+    validate(paramIdSchema),
     validate(rejectOnboardingSchema),
     auditLog('tenant_onboarding.reject'),
     rejectTenantOnboarding
@@ -101,20 +110,36 @@ router
 router.route('/users').get(getUsers);
 router
   .route('/users/:id/status')
-  .patch(validate(paramIdSchema), auditLog('user.status_update'), updateUserStatus);
+  .patch(
+    validate(paramIdSchema),
+    validate(updateUserStatusSchema),
+    auditLog('user.status_update'),
+    updateUserStatus
+  );
 router
   .route('/users/:id/role')
-  .patch(validate(paramIdSchema), auditLog('user.role_update'), updateUserRole);
+  .patch(
+    validate(paramIdSchema),
+    validate(updateUserRoleSchema),
+    auditLog('user.role_update'),
+    updateUserRole
+  );
 router
   .route('/users/:id/reset-password')
-  .post(validate(paramIdSchema), auditLog('user.reset_password'), resetUserPassword);
+  .post(
+    validate(paramIdSchema),
+    validate(resetPasswordSchema),
+    auditLog('user.reset_password'),
+    resetUserPassword
+  );
 router
   .route('/users/:id/impersonate')
   .post(validate(paramIdSchema), auditLog('user.impersonate'), impersonateUser);
+router.route('/users/revoke-impersonation').post(revokeImpersonationToken);
 
 // Infrastructure Telemetry & Cron Job routes
-router.route('/system/health').get(getSystemHealth);
-router.route('/system/cron-logs').get(getCronLogs);
+router.route('/system/health').get(expensiveRouteLimiter, getSystemHealth);
+router.route('/system/cron-logs').get(expensiveRouteLimiter, getCronLogs);
 router.route('/predictive-forecasting').get(getPredictiveDemandForecast);
 
 // Data Oversight routes
@@ -132,7 +157,11 @@ router
 router
   .route('/settings')
   .get(getSystemSettings)
-  .put(auditLog('system_settings.update'), updateSystemSettings);
+  .put(
+    validate(updateSystemSettingsSchema),
+    auditLog('system_settings.update'),
+    updateSystemSettings
+  );
 router
   .route('/settings/trigger-backup')
   .post(auditLog('system_backup.trigger'), triggerManualBackup);

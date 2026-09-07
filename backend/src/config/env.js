@@ -42,7 +42,9 @@ const envSchema = z.object({
     ? z.string().min(1).default('testjwtsecretkey999')
     : requiredString('JWT_SECRET', 'JWT_SECRET is required', 8),
 
-  JWT_REFRESH_SECRET: z.string().min(1).default('supersecretrefresh123'),
+  JWT_REFRESH_SECRET: isTest
+    ? z.string().min(1).default('supersecretrefresh123')
+    : requiredString('JWT_REFRESH_SECRET', 'JWT_REFRESH_SECRET is required', 8),
   JWT_ACCESS_EXPIRY: z.string().default('15m'),
   JWT_REFRESH_EXPIRY: z.string().default('7d'),
 

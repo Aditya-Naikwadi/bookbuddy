@@ -223,4 +223,84 @@
     outline: 2px solid var(--color-ember, #e66525);
     outline-offset: 2px;
   }
+
+  /* Enterprise Admin Glass Panel & Card System */
+  .admin-glass-card {
+    @apply bg-surface/70 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-lg transition-all duration-300;
+  }
+
+  .admin-glass-card-hover {
+    @apply hover:border-ember/40 hover:shadow-[0_12px_32px_rgba(230,101,37,0.12)] hover:-translate-y-0.5;
+  }
+
+  .admin-stat-card {
+    @apply relative overflow-hidden rounded-2xl bg-surface/60 border border-white/10 p-5 backdrop-blur-md transition-all duration-300 hover:border-white/20;
+  }
+
+  .admin-stat-card::before {
+    content: '';
+    @apply absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-ember via-indigo to-cyan opacity-80;
+  }
+
+  .admin-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide border transition-colors;
+  }
+
+  .admin-badge-success {
+    @apply bg-emerald-500/10 text-emerald-400 border-emerald-500/30;
+  }
+
+  .admin-badge-warning {
+    @apply bg-amber-500/10 text-amber-400 border-amber-500/30;
+  }
+
+  .admin-badge-danger {
+    @apply bg-rose-500/10 text-rose-400 border-rose-500/30;
+  }
+
+  .admin-badge-info {
+    @apply bg-indigo-500/10 text-indigo-400 border-indigo-500/30;
+  }
+
+  /* Skeleton Shimmer Loading Keyframe */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s infinite linear;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Clean Scrollbars for Tables & Modals */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ember, #e66525);
+  }
 }
+

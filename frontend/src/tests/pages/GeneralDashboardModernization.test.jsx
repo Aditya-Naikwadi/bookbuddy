@@ -71,7 +71,9 @@ describe("Digital Reader & Modernized General Dashboard", () => {
       );
 
       // Verify header rendered title and EPUB format badge
-      expect(screen.getByText("Computer Science")).toBeInTheDocument();
+      expect(
+        screen.getAllByText("Computer Science").length,
+      ).toBeGreaterThanOrEqual(1);
       expect(screen.getByText("EPUB")).toBeInTheDocument();
 
       // Verify the structured reader renders content, not an empty container

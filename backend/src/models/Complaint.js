@@ -51,6 +51,8 @@ const complaintSchema = new mongoose.Schema(
   }
 );
 
+complaintSchema.index({ collegeId: 1, status: 1, createdAt: -1 });
+
 const { tenantScopingPlugin } = require('../middlewares/scopeToCollege');
 complaintSchema.plugin(tenantScopingPlugin);
 

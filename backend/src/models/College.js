@@ -183,6 +183,12 @@ collegeSchema.pre('save', async function (next) {
     this.slug = candidateSlug;
   }
 
+  if (['suspended', 'archived'].includes(this.status)) {
+    this.isActive = false;
+  } else if (this.status === 'active' && this.isModified('status')) {
+    this.isActive = true;
+  }
+
   if (this.createdVia && !this.creationPath) {
     this.creationPath = this.createdVia;
   } else if (this.creationPath && !this.createdVia) {
@@ -191,6 +197,28 @@ collegeSchema.pre('save', async function (next) {
   if (typeof next === 'function') {
     next();
   }
+});
+
+// Synchronize status and isActive on query updates
+collegeSchema.pre(['updateOne', 'findOneAndUpdate', 'findByIdAndUpdate'], function (next) {
+  const update = this.getUpdate();
+  if (update) {
+    const status = update.status || (update.$set && update.$set.status);
+    if (['suspended', 'archived'].includes(status)) {
+      if (update.$set) {
+        update.$set.isActive = false;
+      } else {
+        update.isActive = false;
+      }
+    } else if (status === 'active') {
+      if (update.$set) {
+        update.$set.isActive = true;
+      } else {
+        update.isActive = true;
+      }
+    }
+  }
+  if (typeof next === 'function') next();
 });
 
 // Text search index for full-text search across tenant names and codes

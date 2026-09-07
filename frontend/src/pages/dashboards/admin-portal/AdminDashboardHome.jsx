@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Globe,
@@ -35,133 +36,144 @@ export default function AdminDashboardHome() {
   const totalPendingActionItems =
     pendingOnboardings + pendingModerations + openTickets;
 
-  const tiles = [
-    {
-      id: "overview",
-      title: "System Infrastructure & Health",
-      subtitle: "Cluster Telemetry & Metrics",
-      path: "/admin-portal/overview",
-      icon: <Globe className="w-5 h-5 text-indigo-600" />,
-      countLabel: overview
-        ? `${totalColleges} Active Institutions`
-        : "Loading...",
-      badgeStatus: "healthy",
-      badgeText: "Operational",
-      description:
-        "Real-time infrastructure health, database memory, cron job execution logs, and feature adoption rates.",
-    },
-    {
-      id: "users",
-      title: "User Directory & Access Control",
-      subtitle: "Global RBAC & Identity",
-      path: "/admin-portal/users",
-      icon: <Users className="w-5 h-5 text-emerald-600" />,
-      countLabel: overview
-        ? `${totalUsers.toLocaleString()} Registered Users`
-        : "Loading...",
-      badgeStatus: "info",
-      badgeText: "Directory Active",
-      description:
-        "Manage platform-wide user accounts, update security roles, toggle access statuses, and manage user impersonation.",
-    },
-    {
-      id: "colleges",
-      title: "Tenants & College Administrators",
-      subtitle: "Tenant Provisioning & Setup",
-      path: "/admin-portal/college-admins",
-      icon: <Building className="w-5 h-5 text-blue-600" />,
-      countLabel: overview
-        ? `${overview?.userCountsByRole?.["college-admin"] || 0} Admin Accounts`
-        : "Loading...",
-      badgeStatus: "info",
-      badgeText: `${totalColleges} Provisioned`,
-      description:
-        "Provision new college tenants, configure custom institution subdomains, and assign college librarians & administrators.",
-    },
-    {
-      id: "registration-queue",
-      title: "Onboarding Review Queue",
-      subtitle: "Tenant Approvals",
-      path: "/admin-portal/registration-queue",
-      icon: <FileCheck className="w-5 h-5 text-amber-600" />,
-      countLabel: `${pendingOnboardings} Pending Request(s)`,
-      badgeStatus: pendingOnboardings > 0 ? "warning" : "healthy",
-      badgeText:
-        pendingOnboardings > 0
-          ? `${pendingOnboardings} Pending Approval`
-          : "Queue Clear",
-      description:
-        "Review and approve self-service institution registration requests and verify uploaded accreditation documents.",
-    },
-    {
-      id: "moderation",
-      title: "Global Content Moderation",
-      subtitle: "E-Resource Compliance",
-      path: "/admin-portal/moderation",
-      icon: <Shield className="w-5 h-5 text-purple-600" />,
-      countLabel: `${pendingModerations} Pending Material(s)`,
-      badgeStatus: pendingModerations > 0 ? "warning" : "healthy",
-      badgeText:
-        pendingModerations > 0
-          ? `${pendingModerations} Pending Review`
-          : "Queue Clear",
-      description:
-        "Review uploaded digital e-books, open-access research papers, and educational resources before publishing.",
-    },
-    {
-      id: "data-oversight",
-      title: "Global Circulation & Fines",
-      subtitle: "Platform Data Analytics",
-      path: "/admin-portal/data-oversight",
-      icon: <Layers className="w-5 h-5 text-cyan-600" />,
-      countLabel: overview
-        ? `${activeLoans} Active Loans · ₹${overview?.totalUnpaidFineAmount || 0} Fines`
-        : "Loading...",
-      badgeStatus: "info",
-      badgeText: "Live Metrics",
-      description:
-        "Cross-institutional cataloging overview, active book loan statistics, fine collection tracking, and circulation analytics.",
-    },
-    {
-      id: "support",
-      title: "Helpdesk & Escalations",
-      subtitle: "Support Tickets",
-      path: "/admin-portal/support",
-      icon: <HelpCircle className="w-5 h-5 text-rose-600" />,
-      countLabel: `${openTickets} Open Ticket(s)`,
-      badgeStatus: openTickets > 0 ? "warning" : "healthy",
-      badgeText:
-        openTickets > 0 ? `${openTickets} Open Ticket(s)` : "No Escalations",
-      description:
-        "Centralized support management queue for technical support tickets, patron inquiries, and system complaints.",
-    },
-    {
-      id: "audit-logs",
-      title: "Security Audit Trail",
-      subtitle: "System Event Stream",
-      path: "/admin-portal/audit-logs",
-      icon: <FileSearch className="w-5 h-5 text-teal-600" />,
-      countLabel: overview
-        ? `${(overview?.auditLogsCount || 0).toLocaleString()} Recorded Events`
-        : "Loading...",
-      badgeStatus: "healthy",
-      badgeText: "Audit Log Active",
-      description:
-        "Immutable audit logs tracking system state changes, role adjustments, tenant creation, and administrative events.",
-    },
-    {
-      id: "settings",
-      title: "System Settings & Maintenance",
-      subtitle: "Configuration & Backups",
-      path: "/admin-portal/settings",
-      icon: <HardDrive className="w-5 h-5 text-slate-600" />,
-      countLabel: "System Ready · Backups Ok",
-      badgeStatus: "healthy",
-      badgeText: "Configured",
-      description:
-        "Manage environment configuration, default borrowing rules, rate limiting options, SMTP settings, and database backups.",
-    },
-  ];
+  const tiles = useMemo(
+    () => [
+      {
+        id: "overview",
+        title: "System Infrastructure & Health",
+        subtitle: "Cluster Telemetry & Metrics",
+        path: "/admin-portal/overview",
+        icon: <Globe className="w-5 h-5 text-indigo-600" />,
+        countLabel: overview
+          ? `${totalColleges} Active Institutions`
+          : "Loading...",
+        badgeStatus: "healthy",
+        badgeText: "Operational",
+        description:
+          "Real-time infrastructure health, database memory, cron job execution logs, and feature adoption rates.",
+      },
+      {
+        id: "users",
+        title: "User Directory & Access Control",
+        subtitle: "Global RBAC & Identity",
+        path: "/admin-portal/users",
+        icon: <Users className="w-5 h-5 text-emerald-600" />,
+        countLabel: overview
+          ? `${totalUsers.toLocaleString()} Registered Users`
+          : "Loading...",
+        badgeStatus: "info",
+        badgeText: "Directory Active",
+        description:
+          "Manage platform-wide user accounts, update security roles, toggle access statuses, and manage user impersonation.",
+      },
+      {
+        id: "colleges",
+        title: "Tenants & College Administrators",
+        subtitle: "Tenant Provisioning & Setup",
+        path: "/admin-portal/college-admins",
+        icon: <Building className="w-5 h-5 text-blue-600" />,
+        countLabel: overview
+          ? `${overview?.userCountsByRole?.["college-admin"] || 0} Admin Accounts`
+          : "Loading...",
+        badgeStatus: "info",
+        badgeText: `${totalColleges} Provisioned`,
+        description:
+          "Provision new college tenants, configure custom institution subdomains, and assign college librarians & administrators.",
+      },
+      {
+        id: "registration-queue",
+        title: "Onboarding Review Queue",
+        subtitle: "Tenant Approvals",
+        path: "/admin-portal/registration-queue",
+        icon: <FileCheck className="w-5 h-5 text-amber-600" />,
+        countLabel: `${pendingOnboardings} Pending Request(s)`,
+        badgeStatus: pendingOnboardings > 0 ? "warning" : "healthy",
+        badgeText:
+          pendingOnboardings > 0
+            ? `${pendingOnboardings} Pending Approval`
+            : "Queue Clear",
+        description:
+          "Review and approve self-service institution registration requests and verify uploaded accreditation documents.",
+      },
+      {
+        id: "moderation",
+        title: "Global Content Moderation",
+        subtitle: "E-Resource Compliance",
+        path: "/admin-portal/moderation",
+        icon: <Shield className="w-5 h-5 text-purple-600" />,
+        countLabel: `${pendingModerations} Pending Material(s)`,
+        badgeStatus: pendingModerations > 0 ? "warning" : "healthy",
+        badgeText:
+          pendingModerations > 0
+            ? `${pendingModerations} Pending Review`
+            : "Queue Clear",
+        description:
+          "Review uploaded digital e-books, open-access research papers, and educational resources before publishing.",
+      },
+      {
+        id: "data-oversight",
+        title: "Global Circulation & Fines",
+        subtitle: "Platform Data Analytics",
+        path: "/admin-portal/data-oversight",
+        icon: <Layers className="w-5 h-5 text-cyan-600" />,
+        countLabel: overview
+          ? `${activeLoans} Active Loans · ₹${overview?.totalUnpaidFineAmount || 0} Fines`
+          : "Loading...",
+        badgeStatus: "info",
+        badgeText: "Live Metrics",
+        description:
+          "Cross-institutional cataloging overview, active book loan statistics, fine collection tracking, and circulation analytics.",
+      },
+      {
+        id: "support",
+        title: "Helpdesk & Escalations",
+        subtitle: "Support Tickets",
+        path: "/admin-portal/support",
+        icon: <HelpCircle className="w-5 h-5 text-rose-600" />,
+        countLabel: `${openTickets} Open Ticket(s)`,
+        badgeStatus: openTickets > 0 ? "warning" : "healthy",
+        badgeText:
+          openTickets > 0 ? `${openTickets} Open Ticket(s)` : "No Escalations",
+        description:
+          "Centralized support management queue for technical support tickets, patron inquiries, and system complaints.",
+      },
+      {
+        id: "audit-logs",
+        title: "Security Audit Trail",
+        subtitle: "System Event Stream",
+        path: "/admin-portal/audit-logs",
+        icon: <FileSearch className="w-5 h-5 text-teal-600" />,
+        countLabel: overview
+          ? `${(overview?.auditLogsCount || 0).toLocaleString()} Recorded Events`
+          : "Loading...",
+        badgeStatus: "healthy",
+        badgeText: "Audit Log Active",
+        description:
+          "Immutable audit logs tracking system state changes, role adjustments, tenant creation, and administrative events.",
+      },
+      {
+        id: "settings",
+        title: "System Settings & Maintenance",
+        subtitle: "Configuration & Backups",
+        path: "/admin-portal/settings",
+        icon: <HardDrive className="w-5 h-5 text-slate-600" />,
+        countLabel: "System Ready · Backups Ok",
+        badgeStatus: "healthy",
+        badgeText: "Configured",
+        description:
+          "Manage environment configuration, default borrowing rules, rate limiting options, SMTP settings, and database backups.",
+      },
+    ],
+    [
+      overview,
+      totalColleges,
+      totalUsers,
+      pendingOnboardings,
+      pendingModerations,
+      openTickets,
+      activeLoans,
+    ],
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-void text-slate-900 dark:text-ink font-sans pb-12">
@@ -174,10 +186,12 @@ export default function AdminDashboardHome() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
         {/* Status Alert Banner */}
-        {totalPendingActionItems > 0 ? (
-          <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-xs">
+        {isLoading ? (
+          <div className="admin-glass-card h-20 skeleton-shimmer rounded-2xl" />
+        ) : totalPendingActionItems > 0 ? (
+          <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-lg backdrop-blur-md">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
@@ -187,11 +201,11 @@ export default function AdminDashboardHome() {
                     label={`${totalPendingActionItems} Action Items Pending`}
                     size="sm"
                   />
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-bold text-slate-900 dark:text-ink">
                     Action Required
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                <p className="text-xs text-slate-600 dark:text-muted mt-1">
                   {pendingOnboardings} onboarding request(s),{" "}
                   {pendingModerations} content moderation item(s), and{" "}
                   {openTickets} open support ticket(s) require review.
@@ -202,7 +216,7 @@ export default function AdminDashboardHome() {
               {pendingOnboardings > 0 && (
                 <Link
                   to="/admin-portal/registration-queue"
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-xl transition-colors shadow-xs"
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs rounded-xl transition-all shadow-md hover:shadow-amber-500/20 active:scale-95"
                 >
                   Review Requests ({pendingOnboardings})
                 </Link>
@@ -210,9 +224,9 @@ export default function AdminDashboardHome() {
             </div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-xs">
+          <div className="admin-glass-card p-4 sm:p-5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <div>
@@ -222,7 +236,7 @@ export default function AdminDashboardHome() {
                     label="All Systems Nominal"
                     size="sm"
                   />
-                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-semibold text-slate-900 dark:text-ink">
                     Zero Pending Bottlenecks
                   </span>
                 </div>
@@ -232,7 +246,7 @@ export default function AdminDashboardHome() {
                 </p>
               </div>
             </div>
-            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium hidden sm:inline-block">
+            <span className="text-xs text-emerald-400 font-medium hidden sm:inline-block border border-emerald-500/30 px-3 py-1 rounded-full bg-emerald-500/10">
               Platform Status: Healthy
             </span>
           </div>
@@ -240,74 +254,89 @@ export default function AdminDashboardHome() {
 
         {/* Enterprise KPI Metrics Bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-5 shadow-xs">
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Campus Tenants
-            </div>
-            <div className="text-2xl font-bold text-slate-900 dark:text-ink mt-1">
-              {isLoading ? "..." : totalColleges}
-            </div>
-            <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mt-1">
-              Active Institutions
-            </div>
-          </div>
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, idx) => (
+              <div
+                key={`kpi-skel-${idx}`}
+                className="admin-stat-card h-28 skeleton-shimmer"
+              />
+            ))
+          ) : (
+            <>
+              <div className="admin-stat-card">
+                <div className="text-[11px] font-semibold text-slate-400 dark:text-muted uppercase tracking-wider">
+                  Campus Tenants
+                </div>
+                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-ink mt-1 tracking-tight">
+                  {totalColleges}
+                </div>
+                <div className="text-xs font-medium text-indigo-500 dark:text-indigo-400 mt-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                  <span>Active Institutions</span>
+                </div>
+              </div>
 
-          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-5 shadow-xs">
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Total Accounts
-            </div>
-            <div className="text-2xl font-bold text-slate-900 dark:text-ink mt-1">
-              {isLoading ? "..." : totalUsers.toLocaleString()}
-            </div>
-            <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mt-1">
-              Cross-Tenant Directory
-            </div>
-          </div>
+              <div className="admin-stat-card">
+                <div className="text-[11px] font-semibold text-slate-400 dark:text-muted uppercase tracking-wider">
+                  Total Accounts
+                </div>
+                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-ink mt-1 tracking-tight">
+                  {totalUsers.toLocaleString()}
+                </div>
+                <div className="text-xs font-medium text-emerald-500 dark:text-emerald-400 mt-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span>Cross-Tenant Directory</span>
+                </div>
+              </div>
 
-          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-5 shadow-xs">
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Pending Actions
-            </div>
-            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">
-              {isLoading ? "..." : totalPendingActionItems}
-            </div>
-            <div className="text-xs font-medium text-amber-700 dark:text-amber-300 mt-1">
-              Tasks Awaiting Review
-            </div>
-          </div>
+              <div className="admin-stat-card">
+                <div className="text-[11px] font-semibold text-slate-400 dark:text-muted uppercase tracking-wider">
+                  Pending Actions
+                </div>
+                <div className="text-2xl sm:text-3xl font-extrabold text-amber-500 dark:text-amber-400 mt-1 tracking-tight">
+                  {totalPendingActionItems}
+                </div>
+                <div className="text-xs font-medium text-amber-600 dark:text-amber-300 mt-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  <span>Tasks Awaiting Review</span>
+                </div>
+              </div>
 
-          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-5 shadow-xs">
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Active Loans
-            </div>
-            <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400 mt-1">
-              {isLoading ? "..." : activeLoans}
-            </div>
-            <div className="text-xs font-medium text-cyan-700 dark:text-cyan-300 mt-1">
-              Monitored Circulation
-            </div>
-          </div>
+              <div className="admin-stat-card">
+                <div className="text-[11px] font-semibold text-slate-400 dark:text-muted uppercase tracking-wider">
+                  Active Loans
+                </div>
+                <div className="text-2xl sm:text-3xl font-extrabold text-cyan-500 dark:text-cyan-400 mt-1 tracking-tight">
+                  {activeLoans}
+                </div>
+                <div className="text-xs font-medium text-cyan-600 dark:text-cyan-300 mt-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
+                  <span>Monitored Circulation</span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Module Navigation Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {tiles.map((tile) => (
             <Link
               key={tile.id}
               to={tile.path}
-              className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-6 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-800 group shadow-xs"
+              className="admin-glass-card admin-glass-card-hover flex flex-col justify-between group cursor-pointer"
             >
               <div>
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-edge pb-4 mb-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3.5 mb-3.5">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/50 group-hover:border-indigo-100 dark:group-hover:border-indigo-800 transition-colors">
+                    <div className="p-3 rounded-xl bg-surface/80 border border-white/10 group-hover:border-ember/40 group-hover:bg-ember/10 transition-all">
                       {tile.icon}
                     </div>
                     <div>
-                      <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 block uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-muted block uppercase tracking-wider">
                         {tile.subtitle}
                       </span>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-ink group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mt-0.5">
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-ink group-hover:text-ember transition-colors mt-0.5">
                         {tile.title}
                       </h3>
                     </div>
@@ -324,11 +353,11 @@ export default function AdminDashboardHome() {
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 dark:border-edge flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+              <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+                <span className="font-medium text-slate-400 dark:text-slate-400">
                   {isLoading ? "Loading..." : tile.countLabel}
                 </span>
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
+                <span className="inline-flex items-center gap-1.5 font-bold text-indigo-500 dark:text-indigo-400 group-hover:text-ember group-hover:translate-x-1 transition-all">
                   <span>Open Module</span>
                   <ArrowRight size={14} />
                 </span>

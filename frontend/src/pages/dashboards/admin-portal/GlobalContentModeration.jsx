@@ -21,6 +21,12 @@ export default function GlobalContentModeration() {
   // Digital Reader Modal State
   const [readerModalItem, setReaderModalItem] = useState(null);
 
+  const [page, setPage] = useState(1);
+  const [paginationInfo, setPaginationInfo] = useState({
+    page: 1,
+    pages: 1,
+    total: 0,
+  });
   const [reloadToken, setReloadToken] = useState(0);
 
   const fetchModerationQueue = useCallback(
@@ -28,13 +34,27 @@ export default function GlobalContentModeration() {
     [],
   );
 
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setPage(1);
+  };
+
   useEffect(() => {
     let ignore = false;
     async function loadQueue() {
       try {
         setIsLoading(true);
-        const data = await eresourcesApi.getAllResources();
-        if (!ignore) setResources(data || []);
+        const res = await adminApi.getPendingModeration(
+          page,
+          20,
+          activeTab === "pending" ? "pending" : "approved",
+        );
+        if (!ignore) {
+          setResources(res.data || []);
+          if (res.pagination) {
+            setPaginationInfo(res.pagination);
+          }
+        }
       } catch (err) {
         console.error(err);
         if (!ignore) {
@@ -51,20 +71,7 @@ export default function GlobalContentModeration() {
     return () => {
       ignore = true;
     };
-  }, [reloadToken]);
-
-  const pendingItems = resources.filter(
-    (r) =>
-      r.moderationStatus === "pending" ||
-      r.status === "pending_review" ||
-      !r.moderationStatus,
-  );
-  const historyItems = resources.filter(
-    (r) =>
-      r.moderationStatus === "approved" || r.moderationStatus === "rejected",
-  );
-
-  const displayedItems = activeTab === "pending" ? pendingItems : historyItems;
+  }, [reloadToken, activeTab, page]);
 
   const handleApprove = async (resourceId) => {
     setIsSubmitting(true);
@@ -73,8 +80,7 @@ export default function GlobalContentModeration() {
       if (adminApi.moderateEResource) {
         await adminApi.moderateEResource(resourceId, {
           status: "approved",
-          reason:
-            "Content verified and approved for platform-wide library access.",
+          note: "Content verified and approved for platform-wide library access.",
         });
       } else {
         await eresourcesApi.updateResource(resourceId, {
@@ -97,7 +103,7 @@ export default function GlobalContentModeration() {
 
       // Auto Advance to next pending item if enabled
       if (autoAdvance) {
-        const remaining = pendingItems.filter((r) => r._id !== resourceId);
+        const remaining = resources.filter((r) => r._id !== resourceId);
         setSelectedResource(remaining[0] || null);
       } else {
         setSelectedResource(null);
@@ -124,7 +130,7 @@ export default function GlobalContentModeration() {
       if (adminApi.moderateEResource) {
         await adminApi.moderateEResource(resourceId, {
           status: "rejected",
-          reason: rejectionReason.trim(),
+          note: rejectionReason.trim(),
         });
       } else {
         await eresourcesApi.updateResource(resourceId, {
@@ -154,7 +160,7 @@ export default function GlobalContentModeration() {
       setRejectionReason("");
 
       if (autoAdvance) {
-        const remaining = pendingItems.filter((r) => r._id !== resourceId);
+        const remaining = resources.filter((r) => r._id !== resourceId);
         setSelectedResource(remaining[0] || null);
       } else {
         setSelectedResource(null);
@@ -202,7 +208,7 @@ export default function GlobalContentModeration() {
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 dark:border-edge pb-3">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setActiveTab("pending")}
+              onClick={() => handleTabChange("pending")}
               className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 border ${
                 activeTab === "pending"
                   ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 shadow-xs"
@@ -210,15 +216,17 @@ export default function GlobalContentModeration() {
               }`}
             >
               <span>Pending Queue</span>
-              <OpsSeverityBadge
-                status="warning"
-                label={String(pendingItems.length)}
-                size="sm"
-              />
+              {activeTab === "pending" && paginationInfo.total ? (
+                <OpsSeverityBadge
+                  status="warning"
+                  label={String(paginationInfo.total)}
+                  size="sm"
+                />
+              ) : null}
             </button>
 
             <button
-              onClick={() => setActiveTab("history")}
+              onClick={() => handleTabChange("history")}
               className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 border ${
                 activeTab === "history"
                   ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 shadow-xs"
@@ -226,9 +234,11 @@ export default function GlobalContentModeration() {
               }`}
             >
               <span>Moderation History</span>
-              <span className="text-xs text-slate-400 font-normal">
-                ({historyItems.length})
-              </span>
+              {activeTab === "history" && paginationInfo.total ? (
+                <span className="text-xs text-slate-400 font-normal">
+                  ({paginationInfo.total})
+                </span>
+              ) : null}
             </button>
           </div>
 
@@ -253,13 +263,13 @@ export default function GlobalContentModeration() {
                 : "Historical Moderation Decisions"}
             </h3>
 
-            <div className="space-y-2 max-h-[640px] overflow-y-auto pr-1">
-              {displayedItems.length === 0 ? (
+            <div className="space-y-2 max-h-[580px] overflow-y-auto pr-1">
+              {resources.length === 0 ? (
                 <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-8 text-center text-slate-400 dark:text-slate-500 text-xs font-medium shadow-xs">
                   Zero items match current moderation scope.
                 </div>
               ) : (
-                displayedItems.map((item) => {
+                resources.map((item) => {
                   const isSelected = selectedResource?._id === item._id;
                   const status = item.moderationStatus || "pending";
 
@@ -283,7 +293,11 @@ export default function GlobalContentModeration() {
                       <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
                         <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400">
                           <Building2 className="w-3.5 h-3.5" />
-                          <span>{item.collegeName || "Institution Asset"}</span>
+                          <span>
+                            {item.collegeId?.name ||
+                              item.collegeName ||
+                              "Institution Asset"}
+                          </span>
                         </span>
                         <span className="text-[11px] font-normal uppercase text-slate-400 dark:text-slate-500">
                           {item.format || "PDF"}
@@ -294,6 +308,33 @@ export default function GlobalContentModeration() {
                 })
               )}
             </div>
+
+            {/* Pagination controls for moderation queue */}
+            {paginationInfo.pages > 1 && (
+              <div className="p-3 bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 font-medium">
+                <span>
+                  Page {paginationInfo.page} of {paginationInfo.pages}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded disabled:opacity-40"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    disabled={page >= paginationInfo.pages}
+                    onClick={() =>
+                      setPage((p) => Math.min(paginationInfo.pages, p + 1))
+                    }
+                    className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded disabled:opacity-40"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Item Inspector & Decision Panel */}

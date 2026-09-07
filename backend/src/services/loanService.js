@@ -123,6 +123,16 @@ const returnBook = async (loanId, collegeId) => {
     loan.returnDate = new Date();
     await loan.save({ session });
 
+    // Calculate fine in real-time if returned overdue
+    if (loan.dueDate && loan.returnDate > loan.dueDate) {
+      try {
+        const fineService = require('./fineService');
+        await fineService.calculateFine(loan);
+      } catch (_fineErr) {
+        // Fine calculation errors non-blocking
+      }
+    }
+
     // 3. Increment copies atomically, ensuring it does not exceed total copies
     const book = await Book.findOne({ _id: loan.bookId, collegeId }).session(session);
     if (book) {

@@ -18,6 +18,13 @@ export default function AuditLogs() {
 
   const [reloadToken, setReloadToken] = useState(0);
 
+  const [page, setPage] = useState(1);
+  const [paginationInfo, setPaginationInfo] = useState({
+    page: 1,
+    pages: 1,
+    total: 0,
+  });
+
   const fetchAuditLogs = useCallback(() => setReloadToken((t) => t + 1), []);
 
   useEffect(() => {
@@ -25,8 +32,19 @@ export default function AuditLogs() {
     async function loadLogs() {
       try {
         setIsLoading(true);
-        const data = await adminApi.getAuditLogs();
-        if (!ignore) setLogs(data || []);
+        const res = await adminApi.getAuditLogs({
+          page,
+          limit: 10,
+          actorRole: actorRoleFilter !== "all" ? actorRoleFilter : undefined,
+          category:
+            actionCategoryFilter !== "all" ? actionCategoryFilter : undefined,
+        });
+        if (!ignore) {
+          setLogs(res.data || []);
+          if (res.pagination) {
+            setPaginationInfo(res.pagination);
+          }
+        }
       } catch (err) {
         console.error(err);
         if (!ignore) setError("Failed to fetch security audit logs.");
@@ -38,7 +56,17 @@ export default function AuditLogs() {
     return () => {
       ignore = true;
     };
-  }, [reloadToken]);
+  }, [reloadToken, page, actorRoleFilter, actionCategoryFilter]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && selectedPayload) {
+        setSelectedPayload(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedPayload]);
 
   // Multi-select selection state stored outside table render window
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -66,45 +94,13 @@ export default function AuditLogs() {
   };
 
   const handleExportSelectedCSV = () => {
-    const selectedLogs = filteredLogs.filter((r) =>
-      selectedIds.has(r._id || r.id),
-    );
+    const selectedLogs = logs.filter((r) => selectedIds.has(r._id || r.id));
     if (!selectedLogs.length) return;
     exportToCSV(
       selectedLogs,
       `selected-audit-logs-${new Date().toISOString().split("T")[0]}.csv`,
     );
   };
-
-  // Filter logs by actor role & action category
-  const filteredLogs = logs.filter((log) => {
-    if (actorRoleFilter !== "all" && log.actorRole !== actorRoleFilter)
-      return false;
-    if (actionCategoryFilter !== "all") {
-      const action = (log.action || "").toLowerCase();
-      if (
-        actionCategoryFilter === "auth" &&
-        !action.includes("auth") &&
-        !action.includes("login")
-      )
-        return false;
-      if (
-        actionCategoryFilter === "tenant" &&
-        !action.includes("tenant") &&
-        !action.includes("registration") &&
-        !action.includes("college")
-      )
-        return false;
-      if (
-        actionCategoryFilter === "security" &&
-        !action.includes("security") &&
-        !action.includes("mfa") &&
-        !action.includes("forbidden")
-      )
-        return false;
-    }
-    return true;
-  });
 
   const getActionSeverity = (action = "") => {
     const act = action.toLowerCase();
@@ -266,13 +262,15 @@ export default function AuditLogs() {
           <div className="flex items-center gap-3 text-xs">
             <span className="text-slate-500 font-medium">
               Loaded{" "}
-              <strong className="text-slate-900">{filteredLogs.length}</strong>{" "}
+              <strong className="text-slate-900">
+                {paginationInfo.total || logs.length}
+              </strong>{" "}
               events
             </span>
             <button
               onClick={() =>
                 exportToCSV(
-                  filteredLogs,
+                  logs,
                   `audit-logs-${new Date().toISOString().split("T")[0]}.csv`,
                 )
               }
@@ -287,7 +285,7 @@ export default function AuditLogs() {
         {/* Dense Audit Data Table */}
         <OpsDataTable
           columns={columns}
-          data={filteredLogs}
+          data={logs}
           isLoading={isLoading}
           searchPlaceholder="Filter audit records by action, IP address, actor ID..."
           emptyMessage="Zero security audit events match current filter conditions."
@@ -295,6 +293,12 @@ export default function AuditLogs() {
           selectedIds={selectedIds}
           onSelectRow={handleSelectRow}
           onSelectAll={handleSelectAll}
+          pagination={{
+            page: paginationInfo.page,
+            pages: paginationInfo.pages,
+            total: paginationInfo.total,
+            onPageChange: (p) => setPage(p),
+          }}
           batchActions={
             <button
               onClick={handleExportSelectedCSV}
@@ -308,12 +312,20 @@ export default function AuditLogs() {
 
         {/* JSON Payload Inspector Modal */}
         {selectedPayload && (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="audit-payload-modal-title"
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 max-w-2xl w-full space-y-4 shadow-2xl font-mono">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <Terminal className="w-5 h-5 text-indigo-400" />
-                  <span className="text-sm font-bold text-white uppercase">
+                  <span
+                    id="audit-payload-modal-title"
+                    className="text-sm font-bold text-white uppercase"
+                  >
                     Audit Log Payload Inspector
                   </span>
                 </div>

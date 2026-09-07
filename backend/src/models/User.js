@@ -98,6 +98,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    mustChangePasswordOnNextLogin: {
+      type: Boolean,
+      default: false,
+    },
     role: {
       type: String,
       enum: ['student', 'college-admin', 'super-admin', 'general'],
@@ -238,13 +242,18 @@ userSchema.index({ collegeId: 1, studentId: 1 }, { unique: true, sparse: true })
 userSchema.index({ collegeId: 1, email: 1 }, { unique: true, sparse: true });
 userSchema.index({ activationTokenHash: 1 }, { sparse: true });
 userSchema.index({ collegeId: 1, status: 1 });
+userSchema.index({ collegeId: 1, role: 1, createdAt: -1 });
+userSchema.index({ status: 1, createdAt: -1 });
 
 // Super Admin Directory & Query Optimization Indexes
 userSchema.index({ role: 1, collegeId: 1, status: 1 });
-userSchema.index({ name: 'text', email: 'text' });
+userSchema.index({ name: 'text', email: 'text', studentId: 'text' });
 
 // Hash password and generate cardSecret before saving
 userSchema.pre('save', async function () {
+  if (this.collegeId === null) {
+    this.collegeId = undefined;
+  }
   if (!this.cardSecret) {
     const crypto = require('crypto');
     this.cardSecret = crypto.randomBytes(32).toString('hex');

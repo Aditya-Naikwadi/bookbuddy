@@ -26,6 +26,7 @@ function OpsDataTable({
   onSelectRow = null,
   onSelectAll = null,
   batchActions = null,
+  pagination = null, // Optional: { page, pages, total, onPageChange }
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState(null);
@@ -33,9 +34,11 @@ function OpsDataTable({
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  // Filter data by search query
+  const isServerPaginated = !!pagination;
+
+  // Filter data by search query (only if not server paginated)
   const filteredData = useMemo(() => {
-    if (!searchTerm.trim()) return data;
+    if (isServerPaginated || !searchTerm.trim()) return data;
     const term = searchTerm.toLowerCase();
     return data.filter((row) =>
       columns.some((col) => {
@@ -44,11 +47,11 @@ function OpsDataTable({
         return String(val).toLowerCase().includes(term);
       }),
     );
-  }, [data, searchTerm, columns]);
+  }, [data, searchTerm, columns, isServerPaginated]);
 
   // Sort filtered data
   const sortedData = useMemo(() => {
-    if (!sortField) return filteredData;
+    if (isServerPaginated || !sortField) return filteredData;
     return [...filteredData].sort((a, b) => {
       const aVal = a[sortField];
       const bVal = b[sortField];
@@ -58,14 +61,19 @@ function OpsDataTable({
       if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
       return sortDirection === "asc" ? 1 : -1;
     });
-  }, [filteredData, sortField, sortDirection]);
+  }, [filteredData, sortField, sortDirection, isServerPaginated]);
 
-  // Paginate sorted data
-  const totalPages = Math.ceil(sortedData.length / pageSize) || 1;
+  // Paginate data
+  const totalPages = isServerPaginated
+    ? pagination.pages || 1
+    : Math.ceil(sortedData.length / pageSize) || 1;
+  const activePage = isServerPaginated ? pagination.page || 1 : currentPage;
+
   const paginatedData = useMemo(() => {
+    if (isServerPaginated) return data;
     const start = (currentPage - 1) * pageSize;
     return sortedData.slice(start, start + pageSize);
-  }, [sortedData, currentPage]);
+  }, [sortedData, currentPage, isServerPaginated, data]);
 
   const handleSort = (key) => {
     if (sortField === key) {
@@ -277,29 +285,44 @@ function OpsDataTable({
       </div>
 
       {/* Table Pagination Footer */}
-      {totalPages > 1 && (
+      {(totalPages > 1 || isServerPaginated) && (
         <div className="p-3 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-200/80 dark:border-edge flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 font-medium">
           <div>
             Page{" "}
             <strong className="text-slate-900 dark:text-ink">
-              {currentPage}
+              {activePage}
             </strong>{" "}
             of{" "}
             <strong className="text-slate-900 dark:text-ink">
               {totalPages}
             </strong>
+            {pagination?.total ? ` (${pagination.total} records)` : ""}
           </div>
           <div className="flex items-center gap-1.5">
             <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
+              onClick={() => {
+                if (isServerPaginated) {
+                  pagination.onPageChange?.(Math.max(1, activePage - 1));
+                } else {
+                  setCurrentPage((p) => Math.max(1, p - 1));
+                }
+              }}
+              disabled={activePage === 1}
               className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 disabled:opacity-40 transition-colors shadow-xs"
             >
               Previous
             </button>
             <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
+              onClick={() => {
+                if (isServerPaginated) {
+                  pagination.onPageChange?.(
+                    Math.min(totalPages, activePage + 1),
+                  );
+                } else {
+                  setCurrentPage((p) => Math.min(totalPages, p + 1));
+                }
+              }}
+              disabled={activePage === totalPages}
               className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 disabled:opacity-40 transition-colors shadow-xs"
             >
               Next

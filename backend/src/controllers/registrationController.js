@@ -379,6 +379,15 @@ const submitTenantOnboarding = async (req, res, next) => {
     let docPath = '';
     let docUrl = '';
     if (req.file) {
+      const safeMimeTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+      if (!safeMimeTypes.includes(req.file.mimetype)) {
+        return next(
+          new AppError(
+            'Invalid document file format. Verification document must be a PDF, JPEG, PNG, or WebP image.',
+            400
+          )
+        );
+      }
       docPath = req.file.path;
       docUrl = `/uploads/proofs/${req.file.filename}`;
     }

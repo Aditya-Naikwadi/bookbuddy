@@ -101,6 +101,24 @@ annotationSchema.index(
 
 // Pre-validate hook
 annotationSchema.pre('validate', function (next) {
+  const sanitizeHtml = (str) => {
+    if (typeof str !== 'string') return str;
+    return str
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+      .replace(/javascript:[^\s"']+/gi, '');
+  };
+
+  if (this.highlightText) {
+    this.highlightText = sanitizeHtml(this.highlightText);
+  }
+  if (this.noteText) {
+    this.noteText = sanitizeHtml(this.noteText);
+  }
+  if (this.label) {
+    this.label = sanitizeHtml(this.label);
+  }
+
   // Sync resourceId to bookId if bookId is not explicitly set
   if (!this.bookId && this.resourceId) {
     this.bookId = this.resourceId;

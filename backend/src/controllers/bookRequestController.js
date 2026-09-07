@@ -25,12 +25,13 @@ const createBookRequest = async (req, res, next) => {
     }
 
     // 2. Case-insensitive deduplication check for pending requests by same user
+    const escapeRegExp = (str) => (str ? String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '');
     const existing = await BookRequest.findOne({
       collegeId: req.user.collegeId,
       userId: req.user._id,
       status: 'pending',
-      title: { $regex: new RegExp(`^${title.trim()}$`, 'i') },
-      author: { $regex: new RegExp(`^${author.trim()}$`, 'i') },
+      title: { $regex: new RegExp(`^${escapeRegExp(title.trim())}$`, 'i') },
+      author: { $regex: new RegExp(`^${escapeRegExp(author.trim())}$`, 'i') },
     });
 
     if (existing) {

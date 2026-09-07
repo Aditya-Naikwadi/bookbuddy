@@ -355,7 +355,8 @@ const searchAnnotations = async (req, res, next) => {
       return res.json({ success: true, data: all });
     }
 
-    const searchRegex = new RegExp(q.trim(), 'i');
+    const escapeRegExp = (str) => (str ? String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '');
+    const searchRegex = new RegExp(escapeRegExp(q.trim()), 'i');
 
     const results = await Annotation.find({
       ...baseQuery,

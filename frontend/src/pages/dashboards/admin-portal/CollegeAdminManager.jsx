@@ -117,7 +117,7 @@ export default function CollegeAdminManager() {
           email: formData.adminEmail,
         },
         tempPassword: generatedPassword,
-        inviteUrl: `http://localhost:5173/auth/login?tenant=${payload.slug}`,
+        inviteUrl: `${typeof window !== "undefined" ? window.location.origin : "http://localhost:5173"}/auth/login?tenant=${payload.slug}`,
       });
 
       setIsCreatingTenant(false);
@@ -273,6 +273,17 @@ export default function CollegeAdminManager() {
       },
     },
   ];
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (editingCollege) setEditingCollege(null);
+        if (isCreatingTenant) setIsCreatingTenant(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editingCollege, isCreatingTenant]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-void text-slate-900 dark:text-ink font-sans pb-12">
@@ -595,7 +606,12 @@ export default function CollegeAdminManager() {
 
         {/* EDIT COLLEGE FEATURES MODAL */}
         {editingCollege && (
-          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-mono">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="college-features-modal-title"
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-mono"
+          >
             <form
               onSubmit={handleSaveCollegeFeatures}
               className="bg-slate-900 border border-indigo-600/60 rounded-xl p-6 max-w-xl w-full shadow-2xl space-y-4"
@@ -603,7 +619,10 @@ export default function CollegeAdminManager() {
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <Building2 className="w-5 h-5 text-indigo-400" />
-                  <span className="text-sm font-bold text-white uppercase">
+                  <span
+                    id="college-features-modal-title"
+                    className="text-sm font-bold text-white uppercase"
+                  >
                     PROVISIONED MODULE CONFIGURATION FOR {editingCollege.name}
                   </span>
                 </div>

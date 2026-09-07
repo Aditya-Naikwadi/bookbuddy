@@ -165,5 +165,6 @@ registrationRequestSchema.index({ 'studentData.email': 1 });
 registrationRequestSchema.index({ 'tenantData.adminEmail': 1 });
 registrationRequestSchema.index({ 'tenantData.domain': 1 });
 registrationRequestSchema.index({ status: 1, type: 1, createdAt: -1 });
+registrationRequestSchema.index({ type: 1, status: 1, createdAt: -1 });
 
 module.exports = mongoose.model('RegistrationRequest', registrationRequestSchema);

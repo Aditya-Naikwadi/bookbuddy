@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -27,12 +27,29 @@ export default function UserManagement() {
   const [_error, setError] = useState("");
   const [message, setMessage] = useState({ type: "", text: "" });
 
-  // Filters State
+  // Filters & Pagination State
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [collegeFilter, setCollegeFilter] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
+  const [paginationInfo, setPaginationInfo] = useState({
+    total: 0,
+    page: 1,
+    pages: 1,
+  });
   const [reloadToken, setReloadToken] = useState(0);
+
+  // Debounce search input (300ms)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
 
   // Modals
   const [selectedUser, setSelectedUser] = useState(null);
@@ -55,13 +72,20 @@ export default function UserManagement() {
         if (isMounted) setColleges(collegeList || []);
 
         const res = await adminApi.getUsers({
-          search: search || undefined,
+          search: debouncedSearch || undefined,
           collegeId: collegeFilter || undefined,
           role: roleFilter || undefined,
           status: statusFilter || undefined,
+          page,
+          limit,
         });
 
-        if (isMounted) setUsers(res.data || []);
+        if (isMounted) {
+          setUsers(res.data || []);
+          if (res.pagination) {
+            setPaginationInfo(res.pagination);
+          }
+        }
       } catch (err) {
         console.error(err);
         if (isMounted) setError("Failed to load user directory.");
@@ -74,7 +98,15 @@ export default function UserManagement() {
     return () => {
       isMounted = false;
     };
-  }, [reloadToken, search, collegeFilter, roleFilter, statusFilter]);
+  }, [
+    reloadToken,
+    debouncedSearch,
+    collegeFilter,
+    roleFilter,
+    statusFilter,
+    page,
+    limit,
+  ]);
 
   const handleToggleUserStatus = async (user) => {
     const nextStatus = user.status === "active" ? "disabled" : "active";
@@ -310,6 +342,51 @@ export default function UserManagement() {
     },
   ];
 
+  const roleModalRef = useRef(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (isRoleModalOpen) {
+          setIsRoleModalOpen(false);
+          setSelectedUser(null);
+        }
+      }
+      if (e.key === "Tab" && isRoleModalOpen && roleModalRef.current) {
+        const elements = Array.from(
+          roleModalRef.current.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          ),
+        );
+        if (elements.length === 0) return;
+        const firstElement = elements[0];
+        const lastElement = elements[elements.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            lastElement.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            firstElement.focus();
+            e.preventDefault();
+          }
+        }
+      }
+    };
+
+    if (isRoleModalOpen && roleModalRef.current) {
+      const focusable = roleModalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length > 0) focusable[0].focus();
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isRoleModalOpen]);
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-void text-slate-900 dark:text-ink font-sans pb-12">
       <OpsHeader
@@ -418,7 +495,10 @@ export default function UserManagement() {
 
             <select
               value={collegeFilter}
-              onChange={(e) => setCollegeFilter(e.target.value)}
+              onChange={(e) => {
+                setCollegeFilter(e.target.value);
+                setPage(1);
+              }}
               className="px-3 py-2 bg-slate-50 dark:bg-deep border border-slate-200 dark:border-edge rounded-xl text-slate-900 dark:text-ink focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             >
               <option value="">All Institutions</option>
@@ -431,7 +511,10 @@ export default function UserManagement() {
 
             <select
               value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
+              onChange={(e) => {
+                setRoleFilter(e.target.value);
+                setPage(1);
+              }}
               className="px-3 py-2 bg-slate-50 dark:bg-deep border border-slate-200 dark:border-edge rounded-xl text-slate-900 dark:text-ink focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             >
               <option value="">All Roles</option>
@@ -443,7 +526,10 @@ export default function UserManagement() {
 
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
               className="px-3 py-2 bg-slate-50 dark:bg-deep border border-slate-200 dark:border-edge rounded-xl text-slate-900 dark:text-ink focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             >
               <option value="">All Account Statuses</option>
@@ -463,11 +549,49 @@ export default function UserManagement() {
           emptyMessage="No matching user records found in directory."
         />
 
+        {/* Pagination Controls */}
+        {paginationInfo.pages > 1 && (
+          <div className="flex items-center justify-between bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl px-5 py-3 shadow-xs text-xs">
+            <span className="text-slate-500 dark:text-muted">
+              Showing page <strong>{paginationInfo.page}</strong> of{" "}
+              <strong>{paginationInfo.pages}</strong> ({paginationInfo.total}{" "}
+              total users)
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={page <= 1 || isLoading}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="px-3 py-1.5 bg-slate-100 dark:bg-deep border border-slate-200 dark:border-edge rounded-xl font-semibold text-slate-700 dark:text-ink disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+              >
+                Previous
+              </button>
+              <button
+                disabled={page >= paginationInfo.pages || isLoading}
+                onClick={() =>
+                  setPage((p) => Math.min(paginationInfo.pages, p + 1))
+                }
+                className="px-3 py-1.5 bg-slate-100 dark:bg-deep border border-slate-200 dark:border-edge rounded-xl font-semibold text-slate-700 dark:text-ink disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ROLE MODIFICATION MODAL */}
         {isRoleModalOpen && selectedUser && (
-          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-mono">
+          <div
+            ref={roleModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="user-role-modal-title"
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-mono"
+          >
             <div className="bg-slate-900 border border-indigo-600/60 rounded-xl p-6 max-w-md w-full shadow-2xl space-y-4">
-              <h3 className="text-sm font-bold text-white uppercase flex items-center gap-2">
+              <h3
+                id="user-role-modal-title"
+                className="text-sm font-bold text-white uppercase flex items-center gap-2"
+              >
                 <Shield className="w-4 h-4 text-indigo-400" />
                 REASSIGN ROLE FOR {selectedUser.name}
               </h3>

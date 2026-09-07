@@ -73,11 +73,25 @@ const useAuthStore = create((set) => {
     },
 
     stopImpersonating: async () => {
+      const currentToken =
+        useAuthStore.getState().token || localStorage.getItem("token");
       const origToken =
         localStorage.getItem("originalSuperAdminToken") ||
         useAuthStore.getState().originalSuperAdminToken;
 
       if (!origToken) return false;
+
+      // Revoke impersonation token on backend
+      if (currentToken && currentToken !== origToken) {
+        try {
+          await apiClient.post(
+            "/dashboards/admin-portal/users/revoke-impersonation",
+            { token: currentToken },
+          );
+        } catch {
+          // ignore revocation error
+        }
+      }
 
       localStorage.setItem("token", origToken);
       localStorage.removeItem("originalSuperAdminToken");
@@ -140,7 +154,10 @@ const useAuthStore = create((set) => {
           isImpersonated: false,
           originalSuperAdminToken: null,
         });
-        toast.success("Welcome back!", `Logged in as ${data.user.name || data.user.email}`);
+        toast.success(
+          "Welcome back!",
+          `Logged in as ${data.user.name || data.user.email}`,
+        );
         return true;
       } catch (error) {
         const responseData = error.response?.data;
@@ -173,10 +190,15 @@ const useAuthStore = create((set) => {
           isAuthenticated: true,
           isLoading: false,
         });
-        toast.success("Google Login", `Welcome ${data.user.name || data.user.email}`);
+        toast.success(
+          "Google Login",
+          `Welcome ${data.user.name || data.user.email}`,
+        );
         return true;
       } catch (error) {
-        const errMsg = error.response?.data?.message || "Google Login failed. Please try again.";
+        const errMsg =
+          error.response?.data?.message ||
+          "Google Login failed. Please try again.";
         set({
           error: errMsg,
           isLoading: false,
@@ -207,7 +229,10 @@ const useAuthStore = create((set) => {
           isAuthenticated: true,
           isLoading: false,
         });
-        toast.success("Registration Successful", "Your account has been created!");
+        toast.success(
+          "Registration Successful",
+          "Your account has been created!",
+        );
         return true;
       } catch (error) {
         const errMsg = error.response?.data?.message || "Registration failed";

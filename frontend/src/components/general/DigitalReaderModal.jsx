@@ -1037,6 +1037,34 @@ const DigitalReaderModal = ({
                       </button>
                     </div>
                   </div>
+                ) : normalizedType === "epub" && !resolvedUrl ? (
+                  <StructuredBookReader
+                    book={activeTarget}
+                    title={resolvedTitle}
+                    page={currentPage}
+                    annotations={annotations}
+                    onTotalPages={(total) => setTotalPages(total)}
+                    onTextSelect={(data) =>
+                      setActiveToolbar({
+                        visible: true,
+                        position: data.position,
+                        selectedText: data.selectedText,
+                        cfiRange: data.cfiRange,
+                        isEditing: false,
+                      })
+                    }
+                    onHighlightClick={(hl, pos) =>
+                      setActiveToolbar({
+                        visible: true,
+                        position: pos,
+                        selectedText: hl.highlightText,
+                        annotationId: hl._id || hl.id,
+                        existingColor: hl.color,
+                        existingNote: hl.noteText || "",
+                        isEditing: true,
+                      })
+                    }
+                  />
                 ) : (
                   <Suspense
                     fallback={

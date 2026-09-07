@@ -57,7 +57,11 @@ labBookingSchema.index({ seatId: 1, date: 1, status: 1 });
 labBookingSchema.index({ userId: 1, date: 1, status: 1 });
 labBookingSchema.index({ userId: 1, status: 1, startTime: 1, endTime: 1 });
 
-// Concurrency control: partial unique index so that a timeslot can only be booked by one person at a time
+// Concurrency control: partial unique index so that a seat at a date/timeslot can only be booked by one patron
+labBookingSchema.index(
+  { seatId: 1, date: 1, startTime: 1 },
+  { unique: true, partialFilterExpression: { status: 'booked' } }
+);
 labBookingSchema.index(
   { seatId: 1, startTime: 1 },
   { unique: true, partialFilterExpression: { status: 'booked' } }

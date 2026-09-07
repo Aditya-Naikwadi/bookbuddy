@@ -21,7 +21,8 @@ const getAcquisitions = async (req, res, next) => {
     }
 
     if (search && search.trim()) {
-      const searchRegex = new RegExp(search.trim(), 'i');
+      const escapeRegExp = (str) => (str ? String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '');
+      const searchRegex = new RegExp(escapeRegExp(search.trim()), 'i');
       filter.$or = [
         { vendorName: searchRegex },
         { budgetCode: searchRegex },

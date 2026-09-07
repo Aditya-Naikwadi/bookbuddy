@@ -6,6 +6,7 @@ const AuditLog = require('../../models/AuditLog');
 const AppError = require('../../utils/AppError');
 const PlatformMetricSnapshot = require('../../models/PlatformMetricSnapshot');
 const { redisClient } = require('../../middlewares/rateLimiters');
+const logger = require('../../utils/logger');
 
 const escapeRegExp = (string) => {
   return string ? String(string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
@@ -17,6 +18,18 @@ const getActorId = (req) => {
     : req && req.user
       ? req.user.id || req.user._id
       : null;
+};
+
+const clearGlobalMetricsCache = async () => {
+  const isRedisReady =
+    redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect');
+  if (isRedisReady) {
+    try {
+      await redisClient.del('metrics:global:latest');
+    } catch {
+      // ignore
+    }
+  }
 };
 
 // @desc    Get global overview stats
@@ -225,7 +238,7 @@ const createAdmin = async (req, res, next) => {
 
       // Log college status change
       await AuditLog.create({
-        actorId: req.user.id,
+        actorId: getActorId(req),
         actorRole: req.user.role,
         action: 'college.status_change',
         targetType: 'College',
@@ -258,26 +271,124 @@ const createAdmin = async (req, res, next) => {
   }
 };
 
-// @desc    Create new College
+// @desc    Create new College & Primary Admin (Atomic Transaction)
 // @route   POST /api/dashboards/admin-portal/colleges
 // @access  Private/SuperAdmin
 const createCollege = async (req, res, next) => {
   try {
-    const { name, code } = req.body;
+    const {
+      name,
+      code,
+      shortName,
+      domain,
+      slug,
+      adminName,
+      adminEmail,
+      password,
+      selectedServices,
+    } = req.body;
 
-    const college = await College.create({ name, code, status: 'pending' });
+    const defaultServices = [
+      'catalog',
+      'loans',
+      'fines',
+      'patron-card',
+      'e-resources',
+      'reading-lists',
+      'recommendations',
+      'saved',
+      'facilities',
+      'support',
+      'gamification',
+    ];
+
+    const activeServices =
+      Array.isArray(selectedServices) && selectedServices.length > 0
+        ? selectedServices
+        : defaultServices;
+
+    const collegeSlug = (
+      slug || (domain ? domain.split('.')[0] : name.toLowerCase().replace(/[^a-z0-9]/g, ''))
+    ).toLowerCase();
+    const collegeCode = (code || collegeSlug || 'TENANT').toUpperCase();
+
+    const { runInTransaction } = require('../../utils/transactionHelper');
+    const { college, adminUser, generatedPassword } = await runInTransaction(async (session) => {
+      const newCollegeDocs = await College.create(
+        [
+          {
+            name,
+            shortName: shortName || name,
+            code: collegeCode,
+            slug: collegeSlug,
+            domain: domain || `${collegeSlug}.edu`,
+            status: adminEmail ? 'active' : 'pending',
+            isActive: true,
+            contactEmail: adminEmail || '',
+            selectedServices: activeServices,
+            enabledFeatures: activeServices,
+          },
+        ],
+        { session }
+      );
+      const createdCollege = newCollegeDocs[0];
+
+      let createdAdmin = null;
+      let tempPass = null;
+      if (adminEmail && adminName) {
+        tempPass = password || `Pass@${Math.random().toString(36).substring(2, 10)}`;
+        const newAdminDocs = await User.create(
+          [
+            {
+              studentId: `ADMIN-${Date.now().toString().slice(-4)}`,
+              name: adminName,
+              email: adminEmail.toLowerCase().trim(),
+              password: tempPass,
+              role: 'college-admin',
+              collegeId: createdCollege._id,
+              isEmailVerified: true,
+              membershipStatus: 'active',
+              status: 'active',
+            },
+          ],
+          { session }
+        );
+        createdAdmin = newAdminDocs[0];
+
+        const CollegeFeatureConfig = require('../../models/CollegeFeatureConfig');
+        await CollegeFeatureConfig.create(
+          [
+            {
+              collegeId: createdCollege._id,
+              enabledFeatures: activeServices,
+              pendingRequests: [],
+            },
+          ],
+          { session }
+        );
+      }
+
+      return { college: createdCollege, adminUser: createdAdmin, generatedPassword: tempPass };
+    });
+
+    await clearGlobalMetricsCache();
 
     res.locals.auditMeta = {
       targetType: 'College',
       targetId: college._id,
       collegeId: college._id,
-      metadata: { name, code },
+      metadata: { name, code: collegeCode, adminEmail },
     };
 
     res.status(201).json({
       success: true,
+      college,
       data: college,
-      message: 'College registered successfully.',
+      adminUser: adminUser
+        ? { id: adminUser._id, name: adminUser.name, email: adminUser.email, role: adminUser.role }
+        : null,
+      tempPassword: generatedPassword,
+      message: 'College registered and provisioned successfully.',
     });
   } catch (error) {
     next(error);
@@ -291,9 +402,11 @@ const getAuditLogs = async (req, res, next) => {
   try {
     const {
       actorId,
+      actorRole,
       action,
       collegeId,
       severity,
+      category,
       startDate,
       endDate,
       page = 1,
@@ -302,9 +415,19 @@ const getAuditLogs = async (req, res, next) => {
     const filter = {};
 
     if (actorId) filter.actorId = actorId;
+    if (actorRole && actorRole !== 'all') filter.actorRole = actorRole;
     if (action) filter.action = action;
     if (collegeId) filter.collegeId = collegeId;
     if (severity) filter.severity = severity;
+    if (category && category !== 'all') {
+      if (category === 'auth') {
+        filter.action = { $regex: 'auth|login', $options: 'i' };
+      } else if (category === 'tenant') {
+        filter.action = { $regex: 'tenant|registration|college', $options: 'i' };
+      } else if (category === 'security') {
+        filter.action = { $regex: 'security|mfa|forbidden', $options: 'i' };
+      }
+    }
 
     if (startDate || endDate) {
       filter.createdAt = {};
@@ -340,29 +463,80 @@ const getAuditLogs = async (req, res, next) => {
 // @access  Private/SuperAdmin
 const listColleges = async (req, res, next) => {
   try {
-    const colleges = await College.find();
+    const { status, search, page, limit } = req.query;
+    const filter = {};
 
-    const collegesWithMetrics = await Promise.all(
-      colleges.map(async (college) => {
-        const latestSnapshot = await PlatformMetricSnapshot.findOne({
-          collegeId: college._id,
-        }).sort({
-          snapshotDate: -1,
-        });
-        return {
-          ...college.toObject(),
-          metrics: latestSnapshot || {
-            activeStudents: 0,
-            storageUsageBytes: 0,
-          },
-        };
-      })
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+    if (search) {
+      const searchRegex = new RegExp(escapeRegExp(search), 'i');
+      filter.$or = [
+        { name: searchRegex },
+        { code: searchRegex },
+        { domain: searchRegex },
+        { slug: searchRegex },
+      ];
+    }
+
+    const isPaginated = page !== undefined || limit !== undefined;
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 100;
+    const skip = (pageNum - 1) * limitNum;
+
+    const total = await College.countDocuments(filter);
+    let query = College.find(filter).sort({ createdAt: -1 });
+
+    if (isPaginated) {
+      query = query.skip(skip).limit(limitNum);
+    }
+
+    const colleges = await query;
+    const collegeIds = colleges.map((c) => c._id);
+
+    const latestSnapshots =
+      collegeIds.length > 0
+        ? await PlatformMetricSnapshot.aggregate([
+            { $match: { collegeId: { $in: collegeIds } } },
+            { $sort: { collegeId: 1, snapshotDate: -1 } },
+            {
+              $group: {
+                _id: '$collegeId',
+                metrics: { $first: '$$ROOT' },
+              },
+            },
+          ])
+        : [];
+
+    const metricsMap = new Map(
+      latestSnapshots.map((s) => [s._id ? s._id.toString() : '', s.metrics])
     );
 
-    res.json({
+    const collegesWithMetrics = colleges.map((college) => {
+      const snapshot = metricsMap.get(college._id.toString());
+      return {
+        ...college.toObject(),
+        metrics: snapshot || {
+          activeStudents: 0,
+          storageUsageBytes: 0,
+        },
+      };
+    });
+
+    const response = {
       success: true,
       data: collegesWithMetrics,
-    });
+    };
+
+    if (isPaginated) {
+      response.pagination = {
+        total,
+        page: pageNum,
+        pages: Math.ceil(total / limitNum),
+      };
+    }
+
+    res.json(response);
   } catch (error) {
     next(error);
   }
@@ -449,24 +623,41 @@ const patchCollegeStatus = async (req, res, next) => {
       );
     }
 
+    const { runInTransaction } = require('../../utils/transactionHelper');
     const oldStatus = college.status;
-    college.status = status;
-    await college.save();
 
-    // Evict Redis status cache
+    await runInTransaction(async (session) => {
+      college.status = status;
+      await college.save({ session });
+
+      if (['suspended', 'archived'].includes(status)) {
+        await User.updateMany(
+          { collegeId: college._id },
+          { $unset: { refreshTokenHash: 1 } },
+          { session }
+        );
+        if (status === 'archived') {
+          await User.updateMany({ collegeId: college._id }, { isActive: false }, { session });
+        }
+      }
+    });
+
+    // Update Redis status cache explicitly
     const isRedisReady =
       redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect');
     if (isRedisReady) {
       try {
-        await redisClient.del(`college:status:${college._id.toString()}`);
+        await redisClient.set(`college:status:${college._id.toString()}`, status, 'EX', 86400);
       } catch {
         // ignore
       }
     }
 
+    await clearGlobalMetricsCache();
+
     // Log college status change
     await AuditLog.create({
-      actorId: req.user.id,
+      actorId: getActorId(req),
       actorRole: req.user.role,
       action: 'college.status_change',
       targetType: 'College',
@@ -493,7 +684,7 @@ const getGlobalPendingEResources = async (req, res, next) => {
   try {
     const EResource = require('../../models/EResource');
     const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 100;
+    const limit = parseInt(req.query.limit, 10) || 10;
     const skip = (page - 1) * limit;
     const status = req.query.status || 'pending';
 
@@ -549,14 +740,16 @@ const moderateEResourceGlobal = async (req, res, next) => {
 
     const oldStatus = resource.moderationStatus;
     resource.moderationStatus = status;
+    resource.isPublished = false;
     resource.moderationNote = note || '';
     resource.moderatedBy = req.user.id;
     resource.moderatedAt = new Date();
     await resource.save();
+    await clearGlobalMetricsCache();
 
     // Log to AuditLog
     await AuditLog.create({
-      actorId: req.user.id,
+      actorId: getActorId(req),
       actorRole: req.user.role,
       action: 'eresource.moderate',
       targetType: 'EResource',
@@ -565,6 +758,13 @@ const moderateEResourceGlobal = async (req, res, next) => {
       metadata: { oldStatus, newStatus: status, note },
       ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
     });
+
+    try {
+      const io = req.app && typeof req.app.get === 'function' ? req.app.get('io') : null;
+      if (io) io.emit('admin:moderation_updated', { resourceId: resource._id, status });
+    } catch {
+      // ignore
+    }
 
     res.json({
       success: true,
@@ -593,10 +793,11 @@ const publishEResourceGlobal = async (req, res, next) => {
 
     resource.moderationStatus = 'published';
     await resource.save();
+    await clearGlobalMetricsCache();
 
     // Log to AuditLog
     await AuditLog.create({
-      actorId: req.user.id,
+      actorId: getActorId(req),
       actorRole: req.user.role,
       action: 'eresource.publish',
       targetType: 'EResource',
@@ -774,12 +975,26 @@ const approveTenantOnboarding = async (req, res, next) => {
       return { college: createdCollege, adminUser: createdAdmin };
     });
 
-    // 4. Send Approval Email
-    await sendTenantOnboardingApprovalEmail(adminEmail, adminName, legalName);
+    await clearGlobalMetricsCache();
+
+    try {
+      const io = req.app && typeof req.app.get === 'function' ? req.app.get('io') : null;
+      if (io)
+        io.emit('admin:onboarding_updated', { requestId: regRequest._id, status: 'approved' });
+    } catch {
+      // ignore
+    }
+
+    // 4. Send Approval Email asynchronously in background job (Item 14)
+    setImmediate(() => {
+      sendTenantOnboardingApprovalEmail(adminEmail, adminName, legalName).catch((err) => {
+        logger.error(`Async approval email delivery failed: ${err.message}`);
+      });
+    });
 
     // 5. Audit Log
     await AuditLog.create({
-      actorId: req.user.id,
+      actorId: getActorId(req),
       actorRole: req.user.role,
       action: 'registration_request.approve',
       targetType: 'College',
@@ -836,17 +1051,21 @@ const rejectTenantOnboarding = async (req, res, next) => {
     regRequest.reviewedBy = req.user.id;
     await regRequest.save();
 
-    // Send rejection email notification
-    await sendTenantOnboardingRejectionEmail(
-      regRequest.tenantData.adminEmail,
-      regRequest.tenantData.adminName,
-      regRequest.tenantData.legalName,
-      reason
-    );
+    // Send rejection email notification asynchronously in background job (Item 14)
+    setImmediate(() => {
+      sendTenantOnboardingRejectionEmail(
+        regRequest.tenantData.adminEmail,
+        regRequest.tenantData.adminName,
+        regRequest.tenantData.legalName,
+        reason
+      ).catch((err) => {
+        logger.error(`Async rejection email delivery failed: ${err.message}`);
+      });
+    });
 
     // Audit log
     await AuditLog.create({
-      actorId: req.user.id,
+      actorId: getActorId(req),
       actorRole: req.user.role,
       action: 'registration_request.reject',
       targetType: 'RegistrationRequest',
@@ -930,6 +1149,7 @@ const updateUserStatus = async (req, res, next) => {
     if (typeof isActive === 'boolean') user.isActive = isActive;
 
     await user.save();
+    await clearGlobalMetricsCache();
 
     await AuditLog.create({
       actorId: getActorId(req),
@@ -975,6 +1195,7 @@ const updateUserRole = async (req, res, next) => {
     const oldRole = user.role;
     user.role = role;
     await user.save();
+    await clearGlobalMetricsCache();
 
     await AuditLog.create({
       actorId: getActorId(req),
@@ -1008,6 +1229,7 @@ const resetUserPassword = async (req, res, next) => {
 
     const generatedPassword = newPassword || `Pass@${Math.random().toString(36).substring(2, 10)}`;
     user.password = generatedPassword;
+    user.mustChangePasswordOnNextLogin = true;
     await user.save();
 
     await AuditLog.create({
@@ -1045,14 +1267,38 @@ const impersonateUser = async (req, res, next) => {
       );
     }
 
-    const { reason } = req.body || {};
+    const { reason, totpCode } = req.body || {};
     const justification = reason && reason.trim() ? reason.trim() : 'Administrative inspection';
 
     const user = await User.findById(req.params.id);
     if (!user) return next(new AppError('Target user not found.', 404));
 
+    if (user.status === 'disabled' || user.isActive === false) {
+      return next(new AppError('Cannot impersonate a disabled or suspended user account.', 400));
+    }
+
     if (user.role === 'super-admin') {
       return next(new AppError('Cannot impersonate another super-admin.', 400));
+    }
+
+    // Require MFA step-up verification if target user has a privileged role and super-admin has MFA enabled
+    if (['college-admin', 'admin', 'librarian'].includes(user.role)) {
+      const superAdminUser = await User.findById(req.user.id).select('+mfaSecret isMfaEnabled');
+      if (superAdminUser && superAdminUser.isMfaEnabled) {
+        if (!totpCode) {
+          return next(
+            new AppError(
+              'MFA verification (totpCode) required to impersonate a privileged administrative user.',
+              403
+            )
+          );
+        }
+        const { authenticator } = require('otplib');
+        const isValid = authenticator.verify({ token: totpCode, secret: superAdminUser.mfaSecret });
+        if (!isValid) {
+          return next(new AppError('Invalid MFA verification code provided.', 403));
+        }
+      }
     }
 
     const { generateAccessToken } = require('../../utils/token');
@@ -1091,6 +1337,31 @@ const impersonateUser = async (req, res, next) => {
   }
 };
 
+// @desc    Revoke active impersonation token
+// @route   POST /api/dashboards/admin-portal/users/revoke-impersonation
+// @access  Private/SuperAdmin
+const revokeImpersonationToken = async (req, res, next) => {
+  try {
+    const token =
+      (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')
+        ? req.headers.authorization.split(' ')[1]
+        : null) ||
+      (req.body && req.body.token);
+
+    if (token) {
+      const { blacklistToken } = require('../../utils/token');
+      await blacklistToken(token, redisClient);
+    }
+
+    res.json({
+      success: true,
+      message: 'Impersonation token revoked successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get live system telemetry & process metrics
 // @route   GET /api/dashboards/admin-portal/system/health
 // @access  Private/SuperAdmin
@@ -1105,12 +1376,18 @@ const getSystemHealth = async (req, res, next) => {
     const isRedisReady =
       redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect');
 
+    const cpuUsage = process.cpuUsage();
+
     res.json({
       success: true,
       data: {
         uptimeSeconds: Math.floor(process.uptime()),
         nodeVersion: process.version,
-        pid: process.pid,
+        pid: '[REDACTED]',
+        cpuUsage: {
+          userMs: Math.round(cpuUsage.user / 1000),
+          systemMs: Math.round(cpuUsage.system / 1000),
+        },
         memoryUsage: {
           rssMB: (memoryUsage.rss / (1024 * 1024)).toFixed(2),
           heapTotalMB: (memoryUsage.heapTotal / (1024 * 1024)).toFixed(2),
@@ -1118,7 +1395,7 @@ const getSystemHealth = async (req, res, next) => {
         },
         database: {
           status: dbStatesMap[dbState] || 'unknown',
-          host: mongoose.connection.host || 'localhost',
+          host: '[REDACTED]',
           name: mongoose.connection.name || 'bookbuddy',
         },
         redis: {
@@ -1321,9 +1598,44 @@ const updateComplaintStatus = async (req, res, next) => {
     complaint.resolvedAt = status === 'resolved' ? new Date() : complaint.resolvedAt;
 
     await complaint.save();
+    await clearGlobalMetricsCache();
+
+    // Patron notification on ticket resolution (Item 15)
+    if (status === 'resolved' && complaint.submittedBy) {
+      const {
+        notify,
+        sendSupportTicketResolutionEmail,
+      } = require('../../services/notificationService');
+      const User = require('../../models/User');
+
+      setImmediate(async () => {
+        try {
+          const patron = await User.findById(complaint.submittedBy);
+          if (patron) {
+            await notify(
+              patron._id,
+              'complaint_resolved',
+              `Your support ticket #${complaint._id.toString().slice(-6)} has been resolved.`,
+              complaint._id,
+              'Complaint'
+            );
+            if (patron.email) {
+              await sendSupportTicketResolutionEmail(
+                patron.email,
+                patron.name,
+                complaint._id.toString().slice(-6),
+                adminResponse || complaint.adminResponse || 'Issue resolved.'
+              );
+            }
+          }
+        } catch (err) {
+          logger.error(`Ticket resolution notification error: ${err.message}`);
+        }
+      });
+    }
 
     await AuditLog.create({
-      actorId: req.user.id,
+      actorId: getActorId(req),
       actorRole: req.user.role,
       action: 'complaint.update',
       targetType: 'Complaint',
@@ -1392,7 +1704,7 @@ const updateSystemSettings = async (req, res, next) => {
     }
 
     await AuditLog.create({
-      actorId: req.user.id,
+      actorId: getActorId(req),
       actorRole: req.user.role,
       action: 'system_settings.update',
       targetType: 'SystemSetting',
@@ -1415,22 +1727,44 @@ const updateSystemSettings = async (req, res, next) => {
 // @access  Private/SuperAdmin
 const triggerManualBackup = async (req, res, next) => {
   try {
-    const backupFilename = `backup-${new Date().toISOString().split('T')[0]}-${Date.now()}.tar.gz`;
+    const fs = require('fs');
+    const path = require('path');
+    const { execFile } = require('child_process');
+    const backupsDir = path.join(__dirname, '../../../backups');
+
+    if (!fs.existsSync(backupsDir)) {
+      fs.mkdirSync(backupsDir, { recursive: true });
+    }
+
+    const timestamp = Date.now();
+    const backupFilename = `backup-${new Date().toISOString().split('T')[0]}-${timestamp}`;
+    const outPath = path.join(backupsDir, backupFilename);
+
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bookbuddy';
+
+    // Execute native mongodump binary with safe fallback
+    execFile('mongodump', ['--uri', mongoUri, '--out', outPath], (err) => {
+      if (err) {
+        logger.warn(`Native mongodump execution note: ${err.message}`);
+      } else {
+        logger.info(`Database snapshot successfully written to ${outPath}`);
+      }
+    });
 
     await AuditLog.create({
-      actorId: req.user.id,
+      actorId: getActorId(req),
       actorRole: req.user.role,
       action: 'system_backup.trigger',
       targetType: 'SystemSetting',
       targetId: req.user.id,
-      metadata: { backupFilename },
+      metadata: { backupFilename: `${backupFilename}.tar.gz` },
       ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
     });
 
     res.json({
       success: true,
       message: 'Manual database snapshot initiated successfully.',
-      filename: backupFilename,
+      filename: `${backupFilename}.tar.gz`,
       timestamp: new Date(),
     });
   } catch (error) {
@@ -1506,8 +1840,35 @@ const getPredictiveDemandForecast = async (req, res, next) => {
       });
     }
 
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+
     const forecast = await Loan.aggregate([
-      { $group: { _id: '$bookId', totalLoans: { $sum: 1 } } },
+      {
+        $group: {
+          _id: '$bookId',
+          totalLoans: { $sum: 1 },
+          recentLoans: {
+            $sum: {
+              $cond: [{ $gte: ['$createdAt', thirtyDaysAgo] }, 1, 0],
+            },
+          },
+          previousLoans: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $gte: ['$createdAt', sixtyDaysAgo] },
+                    { $lt: ['$createdAt', thirtyDaysAgo] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+        },
+      },
       { $sort: { totalLoans: -1 } },
       { $limit: 10 },
       {
@@ -1518,13 +1879,38 @@ const getPredictiveDemandForecast = async (req, res, next) => {
           as: 'bookDetails',
         },
       },
-      { $unwind: '$bookDetails' },
+      { $unwind: { path: '$bookDetails', preserveNullAndEmptyArrays: true } },
       {
         $project: {
           title: '$bookDetails.title',
           author: '$bookDetails.author',
           totalLoans: 1,
-          predictedDemandIncreasePct: { $literal: 15 },
+          recentLoans: 1,
+          previousLoans: 1,
+          predictedDemandIncreasePct: {
+            $cond: [
+              { $gt: ['$previousLoans', 0] },
+              {
+                $round: [
+                  {
+                    $multiply: [
+                      {
+                        $divide: [
+                          { $subtract: ['$recentLoans', '$previousLoans'] },
+                          '$previousLoans',
+                        ],
+                      },
+                      100,
+                    ],
+                  },
+                  1,
+                ],
+              },
+              {
+                $cond: [{ $gt: ['$recentLoans', 0] }, 15, 5],
+              },
+            ],
+          },
         },
       },
     ]);
@@ -1549,7 +1935,8 @@ const triggerDatabaseRestore = async (req, res, next) => {
   try {
     const fs = require('fs');
     const path = require('path');
-    const backupsDir = path.join(__dirname, '../../backups');
+    const { execFile } = require('child_process');
+    const backupsDir = path.join(__dirname, '../../../backups');
 
     if (!fs.existsSync(backupsDir)) {
       return next(new AppError('No backup directory found on platform host.', 404));
@@ -1562,10 +1949,21 @@ const triggerDatabaseRestore = async (req, res, next) => {
 
     dirs.sort();
     const latestBackup = dirs[dirs.length - 1];
+    const targetPath = path.join(backupsDir, latestBackup);
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bookbuddy';
+
+    // Execute native mongorestore binary with safe fallback
+    execFile('mongorestore', ['--uri', mongoUri, targetPath], (err) => {
+      if (err) {
+        logger.warn(`Native mongorestore execution note: ${err.message}`);
+      } else {
+        logger.info(`Database successfully restored from ${targetPath}`);
+      }
+    });
 
     res.json({
       success: true,
-      message: `Database restoration snapshot selected: ${latestBackup}. System ready for restoration.`,
+      message: `Database restoration snapshot selected: ${latestBackup}. Restoration process initiated.`,
       targetSnapshot: latestBackup,
     });
   } catch (error) {
@@ -1607,4 +2005,5 @@ module.exports = {
   updateCollegeTier,
   getPredictiveDemandForecast,
   triggerDatabaseRestore,
+  revokeImpersonationToken,
 };

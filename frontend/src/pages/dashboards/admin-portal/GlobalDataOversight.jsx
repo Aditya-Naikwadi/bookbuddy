@@ -1,22 +1,23 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { BookOpen, DollarSign, Search, Clock } from "lucide-react";
+import { Clock, DollarSign, BookOpen, Search } from "lucide-react";
 import {
-  ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  ResponsiveContainer,
   Tooltip,
   Legend,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
 } from "recharts";
 import adminApi from "../../../api/adminApi";
 import OpsHeader from "../../../components/ops/OpsHeader";
-import OpsDataTable from "../../../components/ops/OpsDataTable";
 import OpsSeverityBadge from "../../../components/ops/OpsSeverityBadge";
+import OpsDataTable from "../../../components/ops/OpsDataTable";
+import useDebounce from "../../../hooks/useDebounce";
 
 export default function GlobalDataOversight() {
   const [activeTab, setActiveTab] = useState("loans");
@@ -27,6 +28,7 @@ export default function GlobalDataOversight() {
 
   // Filters State
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [collegeFilter, setCollegeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
@@ -67,11 +69,46 @@ export default function GlobalDataOversight() {
   const DONUT_COLORS = ["#10b981", "#f59e0b", "#ef4444"];
 
   const circulationBarData = useMemo(() => {
-    const totalCount = Array.isArray(data) ? data.length : 0;
-    return [
-      { month: "Current Activity", loans: totalCount, fines: totalCount * 10 },
-    ];
-  }, [data]);
+    if (!Array.isArray(data) || data.length === 0) {
+      return [{ month: "Current Period", loans: 0, fines: 0 }];
+    }
+    const monthMap = {};
+    data.forEach((item) => {
+      const dateVal = item.createdAt || item.issueDate;
+      const monthStr = dateVal
+        ? new Date(dateVal).toLocaleDateString("en-US", {
+            month: "short",
+            year: "2-digit",
+          })
+        : "Current";
+      if (!monthMap[monthStr]) {
+        monthMap[monthStr] = { month: monthStr, loans: 0, fines: 0 };
+      }
+      if (activeTab === "loans") {
+        monthMap[monthStr].loans += 1;
+      } else if (activeTab === "fines") {
+        monthMap[monthStr].fines += item.amount || 0;
+      } else {
+        monthMap[monthStr].loans += item.totalCopies || 1;
+      }
+    });
+    return Object.values(monthMap);
+  }, [data, activeTab]);
+
+  const [page, setPage] = useState(1);
+  const [paginationInfo, setPaginationInfo] = useState({
+    page: 1,
+    pages: 1,
+    total: 0,
+  });
+
+  const [prevFilterKey, setPrevFilterKey] = useState("");
+  const filterKey = `${activeTab}-${debouncedSearch}-${collegeFilter}-${statusFilter}`;
+
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey);
+    setPage(1);
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -83,22 +120,33 @@ export default function GlobalDataOversight() {
 
         if (activeTab === "loans") {
           res = await adminApi.getGlobalLoans({
+            page,
+            limit: 20,
             status: statusFilter || undefined,
             collegeId: collegeFilter || undefined,
           });
         } else if (activeTab === "fines") {
           res = await adminApi.getGlobalFines({
+            page,
+            limit: 20,
             status: statusFilter || undefined,
             collegeId: collegeFilter || undefined,
           });
         } else if (activeTab === "catalog") {
           res = await adminApi.getGlobalCatalog({
-            search: search || undefined,
+            page,
+            limit: 20,
+            search: debouncedSearch || undefined,
             collegeId: collegeFilter || undefined,
           });
         }
 
-        if (isMounted) setData(res?.data || []);
+        if (isMounted) {
+          setData(res?.data || []);
+          if (res?.pagination) {
+            setPaginationInfo(res.pagination);
+          }
+        }
       } catch (err) {
         console.error(err);
         if (isMounted) setError(`Failed to fetch global ${activeTab} data.`);
@@ -111,7 +159,14 @@ export default function GlobalDataOversight() {
     return () => {
       isMounted = false;
     };
-  }, [activeTab, reloadToken, search, collegeFilter, statusFilter]);
+  }, [
+    activeTab,
+    reloadToken,
+    debouncedSearch,
+    collegeFilter,
+    statusFilter,
+    page,
+  ]);
 
   // Column definitions per tab
   const loanColumns = [
@@ -211,7 +266,10 @@ export default function GlobalDataOversight() {
       key: "amount",
       render: (val) => (
         <span className="font-semibold text-amber-700 text-xs">
-          ₹{(val || 0).toFixed(2)}
+          {new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+          }).format(val || 0)}
         </span>
       ),
     },
@@ -557,6 +615,12 @@ export default function GlobalDataOversight() {
           isLoading={isLoading}
           searchPlaceholder={`Filter global ${activeTab} records...`}
           emptyMessage={`No ${activeTab} records found matching specified criteria.`}
+          pagination={{
+            page: paginationInfo.page,
+            pages: paginationInfo.pages,
+            total: paginationInfo.total,
+            onPageChange: (p) => setPage(p),
+          }}
         />
       </main>
     </div>

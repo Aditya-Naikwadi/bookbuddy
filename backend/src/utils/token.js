@@ -2,6 +2,7 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const config = require('../config');
+
 const generateTokenPair = (user, impersonationOptions = null) => {
   if (!user || (!user._id && !user.id)) {
     throw new Error('Invalid user object provided for token generation');
@@ -60,6 +61,61 @@ const verifyAccessToken = (token) => {
   return jwt.verify(token, config.jwt.secret, { algorithms: ['HS256'] });
 };
 
+const revokedTokenHashes = new Set();
+
+const blacklistToken = async (token, redisClient = null, reason = 'Token revoked') => {
+  if (!token) return;
+  const hash = hashToken(token);
+  revokedTokenHashes.add(hash);
+
+  if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {
+    try {
+      await redisClient.set(`token:blacklist:${hash}`, '1', 'EX', 3600);
+    } catch {
+      // Ignore Redis error
+    }
+  }
+
+  try {
+    const RevokedToken = require('../models/RevokedToken');
+    await RevokedToken.updateOne(
+      { tokenHash: hash },
+      { tokenHash: hash, revokedAt: new Date(), reason },
+      { upsert: true }
+    );
+  } catch {
+    // Ignore DB fallback error
+  }
+};
+
+const isTokenBlacklisted = async (token, redisClient = null) => {
+  if (!token) return false;
+  const hash = hashToken(token);
+  if (revokedTokenHashes.has(hash)) return true;
+
+  if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {
+    try {
+      const isBlacklisted = await redisClient.get(`token:blacklist:${hash}`);
+      if (isBlacklisted) return true;
+    } catch {
+      // Fallback to database check
+    }
+  }
+
+  try {
+    const RevokedToken = require('../models/RevokedToken');
+    const dbRevoked = await RevokedToken.exists({ tokenHash: hash });
+    if (dbRevoked) {
+      revokedTokenHashes.add(hash);
+      return true;
+    }
+  } catch {
+    // Fail safely
+  }
+
+  return false;
+};
+
 const generateAccessToken = (user, impersonationOptions = null) => {
   return generateTokenPair(user, impersonationOptions).accessToken;
 };
@@ -69,4 +125,6 @@ module.exports = {
   generateAccessToken,
   hashToken,
   verifyAccessToken,
+  blacklistToken,
+  isTokenBlacklisted,
 };

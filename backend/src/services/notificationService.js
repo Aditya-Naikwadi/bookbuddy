@@ -305,6 +305,11 @@ const sendTenantOnboardingRejectionEmail = async (email, adminName, collegeName,
   return await sendEmail(null, email, 'tenant_onboarding_rejection', message);
 };
 
+const sendSupportTicketResolutionEmail = async (email, patronName, ticketId, response) => {
+  const message = `Hello ${patronName || 'Patron'}, your support ticket #${ticketId} has been resolved. Response: "${response || 'Issue addressed by support.'}"`;
+  return await sendEmail(null, email, 'support_ticket_resolution', message);
+};
+
 module.exports = {
   notify,
   sendEmail,
@@ -319,4 +324,5 @@ module.exports = {
   sendAdminDomainVerificationEmail,
   sendTenantOnboardingApprovalEmail,
   sendTenantOnboardingRejectionEmail,
+  sendSupportTicketResolutionEmail,
 };

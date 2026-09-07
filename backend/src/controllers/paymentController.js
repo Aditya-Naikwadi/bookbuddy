@@ -165,7 +165,7 @@ const handlePaymentWebhook = asyncHandler(async (req, res) => {
 
   if (targetFineIds.length > 0) {
     await Fine.updateMany(
-      { _id: { $in: targetFineIds } },
+      { _id: { $in: targetFineIds }, status: 'unpaid' },
       {
         $set: {
           status: 'paid',
@@ -270,7 +270,7 @@ const verifyPayment = asyncHandler(async (req, res) => {
 
   if (targetFineIds.length > 0) {
     await Fine.updateMany(
-      { _id: { $in: targetFineIds } },
+      { _id: { $in: targetFineIds }, status: 'unpaid' },
       {
         $set: {
           status: 'paid',

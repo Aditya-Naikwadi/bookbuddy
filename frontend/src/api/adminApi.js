@@ -114,9 +114,17 @@ export const adminApi = {
     );
     return data;
   },
-  impersonateUser: async (id) => {
+  impersonateUser: async (id, totpCode) => {
     const { data } = await apiClient.post(
       `/dashboards/admin-portal/users/${id}/impersonate`,
+      { totpCode },
+    );
+    return data;
+  },
+  revokeImpersonationToken: async (token) => {
+    const { data } = await apiClient.post(
+      "/dashboards/admin-portal/users/revoke-impersonation",
+      { token },
     );
     return data;
   },

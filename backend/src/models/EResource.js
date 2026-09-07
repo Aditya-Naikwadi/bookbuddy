@@ -67,7 +67,6 @@ const eResourceSchema = new mongoose.Schema(
       type: String,
       enum: ['pending', 'pending_review', 'approved', 'rejected', 'published'],
       default: 'pending',
-      index: true,
     },
     moderationNote: {
       type: String,
@@ -202,8 +201,11 @@ eResourceSchema.pre(['save', 'validate'], function (next) {
     this.moderationNote = this.rejectionReason;
   }
 
-  if (this.moderationStatus === 'published' && !this.isPublished) {
+  if (this.moderationStatus === 'published') {
     this.isPublished = true;
+    if (!this.publishedAt) this.publishedAt = new Date();
+  } else if (this.isPublished) {
+    this.moderationStatus = 'published';
     if (!this.publishedAt) this.publishedAt = new Date();
   }
 
@@ -219,9 +221,10 @@ eResourceSchema.pre(['save', 'validate'], function (next) {
 // Compound index for listing approved resources by category
 eResourceSchema.index({ collegeId: 1, moderationStatus: 1, category: 1 });
 
-// Queue index for processing pending reviews in FIFO order (oldest first)
+// Queue index for processing pending reviews in FIFO/LIFO order
 eResourceSchema.index({ moderationStatus: 1, submittedAt: 1 });
 eResourceSchema.index({ moderationStatus: 1, createdAt: 1 });
+eResourceSchema.index({ moderationStatus: 1, createdAt: -1 });
 
 // Tenant catalog view index (approved & published resources)
 eResourceSchema.index({ collegeId: 1, moderationStatus: 1, isPublished: 1 });

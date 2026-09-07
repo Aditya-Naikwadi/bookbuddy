@@ -1,7 +1,6 @@
-// Authentication and authorization middlewares.
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
-const { verifyAccessToken } = require('../utils/token');
+const { verifyAccessToken, isTokenBlacklisted } = require('../utils/token');
 
 const protect = async (req, res, next) => {
   let token;
@@ -15,6 +14,14 @@ const protect = async (req, res, next) => {
   }
 
   try {
+    const { redisClient } = require('./rateLimiters');
+
+    // Check if token has been revoked
+    const blacklisted = await isTokenBlacklisted(token, redisClient);
+    if (blacklisted) {
+      return next(new AppError('Token has been revoked or session ended.', 401));
+    }
+
     const decoded = verifyAccessToken(token);
 
     // Fetch minimal user status
@@ -27,6 +34,31 @@ const protect = async (req, res, next) => {
 
     if (!user.isActive) {
       return next(new AppError('Your account has been deactivated.', 401));
+    }
+
+    // Check global system maintenance mode for non-super-admins
+    if (user.role !== 'super-admin') {
+      let isMaintenance = false;
+      if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {
+        try {
+          const cachedm = await redisClient.get('system:setting:maintenanceMode');
+          if (cachedm === 'true') isMaintenance = true;
+        } catch {
+          // ignore
+        }
+      }
+      if (!isMaintenance) {
+        const SystemSetting = require('../models/SystemSetting');
+        const mSetting = await SystemSetting.findOne({ key: 'maintenanceMode' });
+        if (mSetting && (mSetting.value === true || mSetting.value === 'true')) {
+          isMaintenance = true;
+        }
+      }
+      if (isMaintenance) {
+        return next(
+          new AppError('Platform is under scheduled maintenance. Please try again later.', 503)
+        );
+      }
     }
 
     // Check college suspension/archival for non-super-admins

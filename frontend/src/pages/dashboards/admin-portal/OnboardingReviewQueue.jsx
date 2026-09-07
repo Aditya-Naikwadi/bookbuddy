@@ -79,13 +79,41 @@ export default function OnboardingReviewQueue() {
     setMessage({ type: "", text: "" });
     try {
       const idList = Array.from(selectedIds);
-      await Promise.all(
-        idList.map((id) => registrationApi.approveOnboarding(id)),
+      const results = await Promise.allSettled(
+        idList.map(async (id) => {
+          const reqObj = requests.find((r) => r._id === id);
+          const name = reqObj?.tenantData?.legalName || id;
+          try {
+            const res = await registrationApi.approveOnboarding(id);
+            return { id, name, status: "fulfilled", result: res };
+          } catch (err) {
+            const errMsg =
+              err.response?.data?.message || err.message || "Failed";
+            throw { id, name, status: "rejected", reason: errMsg };
+          }
+        }),
       );
-      setMessage({
-        type: "success",
-        text: `Successfully approved ${idList.length} tenant application(s)!`,
-      });
+
+      const succeeded = results.filter((r) => r.status === "fulfilled");
+      const failed = results.filter((r) => r.status === "rejected");
+
+      if (failed.length === 0) {
+        setMessage({
+          type: "success",
+          text: `Successfully approved all ${succeeded.length} tenant application(s)!`,
+        });
+      } else {
+        const failureDetails = failed
+          .map(
+            (f) =>
+              `${f.reason?.name || f.reason?.id}: ${f.reason?.reason || "Failed"}`,
+          )
+          .join("; ");
+        setMessage({
+          type: "warning",
+          text: `Batch processing complete (${succeeded.length} approved, ${failed.length} failed). Failures: ${failureDetails}`,
+        });
+      }
       setSelectedIds(new Set());
       fetchPendingRequests();
     } catch (err) {
@@ -182,6 +210,16 @@ export default function OnboardingReviewQueue() {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && rejectingRequest) {
+        setRejectingRequest(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [rejectingRequest]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-void text-slate-900 dark:text-ink font-sans pb-12">
@@ -415,9 +453,17 @@ export default function OnboardingReviewQueue() {
 
         {/* REJECTION MODAL */}
         {rejectingRequest && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reject-tenant-modal-title"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
             <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-700">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+              <h3
+                id="reject-tenant-modal-title"
+                className="text-lg font-bold text-slate-900 dark:text-white mb-2"
+              >
                 Reject Tenant Onboarding
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">

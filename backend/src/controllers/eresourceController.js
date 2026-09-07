@@ -40,6 +40,26 @@ const submitEResource = asyncHandler(async (req, res) => {
     throw new AppError('Title is required for material submission.', 400);
   }
 
+  // Storage Quota Enforcement
+  if (req.user.collegeId) {
+    const College = require('../models/College');
+    const college = await College.findById(req.user.collegeId).select('tierLimits');
+    if (college && college.tierLimits && college.tierLimits.maxStorageBytes) {
+      const incomingBytes = req.file ? req.file.size || 1048576 : 1048576;
+      const currentAggregate = await EResource.aggregate([
+        { $match: { collegeId: req.user.collegeId } },
+        { $group: { _id: null, totalBytes: { $sum: '$fileSizeBytes' } } },
+      ]);
+      const currentBytes = currentAggregate[0]?.totalBytes || 0;
+      if (currentBytes + incomingBytes > college.tierLimits.maxStorageBytes) {
+        throw new AppError(
+          'Institutional storage quota exceeded. Upload rejected until capacity is upgraded.',
+          400
+        );
+      }
+    }
+  }
+
   const fileUrl = req.file
     ? `/uploads/ebooks/${req.file.filename}`
     : `/uploads/ebooks/student-${Date.now()}.pdf`;

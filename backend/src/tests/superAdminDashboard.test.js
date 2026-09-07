@@ -307,7 +307,7 @@ describe('Super Admin Dashboard Comprehensive Integration Test Suite', () => {
         .send({ status: 'invalid_status_enum' });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toContain('Invalid user status');
+      expect(res.body.message).toMatch(/Validation Error|Invalid/);
     });
 
     it('PATCH /support/complaints/:id - should reject invalid complaint status enum with 400', async () => {

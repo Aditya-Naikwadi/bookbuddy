@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Building2,
   FileCheck,
   ShieldCheck,
+  ShieldAlert,
   RefreshCw,
   LogOut,
   User,
@@ -13,13 +14,37 @@ import {
   Inbox,
 } from "lucide-react";
 import useAuthStore from "../../store/authStore";
+import useSocket from "../../hooks/useSocket";
 import OpsCommandPalette from "./OpsCommandPalette";
 
 export function OpsHeader({ title, subtitle, onRefresh, isRefreshing }) {
   const location = useLocation();
-  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+  const { user, logout, isImpersonated, stopImpersonating } = useAuthStore();
+  const { socket } = useSocket();
   const [timeString, setTimeString] = useState("");
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+
+  const handleExitImpersonation = async () => {
+    const success = await stopImpersonating();
+    if (success) {
+      navigate("/admin-portal/users", { replace: true });
+    }
+  };
+
+  // Subscribe to real-time admin push events for automated data sync
+  useEffect(() => {
+    if (!socket || !onRefresh) return;
+    const handlePushEvent = () => onRefresh();
+    socket.on("admin:onboarding_updated", handlePushEvent);
+    socket.on("admin:moderation_updated", handlePushEvent);
+    socket.on("admin:metrics_updated", handlePushEvent);
+    return () => {
+      socket.off("admin:onboarding_updated", handlePushEvent);
+      socket.off("admin:moderation_updated", handlePushEvent);
+      socket.off("admin:metrics_updated", handlePushEvent);
+    };
+  }, [socket, onRefresh]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -50,31 +75,75 @@ export function OpsHeader({ title, subtitle, onRefresh, isRefreshing }) {
     return () => clearInterval(interval);
   }, []);
 
-  const navItems = [
-    {
-      path: "/admin-portal/overview",
-      label: "Overview",
-      icon: LayoutDashboard,
-    },
-    {
-      path: "/admin-portal/college-admins",
-      label: "Tenants & Institutions",
-      icon: Building2,
-    },
-    {
-      path: "/admin-portal/moderation",
-      label: "Content Moderation",
-      icon: FileCheck,
-    },
-    {
-      path: "/admin-portal/audit-logs",
-      label: "Security Audit Trail",
-      icon: ShieldCheck,
-    },
-  ];
+  const navItems = useMemo(
+    () => [
+      {
+        path: "/admin-portal",
+        label: "Command Center",
+        icon: LayoutDashboard,
+      },
+      {
+        path: "/admin-portal/overview",
+        label: "Telemetry & Health",
+        icon: RefreshCw,
+      },
+      {
+        path: "/admin-portal/college-admins",
+        label: "Tenants",
+        icon: Building2,
+      },
+      {
+        path: "/admin-portal/moderation",
+        label: "Moderation",
+        icon: FileCheck,
+      },
+      {
+        path: "/admin-portal/support",
+        label: "Support Queue",
+        icon: Inbox,
+      },
+      {
+        path: "/admin-portal/users",
+        label: "User Directory",
+        icon: User,
+      },
+      {
+        path: "/admin-portal/data-oversight",
+        label: "Data Oversight",
+        icon: LayoutDashboard,
+      },
+      {
+        path: "/admin-portal/audit-logs",
+        label: "Audit Trail",
+        icon: ShieldCheck,
+      },
+    ],
+    [],
+  );
 
   return (
-    <header className="bg-white dark:bg-surface border-b border-slate-200/80 dark:border-edge sticky top-0 z-30 shadow-xs font-sans">
+    <header className="bg-white dark:bg-surface border-b border-slate-200/80 dark:border-edge relative z-10 shadow-xs font-sans">
+      {/* Impersonation Mode Active Banner */}
+      {isImpersonated && (
+        <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between shadow-md border-b border-amber-600">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-slate-950 shrink-0" />
+            <span>
+              IMPERSONATION MODE ACTIVE: Currently acting as{" "}
+              <strong>{user?.name || user?.email || "Target User"}</strong> (
+              {user?.role || "user"}). Actions are audited under your Super
+              Admin ID.
+            </span>
+          </div>
+          <button
+            onClick={handleExitImpersonation}
+            className="px-3 py-1 bg-slate-950 hover:bg-slate-900 text-amber-400 text-[11px] font-black rounded-lg transition-colors border border-amber-400/40 shadow-xs shrink-0 cursor-pointer"
+          >
+            EXIT IMPERSONATION
+          </button>
+        </div>
+      )}
+
       <OpsCommandPalette
         isOpen={isPaletteOpen}
         onClose={() => setIsPaletteOpen(false)}

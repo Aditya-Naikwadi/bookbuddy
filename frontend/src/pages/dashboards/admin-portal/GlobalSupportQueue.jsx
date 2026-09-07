@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   CheckCircle2,
   Clock,
@@ -106,6 +106,48 @@ export default function GlobalSupportQueue() {
       setIsSubmitting(false);
     }
   };
+
+  const supportModalRef = useRef(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && selectedComplaint) {
+        setSelectedComplaint(null);
+      }
+      if (e.key === "Tab" && selectedComplaint && supportModalRef.current) {
+        const elements = Array.from(
+          supportModalRef.current.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          ),
+        );
+        if (elements.length === 0) return;
+        const firstElement = elements[0];
+        const lastElement = elements[elements.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            lastElement.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            firstElement.focus();
+            e.preventDefault();
+          }
+        }
+      }
+    };
+
+    if (selectedComplaint && supportModalRef.current) {
+      const focusable = supportModalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length > 0) focusable[0].focus();
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedComplaint]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-void text-slate-900 dark:text-ink font-sans pb-12">
@@ -287,10 +329,19 @@ export default function GlobalSupportQueue() {
 
         {/* Response Modal */}
         {selectedComplaint && (
-          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div
+            ref={supportModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="support-ticket-modal-title"
+            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4"
+          >
             <div className="bg-white border border-slate-200/80 rounded-2xl p-6 max-w-lg w-full space-y-5 shadow-xl">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="text-base font-bold text-slate-900">
+                <h3
+                  id="support-ticket-modal-title"
+                  className="text-base font-bold text-slate-900"
+                >
                   Update Support Ticket Resolution
                 </h3>
                 <button

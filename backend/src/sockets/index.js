@@ -57,8 +57,12 @@ const initSockets = (server) => {
       logger.info(`Super-admin ${userId} joined room:super-admin`);
     }
 
-    socket.on('disconnect', () => {
-      logger.info(`Socket disconnected: ${socket.id} for user: ${userId}`);
+    socket.on('disconnect', (reason) => {
+      logger.info(`Socket disconnected: ${socket.id} for user: ${userId} (${reason})`);
+      if (userId) socket.leave(`user:${userId}`);
+      if (collegeId) socket.leave(`college:${collegeId}`);
+      socket.leave('room:super-admin');
+      socket.removeAllListeners();
     });
   });
 

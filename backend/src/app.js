@@ -93,16 +93,15 @@ const allowedOrigins = [
   'http://127.0.0.1:3000',
 ].filter(Boolean);
 
+const vercelDomainRegex = /^https:\/\/(?:[a-z0-9-]+\.)?book-buddy[a-z0-9-]*\.vercel\.app$/i;
+
 app.use(
   cors({
     origin: (origin, callback) => {
       if (
         !origin ||
         allowedOrigins.includes(origin) ||
-        allowedOrigins.some((o) => origin === o) ||
-        (typeof origin === 'string' &&
-          origin.endsWith('.vercel.app') &&
-          origin.startsWith('https://'))
+        (typeof origin === 'string' && vercelDomainRegex.test(origin))
       ) {
         return callback(null, true);
       }

@@ -193,52 +193,52 @@ export default function SystemOverview() {
 
         {/* Core Operational Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-5 shadow-xs space-y-2">
-            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+          <div className="admin-stat-card space-y-2">
+            <div className="flex items-center justify-between text-slate-400 dark:text-muted text-[11px] font-semibold uppercase tracking-wider">
               <span>Active Colleges</span>
-              <Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <Building2 className="w-4 h-4 text-indigo-400" />
             </div>
-            <div className="text-2xl font-bold text-slate-900 dark:text-ink tracking-tight">
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-ink tracking-tight">
               {stats?.activeCollegesCount || activeCollegesCount || 1}
-              <span className="text-xs text-slate-400 dark:text-slate-500 ml-2 font-normal">
+              <span className="text-xs text-slate-400 dark:text-muted ml-2 font-normal">
                 / {colleges.length || 1} Total
               </span>
             </div>
-            <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-edge">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <div className="text-xs text-emerald-400 font-medium flex items-center gap-1.5 pt-2 border-t border-white/10">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>Multi-Tenant Scoping Active</span>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-5 shadow-xs space-y-2">
-            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+          <div className="admin-stat-card space-y-2">
+            <div className="flex items-center justify-between text-slate-400 dark:text-muted text-[11px] font-semibold uppercase tracking-wider">
               <span>Active Students</span>
-              <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <Users className="w-4 h-4 text-emerald-400" />
             </div>
-            <div className="text-2xl font-bold text-slate-900 dark:text-ink tracking-tight">
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-ink tracking-tight">
               {(
                 stats?.totalUsers ||
                 stats?.userCountsByRole?.student ||
                 0
               ).toLocaleString()}
             </div>
-            <div className="text-xs text-slate-500 dark:text-muted flex items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-edge">
+            <div className="text-xs text-slate-400 dark:text-muted flex items-center gap-1.5 pt-2 border-t border-white/10">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
               <span>Across Onboarded Campus Tenants</span>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-5 shadow-xs space-y-2">
-            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+          <div className="admin-stat-card space-y-2">
+            <div className="flex items-center justify-between text-slate-400 dark:text-muted text-[11px] font-semibold uppercase tracking-wider">
               <span>Server Memory (Heap)</span>
-              <Database className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+              <Database className="w-4 h-4 text-cyan-400" />
             </div>
-            <div className="text-2xl font-bold text-slate-900 dark:text-ink tracking-tight">
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-ink tracking-tight">
               {health?.memoryUsage
                 ? `${health.memoryUsage.heapUsedMB} MB`
                 : "48.2 MB"}
             </div>
-            <div className="text-xs text-slate-500 dark:text-muted flex items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-edge">
+            <div className="text-xs text-slate-400 dark:text-muted flex items-center gap-1.5 pt-2 border-t border-white/10">
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
               <span>
                 RSS: {health?.memoryUsage?.rssMB || "120"} MB // Node{" "}
@@ -247,18 +247,18 @@ export default function SystemOverview() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-surface border border-slate-200/80 dark:border-edge rounded-2xl p-5 shadow-xs space-y-2">
-            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+          <div className="admin-stat-card space-y-2">
+            <div className="flex items-center justify-between text-slate-400 dark:text-muted text-[11px] font-semibold uppercase tracking-wider">
               <span>Pending Review Gate</span>
-              <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <Clock className="w-4 h-4 text-amber-400" />
             </div>
-            <div className="text-2xl font-bold text-slate-900 dark:text-ink tracking-tight">
+            <div className="text-2xl sm:text-3xl font-extrabold text-amber-500 dark:text-amber-400 tracking-tight">
               {pendingCollegesCount}
-              <span className="text-xs text-slate-500 dark:text-muted ml-2 font-normal">
+              <span className="text-xs text-slate-400 dark:text-muted ml-2 font-normal">
                 Applications
               </span>
             </div>
-            <div className="text-xs text-amber-700 dark:text-amber-300 font-medium flex items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-edge">
+            <div className="text-xs text-amber-400 font-medium flex items-center gap-1.5 pt-2 border-t border-white/10">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
               <span>Requires Super Admin Sign-Off</span>
             </div>
