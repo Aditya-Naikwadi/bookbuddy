@@ -86,7 +86,7 @@ const sendCredentialSMS = async ({
   const instName = collegeName || 'BookBuddy';
 
   const bodyText = [
-    `Welcome to ${instName}! Your student library account has been provisioned.`,
+    `Hi ${name}, welcome to ${instName}! Your student library account has been provisioned.`,
     `Student ID: ${studentId}`,
     `Temp Password: ${tempPassword}`,
     `Login Portal: ${portalLink}`,
