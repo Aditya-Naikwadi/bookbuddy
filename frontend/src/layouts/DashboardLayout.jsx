@@ -53,8 +53,12 @@ export default function DashboardLayout() {
 
   const isAdminPortal =
     user?.role === "super-admin" || user?.role === "super_admin";
-  const isCollegeAdmin =
-    user?.role === "college-admin" || user?.role === "college_admin";
+  const isCollegeAdmin = [
+    "college-admin",
+    "college_admin",
+    "admin",
+    "librarian",
+  ].includes(user?.role);
   const isGeneralDashboard = user?.role === "general";
   const isStudent = user?.role === "student";
 
@@ -156,7 +160,7 @@ export default function DashboardLayout() {
           {isCollegeAdmin && (
             <>
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                College Admin
+                Desk Modules
               </p>
               {visibleCollegeAdminItems
                 .filter((item) => item.key !== "dashboard")
@@ -358,7 +362,7 @@ export default function DashboardLayout() {
           {isCollegeAdmin && (
             <>
               <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                College Admin
+                Desk Modules
               </p>
               <NavItem
                 to="/college-admin"
@@ -580,14 +584,24 @@ const NavItem = ({ to, icon, label }) => {
       onMouseEnter={handlePrefetch}
       onTouchStart={handlePrefetch}
       className={cn(
-        "flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all text-xs",
+        "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all text-xs",
         isActive
-          ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-200 dark:border-indigo-800/60 shadow-xs"
+          ? "bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-200 dark:border-indigo-800/80 shadow-xs pl-3.5"
           : "text-slate-600 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-ink",
       )}
     >
-      {icon}
-      <span>{label}</span>
+      {isActive && (
+        <span className="absolute left-1 top-2 bottom-2 w-1 bg-indigo-600 dark:bg-indigo-400 rounded-full" />
+      )}
+      <span
+        className={cn(
+          "transition-transform group-hover:scale-105 shrink-0",
+          isActive ? "text-indigo-600 dark:text-indigo-400" : "",
+        )}
+      >
+        {icon}
+      </span>
+      <span className="truncate">{label}</span>
     </Link>
   );
 };

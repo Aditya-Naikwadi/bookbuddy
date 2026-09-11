@@ -22,7 +22,7 @@ export function PermissionGate({
 
   // Super-admin root bypass
   if (
-    user.role === "super-admin" &&
+    (user.role === "super-admin" || user.role === "super_admin") &&
     (!user.subRole || user.subRole === "root_admin")
   ) {
     return <>{children}</>;
@@ -45,17 +45,23 @@ export function PermissionGate({
     ? permission
     : [permission];
   const userPermissions = user.permissions;
+  const isCollegeAdminRole = [
+    "college-admin",
+    "college_admin",
+    "admin",
+    "librarian",
+  ].includes(user.role);
 
   let hasPermission = false;
   if (!userPermissions) {
-    hasPermission = user.role === "college-admin";
+    hasPermission = isCollegeAdminRole;
   } else if (Array.isArray(userPermissions)) {
     hasPermission = permissionsToCheck.some((p) => userPermissions.includes(p));
   } else if (typeof userPermissions === "object") {
     hasPermission = permissionsToCheck.every(
       (p) =>
         userPermissions[p] === true ||
-        (userPermissions[p] === undefined && user.role === "college-admin"),
+        (userPermissions[p] === undefined && isCollegeAdminRole),
     );
   }
 

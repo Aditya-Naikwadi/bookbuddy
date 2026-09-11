@@ -1,3 +1,12 @@
+const COLLEGE_ADMIN_ROLES = [
+  "college-admin",
+  "college_admin",
+  "admin",
+  "librarian",
+  "super-admin",
+  "super_admin",
+];
+
 // Single source of truth mapping frontend routes to required roles
 export const ROLE_ROUTE_MAP = {
   // Super Admin Routes
@@ -13,18 +22,21 @@ export const ROLE_ROUTE_MAP = {
   "/admin-portal/support": ["super-admin", "super_admin"],
 
   // College Admin Routes
-  "/college-admin": ["college-admin", "admin", "librarian"],
-  "/college-admin/bulk-upload": ["college-admin", "admin", "librarian"],
-  "/college-admin/patrons": ["college-admin", "admin", "librarian"],
-  "/college-admin/circulation": ["college-admin", "admin", "librarian"],
-  "/college-admin/cataloging": ["college-admin", "admin", "librarian"],
-  "/college-admin/digital-assets": ["college-admin", "admin", "librarian"],
-  "/college-admin/inventory": ["college-admin", "admin", "librarian"],
-  "/college-admin/finances": ["college-admin", "admin", "librarian"],
-  "/college-admin/system-config": ["college-admin", "admin", "librarian"],
-  "/college-admin/facilities": ["college-admin", "admin", "librarian"],
-  "/college-admin/helpdesk": ["college-admin", "admin", "librarian"],
-  "/college-admin/analytics": ["college-admin", "admin", "librarian"],
+  "/college-admin": COLLEGE_ADMIN_ROLES,
+  "/college-admin/bulk-upload": COLLEGE_ADMIN_ROLES,
+  "/college-admin/patrons": COLLEGE_ADMIN_ROLES,
+  "/college-admin/circulation": COLLEGE_ADMIN_ROLES,
+  "/college-admin/cataloging": COLLEGE_ADMIN_ROLES,
+  "/college-admin/digital-assets": COLLEGE_ADMIN_ROLES,
+  "/college-admin/inventory": COLLEGE_ADMIN_ROLES,
+  "/college-admin/finances": COLLEGE_ADMIN_ROLES,
+  "/college-admin/features": COLLEGE_ADMIN_ROLES,
+  "/college-admin/system-config": COLLEGE_ADMIN_ROLES,
+  "/college-admin/facilities": COLLEGE_ADMIN_ROLES,
+  "/college-admin/helpdesk": COLLEGE_ADMIN_ROLES,
+  "/college-admin/analytics": COLLEGE_ADMIN_ROLES,
+  "/college-admin/acquisitions": COLLEGE_ADMIN_ROLES,
+  "/college-admin/share-requests": COLLEGE_ADMIN_ROLES,
 
   // General Dashboard Routes
   "/general-dashboard": ["general"],
