@@ -15,13 +15,22 @@ const createOrder = asyncHandler(async (req, res) => {
   const userId = req.user.id || req.user._id;
   const { fineIds, fineId, amount: clientAmount, currency = 'INR' } = req.body;
 
-  let targetFines = [];
+  if (
+    !fineId &&
+    (!Array.isArray(fineIds) || fineIds.length === 0) &&
+    clientAmount !== undefined &&
+    Number(clientAmount) < 100
+  ) {
+    throw new AppError('Minimum payment amount is 100 paise (₹1).', 400);
+  }
+
+  let targetFines;
 
   if (Array.isArray(fineIds) && fineIds.length > 0) {
     targetFines = await Fine.find({ userId, status: 'unpaid', _id: { $in: fineIds } });
   } else if (fineId) {
     targetFines = await Fine.find({ userId, status: 'unpaid', _id: fineId });
-  } else if (!clientAmount) {
+  } else {
     targetFines = await Fine.find({ userId, status: 'unpaid' });
   }
 
