@@ -26,6 +26,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    phone: {
+      type: String,
+      trim: true,
+    },
     activationTokenHash: {
       type: String,
       default: null,

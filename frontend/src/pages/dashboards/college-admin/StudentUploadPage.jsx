@@ -901,6 +901,12 @@ export default function StudentUploadPage() {
                           <span>Sent</span>
                         </span>
                       )}
+                      {row.deliveryStatus === "sms_queued" && (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 text-[10px]">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>SMS Sent</span>
+                        </span>
+                      )}
                       {row.deliveryStatus === "bounced" && (
                         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/30 text-[10px]">
                           <MailWarning className="w-3 h-3" />

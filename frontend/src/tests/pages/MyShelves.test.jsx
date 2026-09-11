@@ -178,4 +178,26 @@ describe("MyShelves Page Component with Drag-Reorder", () => {
       });
     });
   });
+
+  it("5. terminates loading immediately and displays empty state when reading-list API returns empty array", async () => {
+    readingListApi.getReadingLists.mockResolvedValue({
+      success: true,
+      data: [],
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MyShelves />
+      </QueryClientProvider>,
+    );
+
+    // Empty state should render immediately, spinner should disappear
+    expect(await screen.findByText("No Shelves Found")).toBeInTheDocument();
+    expect(
+      screen.getByText("Get started by creating your first reading shelf!"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Loading your shelves..."),
+    ).not.toBeInTheDocument();
+  });
 });

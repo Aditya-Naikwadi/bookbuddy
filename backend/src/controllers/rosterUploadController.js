@@ -7,6 +7,7 @@ const mailer = require('../utils/mailer');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 const logger = require('../utils/logger');
+const { isTwilioConfigured, sendCredentialSMS } = require('../services/smsService');
 
 /**
  * Formula Injection Defense:
@@ -418,16 +419,78 @@ async function processRosterBatchAsync(
                 deliveryChannel: 'bounced_email_fallback',
               });
             }
+          } else if (phone && isTwilioConfigured()) {
+            try {
+              const smsResult = await sendCredentialSMS({
+                to: phone,
+                studentId: normalizedStudentId,
+                tempPassword,
+                name,
+                collegeName: college.name,
+                collegeSlug: college.slug,
+              });
+
+              if (smsResult.success) {
+                rowResults.push({
+                  rowNumber: rowNumber || overallIndex + 2,
+                  studentId: normalizedStudentId,
+                  name,
+                  email: phone,
+                  action: 'created',
+                  deliveryStatus: 'sms_queued',
+                  reason: 'Temporary credentials dispatched via Twilio SMS.',
+                });
+              } else {
+                rowResults.push({
+                  rowNumber: rowNumber || overallIndex + 2,
+                  studentId: normalizedStudentId,
+                  name,
+                  email: phone,
+                  action: 'created',
+                  deliveryStatus: 'no_contact_info',
+                  reason: `SMS delivery failed (${smsResult.error || 'provider error'}). Generated offline credential slip for handout.`,
+                });
+                credentialSlips.push({
+                  studentId: normalizedStudentId,
+                  name,
+                  email,
+                  program,
+                  tempPassword,
+                  deliveryChannel: 'printed_handout',
+                });
+              }
+            } catch (smsErr) {
+              rowResults.push({
+                rowNumber: rowNumber || overallIndex + 2,
+                studentId: normalizedStudentId,
+                name,
+                email: phone,
+                action: 'created',
+                deliveryStatus: 'no_contact_info',
+                reason: `SMS dispatch exception: ${smsErr.message}. Generated offline credential slip for handout.`,
+              });
+              credentialSlips.push({
+                studentId: normalizedStudentId,
+                name,
+                email,
+                program,
+                tempPassword,
+                deliveryChannel: 'printed_handout',
+              });
+            }
           } else {
             // Missing email fallback path -> Handout slip generated
             rowResults.push({
               rowNumber: rowNumber || overallIndex + 2,
               studentId: normalizedStudentId,
               name,
-              email: '',
+              email: phone || '',
               action: 'created',
               deliveryStatus: 'no_contact_info',
-              reason: 'No email address on file. Generated offline credential slip for handout.',
+              reason:
+                phone && !isTwilioConfigured()
+                  ? 'Twilio SMS unconfigured. Generated offline credential slip for handout.'
+                  : 'No email address on file. Generated offline credential slip for handout.',
             });
 
             credentialSlips.push({
@@ -606,7 +669,9 @@ exports.getBatchDeliveryStatus = asyncHandler(async (req, res, next) => {
     created: batch.createdCount || 0,
     updated: batch.updatedCount || 0,
     deactivated: batch.deactivatedCount || 0,
-    sent: rowResults.filter((r) => r.deliveryStatus === 'sent').length,
+    sent: rowResults.filter((r) => r.deliveryStatus === 'sent' || r.deliveryStatus === 'sms_queued')
+      .length,
+    sms_queued: rowResults.filter((r) => r.deliveryStatus === 'sms_queued').length,
     bounced: rowResults.filter((r) => r.deliveryStatus === 'bounced').length,
     no_contact_info: rowResults.filter((r) => r.deliveryStatus === 'no_contact_info').length,
     active_preserved: rowResults.filter((r) => r.deliveryStatus === 'active_preserved').length,

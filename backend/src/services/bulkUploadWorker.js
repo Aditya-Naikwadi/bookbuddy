@@ -8,6 +8,7 @@ const User = require('../models/User');
 const College = require('../models/College');
 const logger = require('../utils/logger');
 const { sendEmail } = require('./notificationService');
+const { isTwilioConfigured, sendCredentialSMS } = require('./smsService');
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_IN_MEMORY_ERRORS = 100;
@@ -170,6 +171,7 @@ const processBulkUploadJob = async (jobId, fileSource) => {
     const seenEmails = new Set();
 
     const emailsToDispatch = [];
+    const smsToDispatch = [];
     const credentialSlips = [];
 
     const deliverySummary = {
@@ -301,6 +303,15 @@ const processBulkUploadJob = async (jobId, fileSource) => {
               });
             } else if (phone) {
               deliverySummary.sms += 1;
+              if (isTwilioConfigured()) {
+                smsToDispatch.push({
+                  name,
+                  phone,
+                  studentId: rawStudentId,
+                  tempPassword,
+                  collegeSlug,
+                });
+              }
               credentialSlips.push({
                 studentId: rawStudentId,
                 name,
@@ -387,6 +398,15 @@ const processBulkUploadJob = async (jobId, fileSource) => {
             });
           } else if (phone) {
             deliverySummary.sms += 1;
+            if (isTwilioConfigured()) {
+              smsToDispatch.push({
+                name,
+                phone,
+                studentId: rawStudentId,
+                tempPassword,
+                collegeSlug,
+              });
+            }
             credentialSlips.push({
               studentId: rawStudentId,
               name,
@@ -518,6 +538,25 @@ const processBulkUploadJob = async (jobId, fileSource) => {
         }
       }
     });
+
+    // Enqueue welcome SMS asynchronously for phone-only students via Twilio
+    if (smsToDispatch.length > 0) {
+      setImmediate(async () => {
+        for (const s of smsToDispatch) {
+          try {
+            await sendCredentialSMS({
+              to: s.phone,
+              studentId: s.studentId,
+              tempPassword: s.tempPassword,
+              name: s.name,
+              collegeSlug: s.collegeSlug,
+            });
+          } catch {
+            // ignore sms notification error
+          }
+        }
+      });
+    }
 
     // Clean up uploaded raw file if it was saved on disk
     if (typeof fileSource === 'string' && fs.existsSync(fileSource)) {

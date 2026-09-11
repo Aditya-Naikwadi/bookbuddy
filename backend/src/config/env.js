@@ -144,6 +144,11 @@ const envSchema = z.object({
   TEST_AUDIT_IMMUTABLE: z.string().optional(),
   INSTANCE_ID: z.string().optional(),
   PM2_ID: z.string().optional(),
+
+  // Twilio / SMS Integration
+  TWILIO_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_FROM_NUMBER: z.string().optional(),
 });
 
 function validateEnv() {

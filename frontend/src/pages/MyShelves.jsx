@@ -145,6 +145,9 @@ export default function MyShelves() {
     queryFn: () => getReadingLists({ limit: 100 }),
   });
 
+  // Ensure loading terminates promptly as soon as data returns (including empty arrays)
+  const isInitialLoading = isLoading && data === undefined;
+
   const lists = useMemo(() => {
     if (!data) return [];
     if (Array.isArray(data)) return data;
@@ -304,7 +307,7 @@ export default function MyShelves() {
         </div>
 
         {/* Shelves Grid */}
-        {isLoading ? (
+        {isInitialLoading ? (
           <div className="flex items-center justify-center py-20 text-slate-400">
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
             <span className="ml-3 text-sm">Loading your shelves...</span>
