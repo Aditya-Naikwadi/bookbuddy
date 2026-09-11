@@ -6,10 +6,14 @@ import {
   BookOpen,
   AlertCircle,
   RefreshCw,
+  Building2,
+  X,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../api/client";
 import { Button } from "../../../components/ui/Button";
+import useAuthStore from "../../../store/authStore";
+import { BookDetail } from "../../../components/BookDetail";
 
 // Fetch catalog with complete search & filter parameters
 const fetchCatalog = async ({ queryKey }) => {
@@ -49,6 +53,7 @@ const CatalogSkeleton = () => (
 );
 
 const Catalog = () => {
+  const { user } = useAuthStore();
   const [searchInput, setSearchInput] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [format, setFormat] = useState("all");
@@ -58,6 +63,7 @@ const Catalog = () => {
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [queueMessage, setQueueMessage] = useState(null);
+  const [selectedBook, setSelectedBook] = useState(null);
 
   // Debounce search query by 300ms
   useEffect(() => {
@@ -119,11 +125,20 @@ const Catalog = () => {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-edge/20 pb-4">
         <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5">
+              <Building2 size={12} />
+              <span>
+                Campus OPAC • {user?.collegeId?.name || "Tenant Collection"}
+              </span>
+            </span>
+          </div>
           <h1 className="text-3xl font-serif font-bold text-ink">
             Library Catalog
           </h1>
           <p className="text-sm text-muted">
-            Discover e-books, physical assets, and learning resources.
+            Discover physical volumes, course reserves, and e-resources strictly
+            scoped to your institution.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -478,6 +493,7 @@ const Catalog = () => {
                         className="mt-auto w-full text-xs h-9 font-semibold hover:border-ember hover:bg-ember/5"
                         onClick={(e) => {
                           e.stopPropagation();
+                          setSelectedBook(book);
                         }}
                       >
                         View Details
@@ -531,6 +547,25 @@ const Catalog = () => {
             </div>
           )}
         </>
+      )}
+
+      {/* Book Detail & Reviews Modal */}
+      {selectedBook && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-surface border border-edge rounded-3xl p-6 max-w-2xl w-full my-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setSelectedBook(null)}
+              className="absolute top-4 right-4 p-2 text-muted hover:text-ink rounded-full bg-surface/50 hover:bg-surface border border-edge/30 transition-all z-10"
+              aria-label="Close details"
+            >
+              <X size={18} />
+            </button>
+            <BookDetail
+              book={selectedBook}
+              currentUserId={user?._id || user?.id}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

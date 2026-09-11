@@ -36,6 +36,20 @@ const protect = async (req, res, next) => {
       return next(new AppError('Your account has been deactivated.', 401));
     }
 
+    // Cross-tenant subdomain boundary check
+    if (req.subdomainTenant && req.subdomainTenant._id) {
+      if (user.role !== 'super-admin' && user.role !== 'super_admin') {
+        if (!user.collegeId || String(user.collegeId) !== String(req.subdomainTenant._id)) {
+          return next(
+            new AppError(
+              'Cross-tenant access violation: User credential belongs to a different institution.',
+              403
+            )
+          );
+        }
+      }
+    }
+
     // Check global system maintenance mode for non-super-admins
     if (user.role !== 'super-admin') {
       let isMaintenance = false;

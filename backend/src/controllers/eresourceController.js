@@ -4,28 +4,83 @@ const AppError = require('../utils/AppError');
 const { recordQualifyingAction } = require('../services/streakService');
 const { scopeToCollege } = require('../middlewares/scopeToCollege');
 
-// @desc    Get internal e-resources
+// @desc    Get internal e-resources with cursor pagination & Redis count caching
 // @route   GET /api/eresources
 // @access  Private
 const listInternalResources = asyncHandler(async (req, res) => {
-  const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 10;
-  const skip = (page - 1) * limit;
+  const limit = Math.max(1, Math.min(100, parseInt(req.query.limit, 10) || 10));
+  const { search, cursor, sortBy = 'newest' } = req.query;
 
-  let filter = { source: 'internal', moderationStatus: 'approved' };
-  if (req.query.search) {
-    filter.title = { $regex: req.query.search, $options: 'i' };
+  let filter = { source: 'internal', moderationStatus: { $in: ['approved', 'published'] } };
+  if (search) {
+    filter.title = { $regex: search, $options: 'i' };
   }
 
   const scopedQuery = scopeToCollege(filter, req.user?.collegeId);
 
-  const total = await EResource.countDocuments(scopedQuery);
-  const resources = await EResource.find(scopedQuery).skip(skip).limit(limit).sort('-createdAt');
+  // Redis-cached count
+  const crypto = require('crypto');
+  const { getCache, setCache } = require('../utils/redisCache');
+  const countKeyPayload = JSON.stringify({ scopedQuery, cid: req.user?.collegeId || 'public' });
+  const countHash = crypto.createHash('md5').update(countKeyPayload).digest('hex');
+  const countCacheKey = `eresources:count:${countHash}`;
+
+  let total = await getCache(countCacheKey);
+  if (total === null || total === undefined) {
+    total = await EResource.countDocuments(scopedQuery);
+    await setCache(countCacheKey, total, 300);
+  }
+
+  const cursorPagination = require('../utils/cursorPagination');
+  const isKeyset = Boolean(cursor || !req.query.page);
+  let resources;
+  let hasMore;
+  let nextCursor = null;
+
+  if (isKeyset) {
+    const keysetFilter = { ...scopedQuery };
+    if (cursor) {
+      const decodedCursor = cursorPagination.decode(cursor);
+      if (decodedCursor) {
+        cursorPagination.apply(keysetFilter, decodedCursor, sortBy);
+      }
+    }
+
+    const sortConfig = sortBy === 'title' ? { title: 1, _id: 1 } : { createdAt: -1, _id: -1 };
+
+    const rawResources = await EResource.find(keysetFilter)
+      .limit(limit + 1)
+      .sort(sortConfig);
+
+    hasMore = rawResources.length > limit;
+    resources = hasMore ? rawResources.slice(0, limit) : rawResources;
+
+    if (hasMore && resources.length > 0) {
+      const last = resources[resources.length - 1];
+      const sortVal = sortBy === 'title' ? last.title : new Date(last.createdAt).getTime();
+      nextCursor = cursorPagination.encode(sortVal, last._id.toString());
+    }
+  } else {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const skip = (page - 1) * limit;
+    resources = await EResource.find(scopedQuery).skip(skip).limit(limit).sort('-createdAt');
+    hasMore = page * limit < total;
+  }
+
+  const pageNumber = parseInt(req.query.page, 10) || 1;
+  const totalPages = Math.ceil(total / limit) || 1;
 
   res.json({
     success: true,
     data: resources,
-    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    pagination: {
+      hasMore,
+      nextCursor,
+      page: pageNumber,
+      limit,
+      total,
+      totalPages,
+    },
   });
 });
 

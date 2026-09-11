@@ -49,30 +49,53 @@ const toggleRSVP = asyncHandler(async (req, res) => {
     throw new AppError('This announcement is not an interactive event', 400);
   }
 
-  const userIdStr = req.user.id.toString();
-  const existingIdx = announcement.rsvpUsers.findIndex((u) => u.userId.toString() === userIdStr);
+  const userId = req.user.id || req.user._id;
+  const userIdStr = userId.toString();
+  const isAlreadyRsvpd = announcement.rsvpUsers.some((u) => u.userId.toString() === userIdStr);
 
-  let hasRSVPd;
+  if (isAlreadyRsvpd) {
+    const updated = await Announcement.findByIdAndUpdate(
+      req.params.id,
+      { $pull: { rsvpUsers: { userId } } },
+      { new: true }
+    );
 
-  if (existingIdx > -1) {
-    announcement.rsvpUsers.splice(existingIdx, 1);
-    hasRSVPd = false;
-  } else {
-    if (announcement.maxCapacity > 0 && announcement.rsvpUsers.length >= announcement.maxCapacity) {
-      throw new AppError('Event has reached maximum capacity', 400);
-    }
-    announcement.rsvpUsers.push({ userId: req.user.id, rsvpAt: new Date() });
-    hasRSVPd = true;
+    return res.json({
+      success: true,
+      data: {
+        hasRSVPd: false,
+        currentRSVPCount: updated.rsvpUsers.length,
+        maxCapacity: updated.maxCapacity,
+      },
+    });
   }
 
-  await announcement.save();
+  // Atomic RSVP with capacity constraint check
+  const updated = await Announcement.findOneAndUpdate(
+    {
+      _id: req.params.id,
+      $or: [
+        { maxCapacity: { $lte: 0 } },
+        { maxCapacity: null },
+        { $expr: { $lt: [{ $size: '$rsvpUsers' }, '$maxCapacity'] } },
+      ],
+    },
+    {
+      $addToSet: { rsvpUsers: { userId, rsvpAt: new Date() } },
+    },
+    { new: true }
+  );
+
+  if (!updated) {
+    throw new AppError('Event has reached maximum capacity', 400);
+  }
 
   res.json({
     success: true,
     data: {
-      hasRSVPd,
-      currentRSVPCount: announcement.rsvpUsers.length,
-      maxCapacity: announcement.maxCapacity,
+      hasRSVPd: true,
+      currentRSVPCount: updated.rsvpUsers.length,
+      maxCapacity: updated.maxCapacity,
     },
   });
 });

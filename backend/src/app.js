@@ -121,8 +121,15 @@ app.use(
 
 const hpp = require('hpp');
 
-// Body Parser
-app.use(express.json({ limit: '1mb' }));
+// Body Parser (with rawBody capture for exact webhook HMAC verification)
+app.use(
+  express.json({
+    limit: '1mb',
+    verify: (req, _res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // HTTP Parameter Pollution Protection
@@ -153,6 +160,10 @@ app.use((req, res, next) => {
 
 // NoSQL Injection Defense
 app.use(mongoSanitize);
+
+// Subdomain-based Tenant Resolution & Cross-Tenant Boundary Enforcement
+const subdomainTenantResolver = require('./middlewares/subdomainTenantResolver');
+app.use(subdomainTenantResolver);
 
 // Request Logger
 app.use(
@@ -571,6 +582,16 @@ app.use(
 
 // Feature Routes (Deprecated unversioned aliases)
 app.use('/api/lab', deprecationWarning, require('./routes/labRoutes'));
+app.post(
+  '/api/lab-bookings/:id/check-in',
+  protect,
+  require('./controllers/dashboards/studentDashboardController').checkInLabBooking
+);
+app.post(
+  '/api/v1/lab-bookings/:id/check-in',
+  protect,
+  require('./controllers/dashboards/studentDashboardController').checkInLabBooking
+);
 app.use('/api/feedback', deprecationWarning, require('./routes/feedbackRoutes'));
 app.use('/api/complaints', deprecationWarning, require('./routes/complaintRoutes'));
 app.use('/api/book-suggestions', deprecationWarning, require('./routes/bookSuggestionRoutes'));

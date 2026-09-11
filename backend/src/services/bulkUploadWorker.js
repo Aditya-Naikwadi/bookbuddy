@@ -2,14 +2,47 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 const crypto = require('crypto');
-const bcrypt = require('bcrypt');
 const UploadJob = require('../models/UploadJob');
+const UploadAuditLog = require('../models/UploadAuditLog');
 const User = require('../models/User');
+const College = require('../models/College');
 const logger = require('../utils/logger');
 const { sendEmail } = require('./notificationService');
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_IN_MEMORY_ERRORS = 100;
+
+/**
+ * Generates a high-entropy cryptographically secure random temporary password.
+ * Guarantees uppercase, lowercase, digit, and special character.
+ */
+const generateSecureTempPassword = () => {
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lower = 'abcdefghijkmnopqrstuvwxyz';
+  const digits = '23456789';
+  const special = '!@#$%^&*';
+  const all = upper + lower + digits + special;
+
+  const required = [
+    upper[crypto.randomInt(0, upper.length)],
+    lower[crypto.randomInt(0, lower.length)],
+    digits[crypto.randomInt(0, digits.length)],
+    special[crypto.randomInt(0, special.length)],
+  ];
+
+  const remaining = [];
+  for (let i = 0; i < 8; i++) {
+    remaining.push(all[crypto.randomInt(0, all.length)]);
+  }
+
+  const combined = [...required, ...remaining];
+  for (let i = combined.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(0, i + 1);
+    [combined[i], combined[j]] = [combined[j], combined[i]];
+  }
+
+  return combined.join('');
+};
 
 const pushErrorDetail = (job, errorObj) => {
   if (job.errorDetails.length < MAX_IN_MEMORY_ERRORS) {
@@ -32,11 +65,16 @@ const emitProgressEvent = (jobId, data) => {
   }
 };
 
+const { Readable } = require('stream');
+const os = require('os');
+
 /**
- * Stream-parse CSV file and returns array of row objects.
+ * Stream-parse CSV file or memory Buffer and returns array of row objects.
  */
-const streamParseCsv = async (filePath) => {
-  const fileStream = fs.createReadStream(filePath);
+const streamParseCsv = async (fileSource) => {
+  const fileStream = Buffer.isBuffer(fileSource)
+    ? Readable.from(fileSource)
+    : fs.createReadStream(fileSource);
   const rl = readline.createInterface({
     input: fileStream,
     crlfDelay: Infinity,
@@ -70,11 +108,11 @@ const streamParseCsv = async (filePath) => {
 };
 
 /**
- * Writes downloadable error report CSV file.
+ * Writes downloadable error report CSV file. Uses serverless-safe os.tmpdir().
  */
 const writeErrorReportCsv = async (jobId, errorDetails) => {
   try {
-    const reportsDir = path.join(__dirname, '../../uploads/reports');
+    const reportsDir = path.join(os.tmpdir(), 'bookbuddy_reports');
     if (!fs.existsSync(reportsDir)) {
       fs.mkdirSync(reportsDir, { recursive: true });
     }
@@ -98,7 +136,7 @@ const writeErrorReportCsv = async (jobId, errorDetails) => {
 /**
  * Main async worker process for processing bulk student ingestion.
  */
-const processBulkUploadJob = async (jobId, filePath) => {
+const processBulkUploadJob = async (jobId, fileSource) => {
   let job;
   try {
     job = await UploadJob.findOne({ jobId });
@@ -112,7 +150,7 @@ const processBulkUploadJob = async (jobId, filePath) => {
 
     emitProgressEvent(jobId, { status: 'processing', progress: 0 });
 
-    const rows = await streamParseCsv(filePath);
+    const rows = await streamParseCsv(fileSource);
     job.totalRows = rows.length;
     await job.save();
 
@@ -124,72 +162,75 @@ const processBulkUploadJob = async (jobId, filePath) => {
       return;
     }
 
-    // Default pre-hashed temp password for invited students
-    const tempSalt = await bcrypt.genSalt(10);
-    const defaultPasswordHash = await bcrypt.hash('Welcome123!', tempSalt);
+    const college = await College.findById(job.collegeId).select('name slug domain').lean();
+    const collegeSlug = college?.slug || '';
 
-    // Track duplicates across file
+    // Track seen entries within the uploaded file
     const seenStudentIds = new Set();
     const seenEmails = new Set();
 
-    const CHUNK_SIZE = 500;
-    let chunk = [];
-    const createdUsersForEmails = [];
+    const emailsToDispatch = [];
+    const credentialSlips = [];
 
-    // Process rows in chunks of CHUNK_SIZE with batch DB duplicate validation
+    const deliverySummary = {
+      emailed: 0,
+      sms: 0,
+      handout: 0,
+    };
+
+    const CHUNK_SIZE = 250;
+
     for (let batchStart = 0; batchStart < rows.length; batchStart += CHUNK_SIZE) {
       const batchRows = rows.slice(batchStart, batchStart + CHUNK_SIZE);
 
-      // Collect candidate studentIds and emails for current batch
       const batchCandidateStudentIds = batchRows
-        .map((r) => (r.studentid || r['student id'] || r.id || '').trim())
-        .filter(Boolean);
-      const batchCandidateEmails = batchRows
-        .map((r) => (r.email || '').toLowerCase().trim())
+        .map((r) => (r.studentid || r['student id'] || r.id || '').trim().toLowerCase())
         .filter(Boolean);
 
-      // Chunk-scoped $in query: fetch only existing DB records matching this batch
+      // Query existing users in DB matching candidate studentIds for this college
       const existingBatchUsers = await User.find({
         collegeId: job.collegeId,
-        $or: [
-          { studentId: { $in: batchCandidateStudentIds } },
-          { email: { $in: batchCandidateEmails } },
-        ],
-      })
-        .select('studentId email')
-        .lean();
+        studentId: { $in: batchCandidateStudentIds },
+      });
 
-      const dbStudentIds = new Set(existingBatchUsers.map((u) => u.studentId));
-      const dbEmails = new Set(existingBatchUsers.map((u) => u.email));
+      const existingUserMap = new Map();
+      for (const u of existingBatchUsers) {
+        if (u.studentId) existingUserMap.set(u.studentId.toLowerCase(), u);
+      }
 
       for (let i = 0; i < batchRows.length; i++) {
         const row = batchRows[i];
         const globalRowIndex = batchStart + i;
         const rowIndex = row._rowIndex || globalRowIndex + 2;
-        const name = row.name || row['full name'] || row['student name'] || '';
-        const email = (row.email || '').toLowerCase().trim();
-        const studentId = (row.studentid || row['student id'] || row.id || '').trim();
-        const department = row.department || row.major || '';
+        const name = (row.name || row['full name'] || row['student name'] || '').trim();
+        const rawStudentId = (row.studentid || row['student id'] || row.id || '').trim();
+        const normalizedStudentId = rawStudentId.toLowerCase();
+        const rawEmail = (row.email || '').trim();
+        const email = rawEmail.toLowerCase();
+        const department = (row.department || row.major || '').trim();
+        const year = (row.year || '').trim();
+        const program = (row.program || '').trim();
+        const phone = (row.phone || row.mobile || row.contact || '').trim();
 
-        // Validation 1: Required fields
-        if (!name || !email || !studentId) {
+        // Validation 1: Name and Student ID are strictly required
+        if (!name || !rawStudentId) {
           job.failedRows += 1;
           pushErrorDetail(job, {
             row: rowIndex,
-            studentId,
+            studentId: rawStudentId,
             email,
-            reason: 'Missing required field (name, email, or studentId).',
+            reason: 'Missing required field (name or studentId).',
           });
           job.processedRows += 1;
           continue;
         }
 
-        // Validation 2: Email format
-        if (!emailRegex.test(email)) {
+        // Validation 2: If email is provided, validate email format
+        if (email && !emailRegex.test(email)) {
           job.failedRows += 1;
           pushErrorDetail(job, {
             row: rowIndex,
-            studentId,
+            studentId: rawStudentId,
             email,
             reason: 'Invalid email address format.',
           });
@@ -198,11 +239,11 @@ const processBulkUploadJob = async (jobId, filePath) => {
         }
 
         // Validation 3: Duplicate within file
-        if (seenStudentIds.has(studentId) || seenEmails.has(email)) {
+        if (seenStudentIds.has(normalizedStudentId) || (email && seenEmails.has(email))) {
           job.failedRows += 1;
           pushErrorDetail(job, {
             row: rowIndex,
-            studentId,
+            studentId: rawStudentId,
             email,
             reason: 'Duplicate studentId or email within uploaded file.',
           });
@@ -210,100 +251,234 @@ const processBulkUploadJob = async (jobId, filePath) => {
           continue;
         }
 
-        // Validation 4: Duplicate in DB
-        if (dbStudentIds.has(studentId) || dbEmails.has(email)) {
-          job.failedRows += 1;
-          pushErrorDetail(job, {
-            row: rowIndex,
-            studentId,
-            email,
-            reason: 'Student ID or email already registered for this institution.',
-          });
-          job.processedRows += 1;
-          continue;
-        }
+        seenStudentIds.add(normalizedStudentId);
+        if (email) seenEmails.add(email);
 
-        seenStudentIds.add(studentId);
-        seenEmails.add(email);
-
+        const tempPassword = generateSecureTempPassword();
         const invitationToken = crypto.randomBytes(32).toString('hex');
-        const newUserDoc = {
-          collegeId: job.collegeId,
-          name,
-          email,
-          studentId,
-          major: department,
-          password: defaultPasswordHash,
-          role: 'student',
-          status: 'invited',
-          invitedVia: 'bulk_upload',
-          invitationToken,
-          isEmailVerified: true,
-          membershipStatus: 'active',
-        };
 
-        chunk.push(newUserDoc);
-        createdUsersForEmails.push({ name, email, invitationToken });
+        // Check if student already exists for this tenant
+        if (existingUserMap.has(normalizedStudentId)) {
+          // --- RE-UPLOAD UPSERT: UPDATE DON'T DUPLICATE ---
+          const existingUser = existingUserMap.get(normalizedStudentId);
 
-        // Write chunk if chunk size met or at end of file
-        if (chunk.length >= CHUNK_SIZE || globalRowIndex === rows.length - 1) {
-          if (chunk.length > 0) {
-            try {
-              const inserted = await User.insertMany(chunk, { ordered: false });
-              job.succeededRows += inserted.length;
-            } catch (insertErr) {
-              if (insertErr.insertedDocs) {
-                job.succeededRows += insertErr.insertedDocs.length;
-              }
-              if (insertErr.writeErrors) {
-                for (const we of insertErr.writeErrors) {
-                  job.failedRows += 1;
-                  pushErrorDetail(job, {
-                    row: rowIndex,
-                    studentId: we.err?.op?.studentId || '',
-                    email: we.err?.op?.email || '',
-                    reason: `Database constraint error: ${we.errmsg || 'Duplicate key'}`,
-                  });
-                }
-              }
-            }
-            chunk = [];
+          existingUser.name = name;
+          if (department) {
+            existingUser.department = department;
+            existingUser.major = department;
+          }
+          if (year) existingUser.year = year;
+          if (program) existingUser.program = program;
+          if (phone) existingUser.phone = phone;
+
+          // If student now provided an email and didn't have one before
+          if (email && !existingUser.email) {
+            existingUser.email = email;
           }
 
-          job.processedRows = globalRowIndex + 1;
-          job.lastCheckpointRow = globalRowIndex + 1;
-          await job.save();
+          // Security preservation:
+          // Do NOT overwrite password or reset mustChangePasswordOnNextLogin if already activated
+          const isActivated =
+            existingUser.status === 'active' ||
+            existingUser.mustChangePasswordOnNextLogin === false;
 
-          const progressPct = Math.round((job.processedRows / job.totalRows) * 100);
-          emitProgressEvent(jobId, {
-            status: 'processing',
-            processedRows: job.processedRows,
-            totalRows: job.totalRows,
-            succeededRows: job.succeededRows,
-            failedRows: job.failedRows,
-            progress: progressPct,
-          });
-        }
-      }
-    }
+          if (!isActivated) {
+            // Student is still in invited status: update temp password and refresh invitation
+            existingUser.password = tempPassword;
+            existingUser.mustChangePasswordOnNextLogin = true;
+            existingUser.invitationToken = invitationToken;
 
-    // Flush any remaining items in chunk after loop ends
-    if (chunk.length > 0) {
-      try {
-        const inserted = await User.insertMany(chunk, { ordered: false });
-        job.succeededRows += inserted.length;
-      } catch (insertErr) {
-        if (insertErr.insertedDocs) {
-          job.succeededRows += insertErr.insertedDocs.length;
+            // Delivery determination
+            if (existingUser.email) {
+              deliverySummary.emailed += 1;
+              emailsToDispatch.push({
+                name,
+                email: existingUser.email,
+                studentId: rawStudentId,
+                tempPassword,
+                invitationToken,
+                collegeSlug,
+              });
+            } else if (phone) {
+              deliverySummary.sms += 1;
+              credentialSlips.push({
+                studentId: rawStudentId,
+                name,
+                department,
+                phone,
+                tempPassword,
+                deliveryChannel: 'sms',
+              });
+            } else {
+              deliverySummary.handout += 1;
+              credentialSlips.push({
+                studentId: rawStudentId,
+                name,
+                department,
+                phone,
+                tempPassword,
+                deliveryChannel: 'handout',
+              });
+            }
+          }
+
+          await existingUser.save();
+          job.updatedRows += 1;
+          job.succeededRows += 1;
+        } else {
+          // --- NEW STUDENT CREATION ---
+          // Check if email already exists for another student in this college
+          if (email) {
+            const emailInUse = await User.findOne({
+              collegeId: job.collegeId,
+              email,
+              studentId: { $ne: normalizedStudentId },
+            }).lean();
+
+            if (emailInUse) {
+              job.failedRows += 1;
+              pushErrorDetail(job, {
+                row: rowIndex,
+                studentId: rawStudentId,
+                email,
+                reason: 'Email is already registered to another student in this institution.',
+              });
+              job.processedRows += 1;
+              continue;
+            }
+          }
+
+          const newUserDoc = {
+            collegeId: job.collegeId,
+            name,
+            studentId: normalizedStudentId,
+            password: tempPassword,
+            role: 'student',
+            status: 'invited',
+            invitedVia: 'bulk_upload',
+            invitationToken,
+            isEmailVerified: !!email,
+            membershipStatus: 'active',
+            mustChangePasswordOnNextLogin: true,
+          };
+          if (email) newUserDoc.email = email;
+          if (department) {
+            newUserDoc.department = department;
+            newUserDoc.major = department;
+          }
+          if (year) newUserDoc.year = year;
+          if (program) newUserDoc.program = program;
+          if (phone) newUserDoc.phone = phone;
+
+          await User.create(newUserDoc);
+          job.insertedRows += 1;
+          job.succeededRows += 1;
+
+          // Delivery channel tracking
+          if (email) {
+            deliverySummary.emailed += 1;
+            emailsToDispatch.push({
+              name,
+              email,
+              studentId: rawStudentId,
+              tempPassword,
+              invitationToken,
+              collegeSlug,
+            });
+          } else if (phone) {
+            deliverySummary.sms += 1;
+            credentialSlips.push({
+              studentId: rawStudentId,
+              name,
+              department,
+              phone,
+              tempPassword,
+              deliveryChannel: 'sms',
+            });
+          } else {
+            deliverySummary.handout += 1;
+            credentialSlips.push({
+              studentId: rawStudentId,
+              name,
+              department,
+              phone,
+              tempPassword,
+              deliveryChannel: 'handout',
+            });
+          }
         }
+
+        job.processedRows += 1;
+        job.lastCheckpointRow = globalRowIndex + 1;
       }
-      chunk = [];
+
+      job.deliverySummary = deliverySummary;
+      job.credentialSlips = credentialSlips;
+      await job.save();
+
+      const progressPct = Math.round((job.processedRows / job.totalRows) * 100);
+      emitProgressEvent(jobId, {
+        status: 'processing',
+        processedRows: job.processedRows,
+        totalRows: job.totalRows,
+        succeededRows: job.succeededRows,
+        insertedRows: job.insertedRows,
+        updatedRows: job.updatedRows,
+        failedRows: job.failedRows,
+        progress: progressPct,
+      });
     }
 
     // Write error report CSV if any failures occurred
     if (job.failedRows > 0) {
       const reportUrl = await writeErrorReportCsv(jobId, job.errorDetails);
       job.errorReportUrl = reportUrl;
+    }
+
+    // --- VERSIONED UPLOAD AUDIT LOG CREATION ---
+    let version = 1;
+    try {
+      const latestAudit = await UploadAuditLog.findOne({ collegeId: job.collegeId })
+        .sort({ version: -1 })
+        .select('version')
+        .lean();
+      if (latestAudit && typeof latestAudit.version === 'number') {
+        version = latestAudit.version + 1;
+      }
+
+      let uploaderInfo = { userId: job.createdBy };
+      const uploader = await User.findById(job.createdBy).select('name email role').lean();
+      if (uploader) {
+        uploaderInfo = {
+          userId: uploader._id,
+          name: uploader.name,
+          email: uploader.email,
+          role: uploader.role,
+        };
+      }
+
+      await UploadAuditLog.create({
+        collegeId: job.collegeId,
+        jobId,
+        version,
+        uploadedBy: uploaderInfo,
+        fileName: job.fileName || 'students.csv',
+        fileSizeBytes: job.fileSizeBytes || 0,
+        totalRows: job.totalRows,
+        insertedRows: job.insertedRows,
+        updatedRows: job.updatedRows,
+        failedRows: job.failedRows,
+        deliverySummary: job.deliverySummary,
+        errorDetails: job.errorDetails,
+        credentialSlips: job.credentialSlips,
+        completedAt: new Date(),
+      });
+
+      job.auditLogVersion = version;
+    } catch (auditErr) {
+      logger.error(
+        `Failed to create versioned UploadAuditLog for job ${jobId}: ${auditErr.message}`
+      );
     }
 
     job.status = 'completed';
@@ -314,30 +489,39 @@ const processBulkUploadJob = async (jobId, filePath) => {
       status: 'completed',
       processedRows: job.processedRows,
       succeededRows: job.succeededRows,
+      insertedRows: job.insertedRows,
+      updatedRows: job.updatedRows,
       failedRows: job.failedRows,
+      deliverySummary: job.deliverySummary,
+      version: job.auditLogVersion,
       errorReportUrl: job.errorReportUrl,
       progress: 100,
     });
 
-    // Enqueue invitation email dispatch asynchronously
+    // Enqueue welcome emails asynchronously with login credentials and portal URL
     setImmediate(async () => {
-      for (const u of createdUsersForEmails) {
+      for (const u of emailsToDispatch) {
         try {
-          await sendEmail(
-            null,
-            u.email,
-            'bulk_student_invitation',
-            `Hello ${u.name}, welcome to BookBuddy! Your account has been provisioned. Log in or complete setup with token: ${u.invitationToken}`
-          );
+          const portalLink = u.collegeSlug ? `/c/${u.collegeSlug}` : '/login';
+          const emailBody = [
+            `Hello ${u.name},`,
+            `Welcome to BookBuddy! Your student account for your institution has been provisioned.`,
+            `Student ID: ${u.studentId}`,
+            `Temporary Password: ${u.tempPassword}`,
+            `Access your institution portal here: ${portalLink}`,
+            `Please note: You will be required to set your own permanent password upon your first login.`,
+          ].join('\n\n');
+
+          await sendEmail(null, u.email, 'bulk_student_invitation', emailBody);
         } catch {
           // ignore email notification error
         }
       }
     });
 
-    // Clean up uploaded raw file
-    if (fs.existsSync(filePath)) {
-      fs.promises.unlink(filePath).catch(() => {});
+    // Clean up uploaded raw file if it was saved on disk
+    if (typeof fileSource === 'string' && fs.existsSync(fileSource)) {
+      fs.promises.unlink(fileSource).catch(() => {});
     }
   } catch (error) {
     logger.error(`Error processing bulk upload job ${jobId}: ${error.message}`);
@@ -351,4 +535,5 @@ const processBulkUploadJob = async (jobId, filePath) => {
 
 module.exports = {
   processBulkUploadJob,
+  generateSecureTempPassword,
 };

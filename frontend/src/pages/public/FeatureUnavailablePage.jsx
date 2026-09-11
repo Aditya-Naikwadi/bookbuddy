@@ -24,7 +24,7 @@ export default function FeatureUnavailablePage({ featureKey }) {
 
       <div className="flex flex-col sm:flex-row items-center gap-3">
         <Link
-          to="/student-dashboard"
+          to="/student"
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-all shadow-sm shadow-indigo-200"
         >
           <ArrowLeft size={18} />

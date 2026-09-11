@@ -84,6 +84,23 @@ export const useReservation = () => {
     },
   });
 
+  // 4. Check-In Mutation (10-minute grace period verification)
+  const checkInMutation = useMutation({
+    mutationFn: facilitiesApi.checkInBooking,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-lab-bookings"] });
+      setLiveAnnouncement("Check-in confirmed! Workstation unlocked.");
+    },
+    onError: (err) => {
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        "Check-in failed. Please verify you are within the grace period.";
+      setLiveAnnouncement(`Check-in failed: ${msg}`);
+      throw new Error(msg);
+    },
+  });
+
   return {
     myBookings,
     loadingMyBookings,
@@ -92,6 +109,8 @@ export const useReservation = () => {
     isCreating: createBookingMutation.isPending,
     cancelBooking: cancelBookingMutation.mutate,
     isCancelling: cancelBookingMutation.isPending,
+    checkInBooking: checkInMutation.mutateAsync,
+    isCheckingIn: checkInMutation.isPending,
     liveAnnouncement,
   };
 };

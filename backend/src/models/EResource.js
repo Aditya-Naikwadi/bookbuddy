@@ -201,12 +201,11 @@ eResourceSchema.pre(['save', 'validate'], function (next) {
     this.moderationNote = this.rejectionReason;
   }
 
-  if (this.moderationStatus === 'published') {
+  if (this.moderationStatus === 'published' && !this.isPublished) {
     this.isPublished = true;
     if (!this.publishedAt) this.publishedAt = new Date();
-  } else if (this.isPublished) {
-    this.moderationStatus = 'published';
-    if (!this.publishedAt) this.publishedAt = new Date();
+  } else if (this.isPublished && !this.publishedAt) {
+    this.publishedAt = new Date();
   }
 
   if (typeof next === 'function') {
@@ -231,6 +230,10 @@ eResourceSchema.index({ collegeId: 1, moderationStatus: 1, isPublished: 1 });
 
 // College moderation list index
 eResourceSchema.index({ collegeId: 1, moderationStatus: 1, createdAt: -1 });
+eResourceSchema.index({ collegeId: 1, moderationStatus: 1, createdAt: 1 });
+
+// Text index for search
+eResourceSchema.index({ title: 'text', author: 'text' });
 
 // Apply tenant-scoping plugin to prevent cross-college e-resource leaks
 const { tenantScopingPlugin } = require('../middlewares/scopeToCollege');

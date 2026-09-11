@@ -11,7 +11,7 @@ const Unauthorized = () => {
     if (user.role === "super-admin") return "/admin-portal";
     if (user.role === "college-admin") return "/college-admin";
     if (user.role === "general") return "/general-dashboard";
-    return "/student-dashboard";
+    return "/student";
   };
 
   const handleSwitchAccount = async () => {

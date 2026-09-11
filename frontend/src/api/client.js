@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getSubdomainTenantSlug } from "../utils/tenantSubdomain";
 
 let inMemoryAccessToken =
   typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
@@ -85,6 +86,12 @@ apiClient.interceptors.request.use(
       if (csrf) {
         config.headers["x-csrf-token"] = csrf;
       }
+    }
+
+    // Attach tenant subdomain header when browsing on a tenant subdomain
+    const tenantSubdomain = getSubdomainTenantSlug();
+    if (tenantSubdomain && !config.headers["x-tenant-subdomain"]) {
+      config.headers["x-tenant-subdomain"] = tenantSubdomain;
     }
 
     return config;

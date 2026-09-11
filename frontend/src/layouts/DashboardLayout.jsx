@@ -26,6 +26,7 @@ import {
   GENERAL_NAV_ITEMS,
 } from "../config/navigation";
 import { cn } from "../utils/cn";
+import { ForcedPasswordChangeModal } from "../components/student/auth/ForcedPasswordChangeModal";
 
 export default function DashboardLayout() {
   const { user, logout } = useAuthStore();
@@ -92,6 +93,7 @@ export default function DashboardLayout() {
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-slate-50 dark:bg-void text-slate-900 dark:text-ink flex flex-col md:flex-row transition-colors duration-200">
+      <ForcedPasswordChangeModal />
       {/* Desktop Sidebar (Visible on >= md) */}
       <aside className="w-full md:w-64 bg-white dark:bg-surface border-r border-slate-200 dark:border-edge flex-shrink-0 flex-col hidden md:flex h-full z-30 overflow-hidden">
         <div className="p-6 border-b border-slate-100 dark:border-edge flex items-center gap-2 flex-shrink-0">
@@ -117,7 +119,7 @@ export default function DashboardLayout() {
           )}
           {isStudent && (
             <NavItem
-              to="/student-dashboard"
+              to="/student"
               icon={<LayoutDashboard size={20} />}
               label="Student Dashboard"
             />
@@ -411,7 +413,7 @@ export default function DashboardLayout() {
                 Student Features
               </p>
               <NavItem
-                to="/student-dashboard"
+                to="/student"
                 icon={<LayoutDashboard size={20} />}
                 label="Dashboard Home"
               />
@@ -474,7 +476,7 @@ export default function DashboardLayout() {
         ) : isStudent ? (
           <>
             <MobileNavItem
-              to="/student-dashboard"
+              to="/student"
               icon={<LayoutDashboard size={20} />}
               label="Home"
             />
@@ -542,9 +544,14 @@ const NavItem = ({ to, icon, label }) => {
   const location = useLocation();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const isBaseRoot =
+    to === "/admin-portal" ||
+    to === "/college-admin" ||
+    to === "/general-dashboard" ||
+    to === "/student";
   const isActive =
     location.pathname === to ||
-    (to !== "/admin-portal" && location.pathname.startsWith(to));
+    (!isBaseRoot && location.pathname.startsWith(to));
 
   const handlePrefetch = useCallback(() => {
     if (!queryClient) return;

@@ -147,7 +147,7 @@ describe('Dual Registration System Integration Tests', () => {
       expect(createdUser).not.toBeNull();
       expect(createdUser.role).toBe('student');
       expect(createdUser.collegeId.toString()).toBe(activeCollege._id.toString());
-      expect(createdUser.studentId).toBe('STU999');
+      expect(createdUser.studentId).toBe('stu999');
     });
   });
 

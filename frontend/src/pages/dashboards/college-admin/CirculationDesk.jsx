@@ -54,8 +54,12 @@ export default function CirculationDesk() {
     },
   });
 
+  const reservations = Array.isArray(queueData?.data)
+    ? queueData.data
+    : Array.isArray(queueData)
+      ? queueData
+      : queueData?.reservations || [];
   const loans = queueData?.activeLoans || [];
-  const reservations = queueData?.reservations || [];
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 py-6 text-slate-100">

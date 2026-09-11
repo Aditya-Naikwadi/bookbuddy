@@ -115,6 +115,9 @@ const createILLRequest = asyncHandler(async (req, res) => {
 // @access  Private
 const getILLRequests = asyncHandler(async (req, res) => {
   const { role = 'borrowing' } = req.query;
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+  const skip = (page - 1) * limit;
 
   const filter =
     role === 'lending'
@@ -125,16 +128,25 @@ const getILLRequests = asyncHandler(async (req, res) => {
     filter.requestingUserId = req.user.id;
   }
 
+  const total = await ILLRequest.countDocuments(filter);
   const requests = await ILLRequest.find(filter)
     .populate('borrowingCollegeId', 'name shortName')
     .populate('lendingCollegeId', 'name shortName')
     .populate('requestingUserId', 'name email')
     .populate('bookId', 'title author isbn')
-    .sort('-createdAt');
+    .sort('-createdAt')
+    .skip(skip)
+    .limit(limit);
 
   res.json({
     success: true,
     data: requests,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
   });
 });
 

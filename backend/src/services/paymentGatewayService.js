@@ -56,10 +56,23 @@ const verifyWebhookSignature = (rawBody, signature, webhookSecret) => {
   if (!signature || !rawBody) return false;
 
   try {
-    const bodyString = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);
-    const expectedSignature = crypto.createHmac('sha256', secret).update(bodyString).digest('hex');
+    const payloadBuffer = Buffer.isBuffer(rawBody)
+      ? rawBody
+      : Buffer.from(typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody), 'utf8');
 
-    return crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature));
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(payloadBuffer)
+      .digest('hex');
+
+    const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+    const signatureBuffer = Buffer.from(signature, 'utf8');
+
+    if (expectedBuffer.length !== signatureBuffer.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
   } catch (_err) {
     return false;
   }

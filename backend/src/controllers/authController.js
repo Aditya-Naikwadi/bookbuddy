@@ -35,36 +35,28 @@ const registerUser = async (req, res, next) => {
       return next(new AppError('Public registration of administrative roles is forbidden.', 403));
     }
 
-    if (collegeId) {
+    if (role !== 'super-admin') {
+      if (!collegeId) {
+        return next(
+          new AppError('College selection is required. Please select your institution.', 400)
+        );
+      }
       const college = await College.findById(collegeId);
       if (!college || !college.isActive) {
         return next(new AppError('The specified college is inactive or does not exist.', 400));
       }
-    } else {
-      let defaultCollege = await College.findOne({ status: 'active', isActive: true });
-      if (!defaultCollege) {
-        defaultCollege = await College.findOne({ isActive: true });
-      }
-      if (!defaultCollege) {
-        defaultCollege = await College.create({
-          name: 'Demo College',
-          code: 'COLLEGE_A',
-          status: 'active',
-          isActive: true,
-        });
-      }
-      collegeId = defaultCollege._id;
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const normalizedStudentId = studentId ? studentId.toLowerCase().trim() : '';
     const targetCollegeId = role === 'super-admin' ? undefined : collegeId;
 
     const userExists = await User.findOne({
       $or: [
         { email: normalizedEmail },
         ...(targetCollegeId
-          ? [{ collegeId: targetCollegeId, studentId: studentId.trim() }]
-          : [{ studentId: studentId.trim() }]),
+          ? [{ collegeId: targetCollegeId, studentId: normalizedStudentId }]
+          : [{ studentId: normalizedStudentId }]),
       ],
     });
     if (userExists) {
@@ -74,7 +66,7 @@ const registerUser = async (req, res, next) => {
     }
 
     const user = await User.create({
-      studentId: studentId.trim(),
+      studentId: normalizedStudentId,
       name: name.trim(),
       email: normalizedEmail,
       password,
@@ -115,10 +107,14 @@ const loginUser = async (req, res, next) => {
     const { email, studentId, password, totpCode, collegeSlug, collegeId: reqCollegeId } = req.body;
     const credential = (email || studentId || '').trim();
     const normalizedEmail = credential.toLowerCase();
-    const effectiveSlug = collegeSlug || req.headers['x-college-slug'];
-    let targetCollegeId = reqCollegeId || req.headers['x-college-id'];
+    const effectiveSlug = req.subdomainTenant
+      ? req.subdomainTenant.slug
+      : collegeSlug || req.headers['x-college-slug'];
+    let targetCollegeId = req.subdomainTenant
+      ? req.subdomainTenant._id
+      : reqCollegeId || req.headers['x-college-id'];
 
-    // Resolve target collegeId if collegeSlug is provided in request context
+    // Resolve target collegeId if collegeSlug is provided in request context and not already resolved
     if (!targetCollegeId && effectiveSlug) {
       const college = await College.findOne({ slug: effectiveSlug });
       if (college) {
@@ -126,15 +122,9 @@ const loginUser = async (req, res, next) => {
       }
     }
 
-    // Build tenant-scoped query matching email or studentId (handling case variations)
+    // Build query matching only normalized fields against compound indexes {collegeId, email} / {collegeId, studentId}
     const query = {
-      $or: [
-        { email: normalizedEmail },
-        { email: credential },
-        { studentId: credential },
-        { studentId: credential.toUpperCase() },
-        { studentId: credential.toLowerCase() },
-      ],
+      $or: [{ email: normalizedEmail }, { studentId: normalizedEmail }],
     };
 
     // Hard Rule: If college context is present, ALWAYS scope by collegeId
@@ -226,6 +216,7 @@ const loginUser = async (req, res, next) => {
         role: user.role,
         collegeId: user.collegeId,
         isMfaEnabled: !!user.isMfaEnabled,
+        mustChangePasswordOnNextLogin: Boolean(user.mustChangePasswordOnNextLogin),
       },
       accessToken,
     });
@@ -390,6 +381,44 @@ const verifyMfa = async (req, res, next) => {
   }
 };
 
+const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return next(new AppError('Current password and new password are required.', 400));
+    }
+
+    if (typeof newPassword !== 'string' || newPassword.length < 8) {
+      return next(new AppError('New password must be at least 8 characters long.', 400));
+    }
+
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user) {
+      return next(new AppError('User not found.', 404));
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return next(new AppError('Current password does not match.', 400));
+    }
+
+    user.password = newPassword;
+    user.mustChangePasswordOnNextLogin = false;
+    if (user.status === 'invited') {
+      user.status = 'active';
+    }
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password changed successfully. Your account is now active.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -398,4 +427,5 @@ module.exports = {
   getUserProfile,
   setupMfa,
   verifyMfa,
+  changePassword,
 };

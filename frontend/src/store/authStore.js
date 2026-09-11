@@ -12,6 +12,7 @@ import apiClient, {
 import { clearQueryCache } from "../providers/QueryProvider";
 import { disconnectSocket } from "../lib/socketClient";
 import { toast } from "./toastStore";
+import { getSubdomainTenantSlug } from "../utils/tenantSubdomain";
 
 const isTokenExpiredOrNearExpiry = (token, thresholdSeconds = 60) => {
   if (!token || typeof token !== "string") return true;
@@ -131,13 +132,18 @@ const useAuthStore = create((set) => {
       set({ isLoading: true, error: null, mfaRequired: false });
       try {
         await fetchCsrfToken();
+        const effectiveSlug = (
+          collegeSlug ||
+          getSubdomainTenantSlug() ||
+          ""
+        ).trim();
         const payload = {
           password,
           ...(identifier.includes("@")
             ? { email: identifier.trim() }
             : { studentId: identifier.trim(), email: identifier.trim() }),
           ...(totpCode ? { totpCode: totpCode.trim() } : {}),
-          ...(collegeSlug ? { collegeSlug: collegeSlug.trim() } : {}),
+          ...(effectiveSlug ? { collegeSlug: effectiveSlug } : {}),
         };
 
         const { data } = await apiClient.post("/auth/login", payload);

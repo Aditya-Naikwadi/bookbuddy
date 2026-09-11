@@ -58,7 +58,7 @@ export default function CollegeDeepLinkEntry() {
 
   // Resolve target internal route from featurePath or registry
   const getInternalRoute = useCallback(() => {
-    if (!featurePath) return "/student-dashboard";
+    if (!featurePath) return "/student";
 
     const match = Object.values(FEATURE_REGISTRY).find(
       (entry) =>
@@ -102,7 +102,7 @@ export default function CollegeDeepLinkEntry() {
         navigate(targetInternalRoute, { replace: true });
       } else {
         // Tenant Mismatch -> Do NOT render target college page; redirect to user's dashboard home with notice
-        navigate("/student-dashboard", {
+        navigate("/student", {
           replace: true,
           state: {
             mismatchNotice: `That link was for ${collegeData.name} — here's your dashboard.`,

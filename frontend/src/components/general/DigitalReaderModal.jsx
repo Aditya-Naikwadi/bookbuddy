@@ -21,7 +21,13 @@ import {
   Bookmark,
   PanelRightOpen,
   PanelRightClose,
+  Lock,
+  LogIn,
+  UserPlus,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import useAuthStore from "../../store/authStore";
+import apiClient from "../../api/client";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useReducedMotion } from "../../hooks/useReducedMotion";
@@ -610,6 +616,10 @@ const DigitalReaderModal = ({
   const [scale, setScale] = useState(1.0);
   const [error, setError] = useState(null);
 
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
   // Annotations & UI State
   const [annotations, setAnnotations] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -746,9 +756,71 @@ const DigitalReaderModal = ({
 
   const prefersReducedMotion = useReducedMotion();
 
+  // Reading progress upsert with auth-guard: check auth status before server sync
+  const upsertReadingProgress = useCallback(
+    async (progressData = {}) => {
+      if (!isAuthenticated) {
+        setShowLoginPrompt(true);
+        return;
+      }
+      try {
+        if (targetId) {
+          await apiClient.put(`/reading-progress/${targetId}`, {
+            position: { page: currentPage },
+            ...progressData,
+          });
+        }
+      } catch (err) {
+        console.warn("Failed to sync reading progress:", err?.message || err);
+      }
+    },
+    [isAuthenticated, targetId, currentPage],
+  );
+
+  // Preserve place in book and redirect to auth flow
+  const handleLoginRedirect = (destination = "/auth/login") => {
+    if (targetId) {
+      try {
+        localStorage.setItem(
+          `bookbuddy_reader_resume_${targetId}`,
+          JSON.stringify({
+            page: currentPage,
+            title: resolvedTitle,
+            targetId,
+            timestamp: Date.now(),
+          }),
+        );
+      } catch {
+        // Storage error handling fallback
+      }
+    }
+
+    setShowLoginPrompt(false);
+    navigate(destination, {
+      state: {
+        from:
+          typeof window !== "undefined" ? window.location.pathname : "/catalog",
+        bookId: targetId,
+        bookTitle: resolvedTitle,
+        page: currentPage,
+      },
+    });
+  };
+
   // Create / Update Highlight
   const handleSelectColor = async (colorId, noteText) => {
     if (!targetId || !activeToolbar) return;
+
+    // Auth Guard: Unauthenticated visitors must see login prompt instead of raw 401 toast
+    if (!isAuthenticated) {
+      setActiveToolbar(null);
+      setShowLoginPrompt(true);
+      return;
+    }
+
+    await upsertReadingProgress({
+      lastAction: "highlight",
+    });
 
     const isEditing = activeToolbar.isEditing;
     const annotationId = activeToolbar.annotationId;
@@ -798,6 +870,11 @@ const DigitalReaderModal = ({
   // Save / Update Note only
   const handleSaveNote = async (noteText) => {
     if (!activeToolbar) return;
+    if (!isAuthenticated) {
+      setActiveToolbar(null);
+      setShowLoginPrompt(true);
+      return;
+    }
     handleSelectColor(activeToolbar.existingColor || "yellow", noteText);
   };
 
@@ -805,6 +882,16 @@ const DigitalReaderModal = ({
   const handleConfirmBookmark = async (e) => {
     e.preventDefault();
     if (!targetId) return;
+
+    if (!isAuthenticated) {
+      setShowBookmarkPrompt(false);
+      setShowLoginPrompt(true);
+      return;
+    }
+
+    await upsertReadingProgress({
+      lastAction: "bookmark",
+    });
 
     const label = bookmarkLabelInput.trim() || `Page ${currentPage}`;
     const payload = {
@@ -830,6 +917,10 @@ const DigitalReaderModal = ({
   // Delete Annotation
   const handleDeleteAnnotation = async (id) => {
     if (!id) return;
+    if (!isAuthenticated) {
+      setShowLoginPrompt(true);
+      return;
+    }
     try {
       await deleteAnnotationApi(id);
       setAnnotations((prev) =>
@@ -1221,6 +1312,104 @@ const DigitalReaderModal = ({
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+
+          {/* Login Prompt Modal for Unauthenticated Readers */}
+          {showLoginPrompt && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="login-prompt-title"
+              data-testid="login-prompt-modal"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in"
+            >
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md space-y-5 shadow-2xl relative text-left">
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPrompt(false)}
+                  aria-label="Close login prompt"
+                  data-testid="login-prompt-close-btn"
+                  className="absolute top-4 right-4 p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-2xl flex-shrink-0">
+                    <Lock className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3
+                      id="login-prompt-title"
+                      className="text-base font-bold text-white tracking-tight"
+                    >
+                      Sign In to Save Highlights
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Save annotations, notes, and sync your reading progress
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-950/60 rounded-2xl p-3.5 border border-slate-800/80 space-y-1 text-xs">
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span className="text-slate-400 font-medium">
+                      Current Book:
+                    </span>
+                    <span className="font-semibold text-white truncate max-w-[200px]">
+                      {resolvedTitle}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span className="text-slate-400 font-medium">
+                      Your Place:
+                    </span>
+                    <span className="font-semibold text-indigo-400">
+                      Page {currentPage} (preserved)
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  You are previewing this title as a guest. Log in or create a
+                  free account to keep your bookmarks, highlights, and custom
+                  study notes across devices.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleLoginRedirect("/auth/login")}
+                    data-testid="login-prompt-login-btn"
+                    className="flex-1 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>Log In</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleLoginRedirect("/register")}
+                    data-testid="login-prompt-register-btn"
+                    className="flex-1 py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-semibold text-xs rounded-xl border border-slate-700/80 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Register</span>
+                  </button>
+                </div>
+
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPrompt(false)}
+                    data-testid="login-prompt-cancel-btn"
+                    className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                  >
+                    Continue Reading as Guest
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

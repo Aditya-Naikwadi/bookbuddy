@@ -22,7 +22,8 @@ import { ReaderThemeControls } from "../../../components/student/ebook-reader/Re
 import { ResumePromptToast } from "../../../components/student/ebook-reader/ResumePromptToast";
 
 const EbookReader = () => {
-  const { resourceId } = useParams();
+  const { id, resourceId: rawResourceId } = useParams();
+  const resourceId = rawResourceId || id;
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const userId = user?.id || user?._id || "guest";

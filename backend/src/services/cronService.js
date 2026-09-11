@@ -561,6 +561,16 @@ const initCronJobs = () => {
     runJob('Stale Registration Cleanup', runRegistrationCleanup);
   });
 
+  // Workstation & Seat No-Show Auto-Release Sweep: Every 2 minutes (10-min grace period)
+  cron.schedule('*/2 * * * *', () => {
+    runJob('Workstation No-Show Auto-Release Sweep', runFacilityNoShowSweep);
+  });
+
+  // Facility Queue Promotion Expiry Sweep: Every 1 minute (10-min confirmation window)
+  cron.schedule('* * * * *', () => {
+    runJob('Facility Queue Promotion Expiry Sweep', runFacilityQueueExpirySweep);
+  });
+
   logger.info('Cron jobs initialized successfully.');
 };
 
@@ -734,6 +744,28 @@ const runRegistrationCleanup = async () => {
   return result.deletedCount || 0;
 };
 
+/**
+ * JOB 11: Facility No-Show Auto-Release Sweep
+ * Scans for un-checked-in slots past the 10-minute grace window, marks them as no_show, and frees seats.
+ */
+const runFacilityNoShowSweep = async () => {
+  const labBookingService = require('./labBookingService');
+  const facilityEngineService = require('./facilityEngineService');
+  const labCount = await labBookingService.autoReleaseNoShows();
+  const engineResult = await facilityEngineService.autoReleaseNoShows();
+  return (labCount || 0) + (engineResult?.releasedCount || 0);
+};
+
+/**
+ * JOB 12: Facility Booking Queue Promotion Expiry Sweep
+ * Sweeps expired 10-minute queue claim windows and auto-promotes the next student in line.
+ */
+const runFacilityQueueExpirySweep = async () => {
+  const facilityEngineService = require('./facilityEngineService');
+  const result = await facilityEngineService.autoExpireQueuePromotions();
+  return result?.expiredCount || 0;
+};
+
 module.exports = {
   initCronJobs,
   runJob,
@@ -747,4 +779,6 @@ module.exports = {
   runNightlyRecommendations,
   runDailyPaymentReconciliation,
   runRegistrationCleanup,
+  runFacilityNoShowSweep,
+  runFacilityQueueExpirySweep,
 };

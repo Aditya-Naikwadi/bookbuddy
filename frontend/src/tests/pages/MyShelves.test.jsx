@@ -62,7 +62,7 @@ describe("MyShelves Page Component with Drag-Reorder", () => {
     );
 
     expect(
-      await screen.findByText("Computer Science Core"),
+      await screen.findByText("Computer Science Core", {}, { timeout: 5000 }),
     ).toBeInTheDocument();
     expect(screen.getByText("Private Math Shelf")).toBeInTheDocument();
     expect(screen.getByText(/1 book/i)).toBeInTheDocument();

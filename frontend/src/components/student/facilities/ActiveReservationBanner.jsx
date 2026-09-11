@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Clock, Monitor, AlertTriangle } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  Monitor,
+  AlertTriangle,
+  CheckCircle,
+} from "lucide-react";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
 
-export const ActiveReservationBanner = ({ bookings = [] }) => {
+export const ActiveReservationBanner = ({ bookings = [], onCheckIn }) => {
   const activeBooking = bookings.find((b) => b.status === "booked");
   const prefersReducedMotion = useReducedMotion();
   const [minsRemaining, setMinsRemaining] = useState(60);
@@ -30,6 +36,7 @@ export const ActiveReservationBanner = ({ bookings = [] }) => {
       weekday: "short",
       month: "short",
       day: "numeric",
+      year: "numeric",
       timeZone: "UTC",
     });
   };
@@ -75,15 +82,20 @@ export const ActiveReservationBanner = ({ bookings = [] }) => {
             <span>
               Active Reserved Seat: {activeBooking.seatId?.seatNumber || "PC"}
             </span>
-            {isExpiringSoon && (
+            {activeBooking.checkedInAt ? (
+              <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold flex items-center gap-1 border border-emerald-500/30">
+                <CheckCircle size={10} /> Checked In
+              </span>
+            ) : isExpiringSoon ? (
               <span className="px-2 py-0.5 rounded-md bg-amber-500 text-white text-[10px] font-black animate-pulse">
                 Expiring Soon!
               </span>
-            )}
+            ) : null}
           </p>
           <p className="text-[10px] text-slate-600 dark:text-muted font-medium mt-0.5">
-            Check into your workstation at{" "}
-            {activeBooking.seatId?.labName || "Central Computing Lab"}.
+            {activeBooking.checkedInAt
+              ? `Checked in at ${new Date(activeBooking.checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.`
+              : `Check into your workstation at ${activeBooking.seatId?.labName || "Central Computing Lab"} within 10 minutes.`}
           </p>
         </div>
       </div>
@@ -97,6 +109,15 @@ export const ActiveReservationBanner = ({ bookings = [] }) => {
           <Clock size={13} />
           <span>{timeRange}</span>
         </div>
+        {!activeBooking.checkedInAt && onCheckIn && (
+          <button
+            onClick={() => onCheckIn(activeBooking)}
+            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all"
+          >
+            <CheckCircle size={13} />
+            <span>Check In</span>
+          </button>
+        )}
       </div>
     </motion.div>
   );

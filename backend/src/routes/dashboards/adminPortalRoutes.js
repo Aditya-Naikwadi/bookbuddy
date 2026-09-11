@@ -48,7 +48,7 @@ const {
   updateSystemSettingsSchema,
 } = require('../../validations/admin.validation');
 const { rejectOnboardingSchema } = require('../../validations/registration.validation');
-const { paramIdSchema } = require('../../validations/common.validation');
+const { paramIdSchema, paramRequestIdSchema } = require('../../validations/common.validation');
 
 const { userLimiter, expensiveRouteLimiter } = require('../../middlewares/rateLimiters');
 
@@ -96,11 +96,15 @@ router
 router.route('/onboardings/pending').get(getPendingOnboardings);
 router
   .route('/onboardings/:requestId/approve')
-  .post(validate(paramIdSchema), auditLog('tenant_onboarding.approve'), approveTenantOnboarding);
+  .post(
+    validate(paramRequestIdSchema),
+    auditLog('tenant_onboarding.approve'),
+    approveTenantOnboarding
+  );
 router
   .route('/onboardings/:requestId/reject')
   .post(
-    validate(paramIdSchema),
+    validate(paramRequestIdSchema),
     validate(rejectOnboardingSchema),
     auditLog('tenant_onboarding.reject'),
     rejectTenantOnboarding

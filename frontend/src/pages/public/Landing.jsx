@@ -31,7 +31,7 @@ const Landing = () => {
         navigate("/general-dashboard", { replace: true });
       else if (role === "super-admin")
         navigate("/admin-portal", { replace: true });
-      else navigate("/student-dashboard", { replace: true });
+      else navigate("/student", { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
 

@@ -92,7 +92,7 @@ export const EResources = () => {
   const handleReadExternal = async (gutenbergId) => {
     try {
       const { resourceId } = await openEbook(gutenbergId);
-      navigate(`/eresources/read/${resourceId}`);
+      navigate(`/student/reader/${resourceId}`);
     } catch (error) {
       console.error("Failed to open ebook", error);
       alert("Failed to open this book. Please try again later.");
@@ -265,7 +265,7 @@ export const EResources = () => {
                   <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
                     <button
                       onClick={() =>
-                        navigate(`/eresources/read/${resource._id}`)
+                        navigate(`/student/reader/${resource._id}`)
                       }
                       className="w-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold py-2.5 rounded-xl hover:bg-indigo-100 transition-colors flex justify-center items-center gap-2 text-xs"
                     >

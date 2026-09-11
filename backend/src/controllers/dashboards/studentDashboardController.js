@@ -135,6 +135,20 @@ const getStudentLoans = async (req, res, next) => {
     const activeLoans = [];
     const historyLoans = [];
 
+    // Batch check active book holds to eliminate N+1 database queries
+    const activeBookIds = loans
+      .filter((l) => (l.status === 'active' || l.status === 'overdue') && l.bookId)
+      .map((l) => l.bookId._id || l.bookId);
+
+    const queuedHolds =
+      activeBookIds.length > 0
+        ? await Reservation.distinct('bookId', {
+            bookId: { $in: activeBookIds },
+            status: { $in: ['queued', 'ready_for_pickup'] },
+          })
+        : [];
+    const heldBookSet = new Set(queuedHolds.map((id) => id.toString()));
+
     for (const loan of loans) {
       if (loan.status === 'active' || loan.status === 'overdue') {
         // Calculate renewal eligibility
@@ -148,11 +162,9 @@ const getStudentLoans = async (req, res, next) => {
           eligible = false;
           reason = 'limit_reached';
         } else {
-          // Check if anyone else has a reservation hold on this book
-          const hasQueue = await Reservation.exists({
-            bookId: loan.bookId,
-            status: { $in: ['queued', 'ready_for_pickup'] },
-          });
+          // Check if anyone else has a reservation hold on this book in O(1)
+          const bookIdStr = (loan.bookId?._id || loan.bookId)?.toString();
+          const hasQueue = bookIdStr ? heldBookSet.has(bookIdStr) : false;
           if (hasQueue) {
             eligible = false;
             reason = 'on_hold';
@@ -305,8 +317,8 @@ const getStudentEResourceDetails = async (req, res, next) => {
 
     // Hide pending/rejected resources from other students (uploader can view pending status)
     if (
-      resource.moderationStatus !== 'approved' &&
-      resource.uploadedBy.toString() !== req.user.id.toString()
+      !['approved', 'published'].includes(resource.moderationStatus) &&
+      (!resource.uploadedBy || resource.uploadedBy.toString() !== req.user.id.toString())
     ) {
       return next(new AppError('Resource not found.', 404));
     }
@@ -825,9 +837,22 @@ const getStudentLabBookings = async (req, res, next) => {
       ...req.tenantFilter,
     })
       .populate('seatId')
-      .sort({ startTime: -1 });
+      .sort({ startTime: -1 })
+      .lean();
 
     res.json({ success: true, data: bookings });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Student check-in to a lab timeslot booking
+// @route   POST /api/dashboards/student/lab-bookings/:id/check-in
+// @access  Private/Student
+const checkInLabBooking = async (req, res, next) => {
+  try {
+    const result = await labBookingService.checkInBooking(req.params.id, req.user.id);
+    res.json({ success: true, data: result.booking, message: result.message });
   } catch (error) {
     next(error);
   }
@@ -1052,6 +1077,7 @@ const getStudentOverview = async (req, res, next) => {
       recentReadingProgress,
       recommendations,
       unreadNotificationsCount,
+      activeBookings,
     ] = await Promise.all([
       Loan.find({ userId, status: { $in: ['active', 'overdue'] } })
         .populate('bookId', 'title author isbn category format coverImage')
@@ -1082,6 +1108,16 @@ const getStudentOverview = async (req, res, next) => {
         .getMyNotifications(userId, { read: 'false', limit: 1 })
         .then((r) => r.total || 0)
         .catch(() => 0),
+
+      LabBooking.find({
+        userId,
+        status: { $in: ['booked', 'confirmed', 'checked-in'] },
+        endTime: { $gte: new Date() },
+      })
+        .populate('seatId', 'seatNumber floor section resourceType')
+        .sort('startTime')
+        .limit(5)
+        .lean(),
     ]);
 
     // Batch query reservation holds for active loan books (Solves N+1 query loop)
@@ -1153,6 +1189,7 @@ const getStudentOverview = async (req, res, next) => {
         recentReadingProgress,
         recommendations,
         unreadNotificationsCount,
+        activeBookings: activeBookings || [],
       },
     });
   } catch (error) {
@@ -1275,6 +1312,7 @@ module.exports = {
   toggleSavedSearchAlerts,
   getLabsAvailability,
   createLabBooking,
+  checkInLabBooking,
   cancelLabBooking,
   getStudentLabBookings,
   createBookSuggestion,

@@ -25,6 +25,10 @@ const studentUploadBatchSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    processedRows: {
+      type: Number,
+      default: 0,
+    },
     createdCount: {
       type: Number,
       default: 0,
@@ -33,9 +37,17 @@ const studentUploadBatchSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    deactivatedCount: {
+      type: Number,
+      default: 0,
+    },
     skippedCount: {
       type: Number,
       default: 0,
+    },
+    bulkDeactivateAbsent: {
+      type: Boolean,
+      default: false,
     },
     failedRows: [
       {
@@ -45,13 +57,53 @@ const studentUploadBatchSchema = new mongoose.Schema(
         reason: String,
       },
     ],
+    rowResults: [
+      {
+        rowNumber: Number,
+        studentId: String,
+        name: String,
+        email: String,
+        action: {
+          type: String,
+          enum: ['created', 'updated', 'deactivated', 'failed', 'skipped'],
+        },
+        deliveryStatus: {
+          type: String,
+          enum: [
+            'sent',
+            'bounced',
+            'no_contact_info',
+            'sms_queued',
+            'active_preserved',
+            'inactive',
+            'failed',
+          ],
+        },
+        reason: String,
+      },
+    ],
+    credentialSlips: [
+      {
+        studentId: String,
+        name: String,
+        email: String,
+        program: String,
+        tempPassword: String,
+        deliveryChannel: String,
+      },
+    ],
     status: {
       type: String,
-      enum: ['preview', 'committed', 'failed'],
+      enum: ['preview', 'queued', 'processing', 'committed', 'failed'],
       default: 'preview',
+      index: true,
     },
     committedAt: {
       type: Date,
+      default: null,
+    },
+    errorMessage: {
+      type: String,
       default: null,
     },
   },

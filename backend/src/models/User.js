@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      lowercase: true,
     },
     name: {
       type: String,
@@ -14,7 +15,6 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: true,
       lowercase: true,
       trim: true,
     },
@@ -117,6 +117,14 @@ const userSchema = new mongoose.Schema(
       enum: ['invited', 'active', 'inactive', 'disabled'],
       default: 'active',
     },
+    deactivatedAt: {
+      type: Date,
+      default: null,
+    },
+    deactivationReason: {
+      type: String,
+      default: null,
+    },
     invitedVia: {
       type: String,
       enum: ['self_registration', 'bulk_upload'],
@@ -137,6 +145,10 @@ const userSchema = new mongoose.Schema(
     },
     major: {
       type: String,
+    },
+    department: {
+      type: String,
+      trim: true,
     },
     savedBookmarks: [
       {
@@ -239,18 +251,41 @@ userSchema.set('toObject', { virtuals: true });
 
 // Compound unique indexes scoped to collegeId
 userSchema.index({ collegeId: 1, studentId: 1 }, { unique: true, sparse: true });
-userSchema.index({ collegeId: 1, email: 1 }, { unique: true, sparse: true });
+userSchema.index(
+  { collegeId: 1, email: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      email: { $type: 'string' },
+    },
+  }
+);
 userSchema.index({ activationTokenHash: 1 }, { sparse: true });
 userSchema.index({ collegeId: 1, status: 1 });
 userSchema.index({ collegeId: 1, role: 1, createdAt: -1 });
+userSchema.index({ collegeId: 1, role: 1, department: 1, createdAt: -1 });
+userSchema.index({ collegeId: 1, role: 1, studentId: 1 });
 userSchema.index({ status: 1, createdAt: -1 });
 
 // Super Admin Directory & Query Optimization Indexes
 userSchema.index({ role: 1, collegeId: 1, status: 1 });
 userSchema.index({ name: 'text', email: 'text', studentId: 'text' });
 
-// Hash password and generate cardSecret before saving
+// Normalize fields, hash password and generate cardSecret before saving
 userSchema.pre('save', async function () {
+  if (this.studentId) {
+    this.studentId = this.studentId.trim().toLowerCase();
+  }
+  if (this.email) {
+    this.email = this.email.trim().toLowerCase();
+  } else {
+    this.email = undefined;
+  }
+  if (this.department && !this.major) {
+    this.major = this.department;
+  } else if (this.major && !this.department) {
+    this.department = this.major;
+  }
   if (this.collegeId === null) {
     this.collegeId = undefined;
   }

@@ -283,21 +283,21 @@ export const StudentDashboardHome = () => {
             {/* Quick Action Badges */}
             <div className="pt-2 flex flex-wrap gap-2 text-xs">
               <Link
-                to="/catalog"
+                to="/student/catalog"
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all shadow-md flex items-center gap-1.5"
               >
                 <Search size={14} />
                 <span>Browse Catalog</span>
               </Link>
               <Link
-                to="/patron-card"
+                to="/student/card"
                 className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold backdrop-blur-md transition-all flex items-center gap-1.5"
               >
                 <QrCode size={14} className="text-indigo-300" />
                 <span>Digital ID Pass</span>
               </Link>
               <Link
-                to="/lab-booking"
+                to="/student/facilities"
                 className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold backdrop-blur-md transition-all flex items-center gap-1.5"
               >
                 <Laptop size={14} className="text-purple-300" />
@@ -430,7 +430,7 @@ export const StudentDashboardHome = () => {
                 </div>
               </div>
               <Link
-                to="/loans"
+                to="/student/loans"
                 className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
               >
                 View All Loans <ArrowRight size={12} />
@@ -447,7 +447,7 @@ export const StudentDashboardHome = () => {
                   You have no books currently checked out.
                 </p>
                 <Link
-                  to="/catalog"
+                  to="/student/catalog"
                   className="inline-flex items-center gap-1 px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700 transition-all shadow"
                 >
                   Explore Library Catalog
@@ -678,7 +678,7 @@ export const StudentDashboardHome = () => {
               </div>
               <button
                 onClick={() =>
-                  navigate(`/eresources/read/${eresource._id || eresource.id}`)
+                  navigate(`/student/reader/${eresource._id || eresource.id}`)
                 }
                 className="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-400 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 flex-shrink-0"
               >
@@ -774,28 +774,28 @@ export const StudentDashboardHome = () => {
 
             <div className="grid grid-cols-2 gap-3 text-xs">
               <Link
-                to="/reading-lists"
+                to="/student/reading-lists"
                 className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 transition-all border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center gap-2 font-bold"
               >
                 <Bookmark size={20} className="text-indigo-600" />
                 <span>Reading Lists</span>
               </Link>
               <Link
-                to="/e-resources"
+                to="/student/e-resources"
                 className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-purple-50 dark:hover:bg-purple-950/50 hover:text-purple-600 transition-all border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center gap-2 font-bold"
               >
                 <Sparkles size={20} className="text-purple-600" />
                 <span>E-Resources</span>
               </Link>
               <Link
-                to="/fines"
+                to="/student/fines"
                 className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-600 transition-all border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center gap-2 font-bold"
               >
                 <CreditCard size={20} className="text-emerald-600" />
                 <span>Pay Fines</span>
               </Link>
               <Link
-                to="/achievements"
+                to="/student/engagement"
                 className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-600 transition-all border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center gap-2 font-bold"
               >
                 <Award size={20} className="text-amber-500" />
@@ -812,7 +812,7 @@ export const StudentDashboardHome = () => {
                   Recommended for You
                 </h2>
                 <Link
-                  to="/recommendations"
+                  to="/student/recommendations"
                   className="text-xs text-indigo-600 font-bold hover:underline"
                 >
                   More

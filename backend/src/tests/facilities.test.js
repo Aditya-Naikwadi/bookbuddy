@@ -164,7 +164,9 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
 
       // Verify the body of the collision request contains 'slot already booked' or seat collision message
       const collisionResult = results.find((r) => r.status === 409);
-      expect(collisionResult.body.message).toMatch(/slot already booked|already exists/i);
+      expect(collisionResult.body.message).toMatch(
+        /slot already booked|already exists|overlapping time slot/i
+      );
 
       // Verify DB contains exactly 1 booked reservation
       const dbBookings = await LabBooking.find({
@@ -434,6 +436,206 @@ describe('Phase 4 — Facilities & Engagement Integration Tests', () => {
           resolutionMessage: 'Boosted signal.',
         });
       expect(resResolveComplaint.status).toBe(404);
+    });
+  });
+
+  describe('Refined Facility Booking Engine — Rules, Horizons, Check-In & Suspensions', () => {
+    let seatRefined;
+
+    beforeAll(async () => {
+      seatRefined = await LabSeat.create({
+        collegeId: collegeA._id,
+        labName: 'Lab Refined',
+        seatNumber: 'RF-01',
+        resourceType: 'workstation',
+        maintenanceStatus: 'operational',
+      });
+    });
+
+    // 8. Advance Booking Horizon
+    it('8. should reject bookings beyond the 7-day advance booking horizon (HTTP 400)', async () => {
+      const futureDate8d = new Date(Date.now() + 8 * 24 * 60 * 60 * 1000);
+      futureDate8d.setUTCMinutes(0, 0, 0);
+      futureDate8d.setUTCHours(10);
+      const end8d = new Date(futureDate8d.getTime() + 60 * 60 * 1000);
+
+      const res = await request(app)
+        .post('/api/v1/dashboards/student/lab-bookings')
+        .set('Authorization', `Bearer ${tokenStudentA}`)
+        .send({
+          seatId: seatRefined._id.toString(),
+          startTime: futureDate8d.toISOString(),
+          endTime: end8d.toISOString(),
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toMatch(/advance booking limit exceeded|up to 7 days in advance/i);
+    });
+
+    it('9. should allow bookings within the 7-day advance booking horizon (HTTP 201)', async () => {
+      const futureDate3d = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+      futureDate3d.setUTCMinutes(0, 0, 0);
+      futureDate3d.setUTCHours(10);
+      const end3d = new Date(futureDate3d.getTime() + 60 * 60 * 1000);
+
+      const res = await request(app)
+        .post('/api/v1/dashboards/student/lab-bookings')
+        .set('Authorization', `Bearer ${tokenStudentA}`)
+        .send({
+          seatId: seatRefined._id.toString(),
+          startTime: futureDate3d.toISOString(),
+          endTime: end3d.toISOString(),
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+    });
+
+    // 10. 10-Minute Check-in Grace Period & Auto-Release Worker
+    it('10. should auto-release non-checked-in slots past 10 minutes to no_show and free slot', async () => {
+      const pastStart = new Date(Date.now() - 15 * 60 * 1000);
+      const pastEnd = new Date(pastStart.getTime() + 60 * 60 * 1000);
+
+      // Create raw booking with checkedInAt: null
+      const abandonedBooking = await LabBooking.create({
+        collegeId: collegeA._id,
+        userId: studentA._id,
+        seatId: seatRefined._id,
+        date: new Date(
+          Date.UTC(pastStart.getUTCFullYear(), pastStart.getUTCMonth(), pastStart.getUTCDate())
+        ),
+        startTime: pastStart,
+        endTime: pastEnd,
+        resourceType: 'workstation',
+        status: 'booked',
+        checkedInAt: null,
+      });
+
+      const { autoReleaseNoShows } = require('../services/labBookingService');
+      const releasedCount = await autoReleaseNoShows();
+      expect(releasedCount).toBeGreaterThanOrEqual(1);
+
+      const updated = await LabBooking.findById(abandonedBooking._id);
+      expect(updated.status).toBe('no_show');
+    });
+
+    // 11. Student Check-in
+    it('11. should allow student to check in within grace window, setting checkedInAt', async () => {
+      const now = new Date();
+      const currentSlotStart = new Date(now.getTime() - 2 * 60 * 1000);
+      const currentSlotEnd = new Date(currentSlotStart.getTime() + 60 * 60 * 1000);
+
+      const booking = await LabBooking.create({
+        collegeId: collegeA._id,
+        userId: studentA._id,
+        seatId: seatRefined._id,
+        date: new Date(
+          Date.UTC(
+            currentSlotStart.getUTCFullYear(),
+            currentSlotStart.getUTCMonth(),
+            currentSlotStart.getUTCDate()
+          )
+        ),
+        startTime: currentSlotStart,
+        endTime: currentSlotEnd,
+        resourceType: 'workstation',
+        status: 'booked',
+        checkedInAt: null,
+      });
+
+      const res = await request(app)
+        .post(`/api/v1/dashboards/student/lab-bookings/${booking._id}/check-in`)
+        .set('Authorization', `Bearer ${tokenStudentA}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.checkedInAt).toBeDefined();
+
+      // Ensure auto-release does NOT mark it as no_show
+      const { autoReleaseNoShows } = require('../services/labBookingService');
+      await autoReleaseNoShows();
+      const dbBooking = await LabBooking.findById(booking._id);
+      expect(dbBooking.status).not.toBe('no_show');
+      expect(dbBooking.checkedInAt).toBeDefined();
+    });
+
+    // 12. No-Show Penalty & 48-Hour Suspension Engine
+    it('12. should reject new booking attempts with HTTP 403 when student has 3 or more no-shows within 14 days', async () => {
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      await LabBooking.create([
+        {
+          collegeId: collegeB._id,
+          userId: studentB._id,
+          seatId: seatRefined._id,
+          date: yesterday,
+          startTime: new Date(yesterday.getTime() - 3 * 3600000),
+          endTime: new Date(yesterday.getTime() - 2 * 3600000),
+          status: 'no_show',
+          createdAt: yesterday,
+          updatedAt: yesterday,
+        },
+        {
+          collegeId: collegeB._id,
+          userId: studentB._id,
+          seatId: seatRefined._id,
+          date: yesterday,
+          startTime: new Date(yesterday.getTime() - 2 * 3600000),
+          endTime: new Date(yesterday.getTime() - 1 * 3600000),
+          status: 'no_show',
+          createdAt: yesterday,
+          updatedAt: yesterday,
+        },
+        {
+          collegeId: collegeB._id,
+          userId: studentB._id,
+          seatId: seatRefined._id,
+          date: yesterday,
+          startTime: new Date(yesterday.getTime() - 1 * 3600000),
+          endTime: yesterday,
+          status: 'no_show',
+          createdAt: yesterday,
+          updatedAt: yesterday,
+        },
+      ]);
+
+      const validFuture = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+      validFuture.setUTCMinutes(0, 0, 0);
+      validFuture.setUTCHours(14);
+      const validEnd = new Date(validFuture.getTime() + 60 * 60 * 1000);
+
+      const res = await request(app)
+        .post('/api/v1/dashboards/student/lab-bookings')
+        .set('Authorization', `Bearer ${tokenStudentB}`)
+        .send({
+          seatId: seatRefined._id.toString(),
+          startTime: validFuture.toISOString(),
+          endTime: validEnd.toISOString(),
+        });
+
+      expect(res.status).toBe(403);
+      expect(res.body.message).toMatch(/privileges temporarily suspended|no-show strikes/i);
+    });
+
+    // 13. Timezone-Aware Week Range Calculation
+    it('13. should compute week ranges starting Monday 00:00 and ending Sunday 23:59:59 in target timezone', () => {
+      const { getCollegeTimezoneWeekRange } = require('../services/labBookingService');
+      const refDate = new Date('2026-09-09T12:00:00.000Z');
+      const { monday, sunday } = getCollegeTimezoneWeekRange('America/New_York', refDate);
+
+      expect(monday).toBeInstanceOf(Date);
+      expect(sunday).toBeInstanceOf(Date);
+      expect(monday.getTime()).toBeLessThan(sunday.getTime());
+
+      const { DateTime } = require('luxon');
+      const dtMonday = DateTime.fromJSDate(monday).setZone('America/New_York');
+      const dtSunday = DateTime.fromJSDate(sunday).setZone('America/New_York');
+
+      expect(dtMonday.weekday).toBe(1); // Monday
+      expect(dtMonday.hour).toBe(0);
+      expect(dtMonday.minute).toBe(0);
+      expect(dtSunday.weekday).toBe(7); // Sunday
+      expect(dtSunday.hour).toBe(23);
+      expect(dtSunday.minute).toBe(59);
     });
   });
 });

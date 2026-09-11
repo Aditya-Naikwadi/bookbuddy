@@ -1,18 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useAvailability } from "../../../hooks/useAvailability";
 import { useReservation } from "../../../hooks/useReservation";
-import { WorkstationGrid } from "../../../components/student/facilities/WorkstationGrid";
 import { ReservationModal } from "../../../components/student/facilities/ReservationModal";
 import { CancelModal } from "../../../components/student/facilities/CancelModal";
 import { MyReservationsList } from "../../../components/student/facilities/MyReservationsList";
 import { ActiveReservationBanner } from "../../../components/student/facilities/ActiveReservationBanner";
-import { Calendar, RefreshCw, AlertCircle } from "lucide-react";
+import { LiveWorkstationBoard } from "../../../components/student/facilities/LiveWorkstationBoard";
+import { SeatDayPlanner } from "../../../components/student/facilities/SeatDayPlanner";
+import { QueuePositionBadge } from "../../../components/student/facilities/QueuePositionBadge";
+import facilitiesApi from "../../../api/facilitiesApi";
+import { useSocket } from "../../../hooks/useSocket";
+import { AlertCircle, Monitor, BookOpen, Layers } from "lucide-react";
 
 const LabBooking = () => {
   const [labName] = useState("Central Computing Lab");
 
+  // Facility View Mode: 'workstation' (Short-Horizon Live Board) vs 'seat' (Day-Ahead Planner) (§10.3 & §12)
+  const [facilityMode, setFacilityMode] = useState("workstation");
+
   // Set default date to today (YYYY-MM-DD) in local browser perspective
-  const [selectedDate, setSelectedDate] = useState(() => {
+  const [selectedDate] = useState(() => {
     const today = new Date();
     return today.toLocaleDateString("en-CA");
   });
@@ -22,11 +29,15 @@ const LabBooking = () => {
   const [cancellingBooking, setCancellingBooking] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Queue state (§10.4 & §11)
+  const [queueTickets, setQueueTickets] = useState([]);
+  const [isClaimingQueue, setIsClaimingQueue] = useState(false);
+  const [isLeavingQueue, setIsLeavingQueue] = useState(false);
+
   // 1. Fetch live availability
   const {
     availability,
     isLoading: loadingAvailability,
-    isRefetching,
     refetch: refetchAvailability,
   } = useAvailability(labName, selectedDate);
 
@@ -38,28 +49,122 @@ const LabBooking = () => {
     isCreating,
     cancelBooking,
     isCancelling,
+    checkInBooking,
     liveAnnouncement,
   } = useReservation();
 
-  // Find if user already has an active booking
-  const hasActiveBooking = myBookings.some((b) => b.status === "booked");
-  const activeBooking = myBookings.find((b) => b.status === "booked");
+  // 3. Fetch active queue tickets
+  const fetchQueueTickets = useCallback(async () => {
+    try {
+      const tickets = await facilitiesApi.getMyQueue();
+      setQueueTickets(tickets || []);
+    } catch {
+      // Graceful fallback
+    }
+  }, []);
 
-  // Track time elapsed since last refresh
-  const [secondsSinceUpdate, setSecondsSinceUpdate] = useState(0);
   useEffect(() => {
-    let isMounted = true;
-    Promise.resolve().then(() => {
-      if (isMounted) setSecondsSinceUpdate(0);
-    });
-    const interval = setInterval(() => {
-      setSecondsSinceUpdate((prev) => prev + 1);
-    }, 1000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
+    let mounted = true;
+    const loadTickets = async () => {
+      try {
+        const tickets = await facilitiesApi.getMyQueue();
+        if (mounted) setQueueTickets(tickets || []);
+      } catch {
+        // Graceful fallback
+      }
     };
-  }, [availability, isRefetching]);
+    loadTickets();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // 4. Realtime Socket.io synchronizer for queue & releases (§10.4)
+  const { socket } = useSocket();
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleRealtimeUpdate = () => {
+      fetchQueueTickets();
+      refetchAvailability();
+    };
+
+    socket.on("facility:queue_promoted", handleRealtimeUpdate);
+    socket.on("facility:queue_updated", handleRealtimeUpdate);
+    socket.on("facility:slot_released", handleRealtimeUpdate);
+    socket.on("facility:slot_booked", handleRealtimeUpdate);
+
+    return () => {
+      socket.off("facility:queue_promoted", handleRealtimeUpdate);
+      socket.off("facility:queue_updated", handleRealtimeUpdate);
+      socket.off("facility:slot_released", handleRealtimeUpdate);
+      socket.off("facility:slot_booked", handleRealtimeUpdate);
+    };
+  }, [socket, fetchQueueTickets, refetchAvailability]);
+
+  const handleCheckIn = async (booking) => {
+    setErrorMessage("");
+    try {
+      await checkInBooking(booking._id);
+    } catch (err) {
+      setErrorMessage(err.message || "Failed to check in.");
+    }
+  };
+
+  // Queue interactions
+  const handleClaimQueue = async (queueId) => {
+    setIsClaimingQueue(true);
+    setErrorMessage("");
+    try {
+      await facilitiesApi.claimQueueSpot(queueId);
+      await fetchQueueTickets();
+      await refetchAvailability();
+    } catch (err) {
+      setErrorMessage(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to claim promoted slot.",
+      );
+    } finally {
+      setIsClaimingQueue(false);
+    }
+  };
+
+  const handleLeaveQueue = async (queueId) => {
+    setIsLeavingQueue(true);
+    try {
+      await facilitiesApi.leaveQueue(queueId);
+      await fetchQueueTickets();
+    } catch (err) {
+      setErrorMessage(
+        err.response?.data?.message || err.message || "Failed to leave queue.",
+      );
+    } finally {
+      setIsLeavingQueue(false);
+    }
+  };
+
+  const handleJoinQueue = async (station) => {
+    setErrorMessage("");
+    try {
+      const now = new Date();
+      const slotStart = new Date(now.getTime() + 5 * 60 * 1000).toISOString();
+      const slotEnd = new Date(now.getTime() + 65 * 60 * 1000).toISOString();
+
+      await facilitiesApi.joinQueue({
+        resourceGroupId: station.groupId,
+        resourceId: station._id,
+        date: selectedDate,
+        slotStart,
+        slotEnd,
+      });
+      await fetchQueueTickets();
+    } catch (err) {
+      setErrorMessage(
+        err.response?.data?.message || err.message || "Could not join queue.",
+      );
+    }
+  };
 
   // Helper to check time slot overlap
   const isTimeOverlap = (startA, endA, startB, endB) => {
@@ -74,7 +179,6 @@ const LabBooking = () => {
     if (!selectedSlot) return;
     setErrorMessage("");
 
-    // 1. Client-side same-user double-booking prevention
     const existingOverlap = myBookings?.find(
       (b) =>
         (b.status === "booked" || b.status === "confirmed") &&
@@ -88,27 +192,23 @@ const LabBooking = () => {
 
     if (existingOverlap) {
       setErrorMessage(
-        `Double-Booking Prevention: You already hold an active reservation for Workstation ${
-          existingOverlap.seatId?.seatNumber || "seat"
-        } during this overlapping time slot.`,
+        `Double-Booking Prevention: You already hold an active reservation during this overlapping time slot.`,
       );
       return;
     }
 
     try {
-      // startTime/endTime in ISO format
       await createBooking({
         seatId: selectedSlot.seatId,
         startTime: selectedSlot.startTime,
         endTime: selectedSlot.endTime,
       });
-      // Close modal on success
       setSelectedSlot(null);
     } catch (err) {
       if (err.response?.status === 409 || err.status === 409) {
         setErrorMessage(
           err.response?.data?.message ||
-            "409 Conflict: You or another user already hold a reservation for this slot.",
+            "409 Conflict: This slot has already been reserved concurrently.",
         );
       } else {
         setErrorMessage(
@@ -124,9 +224,37 @@ const LabBooking = () => {
     cancelBooking(cancellingBooking._id, {
       onSuccess: () => {
         setCancellingBooking(null);
+        refetchAvailability();
+        fetchQueueTickets();
       },
     });
   };
+
+  // Workstation mapping for LiveWorkstationBoard
+  const workstations = useMemo(() => {
+    if (!availability?.seats) return [];
+    return availability.seats.map((seat) => ({
+      _id: seat._id,
+      label: seat.seatNumber || `PC-${seat._id.slice(-2)}`,
+      groupId: seat.groupId || "6aa115f8b9b09f1b15884a01",
+      groupName: seat.labName || "Central Computing Lab",
+      status: seat.status || "available",
+      isCurrentlyBooked: seat.isBooked || seat.status === "booked",
+      specs: seat.specs || "Equipped Workstation • High-Speed LAN",
+    }));
+  }, [availability]);
+
+  // Study Seat mapping for SeatDayPlanner
+  const studySeats = useMemo(() => {
+    if (!availability?.seats) return [];
+    return availability.seats.map((seat) => ({
+      _id: seat._id,
+      label:
+        seat.seatNumber?.replace("PC-", "S-") || `Seat-${seat._id.slice(-2)}`,
+      status: seat.status || "available",
+      isBookedInSlot: seat.isBooked || seat.status === "booked",
+    }));
+  }, [availability]);
 
   const formattedDateLabel = new Date(selectedDate).toLocaleDateString(
     undefined,
@@ -140,7 +268,7 @@ const LabBooking = () => {
   );
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 px-4 py-4">
+    <div className="max-w-6xl mx-auto space-y-6 px-4 py-4">
       {/* Screen Reader Live Status Region */}
       <div
         className="sr-only"
@@ -151,109 +279,142 @@ const LabBooking = () => {
         {liveAnnouncement}
       </div>
 
-      {/* Page Heading */}
-      <div className="border-b border-slate-200 pb-4 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-4">
+      {/* Page Heading & Surface Mode Switcher (§10.3 & §12) */}
+      <div className="border-b border-slate-200 pb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-serif font-bold text-slate-900">
-            Computer Lab Booking
+            Facility & Lab Booking
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Reserve individual workstation seats in the library's high-speed
-            Central Computing Lab.
+            Reserve individual PC workstations or quiet study seats across
+            campus libraries.
           </p>
+        </div>
+
+        {/* Dual-Horizon Surface Selector */}
+        <div className="inline-flex p-1 rounded-2xl bg-slate-100 border border-slate-200/80 shadow-xs">
+          <button
+            onClick={() => setFacilityMode("workstation")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              facilityMode === "workstation"
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Monitor
+              size={15}
+              className={
+                facilityMode === "workstation" ? "text-indigo-600" : ""
+              }
+            />
+            <span>Workstations (Live ≤1h)</span>
+          </button>
+          <button
+            onClick={() => setFacilityMode("seat")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              facilityMode === "seat"
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <BookOpen
+              size={15}
+              className={facilityMode === "seat" ? "text-indigo-600" : ""}
+            />
+            <span>Study Seats (Day-Ahead)</span>
+          </button>
         </div>
       </div>
 
-      {/* Active reservation top summary banner */}
-      <ActiveReservationBanner bookings={myBookings} />
+      {/* Active Promotion & Queue Ticket Alerts (§10.4 & §11) */}
+      <QueuePositionBadge
+        tickets={queueTickets}
+        onClaim={handleClaimQueue}
+        onLeave={handleLeaveQueue}
+        isClaiming={isClaimingQueue}
+        isLeaving={isLeavingQueue}
+      />
 
-      {/* Limit Alert Banner if they already have a booking */}
-      {hasActiveBooking && (
-        <div className="p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl flex items-start gap-3">
-          <AlertCircle className="text-amber-600 shrink-0 mt-0.5" size={18} />
-          <div>
-            <h4 className="font-bold text-xs">
-              Reservation Constraint Limit Reached
-            </h4>
-            <p className="text-[10px] text-amber-700 mt-1 leading-normal">
-              Students are restricted to a maximum of **1 active workstation
-              booking** at a time. To reserve a different seat or timeslot, you
-              must first cancel your current reservation for workstation{" "}
-              <strong className="text-slate-800 font-extrabold">
-                {activeBooking?.seatId?.seatNumber}
-              </strong>{" "}
-              below.
-            </p>
+      {/* Active reservation top summary banner */}
+      <ActiveReservationBanner
+        bookings={myBookings}
+        onCheckIn={handleCheckIn}
+      />
+
+      {/* Error / Alert Message Banner */}
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 text-red-800 rounded-2xl flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={16} className="text-red-500 shrink-0" />
+            <span>{errorMessage}</span>
           </div>
+          <button
+            onClick={() => setErrorMessage("")}
+            className="text-red-500 hover:text-red-700 font-bold"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 
-      {/* Split views: Selection calendar + workstation grid on left, my list on right */}
+      {/* Main Split Interface */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Workstation Grid Selectors */}
+        {/* Left 2-Columns: Dynamic UI Surface */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Controls Bar */}
-          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="w-full sm:w-auto">
-              <label
-                htmlFor="booking-date"
-                className="block text-[10px] text-slate-400 font-extrabold uppercase tracking-wider mb-1.5"
-              >
-                Target Date
-              </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                <input
-                  id="booking-date"
-                  type="date"
-                  value={selectedDate}
-                  min={new Date().toLocaleDateString("en-CA")}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full sm:w-48 pl-9 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 text-xs font-bold text-slate-700"
-                />
-              </div>
-            </div>
-
-            {/* Freshness Polling Status Tag */}
-            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-              <div className="text-right text-[10px] font-bold text-slate-400">
-                {isRefetching ? (
-                  <span className="text-indigo animate-pulse">Syncing...</span>
-                ) : (
-                  <span>Updated {secondsSinceUpdate}s ago</span>
-                )}
-              </div>
-              <button
-                onClick={() => refetchAvailability()}
-                disabled={loadingAvailability || isRefetching}
-                className="p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-indigo transition-colors focus:ring-2 focus:ring-slate-400 focus:outline-none"
-                aria-label="Refresh availability now"
-              >
-                <RefreshCw
-                  size={14}
-                  className={isRefetching ? "animate-spin" : ""}
-                />
-              </button>
-            </div>
-          </div>
-
-          {/* Seat selection list grid */}
-          {loadingAvailability ? (
-            <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center text-slate-400 text-sm flex flex-col items-center gap-2">
-              <RefreshCw className="animate-spin text-indigo-500" size={32} />
-              <span>Querying workstation availability matrix...</span>
-            </div>
+          {facilityMode === "workstation" ? (
+            <LiveWorkstationBoard
+              workstations={workstations}
+              isLoading={loadingAvailability}
+              onSelectWorkstation={(station) => {
+                setSelectedSlot({
+                  seatId: station._id,
+                  seatNumber: station.label,
+                  startTime: new Date().toISOString(),
+                  endTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                });
+              }}
+              onJoinQueue={handleJoinQueue}
+              weeklyPcHoursUsed={120}
+              maxPcHours={12}
+              userActiveQueue={queueTickets}
+            />
           ) : (
-            <WorkstationGrid
-              availability={availability}
-              selectedSlot={selectedSlot}
-              onSelectSlot={setSelectedSlot}
-              hasActiveBooking={hasActiveBooking}
+            <SeatDayPlanner
+              seats={studySeats}
+              isLoading={loadingAvailability}
+              onSelectSeat={({ seat, slotStart, slotEnd }) => {
+                setSelectedSlot({
+                  seatId: seat._id,
+                  seatNumber: seat.label,
+                  startTime: slotStart,
+                  endTime: slotEnd,
+                });
+              }}
+              onJoinWaitlist={async ({ slotStart, slotEnd }) => {
+                try {
+                  await facilitiesApi.joinQueue({
+                    resourceGroupId: "6aa115f8b9b09f1b15884a02",
+                    date: selectedDate,
+                    slotStart,
+                    slotEnd,
+                  });
+                  await fetchQueueTickets();
+                } catch (err) {
+                  setErrorMessage(
+                    err.response?.data?.message ||
+                      err.message ||
+                      "Failed to join waitlist.",
+                  );
+                }
+              }}
+              weeklySeatHoursUsed={180}
+              maxSeatHours={30}
+              userActiveQueue={queueTickets}
             />
           )}
         </div>
 
-        {/* Right Column: Student Bookings History */}
+        {/* Right Column: Student Bookings History & Policies */}
         <div className="space-y-6">
           {loadingMyBookings ? (
             <div className="bg-white rounded-3xl border border-slate-200 p-8 text-center text-slate-400 text-xs">
@@ -263,36 +424,41 @@ const LabBooking = () => {
             <MyReservationsList
               bookings={myBookings}
               onCancelRequest={setCancellingBooking}
+              onCheckInRequest={handleCheckIn}
             />
           )}
 
-          {/* Guidelines box */}
+          {/* Unified Fair Booking Policies Box (§10.5) */}
           <div className="bg-slate-50 border border-slate-100 rounded-3xl p-5 space-y-3">
-            <h4 className="text-xs font-bold text-slate-700">
-              Lab Operating Policies
+            <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Layers size={14} className="text-indigo-600" />
+              <span>Fairness & Quota Policies</span>
             </h4>
-            <ul className="text-[10px] text-slate-500 space-y-2 list-disc list-inside leading-relaxed font-medium">
+            <ul className="text-[10px] text-slate-600 space-y-2 list-disc list-inside leading-relaxed font-medium">
               <li>
-                Reservations are strictly limited to **1-hour increments**
-                starting on the hour.
+                <strong>Independent Weekly Quotas:</strong> 12 hours for PCs and
+                30 hours for Study Seats.
               </li>
               <li>
-                Please cancel bookings at least **15 minutes in advance** if you
-                cannot attend.
+                <strong>10-Minute Grace Period:</strong> Check in within 10
+                minutes of slot start or your slot is auto-released as a
+                no-show.
               </li>
               <li>
-                Workstations automatically log out after **5 minutes** of idle
-                activity.
+                <strong>1-Hour Cancellation Notice:</strong> Cancel ≥ 1 hour in
+                advance for a 100% quota refund. Under 1 hour notice forfeits
+                the slot duration from your weekly cap.
               </li>
               <li>
-                No food or drink permitted inside the Digital Computing spaces.
+                <strong>Automatic Promotion:</strong> Waitlisted patrons receive
+                a 10-minute priority window to claim freed slots.
               </li>
             </ul>
           </div>
         </div>
       </div>
 
-      {/* Confirmation overlays */}
+      {/* Confirmation Overlays */}
       <ReservationModal
         slot={selectedSlot}
         dateLabel={formattedDateLabel}

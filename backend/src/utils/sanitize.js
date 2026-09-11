@@ -24,7 +24,13 @@ const sanitizeObjectStrings = (obj) => {
   return obj;
 };
 
+const escapeRegExp = (str) => {
+  if (!str) return '';
+  return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
 module.exports = {
   sanitizeHtmlString,
   sanitizeObjectStrings,
+  escapeRegExp,
 };

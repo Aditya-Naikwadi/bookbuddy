@@ -209,7 +209,7 @@ export default function UserManagement() {
             ? "/college-admin"
             : user.role === "general"
               ? "/general-dashboard"
-              : "/student-dashboard";
+              : "/student";
 
         navigate(targetPath, { replace: true });
       }

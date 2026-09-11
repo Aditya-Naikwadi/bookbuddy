@@ -731,4 +731,64 @@ describe('Phase 7 — Super Admin & Analytics Integration Tests', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data.totalColleges).toBe(2);
   });
+
+  // 13. End-to-End: Super Admin publishes -> student can view in catalog and open detail page, zero 404s
+  it('13. Super Admin publishes -> student can view in catalog and open detail page, zero 404s', async () => {
+    const studentA2 = await User.create({
+      studentId: 'STU_ALPH_002',
+      name: 'Student Alpha Two',
+      email: 'student.a2@alpha.edu',
+      password: 'password123',
+      role: 'student',
+      collegeId: collegeA._id,
+    });
+    const tokenStudentA2 = generateTokenPair(studentA2).accessToken;
+
+    // Student A uploads a resource
+    const resource = await EResource.create({
+      collegeId: collegeA._id,
+      title: 'Global Quantum Computing',
+      author: 'Dr. Physicist',
+      type: 'pdf',
+      fileUrl: '/api/v1/reader/local/quantum.pdf',
+      uploadedBy: studentA._id,
+      moderationStatus: 'pending',
+      category: 'Computer Science',
+      storageKey: 'uploads/ebooks/quantum.pdf',
+      fileSizeBytes: 2048,
+    });
+
+    // 1. Super Admin approves it
+    const resApprove = await request(app)
+      .put(`/api/v1/dashboards/admin-portal/moderation/${resource._id.toString()}`)
+      .set('Authorization', `Bearer ${tokenSuperAdmin}`)
+      .send({ status: 'approved', note: 'Approved for publication' });
+    expect(resApprove.status).toBe(200);
+    expect(resApprove.body.data.moderationStatus).toBe('approved');
+
+    // 2. Super Admin publishes globally
+    const resPublish = await request(app)
+      .post(`/api/v1/dashboards/admin-portal/moderation/${resource._id.toString()}/publish`)
+      .set('Authorization', `Bearer ${tokenSuperAdmin}`);
+    expect(resPublish.status).toBe(200);
+    expect(resPublish.body.data.moderationStatus).toBe('published');
+
+    // 3. Student A2 (who did NOT upload the resource) views eresources list via student dashboard
+    const resList = await request(app)
+      .get('/api/v1/dashboards/student/eresources')
+      .set('Authorization', `Bearer ${tokenStudentA2}`);
+    expect(resList.status).toBe(200);
+    const foundInList = resList.body.data.find((r) => r._id.toString() === resource._id.toString());
+    expect(foundInList).toBeDefined();
+    expect(foundInList.moderationStatus).toBe('published');
+
+    // 4. Student A2 opens detail page directly (MUST return 200, ZERO 404s)
+    const resDetail = await request(app)
+      .get(`/api/v1/dashboards/student/eresources/${resource._id.toString()}`)
+      .set('Authorization', `Bearer ${tokenStudentA2}`);
+    expect(resDetail.status).toBe(200);
+    expect(resDetail.body.success).toBe(true);
+    expect(resDetail.body.data._id.toString()).toBe(resource._id.toString());
+    expect(resDetail.body.data.moderationStatus).toBe('published');
+  });
 });

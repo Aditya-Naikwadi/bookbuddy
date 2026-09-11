@@ -3,23 +3,51 @@ const AppError = require('../utils/AppError');
 const Loan = require('../models/Loan');
 const EResource = require('../models/EResource');
 const Book = require('../models/Book');
+const ReadingProgress = require('../models/ReadingProgress');
 const { getProgress, upsertProgress } = require('../services/progressService');
+const { getCache, setCache } = require('../utils/redisCache');
 
 /**
  * Helper function to verify whether the authenticated user has borrowed
  * or has access to a specific resource (physical book or e-resource).
+ * Short-circuits via Redis 10-min TTL cache and existing ReadingProgress record
+ * to avoid 3 redundant DB calls on every progress save.
  * Throws a 403 Forbidden AppError if access is denied.
  */
 const verifyResourceAccess = async (user, resourceId) => {
   const userId = user.id || user._id;
+  const cacheKey = `reading_access:${userId}:${resourceId}`;
 
-  // 1. Check if user has an active or historic Loan for this book
-  const loan = await Loan.findOne({ userId, bookId: resourceId });
-  if (loan) {
-    return { hasAccess: true, defaultResourceType: 'epub' };
+  // 1. Fast path: Redis 10-min TTL cache (0 DB queries)
+  const cachedAccess = await getCache(cacheKey);
+  if (cachedAccess) {
+    return cachedAccess;
   }
 
-  // 2. Check if resourceId is an EResource
+  // 2. Short-circuit: Existing ReadingProgress record shortcut
+  // If user has already made progress on this resource, access was verified previously
+  const existingProgress = await ReadingProgress.findOne({ userId, resourceId }).select(
+    '_id resourceType'
+  );
+  if (existingProgress) {
+    const accessInfo = {
+      hasAccess: true,
+      defaultResourceType: existingProgress.resourceType || 'epub',
+    };
+    await setCache(cacheKey, accessInfo, 600); // 10-min TTL
+    return accessInfo;
+  }
+
+  // 3. Fallback: Full verification across Loan / EResource / Book
+  // 3a. Check if user has an active or historic Loan for this book
+  const loan = await Loan.findOne({ userId, bookId: resourceId });
+  if (loan) {
+    const accessInfo = { hasAccess: true, defaultResourceType: 'epub' };
+    await setCache(cacheKey, accessInfo, 600);
+    return accessInfo;
+  }
+
+  // 3b. Check if resourceId is an EResource
   const eresource = await EResource.findById(resourceId);
   if (eresource) {
     // Enforce tenant isolation if collegeId exists on user and resource
@@ -37,19 +65,21 @@ const verifyResourceAccess = async (user, resourceId) => {
     const isAdmin = ['super-admin', 'college-admin'].includes(user.role);
 
     if (isPublishedOrApproved || isOwner || isAdmin) {
-      return { hasAccess: true, defaultResourceType: eresource.type || 'epub' };
+      const accessInfo = { hasAccess: true, defaultResourceType: eresource.type || 'epub' };
+      await setCache(cacheKey, accessInfo, 600);
+      return accessInfo;
     }
 
     throw new AppError('Access denied. This e-resource is not available.', 403);
   }
 
-  // 3. Check if resource exists as a Book in the catalog that user hasn't borrowed
+  // 3c. Check if resource exists as a Book in the catalog that user hasn't borrowed
   const book = await Book.findById(resourceId);
   if (book) {
     throw new AppError('Access denied. You have not borrowed this book.', 403);
   }
 
-  // 4. Resource not found or no loan/access record
+  // 3d. Resource not found or no loan/access record
   throw new AppError('Access denied. Resource not found or not borrowed.', 403);
 };
 

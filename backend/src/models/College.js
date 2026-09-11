@@ -1,5 +1,6 @@
 // Schema representing college/institution tenants.
 const mongoose = require('mongoose');
+const { validateSlugFormat, isSlugReserved } = require('../constants/reservedSlugs');
 
 const collegeSchema = new mongoose.Schema(
   {
@@ -25,6 +26,17 @@ const collegeSchema = new mongoose.Schema(
       sparse: true,
       lowercase: true,
       trim: true,
+      validate: {
+        validator: function (v) {
+          if (!v) return true;
+          const { valid } = validateSlugFormat(v);
+          return valid;
+        },
+        message: function (props) {
+          const { reason } = validateSlugFormat(props.value);
+          return reason || 'Invalid college slug.';
+        },
+      },
     },
     institutionType: {
       type: String,
@@ -144,6 +156,25 @@ const collegeSchema = new mongoose.Schema(
       labBookingEnabled: { type: Boolean, default: true },
       aiRecommendationsEnabled: { type: Boolean, default: true },
     },
+    timezone: {
+      type: String,
+      default: 'UTC',
+      trim: true,
+    },
+    facilitySettings: {
+      maxWeeklyWorkstationHours: { type: Number, default: 12 },
+      maxWeeklySeatHours: { type: Number, default: 30 },
+      workstationAdvanceHorizonHours: { type: Number, default: 1 },
+      seatAdvanceHorizonDays: { type: Number, default: 1 },
+      checkInGraceMinutes: { type: Number, default: 10 },
+      capScope: { type: String, enum: ['college', 'branch'], default: 'college' },
+      // Backward compatibility fields
+      maxWeeklyHours: { type: Number, default: 12 },
+      advanceBookingDays: { type: Number, default: 7 },
+      noShowPenaltyWindowDays: { type: Number, default: 14 },
+      noShowMaxStrikes: { type: Number, default: 3 },
+      noShowSuspensionHours: { type: Number, default: 48 },
+    },
   },
   {
     timestamps: true,
@@ -163,20 +194,39 @@ collegeSchema
 collegeSchema.set('toJSON', { virtuals: true });
 collegeSchema.set('toObject', { virtuals: true });
 
-// Auto-generate slug if missing and track formerSlugs on change
-collegeSchema.pre('save', async function (next) {
+// Auto-generate slug if missing, validate reserved words, and enforce immutability
+collegeSchema.pre('save', async function () {
+  const College = mongoose.model('College');
+
+  // Enforce slug immutability once established
+  if (!this.isNew && this.isModified('slug')) {
+    const existing = await College.findById(this._id).select('slug').lean();
+    if (existing && existing.slug && existing.slug !== this.slug) {
+      const err = new Error('College slug is immutable once established and cannot be changed.');
+      err.statusCode = 400;
+      throw err;
+    }
+  }
+
   if (!this.slug && this.name) {
     let baseSlug = this.name
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
-    if (!baseSlug) baseSlug = 'college';
+    if (!baseSlug || isSlugReserved(baseSlug) || baseSlug.length < 3) {
+      baseSlug = `college-${baseSlug || 'inst'}`;
+    }
 
     let candidateSlug = baseSlug;
     let counter = 1;
-    const College = mongoose.model('College');
-    while (await College.exists({ slug: candidateSlug, _id: { $ne: this._id } })) {
+    while (
+      isSlugReserved(candidateSlug) ||
+      (await College.exists({
+        $or: [{ slug: candidateSlug }, { formerSlugs: candidateSlug }],
+        _id: { $ne: this._id },
+      }))
+    ) {
       candidateSlug = `${baseSlug}-${counter}`;
       counter++;
     }
@@ -194,15 +244,19 @@ collegeSchema.pre('save', async function (next) {
   } else if (this.creationPath && !this.createdVia) {
     this.createdVia = this.creationPath;
   }
-  if (typeof next === 'function') {
-    next();
-  }
 });
 
-// Synchronize status and isActive on query updates
-collegeSchema.pre(['updateOne', 'findOneAndUpdate', 'findByIdAndUpdate'], function (next) {
+// Synchronize status/isActive and block immutable slug mutations on query updates
+collegeSchema.pre(['updateOne', 'findOneAndUpdate', 'findByIdAndUpdate'], function () {
   const update = this.getUpdate();
   if (update) {
+    const attemptedSlug = update.slug || (update.$set && update.$set.slug);
+    if (attemptedSlug !== undefined) {
+      const err = new Error('College slug is immutable and cannot be modified.');
+      err.statusCode = 400;
+      throw err;
+    }
+
     const status = update.status || (update.$set && update.$set.status);
     if (['suspended', 'archived'].includes(status)) {
       if (update.$set) {
@@ -218,7 +272,6 @@ collegeSchema.pre(['updateOne', 'findOneAndUpdate', 'findByIdAndUpdate'], functi
       }
     }
   }
-  if (typeof next === 'function') next();
 });
 
 // Text search index for full-text search across tenant names and codes

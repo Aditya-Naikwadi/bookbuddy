@@ -65,4 +65,78 @@ const cancelBooking = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Booking cancelled' });
 });
 
-module.exports = { getSeats, getAvailability, createBooking, getMyBookings, cancelBooking };
+// @desc    Check in to a lab booking
+// @route   POST /api/lab/bookings/:id/check-in
+// @access  Private
+const checkInBooking = asyncHandler(async (req, res) => {
+  const result = await labBookingService.checkInBooking(req.params.id, req.user.id || req.user._id);
+  res.json({ success: true, data: result.booking, message: result.message });
+});
+
+// @desc    Join facility booking queue
+// @route   POST /api/lab/queue/join
+// @access  Private
+const joinQueue = asyncHandler(async (req, res) => {
+  const facilityEngineService = require('../services/facilityEngineService');
+  const { resourceGroupId, resourceId, date, slotStart, slotEnd } = req.body;
+  const result = await facilityEngineService.joinBookingQueue({
+    collegeId: req.user.collegeId,
+    branchId: req.user.branchId || null,
+    resourceGroupId,
+    resourceId,
+    studentId: req.user.id || req.user._id,
+    date,
+    slotStart,
+    slotEnd,
+  });
+  res.status(201).json({ success: true, data: result });
+});
+
+// @desc    Leave facility booking queue
+// @route   DELETE /api/lab/queue/:id
+// @access  Private
+const leaveQueue = asyncHandler(async (req, res) => {
+  const facilityEngineService = require('../services/facilityEngineService');
+  const result = await facilityEngineService.leaveBookingQueue({
+    queueId: req.params.id,
+    studentId: req.user.id || req.user._id,
+  });
+  res.json({ success: true, message: result.message });
+});
+
+// @desc    Get student's active queue tickets
+// @route   GET /api/lab/queue/me
+// @access  Private
+const getMyQueue = asyncHandler(async (req, res) => {
+  const facilityEngineService = require('../services/facilityEngineService');
+  const tickets = await facilityEngineService.getStudentQueueStatus({
+    collegeId: req.user.collegeId,
+    studentId: req.user.id || req.user._id,
+  });
+  res.json({ success: true, data: tickets });
+});
+
+// @desc    Claim promoted queue spot
+// @route   POST /api/lab/queue/:id/claim
+// @access  Private
+const claimQueueSpot = asyncHandler(async (req, res) => {
+  const facilityEngineService = require('../services/facilityEngineService');
+  const result = await facilityEngineService.claimPromotedQueueSpot({
+    queueId: req.params.id,
+    studentId: req.user.id || req.user._id,
+  });
+  res.json({ success: true, data: result });
+});
+
+module.exports = {
+  getSeats,
+  getAvailability,
+  createBooking,
+  getMyBookings,
+  cancelBooking,
+  checkInBooking,
+  joinQueue,
+  leaveQueue,
+  getMyQueue,
+  claimQueueSpot,
+};

@@ -6,6 +6,8 @@ const profanityFilter = require('../middlewares/profanityFilter');
 const {
   getResourceReviews,
   createReview,
+  updateReview,
+  deleteReview,
   voteHelpful,
   flagReview,
 } = require('../controllers/reviewController');
@@ -15,6 +17,8 @@ router.use(scopeToTenant);
 
 router.get('/:resourceType/:resourceId', getResourceReviews);
 router.post('/', profanityFilter, createReview);
+router.put('/:id', profanityFilter, updateReview);
+router.delete('/:id', deleteReview);
 router.post('/:id/helpful', voteHelpful);
 router.post('/:id/flag', flagReview);
 

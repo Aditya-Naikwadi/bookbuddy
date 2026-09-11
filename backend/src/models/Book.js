@@ -52,6 +52,17 @@ const bookSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    ratingSummary: {
+      average: { type: Number, default: 0 },
+      count: { type: Number, default: 0 },
+      distribution: {
+        1: { type: Number, default: 0 },
+        2: { type: Number, default: 0 },
+        3: { type: Number, default: 0 },
+        4: { type: Number, default: 0 },
+        5: { type: Number, default: 0 },
+      },
+    },
     tags: [
       {
         type: String,
@@ -88,10 +99,12 @@ bookSchema.pre('save', function () {
 // Compound indexes for dashboard and catalog queries
 bookSchema.index({ collegeId: 1, category: 1 });
 bookSchema.index({ collegeId: 1, copiesAvailable: -1, title: 1 });
+bookSchema.index({ collegeId: 1, copiesAvailable: 1 });
+bookSchema.index({ collegeId: 1, isbn: 1 });
 bookSchema.index({ collegeId: 1, createdAt: -1 });
 
 // Text index for search
-bookSchema.index({ title: 'text', author: 'text' });
+bookSchema.index({ title: 'text', author: 'text', isbn: 'text' });
 
 // Algolia Search Index Sync Hooks
 bookSchema.post('save', async function (doc) {

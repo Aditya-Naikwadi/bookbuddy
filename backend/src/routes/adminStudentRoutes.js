@@ -10,7 +10,7 @@ const router = express.Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 20 * 1024 * 1024, // 20MB limit
   },
   fileFilter: (req, file, cb) => {
     const allowedMimes = [
@@ -33,11 +33,14 @@ router.use(protect);
 router.use(restrictTo('college-admin', 'super-admin'));
 router.use(scopeToTenant);
 
-// Upload routes
+// Upload & Validation routes
 router.post('/upload/validate', upload.single('file'), rosterUploadController.validateRosterUpload);
-
 router.post('/upload/commit', rosterUploadController.commitRosterUpload);
+router.get('/upload/:batchId/status', rosterUploadController.getBatchStatus);
+router.get('/upload/:batchId/delivery-status', rosterUploadController.getBatchDeliveryStatus);
+router.get('/upload/:batchId/handouts', rosterUploadController.downloadBatchHandouts);
 
+// Export active college roster
 router.get('/export', rosterUploadController.exportRoster);
 
 module.exports = router;

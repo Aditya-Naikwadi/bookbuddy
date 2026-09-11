@@ -161,6 +161,7 @@ const sendPasswordResetEmail = async (userEmail, userName, resetUrl) => {
 module.exports = {
   getTransporter,
   queueEmail,
+  sendMail: queueEmail,
   sendOverdueFineEmail,
   sendReservationReadyEmail,
   sendPasswordResetEmail,

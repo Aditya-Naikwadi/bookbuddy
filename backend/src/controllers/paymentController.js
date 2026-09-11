@@ -16,26 +16,27 @@ const createOrder = asyncHandler(async (req, res) => {
   const { fineIds, fineId, amount: clientAmount, currency = 'INR' } = req.body;
 
   let targetFines = [];
-  let finalAmountInPaise;
 
   if (Array.isArray(fineIds) && fineIds.length > 0) {
     targetFines = await Fine.find({ userId, status: 'unpaid', _id: { $in: fineIds } });
-    const serverComputedRupees = targetFines.reduce((sum, f) => sum + (f.amount || 0), 0);
-    finalAmountInPaise = serverComputedRupees * 100;
   } else if (fineId) {
     targetFines = await Fine.find({ userId, status: 'unpaid', _id: fineId });
-    const serverComputedRupees = targetFines.reduce((sum, f) => sum + (f.amount || 0), 0);
-    finalAmountInPaise = serverComputedRupees * 100;
-  } else if (clientAmount !== undefined) {
-    finalAmountInPaise = Number(clientAmount);
-  } else {
+  } else if (!clientAmount) {
     targetFines = await Fine.find({ userId, status: 'unpaid' });
-    if (targetFines && targetFines.length > 0) {
-      const serverComputedRupees = targetFines.reduce((sum, f) => sum + (f.amount || 0), 0);
-      finalAmountInPaise = serverComputedRupees * 100;
-    } else {
-      throw new AppError('No unpaid fines found to process.', 400);
+  }
+
+  let finalAmountInPaise;
+
+  if (targetFines && targetFines.length > 0) {
+    const serverComputedRupees = targetFines.reduce((sum, f) => sum + (f.amount || 0), 0);
+    finalAmountInPaise = Math.round(serverComputedRupees * 100);
+  } else if (clientAmount !== undefined) {
+    if (Number(clientAmount) < 100) {
+      throw new AppError('Minimum payment amount is 100 paise (₹1).', 400);
     }
+    throw new AppError('No unpaid fines found to process.', 400);
+  } else {
+    throw new AppError('No unpaid fines found to process.', 400);
   }
 
   if (finalAmountInPaise < 100) {

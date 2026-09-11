@@ -8,11 +8,6 @@ const cursorPagination = require('../utils/cursorPagination');
 const cacheHelper = require('../utils/cacheHelper');
 const { checkoutBook, returnBook } = require('../services/loanService');
 
-// Helper to escape query strings for safe Regex operations
-const escapeRegex = (str) => {
-  return str.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
-};
-
 // Normalize Catalog Items for a uniform response
 const normalizeItem = (item) => {
   const isBook = item.copiesTotal !== undefined;
@@ -74,16 +69,8 @@ const searchCatalog = asyncHandler(async (req, res) => {
   const eresourceFilter = {};
 
   if (q.trim()) {
-    const escaped = escapeRegex(q.trim());
-    bookFilter.$or = [
-      { title: { $regex: escaped, $options: 'i' } },
-      { author: { $regex: escaped, $options: 'i' } },
-      { isbn: { $regex: escaped, $options: 'i' } },
-    ];
-    eresourceFilter.$or = [
-      { title: { $regex: escaped, $options: 'i' } },
-      { author: { $regex: escaped, $options: 'i' } },
-    ];
+    bookFilter.$text = { $search: q.trim() };
+    eresourceFilter.$text = { $search: q.trim() };
   }
 
   if (category && category !== 'all') {
@@ -101,22 +88,57 @@ const searchCatalog = asyncHandler(async (req, res) => {
     // ebooks are always available, no restriction needed
   }
 
+  // Push cursor filter into MongoDB query
+  if (decodedCursor) {
+    const { sortValue, lastId } = decodedCursor;
+    if (sortBy === 'newest') {
+      const cursorDate = new Date(Number(sortValue));
+      if (!isNaN(cursorDate.getTime())) {
+        const cursorCond = lastId
+          ? {
+              $or: [
+                { createdAt: { $lt: cursorDate } },
+                { createdAt: cursorDate, _id: { $lt: lastId } },
+              ],
+            }
+          : { createdAt: { $lt: cursorDate } };
+
+        bookFilter.$and = bookFilter.$and ? [...bookFilter.$and, cursorCond] : [cursorCond];
+        eresourceFilter.$and = eresourceFilter.$and
+          ? [...eresourceFilter.$and, cursorCond]
+          : [cursorCond];
+      }
+    } else if (sortBy === 'title') {
+      const cursorCond = lastId
+        ? {
+            $or: [{ title: { $gt: sortValue } }, { title: sortValue, _id: { $gt: lastId } }],
+          }
+        : { title: { $gt: sortValue } };
+
+      bookFilter.$and = bookFilter.$and ? [...bookFilter.$and, cursorCond] : [cursorCond];
+      eresourceFilter.$and = eresourceFilter.$and
+        ? [...eresourceFilter.$and, cursorCond]
+        : [cursorCond];
+    }
+  }
+
   // We query limit + 1 from both collections to evaluate hasMore
   let books = [];
   let eresources = [];
 
   const dbLimit = parsedLimit + 1;
+  const sortConfig = sortBy === 'title' ? { title: 1, _id: 1 } : { createdAt: -1, _id: -1 };
 
   if (searchPhysical) {
     const booksQuery = bookRepo.find(bookFilter);
-    books = await booksQuery.sort({ createdAt: -1 }).limit(dbLimit);
+    books = await booksQuery.sort(sortConfig).limit(dbLimit);
   }
 
   if (searchDigital) {
-    // Only fetch approved e-resources
-    eresourceFilter.moderationStatus = 'approved';
+    // Only fetch approved/published e-resources
+    eresourceFilter.moderationStatus = { $in: ['approved', 'published'] };
     const eresourcesQuery = eresourceRepo.find(eresourceFilter);
-    eresources = await eresourcesQuery.sort({ createdAt: -1 }).limit(dbLimit);
+    eresources = await eresourcesQuery.sort(sortConfig).limit(dbLimit);
   }
 
   // Normalize and combine
@@ -124,7 +146,7 @@ const searchCatalog = asyncHandler(async (req, res) => {
   const normalizedEResources = eresources.map(normalizeItem);
   let combined = [...normalizedBooks, ...normalizedEResources];
 
-  // Sort merged results in memory
+  // Sort merged results across physical + digital
   if (sortBy === 'newest') {
     combined.sort(
       (a, b) =>
@@ -135,22 +157,6 @@ const searchCatalog = asyncHandler(async (req, res) => {
     combined.sort(
       (a, b) => a.title.localeCompare(b.title) || a.id.toString().localeCompare(b.id.toString())
     );
-  }
-
-  // Slice based on paginated cursor if present
-  if (decodedCursor) {
-    const { sortValue, lastId } = decodedCursor;
-    if (sortBy === 'newest') {
-      const cursorTime = Number(sortValue);
-      combined = combined.filter((item) => {
-        const itemTime = new Date(item.createdAt).getTime();
-        return itemTime < cursorTime || (itemTime === cursorTime && item.id.toString() < lastId);
-      });
-    } else if (sortBy === 'title') {
-      combined = combined.filter((item) => {
-        return item.title > sortValue || (item.title === sortValue && item.id.toString() > lastId);
-      });
-    }
   }
 
   const hasMore = combined.length > parsedLimit;

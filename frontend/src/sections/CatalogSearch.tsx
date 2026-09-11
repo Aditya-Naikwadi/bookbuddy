@@ -110,7 +110,7 @@ export const CatalogSearch: React.FC = () => {
       if (role === "college-admin") navigate("/college-admin");
       else if (role === "general") navigate("/general-dashboard/search");
       else if (role === "super-admin") navigate("/admin-portal");
-      else navigate("/student-dashboard/catalog");
+      else navigate("/student/catalog");
     } else {
       // Requirement 6: Clicking any book card redirects unauthenticated users to Login/Registration page
       navigate("/auth/login", {

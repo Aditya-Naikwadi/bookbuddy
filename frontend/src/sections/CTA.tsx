@@ -135,7 +135,7 @@ export const CTA = () => {
                 if (role === "college-admin") navigate("/college-admin");
                 else if (role === "general") navigate("/general-dashboard");
                 else if (role === "super-admin") navigate("/admin-portal");
-                else navigate("/student-dashboard");
+                else navigate("/student");
               } else {
                 const hadAccount =
                   localStorage.getItem("bookbuddy_had_account") === "true";

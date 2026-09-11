@@ -44,8 +44,9 @@ const importGoogleBook = asyncHandler(async (req, res) => {
     throw new Error('College context is required to import books');
   }
 
-  // Check if book already imported
+  // Check if book already imported in this college catalog
   let existing = await Book.findOne({
+    collegeId,
     $or: [{ isbn: bookData.isbn }, { title: bookData.title, author: bookData.author }],
   });
 

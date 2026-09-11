@@ -139,10 +139,7 @@ const streamEbookContent = async (req, res, next) => {
       throw new AppError('Ebook resource not found or unauthorized access.', 404);
     }
 
-    const isAllowedStatus =
-      resource.source === 'gutenberg' || resource.sourceType === 'gutenberg'
-        ? ['approved', 'published'].includes(resource.moderationStatus)
-        : resource.moderationStatus === 'published';
+    const isAllowedStatus = resource.moderationStatus === 'published' || resource.isPublished;
 
     if (!isAllowedStatus && req.user.role !== 'super-admin' && req.user.role !== 'college-admin') {
       throw new AppError('This e-resource is not published yet.', 403);

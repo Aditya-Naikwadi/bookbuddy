@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import DigitalReaderModal from "../../components/general/DigitalReaderModal";
 import GeneralDashboardHome from "../../pages/dashboards/general/GeneralDashboardHome";
 import * as bookDataHooks from "../../hooks/useBookData";
+import useAuthStore from "../../store/authStore";
 
 // Mock router navigation
 const mockNavigate = vi.fn();
@@ -177,6 +178,69 @@ describe("Digital Reader & Modernized General Dashboard", () => {
       expect(
         screen.getByText(/Overview and Academic Context/i),
       ).toBeInTheDocument();
+    });
+
+    it("public reader highlight/bookmark attempt shows login prompt, not a 401 error", async () => {
+      useAuthStore.setState({
+        isAuthenticated: false,
+        user: null,
+      });
+
+      const mockBook = {
+        id: "cs-book-1",
+        title: "Computer Science",
+        format: "epub",
+        category: "Computer Science",
+      };
+
+      render(
+        <DigitalReaderModal
+          isOpen={true}
+          onClose={vi.fn()}
+          book={mockBook}
+          title="Computer Science"
+          fileType="epub"
+        />,
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Foundational Principles & Architecture/i),
+        ).toBeInTheDocument();
+      });
+
+      // Click Bookmark Location button
+      const bookmarkBtn = screen.getByTitle("Bookmark Location");
+      fireEvent.click(bookmarkBtn);
+
+      // Bookmark prompt modal opens
+      expect(screen.getByText("Add Bookmark")).toBeInTheDocument();
+      const saveBookmarkBtn = screen.getByText("Save Bookmark");
+      fireEvent.click(saveBookmarkBtn);
+
+      // Login prompt modal must appear instead of a 401 error
+      await waitFor(() => {
+        expect(screen.getByTestId("login-prompt-modal")).toBeInTheDocument();
+      });
+      expect(
+        screen.getByText("Sign In to Save Highlights"),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/Page 1 \(preserved\)/i)).toBeInTheDocument();
+
+      // Clicking Log In redirects to /auth/login with preserved state
+      const loginBtn = screen.getByTestId("login-prompt-login-btn");
+      fireEvent.click(loginBtn);
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        "/auth/login",
+        expect.objectContaining({
+          state: expect.objectContaining({
+            bookId: "cs-book-1",
+            page: 1,
+            bookTitle: "Computer Science",
+          }),
+        }),
+      );
     });
   });
 

@@ -2,6 +2,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const Streak = require('../models/Streak');
 const ReadingActivityLog = require('../models/ReadingActivityLog');
 const User = require('../models/User');
+const cacheHelper = require('../utils/cacheHelper');
 
 // @desc    Get college leaderboard
 // @route   GET /api/v1/leaderboard
@@ -9,6 +10,21 @@ const User = require('../models/User');
 const getLeaderboard = asyncHandler(async (req, res) => {
   const { metric = 'streak', limit = 10 } = req.query;
   const numLimit = Math.min(50, parseInt(limit, 10) || 10);
+
+  // Check Redis Cache with 15-minute TTL
+  const cacheKey = cacheHelper.makeKey(req.user.collegeId, 'leaderboard', `${metric}:${numLimit}`);
+
+  const cachedResults = await cacheHelper.get(cacheKey);
+  if (cachedResults && Array.isArray(cachedResults)) {
+    const personalized = cachedResults.map((entry) => ({
+      ...entry,
+      isSelf: entry.userId ? entry.userId.toString() === req.user.id.toString() : false,
+    }));
+    return res.json({
+      success: true,
+      data: personalized,
+    });
+  }
 
   let leaderboard;
 
@@ -100,6 +116,9 @@ const getLeaderboard = asyncHandler(async (req, res) => {
       };
     });
   }
+
+  // Cache leaderboard in Redis for 15 minutes (900 seconds)
+  await cacheHelper.set(cacheKey, leaderboard, 900);
 
   res.json({
     success: true,

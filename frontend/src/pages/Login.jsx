@@ -3,10 +3,11 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import useAuthStore from "../store/authStore";
 import { useConfig } from "../context/ConfigContext";
 import { isUserAllowedForRoute } from "../config/roleRouteConfig";
-import { Loader2, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { Loader2, Eye, EyeOff, CheckCircle2, Building2 } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGoogleLogin } from "@react-oauth/google";
+import { getSubdomainTenantSlug } from "../utils/tenantSubdomain";
 
 const GoogleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -71,7 +72,7 @@ export default function Login() {
 
   const handlePostAuthNavigate = () => {
     const user = useAuthStore.getState().user;
-    let defaultRoute = "/student-dashboard";
+    let defaultRoute = "/student";
     let collegeName =
       user?.collegeId?.name || user?.collegeName || "your institution";
 
@@ -106,19 +107,22 @@ export default function Login() {
     }, 1200);
   };
 
+  const subdomainSlug = getSubdomainTenantSlug();
+  const queryParams = new URLSearchParams(location.search);
+  const effectiveCollegeSlug =
+    subdomainSlug ||
+    location.state?.collegeSlug ||
+    queryParams.get("tenant") ||
+    queryParams.get("collegeSlug");
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const queryParams = new URLSearchParams(location.search);
-    const collegeSlug =
-      location.state?.collegeSlug ||
-      queryParams.get("tenant") ||
-      queryParams.get("collegeSlug");
 
     const result = await login(
       email,
       password,
       showMfaField || mfaRequired ? totpCode : null,
-      collegeSlug,
+      effectiveCollegeSlug,
     );
     if (result === true) {
       handlePostAuthNavigate();
@@ -204,6 +208,22 @@ export default function Login() {
         >
           Please contact your college IT Helpdesk or library administrator to
           reset your password.
+        </motion.div>
+      )}
+
+      {effectiveCollegeSlug && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="mb-4 p-2.5 bg-indigo-500/10 border border-indigo-500/30 rounded-xl flex items-center justify-center gap-2 text-xs text-indigo-300 font-mono shadow-sm"
+        >
+          <Building2 className="w-4 h-4 text-indigo-400 shrink-0" />
+          <span>
+            Institution Scoped:{" "}
+            <strong className="text-white uppercase">
+              {effectiveCollegeSlug}
+            </strong>
+          </span>
         </motion.div>
       )}
 

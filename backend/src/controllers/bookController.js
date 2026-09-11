@@ -3,15 +3,26 @@ const BookDTO = require('../dtos/BookDTO');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('express-async-handler');
 const { scopeToCollege } = require('../middlewares/scopeToCollege');
+const cursorPagination = require('../utils/cursorPagination');
+const { getCache, setCache } = require('../utils/redisCache');
+const crypto = require('crypto');
 
-// @desc    Get all books with search, filter & pagination
+// @desc    Get all books with search, filter & cursor/keyset pagination
 // @route   GET /api/books
 // @access  Public
 const getBooks = asyncHandler(async (req, res) => {
   const pageSize = Math.max(1, Math.min(100, Number(req.query.limit) || 12));
-  const page = Math.max(1, Number(req.query.page) || 1);
-
-  const { search, category, format, available, yearFrom, yearTo, lang } = req.query;
+  const {
+    search,
+    category,
+    format,
+    available,
+    yearFrom,
+    yearTo,
+    lang,
+    cursor,
+    sortBy = 'newest',
+  } = req.query;
 
   let queryFilter = {};
 
@@ -44,19 +55,81 @@ const getBooks = asyncHandler(async (req, res) => {
 
   const scopedQuery = scopeToCollege(queryFilter, req.user?.collegeId);
 
-  const count = await Book.countDocuments(scopedQuery);
+  // Redis-cached total count calculation (5-minute TTL)
+  const countKeyPayload = JSON.stringify({
+    scopedQuery,
+    cid: req.user?.collegeId || 'public',
+  });
+  const countHash = crypto.createHash('md5').update(countKeyPayload).digest('hex');
+  const countCacheKey = `books:count:${countHash}`;
 
-  const books = await Book.find(scopedQuery)
-    .limit(pageSize)
-    .skip(pageSize * (page - 1))
-    .sort(search ? { score: { $meta: 'textScore' } } : { createdAt: -1 });
+  let total = await getCache(countCacheKey);
+  if (total === null || total === undefined) {
+    total = await Book.countDocuments(scopedQuery);
+    await setCache(countCacheKey, total, 300);
+  }
+
+  // Handle keyset cursor pagination vs legacy offset fallback
+  const isKeyset = Boolean(cursor || !req.query.page);
+  let books;
+  let hasMore;
+  let nextCursor = null;
+
+  if (isKeyset) {
+    const keysetFilter = { ...scopedQuery };
+    if (cursor) {
+      const decodedCursor = cursorPagination.decode(cursor);
+      if (decodedCursor) {
+        cursorPagination.apply(keysetFilter, decodedCursor, sortBy);
+      }
+    }
+
+    const sortConfig =
+      sortBy === 'title'
+        ? { title: 1, _id: 1 }
+        : search
+          ? { score: { $meta: 'textScore' } }
+          : { createdAt: -1, _id: -1 };
+
+    const rawBooks = await Book.find(keysetFilter)
+      .limit(pageSize + 1)
+      .sort(sortConfig);
+
+    hasMore = rawBooks.length > pageSize;
+    books = hasMore ? rawBooks.slice(0, pageSize) : rawBooks;
+
+    if (hasMore && books.length > 0) {
+      const last = books[books.length - 1];
+      const sortVal = sortBy === 'title' ? last.title : new Date(last.createdAt).getTime();
+      nextCursor = cursorPagination.encode(sortVal, last._id.toString());
+    }
+  } else {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    books = await Book.find(scopedQuery)
+      .limit(pageSize)
+      .skip(pageSize * (page - 1))
+      .sort(search ? { score: { $meta: 'textScore' } } : { createdAt: -1 });
+    hasMore = page * pageSize < total;
+  }
+
+  const pageNumber = Number(req.query.page) || 1;
+  const totalPages = Math.ceil(total / pageSize) || 1;
 
   res.json({
     success: true,
     books: BookDTO.transformMany(books),
-    page,
-    pages: Math.ceil(count / pageSize),
-    total: count,
+    data: BookDTO.transformMany(books),
+    page: pageNumber,
+    pages: totalPages,
+    total,
+    pagination: {
+      hasMore,
+      nextCursor,
+      total,
+      limit: pageSize,
+      page: pageNumber,
+      pages: totalPages,
+    },
   });
 });
 

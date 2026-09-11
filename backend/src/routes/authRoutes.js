@@ -9,6 +9,7 @@ const {
   getUserProfile,
   setupMfa,
   verifyMfa,
+  changePassword,
 } = require('../controllers/authController');
 const { googleAuthHandler } = require('../controllers/googleAuthController');
 const { handleOAuthCallback, getMe } = require('../controllers/oauthController');
@@ -87,5 +88,9 @@ router.get('/logout', logoutUser);
 // @access  Private
 router.post('/mfa/setup', protect, setupMfa);
 router.post('/mfa/verify', protect, verifyMfa);
+
+// @desc    Change password (first-login forced change or user update)
+// @access  Private
+router.post('/change-password', protect, changePassword);
 
 module.exports = router;

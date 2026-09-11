@@ -60,9 +60,20 @@ const validateMagicBytes = (allowedMimes = []) => {
       }
 
       for (const file of files) {
-        if (!file.path || !fs.existsSync(file.path)) continue;
+        const buffer =
+          file.buffer ||
+          (file.path && fs.existsSync(file.path) ? fs.readFileSync(file.path) : null);
+        if (!buffer) continue;
 
-        const buffer = fs.readFileSync(file.path);
+        const cleanupDisk = () => {
+          if (file.path && fs.existsSync(file.path)) {
+            try {
+              fs.unlinkSync(file.path);
+            } catch {
+              // ignore cleanup error
+            }
+          }
+        };
 
         // Check for EICAR test string or executable signature for malware detection
         const contentStr = buffer.toString('utf8', 0, Math.min(buffer.length, 2048));
@@ -70,7 +81,7 @@ const validateMagicBytes = (allowedMimes = []) => {
           contentStr.includes('EICAR-STANDARD-ANTIVIRUS-TEST-FILE') ||
           (buffer[0] === 0x4d && buffer[1] === 0x5a) // MZ Windows executable header
         ) {
-          if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+          cleanupDisk();
           logger.warn(`[Malware Alert] Blocked suspicious file upload: ${file.originalname}`);
           return next(
             new AppError('Malware or executable signature detected in uploaded file.', 400)
@@ -105,7 +116,7 @@ const validateMagicBytes = (allowedMimes = []) => {
             // Verify plain text / valid CSV
             continue;
           } else {
-            if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+            cleanupDisk();
             return next(
               new AppError('Uploaded file signature does not match allowed format.', 400)
             );
@@ -121,7 +132,7 @@ const validateMagicBytes = (allowedMimes = []) => {
           ) {
             continue;
           }
-          if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+          cleanupDisk();
           return next(
             new AppError(
               `File type mismatch: expected ${allowedMimes.join(', ')}, detected ${detected.mime}`,

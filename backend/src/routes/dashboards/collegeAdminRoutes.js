@@ -20,8 +20,10 @@ const {
   getAnalyticsSummary,
   getLabSeats,
   createLabSeat,
+  bulkCreateLabSeats,
   updateLabSeat,
   getLabBookings,
+  cancelLabBookingByAdmin,
   getBookSuggestions,
   updateBookSuggestion,
   getFeedback,
@@ -97,6 +99,7 @@ router
   );
 
 // Lab Inventory & Booking Management
+router.post('/lab-seats/bulk', auditLog('lab_seat.bulk_create'), bulkCreateLabSeats);
 router
   .route('/lab-seats')
   .get(getLabSeats)
@@ -110,6 +113,9 @@ router
     updateLabSeat
   );
 router.route('/lab-bookings').get(getLabBookings);
+router
+  .route('/lab-bookings/:id')
+  .delete(validate(paramIdSchema), auditLog('lab_booking.cancel'), cancelLabBookingByAdmin);
 
 // Book Suggestions Moderation
 router.route('/book-suggestions').get(getBookSuggestions);

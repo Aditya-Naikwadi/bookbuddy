@@ -1,0 +1,287 @@
+const request = require('supertest');
+const mongoose = require('mongoose');
+const app = require('../app');
+const User = require('../models/User');
+const College = require('../models/College');
+const StudentUploadBatch = require('../models/StudentUploadBatch');
+const { generateAccessToken } = require('../utils/token');
+
+describe('Phase 3 — Production Hardening: Full Upload-to-Login-to-Password-Change Lifecycle', () => {
+  let collegeA;
+  let collegeB;
+  let adminA;
+  let adminTokenA;
+
+  beforeAll(async () => {
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(process.env.MONGO_URI, {
+        tlsAllowInvalidCertificates: true,
+      });
+    }
+
+    try {
+      await User.collection.dropIndexes();
+      await User.syncIndexes();
+    } catch {
+      // ignore
+    }
+
+    await User.deleteMany({});
+    await College.deleteMany({});
+    await StudentUploadBatch.deleteMany({});
+
+    // 1. College A (MIT)
+    collegeA = await College.create({
+      name: 'Massachusetts Institute of Technology',
+      code: 'MIT',
+      domain: 'mit.edu',
+      slug: 'mit-tech',
+      status: 'active',
+      isActive: true,
+      subscriptionPlan: 'institution-enterprise',
+    });
+
+    // 2. College B (Stanford)
+    collegeB = await College.create({
+      name: 'Stanford University',
+      code: 'STAN',
+      domain: 'stanford.edu',
+      slug: 'stanford-univ',
+      status: 'active',
+      isActive: true,
+      subscriptionPlan: 'institution-enterprise',
+    });
+
+    // 3. College Admin for College A
+    adminA = await User.create({
+      name: 'Admin MIT',
+      studentId: 'MIT-ADMIN-01',
+      email: 'admin@mit.edu',
+      password: 'AdminPassword123!',
+      role: 'college-admin',
+      collegeId: collegeA._id,
+      status: 'active',
+      isActive: true,
+      permissions: ['canManagePatrons', 'canViewAnalytics'],
+    });
+
+    adminTokenA = generateAccessToken(adminA);
+  });
+
+  afterAll(async () => {
+    await User.deleteMany({});
+    await College.deleteMany({});
+    await StudentUploadBatch.deleteMany({});
+    await mongoose.connection.close();
+  });
+
+  const emailStudentId = 'MIT-P3-101';
+  const emailStudentAddr = 'p3student@mit.edu';
+  const offlineStudentId = 'MIT-P3-102';
+  let generatedTempPassword = null;
+  let firstLoginAccessToken = null;
+  const newPermanentPassword = 'PermanentSecurePass@2026!';
+
+  test('1. Step 1: Bulk upload ingestion with per-row credential delivery and offline slips', async () => {
+    // Generate valid CSV with 1 student having email and 1 missing email
+    const csvContent =
+      'studentId,name,email,program,year\n' +
+      `${emailStudentId},Phase3 Student,${emailStudentAddr},Computer Science,2\n` +
+      `${offlineStudentId},Offline Handout Student,,Electrical Engineering,1\n`;
+
+    // 1a. Dry-run validate
+    const valRes = await request(app)
+      .post('/api/admin/students/upload/validate')
+      .set('Authorization', `Bearer ${adminTokenA}`)
+      .attach('file', Buffer.from(csvContent, 'utf-8'), 'roster.csv');
+
+    expect(valRes.status).toBe(200);
+    expect(valRes.body.success).toBe(true);
+    expect(valRes.body.batchId).toBeDefined();
+
+    const batchId = valRes.body.batchId;
+    const validRows = valRes.body.validRowsPayload;
+
+    // 1b. Non-blocking commit
+    const commitRes = await request(app)
+      .post('/api/admin/students/upload/commit')
+      .set('Authorization', `Bearer ${adminTokenA}`)
+      .send({
+        batchId,
+        validRows,
+        bulkDeactivateAbsent: false,
+      });
+
+    expect(commitRes.status).toBe(202);
+    expect(commitRes.body.success).toBe(true);
+
+    // Poll for background batch completion
+    let batch;
+    for (let i = 0; i < 40; i++) {
+      batch = await StudentUploadBatch.findById(batchId);
+      if (batch && batch.status === 'committed') break;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+
+    expect(batch).toBeDefined();
+    expect(batch.status).toBe('committed');
+    expect(batch.createdCount).toBe(2);
+
+    // Verify row delivery results (case-insensitive matching)
+    const emailResult = batch.rowResults.find(
+      (r) => r.studentId.toLowerCase() === emailStudentId.toLowerCase()
+    );
+    expect(emailResult).toBeDefined();
+    expect(emailResult.deliveryStatus).toBe('sent');
+
+    const offlineResult = batch.rowResults.find(
+      (r) => r.studentId.toLowerCase() === offlineStudentId.toLowerCase()
+    );
+    expect(offlineResult).toBeDefined();
+    expect(offlineResult.deliveryStatus).toBe('no_contact_info');
+
+    // Verify offline credential slips collection
+    expect(batch.credentialSlips.length).toBeGreaterThanOrEqual(1);
+    const slip = batch.credentialSlips.find(
+      (s) => s.studentId.toLowerCase() === offlineStudentId.toLowerCase()
+    );
+    expect(slip).toBeDefined();
+    expect(slip.tempPassword).toBeDefined();
+    expect(slip.deliveryChannel).toBe('printed_handout');
+
+    // Extract the real random temporary password generated by production code!
+    generatedTempPassword = slip.tempPassword;
+
+    // Verify student document in DB has mustChangePasswordOnNextLogin: true
+    const studentUser = await User.findOne({
+      collegeId: collegeA._id,
+      studentId: offlineStudentId.toLowerCase(),
+    });
+
+    expect(studentUser).toBeDefined();
+    expect(studentUser.mustChangePasswordOnNextLogin).toBe(true);
+    expect(studentUser.status).toBe('invited');
+  });
+
+  test('2. Step 2: First student login on tenant subdomain with real temporary credentials', async () => {
+    expect(generatedTempPassword).toBeDefined();
+
+    const res = await request(app)
+      .post('/api/auth/login')
+      .set('Host', 'mit-tech.bookbuddy.com')
+      .send({
+        studentId: offlineStudentId,
+        password: generatedTempPassword,
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.user.mustChangePasswordOnNextLogin).toBe(true);
+    expect(res.body.accessToken).toBeDefined();
+
+    firstLoginAccessToken = res.body.accessToken;
+  });
+
+  test('3. Step 3: Forced password change via POST /api/v1/auth/change-password', async () => {
+    // Attempting with wrong current password fails
+    const badRes = await request(app)
+      .post('/api/v1/auth/change-password')
+      .set('Host', 'mit-tech.bookbuddy.com')
+      .set('Authorization', `Bearer ${firstLoginAccessToken}`)
+      .send({
+        currentPassword: 'WrongPassword123!',
+        newPassword: newPermanentPassword,
+      });
+
+    expect(badRes.status).toBe(400);
+    expect(badRes.body.message).toContain('Current password does not match');
+
+    // Successful change
+    const changeRes = await request(app)
+      .post('/api/v1/auth/change-password')
+      .set('Host', 'mit-tech.bookbuddy.com')
+      .set('Authorization', `Bearer ${firstLoginAccessToken}`)
+      .send({
+        currentPassword: generatedTempPassword,
+        newPassword: newPermanentPassword,
+      });
+
+    expect(changeRes.status).toBe(200);
+    expect(changeRes.body.success).toBe(true);
+    expect(changeRes.body.message).toContain('Password changed successfully');
+
+    // Verify DB update: status active & mustChangePasswordOnNextLogin false
+    const updatedUser = await User.findOne({
+      collegeId: collegeA._id,
+      studentId: offlineStudentId.toLowerCase(),
+    });
+    expect(updatedUser.mustChangePasswordOnNextLogin).toBe(false);
+    expect(updatedUser.status).toBe('active');
+  });
+
+  test('4. Step 4: Revocation of old temporary password and successful login with permanent password', async () => {
+    // Old temporary password must now be rejected
+    const oldLoginRes = await request(app)
+      .post('/api/auth/login')
+      .set('Host', 'mit-tech.bookbuddy.com')
+      .send({
+        studentId: offlineStudentId,
+        password: generatedTempPassword,
+      });
+
+    expect(oldLoginRes.status).toBe(401);
+    expect(oldLoginRes.body.message).toContain('Invalid credentials');
+
+    // Permanent password succeeds
+    const newLoginRes = await request(app)
+      .post('/api/auth/login')
+      .set('Host', 'mit-tech.bookbuddy.com')
+      .send({
+        studentId: offlineStudentId,
+        password: newPermanentPassword,
+      });
+
+    expect(newLoginRes.status).toBe(200);
+    expect(newLoginRes.body.success).toBe(true);
+    expect(newLoginRes.body.user.mustChangePasswordOnNextLogin).toBe(false);
+    expect(newLoginRes.body.accessToken).toBeDefined();
+
+    // Store updated token
+    firstLoginAccessToken = newLoginRes.body.accessToken;
+  });
+
+  test('5. Step 5: Tenant-scoped session verification and zero cross-tenant leakage defense', async () => {
+    // Subdomain MIT session succeeds
+    const profileRes = await request(app)
+      .get('/api/v1/auth/profile')
+      .set('Host', 'mit-tech.bookbuddy.com')
+      .set('Authorization', `Bearer ${firstLoginAccessToken}`);
+
+    expect(profileRes.status).toBe(200);
+    expect(profileRes.body.success).toBe(true);
+    expect(profileRes.body.data.studentId).toBe(offlineStudentId.toLowerCase());
+    const returnedCollegeId = profileRes.body.data.collegeId?._id || profileRes.body.data.collegeId;
+    expect(returnedCollegeId.toString()).toBe(collegeA._id.toString());
+
+    // Zero Cross-Tenant Leakage 1: Student token from College A accessing College B subdomain
+    const leakSubdomainRes = await request(app)
+      .get('/api/v1/auth/profile')
+      .set('Host', 'stanford-univ.bookbuddy.com')
+      .set('Authorization', `Bearer ${firstLoginAccessToken}`);
+
+    expect(leakSubdomainRes.status).toBe(403);
+    expect(leakSubdomainRes.body.message).toContain('Cross-tenant access violation');
+
+    // Zero Cross-Tenant Leakage 2: Student from College A trying to log in on College B subdomain
+    const crossLoginRes = await request(app)
+      .post('/api/auth/login')
+      .set('Host', 'stanford-univ.bookbuddy.com')
+      .send({
+        studentId: offlineStudentId,
+        password: newPermanentPassword,
+      });
+
+    expect(crossLoginRes.status).toBe(401);
+    expect(crossLoginRes.body.message).toContain('Invalid credentials');
+  });
+});

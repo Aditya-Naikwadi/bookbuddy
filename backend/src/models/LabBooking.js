@@ -32,17 +32,31 @@ const labBookingSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    resourceType: {
+      type: String,
+      enum: ['workstation', 'quiet_seat', 'study_pod'],
+      default: 'workstation',
+      index: true,
+    },
     status: {
       type: String,
-      enum: ['booked', 'cancelled', 'completed', 'no_show'],
+      enum: ['booked', 'soft_locked', 'cancelled', 'completed', 'no_show'],
       default: 'booked',
       index: true,
+    },
+    softLockExpiresAt: {
+      type: Date,
+      default: null,
     },
     confirmationToken: {
       type: String,
       default: null,
     },
     tokenExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    checkedInAt: {
       type: Date,
       default: null,
     },
@@ -56,6 +70,7 @@ const labBookingSchema = new mongoose.Schema(
 labBookingSchema.index({ seatId: 1, date: 1, status: 1 });
 labBookingSchema.index({ userId: 1, date: 1, status: 1 });
 labBookingSchema.index({ userId: 1, status: 1, startTime: 1, endTime: 1 });
+labBookingSchema.index({ collegeId: 1, userId: 1, status: 1, updatedAt: -1 });
 
 // Concurrency control: partial unique index so that a seat at a date/timeslot can only be booked by one patron
 labBookingSchema.index(

@@ -122,7 +122,7 @@ export const EResources = () => {
       if (role === "college-admin") navigate("/college-admin");
       else if (role === "general") navigate("/general-dashboard/e-resources");
       else if (role === "super-admin") navigate("/admin-portal");
-      else navigate("/student-dashboard/e-resources");
+      else navigate("/student/e-resources");
     } else {
       // Requirement 6: Clicking any book card redirects unauthenticated users to Login/Registration page
       navigate("/auth/login", {

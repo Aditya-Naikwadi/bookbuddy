@@ -90,7 +90,7 @@ const ReadingLists = () => {
   };
 
   const handleCopyShareLink = (listId) => {
-    const url = `${window.location.origin}/student-dashboard/reading-lists?id=${listId}`;
+    const url = `${window.location.origin}/student/reading-lists?id=${listId}`;
     navigator.clipboard.writeText(url);
     setCopiedId(listId);
     setTimeout(() => setCopiedId(null), 2500);

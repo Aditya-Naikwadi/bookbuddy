@@ -38,6 +38,11 @@ export const LoansTracker = ({ defaultTab = "loans" }) => {
 
   // Tab State
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const [prevDefaultTab, setPrevDefaultTab] = useState(defaultTab);
+  if (defaultTab !== prevDefaultTab) {
+    setPrevDefaultTab(defaultTab);
+    setActiveTab(defaultTab);
+  }
 
   // Live Region announcement
   const [liveAnnouncement, setLiveAnnouncement] = useState("");

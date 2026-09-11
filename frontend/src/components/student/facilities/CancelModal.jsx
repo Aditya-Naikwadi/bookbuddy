@@ -1,10 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ShieldAlert, X, Trash2 } from "lucide-react";
 import { Button } from "../../ui/Button";
 
 export const CancelModal = ({ booking, isPending, onConfirm, onClose }) => {
   const modalRef = useRef(null);
   const closeBtnRef = useRef(null);
+  const [renderedAt] = useState(() => Date.now());
 
   // Focus trap
   useEffect(() => {
@@ -13,30 +14,31 @@ export const CancelModal = ({ booking, isPending, onConfirm, onClose }) => {
     setTimeout(() => {
       closeBtnRef.current?.focus();
     }, 50);
+  }, [booking]);
 
+  useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
         onClose();
         return;
       }
 
-      if (e.key === "Tab") {
-        if (!modalRef.current) return;
-        const focusableElements = modalRef.current.querySelectorAll(
+      if (e.key === "Tab" && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
         );
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
 
         if (e.shiftKey) {
-          if (document.activeElement === firstElement) {
-            lastElement.focus();
+          if (document.activeElement === first) {
             e.preventDefault();
+            last?.focus();
           }
         } else {
-          if (document.activeElement === lastElement) {
-            firstElement.focus();
+          if (document.activeElement === last) {
             e.preventDefault();
+            first?.focus();
           }
         }
       }
@@ -47,6 +49,12 @@ export const CancelModal = ({ booking, isPending, onConfirm, onClose }) => {
   }, [booking, onClose]);
 
   if (!booking) return null;
+
+  const slotStartTime = booking.slotStart || booking.startTime;
+  const noticeMinutes = slotStartTime
+    ? Math.round((new Date(slotStartTime).getTime() - renderedAt) / (60 * 1000))
+    : null;
+  const isFreeCancellation = noticeMinutes === null || noticeMinutes >= 60;
 
   return (
     <div
@@ -77,15 +85,37 @@ export const CancelModal = ({ booking, isPending, onConfirm, onClose }) => {
           id="cancel-booking-title"
           className="text-lg font-serif font-black text-slate-900"
         >
-          Cancel Workstation Booking?
+          Cancel Reservation?
         </h3>
         <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-          Are you sure you want to cancel your reservation for workstation{" "}
+          Are you sure you want to cancel your reservation for{" "}
           <strong className="text-slate-800">
-            {booking.seatId?.seatNumber || "PC"}
+            {booking.seatId?.seatNumber ||
+              booking.resourceLabel ||
+              "Facility Slot"}
           </strong>
-          ? This slot will immediately return to the available booking pool.
+          ? This slot will immediately return to the bookable pool or be offered
+          to the waitlist.
         </p>
+
+        {/* Cancellation Notice & Quota Impact Banner (§10.5) */}
+        {isFreeCancellation ? (
+          <div className="mt-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-start gap-2">
+            <span className="text-emerald-600 font-bold shrink-0">✓</span>
+            <p className="leading-normal">
+              <strong>Free cancellation (≥ 1h notice):</strong> Your weekly
+              quota minutes will be 100% refunded.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-3 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2">
+            <span className="text-amber-600 font-bold shrink-0">⚠</span>
+            <p className="leading-normal">
+              <strong>Late cancellation (&lt; 1h notice):</strong> Per fairness
+              policy, the slot duration remains deducted from your weekly cap.
+            </p>
+          </div>
+        )}
 
         <div className="flex gap-3 mt-6">
           <Button

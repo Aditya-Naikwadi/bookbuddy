@@ -77,9 +77,40 @@ export const getLabSeats = async () => {
   return data;
 };
 
+export const createLabSeat = async (payload) => {
+  const { data } = await apiClient.post(
+    "/dashboards/college-admin/lab-seats",
+    payload,
+  );
+  return data;
+};
+
+export const bulkCreateLabSeats = async (payload) => {
+  const { data } = await apiClient.post(
+    "/dashboards/college-admin/lab-seats/bulk",
+    payload,
+  );
+  return data;
+};
+
+export const updateLabSeat = async (id, payload) => {
+  const { data } = await apiClient.put(
+    `/dashboards/college-admin/lab-seats/${id}`,
+    payload,
+  );
+  return data;
+};
+
 export const getLabBookings = async () => {
   const { data } = await apiClient.get(
     "/dashboards/college-admin/lab-bookings",
+  );
+  return data;
+};
+
+export const cancelLabBooking = async (id) => {
+  const { data } = await apiClient.delete(
+    `/dashboards/college-admin/lab-bookings/${id}`,
   );
   return data;
 };
@@ -131,7 +162,11 @@ const collegeAdminApi = {
   getPendingEResources,
   moderateEResource,
   getLabSeats,
+  createLabSeat,
+  bulkCreateLabSeats,
+  updateLabSeat,
   getLabBookings,
+  cancelLabBooking,
   getHelpdeskTickets,
   resolveHelpdeskTicket,
   getAnalyticsSummary,

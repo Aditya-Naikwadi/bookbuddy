@@ -91,7 +91,7 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
     expect(res.body.user.refreshTokenHash).toBeUndefined();
   });
 
-  it('1b. should register a public user without explicit collegeId and assign default active college', async () => {
+  it('1b. should reject public registration without explicit collegeId (requiring tenant selection)', async () => {
     const res = await request(app).post('/api/v1/auth/register').send({
       studentId: 'STU_NO_COLLEGE',
       name: 'Public Signup User',
@@ -100,9 +100,9 @@ describe('Auth & Multi-Tenancy Backbone API Integration Tests', () => {
       role: 'general',
     });
 
-    expect(res.status).toBe(201);
-    expect(res.body.success).toBe(true);
-    expect(res.body.user.collegeId).toBeDefined();
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/College selection is required/i);
   });
 
   // Assertion 2: Login with correct credentials returns tokens

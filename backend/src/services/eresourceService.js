@@ -3,7 +3,7 @@
 const getApprovedResourcesFilter = (tenantFilter) => {
   return {
     ...tenantFilter,
-    moderationStatus: 'approved',
+    moderationStatus: { $in: ['approved', 'published'] },
   };
 };
 

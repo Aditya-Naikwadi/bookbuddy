@@ -14,6 +14,8 @@ const loanService = require('../../services/loanService');
 const notificationService = require('../../services/notificationService');
 const AppError = require('../../utils/AppError');
 
+const { runInTransaction } = require('../../utils/transactionHelper');
+
 // @desc    Create new student
 // @route   POST /api/dashboards/college-admin/patrons
 // @access  Private/CollegeAdmin
@@ -49,13 +51,55 @@ const getAllPatrons = async (req, res, next) => {
     const limit = parseInt(req.query.limit, 10) || 100;
     const skip = (page - 1) * limit;
 
-    const patrons = await User.find({ role: 'student', ...req.tenantFilter })
+    const filter = { role: 'student', ...req.tenantFilter };
+
+    const search = req.query.search ? String(req.query.search).trim() : '';
+    if (search) {
+      const escaped = search.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      filter.$or = [
+        { name: { $regex: escaped, $options: 'i' } },
+        { studentId: { $regex: escaped, $options: 'i' } },
+        { email: { $regex: escaped, $options: 'i' } },
+      ];
+    }
+
+    if (req.query.studentId) {
+      const sId = String(req.query.studentId).trim();
+      filter.studentId = sId.toLowerCase();
+    }
+
+    if (req.query.department) {
+      const dept = String(req.query.department).trim();
+      filter.$and = filter.$and || [];
+      filter.$and.push({
+        $or: [
+          { department: dept },
+          { major: dept },
+          { department: { $regex: `^${dept}$`, $options: 'i' } },
+          { major: { $regex: `^${dept}$`, $options: 'i' } },
+        ],
+      });
+    }
+
+    const total = await User.countDocuments(filter);
+
+    const patrons = await User.find(filter)
       .select('-password')
       .sort('-createdAt')
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
-    res.json({ success: true, data: patrons });
+    res.json({
+      success: true,
+      data: patrons,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -451,19 +495,29 @@ const getCirculationQueue = async (req, res, next) => {
     const limit = parseInt(req.query.limit, 10) || 100;
     const skip = (page - 1) * limit;
 
-    const queue = await Reservation.find({
+    const filter = {
       ...req.tenantFilter,
       status: { $in: ['queued', 'ready_for_pickup'] },
-    })
-      .populate('bookId', 'title author isbn')
+    };
+    const total = await Reservation.countDocuments(filter);
+
+    const queue = await Reservation.find(filter)
+      .populate('bookId', 'title author isbn copiesAvailable')
       .populate('userId', 'name email studentId')
       .sort('queuePosition')
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     res.json({
       success: true,
       data: queue,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     next(error);
@@ -485,6 +539,8 @@ const getCollegeFines = async (req, res, next) => {
       filter.status = status;
     }
 
+    const total = await Fine.countDocuments(filter);
+
     const fines = await Fine.find(filter)
       .populate('userId', 'name email studentId')
       .populate({
@@ -493,11 +549,18 @@ const getCollegeFines = async (req, res, next) => {
       })
       .sort('-createdAt')
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     res.json({
       success: true,
       data: fines,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     next(error);
@@ -509,18 +572,23 @@ const getCollegeFines = async (req, res, next) => {
 // @access  Private/CollegeAdmin
 const payCollegeFine = async (req, res, next) => {
   try {
-    const fine = await Fine.findOne({ _id: req.params.id, ...req.tenantFilter });
-    if (!fine) {
-      return next(new AppError('Fine not found or unauthorized access.', 404));
-    }
+    const fine = await runInTransaction(async (session) => {
+      const targetFine = await Fine.findOne({ _id: req.params.id, ...req.tenantFilter }).session(
+        session
+      );
+      if (!targetFine) {
+        throw new AppError('Fine not found or unauthorized access.', 404);
+      }
 
-    if (fine.status === 'paid') {
-      return next(new AppError('This fine has already been paid.', 400));
-    }
+      if (targetFine.status === 'paid') {
+        throw new AppError('This fine has already been paid.', 400);
+      }
 
-    fine.status = 'paid';
-    fine.paidAt = new Date();
-    await fine.save();
+      targetFine.status = 'paid';
+      targetFine.paidAt = new Date();
+      await targetFine.save({ session });
+      return targetFine;
+    });
 
     res.locals.auditMeta = {
       targetType: 'Fine',
@@ -629,7 +697,7 @@ const createLabSeat = async (req, res, next) => {
   }
 };
 
-// @desc    Update lab seat (specs/maintenance status)
+// @desc    Update lab seat (specs/maintenance status/blackout hours)
 // @route   PUT /api/dashboards/college-admin/lab-seats/:id
 // @access  Private/CollegeAdmin
 const updateLabSeat = async (req, res, next) => {
@@ -641,6 +709,11 @@ const updateLabSeat = async (req, res, next) => {
     );
     if (!seat) {
       return next(new AppError('Lab seat not found or unauthorized access.', 404));
+    }
+
+    if (req.body.maintenanceStatus) {
+      const { handleSeatMaintenanceChange } = require('../../services/labBookingService');
+      await handleSeatMaintenanceChange(seat._id, req.body.maintenanceStatus, req.user.collegeId);
     }
 
     res.locals.auditMeta = {
@@ -656,17 +729,66 @@ const updateLabSeat = async (req, res, next) => {
   }
 };
 
+// @desc    Bulk create lab seats / workstations
+// @route   POST /api/dashboards/college-admin/lab-seats/bulk
+// @access  Private/CollegeAdmin
+const bulkCreateLabSeats = async (req, res, next) => {
+  try {
+    const {
+      labName,
+      prefix = 'SEAT-',
+      startNum = 1,
+      count = 10,
+      resourceType = 'workstation',
+      zoneName = 'Main Hall',
+      specs,
+    } = req.body;
+
+    if (!labName || count < 1 || count > 100) {
+      return next(new AppError('Valid labName and count (1-100) required.', 400));
+    }
+
+    const seatsToCreate = [];
+    for (let i = 0; i < count; i++) {
+      const numStr = String(startNum + i).padStart(2, '0');
+      seatsToCreate.push({
+        collegeId: req.user.collegeId,
+        labName,
+        seatNumber: `${prefix}${numStr}`,
+        resourceType,
+        zoneName,
+        specs: specs || `${resourceType.toUpperCase()} Station ${numStr}`,
+        maintenanceStatus: 'operational',
+      });
+    }
+
+    const createdSeats = await LabSeat.insertMany(seatsToCreate, { ordered: false });
+
+    res.status(201).json({
+      success: true,
+      count: createdSeats.length,
+      data: createdSeats,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get all lab bookings for college
 // @route   GET /api/dashboards/college-admin/lab-bookings
 // @access  Private/CollegeAdmin
 const getLabBookings = async (req, res, next) => {
   try {
-    const { date, labName } = req.query;
+    const { date, labName, resourceType } = req.query;
     const filter = { ...req.tenantFilter };
 
     if (date) {
       const d = new Date(date);
       filter.date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    }
+
+    if (resourceType && resourceType !== 'all') {
+      filter.resourceType = resourceType;
     }
 
     if (labName) {
@@ -677,9 +799,23 @@ const getLabBookings = async (req, res, next) => {
     const bookings = await LabBooking.find(filter)
       .populate('seatId')
       .populate('userId', 'name studentId email')
-      .sort({ startTime: -1 });
+      .sort({ startTime: -1 })
+      .lean();
 
     res.json({ success: true, data: bookings });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Admin cancel lab booking
+// @route   DELETE /api/dashboards/college-admin/lab-bookings/:id
+// @access  Private/CollegeAdmin
+const cancelLabBookingByAdmin = async (req, res, next) => {
+  try {
+    const { cancelBooking } = require('../../services/labBookingService');
+    const cancelled = await cancelBooking(req.params.id, req.user.id, req.user.role);
+    res.json({ success: true, data: cancelled });
   } catch (error) {
     next(error);
   }
@@ -1053,8 +1189,10 @@ module.exports = {
   moderateEResource,
   getLabSeats,
   createLabSeat,
+  bulkCreateLabSeats,
   updateLabSeat,
   getLabBookings,
+  cancelLabBookingByAdmin,
   getBookSuggestions,
   updateBookSuggestion,
   getFeedback,

@@ -25,6 +25,14 @@ const uploadJobSchema = new mongoose.Schema(
       default: 'queued',
       index: true,
     },
+    fileName: {
+      type: String,
+      default: 'students.csv',
+    },
+    fileSizeBytes: {
+      type: Number,
+      default: 0,
+    },
     totalRows: {
       type: Number,
       default: 0,
@@ -34,6 +42,14 @@ const uploadJobSchema = new mongoose.Schema(
       default: 0,
     },
     succeededRows: {
+      type: Number,
+      default: 0,
+    },
+    insertedRows: {
+      type: Number,
+      default: 0,
+    },
+    updatedRows: {
       type: Number,
       default: 0,
     },
@@ -47,6 +63,25 @@ const uploadJobSchema = new mongoose.Schema(
     },
     errorReportUrl: {
       type: String,
+      default: null,
+    },
+    deliverySummary: {
+      emailed: { type: Number, default: 0 },
+      sms: { type: Number, default: 0 },
+      handout: { type: Number, default: 0 },
+    },
+    credentialSlips: [
+      {
+        studentId: String,
+        name: String,
+        department: String,
+        phone: String,
+        tempPassword: String,
+        deliveryChannel: String,
+      },
+    ],
+    auditLogVersion: {
+      type: Number,
       default: null,
     },
     errorDetails: [

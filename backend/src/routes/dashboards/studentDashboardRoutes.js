@@ -32,6 +32,7 @@ const {
   toggleSavedSearchAlerts,
   getLabsAvailability,
   createLabBooking,
+  checkInLabBooking,
   cancelLabBooking,
   getStudentLabBookings,
   createBookSuggestion,
@@ -169,6 +170,7 @@ router.patch(
 // Labs & Bookings
 router.get('/labs/availability', validate(getAvailabilitySchema), getLabsAvailability);
 router.post('/lab-bookings', validate(createBookingSchema), createLabBooking);
+router.post('/lab-bookings/:id/check-in', validate(paramIdSchema), checkInLabBooking);
 router.delete('/lab-bookings/:id', validate(paramIdSchema), cancelLabBooking);
 router.get('/lab-bookings', getStudentLabBookings);
 

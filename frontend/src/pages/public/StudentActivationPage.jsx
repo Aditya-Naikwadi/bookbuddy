@@ -98,7 +98,7 @@ export default function StudentActivationPage() {
 
       setActivationSuccess(true);
       setTimeout(() => {
-        navigate("/student-dashboard");
+        navigate("/student");
       }, 2500);
     } catch (err) {
       setError(err.message || "Failed to activate account.");

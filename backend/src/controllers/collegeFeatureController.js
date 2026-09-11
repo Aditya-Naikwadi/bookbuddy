@@ -3,6 +3,7 @@ const CollegeFeatureConfig = require('../models/CollegeFeatureConfig');
 const FeatureCatalog = require('../models/FeatureCatalog');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
+const { validateSlugFormat, isSlugReserved } = require('../constants/reservedSlugs');
 
 // Default full list of features if configuration is absent
 const DEFAULT_STUDENT_FEATURES = [
@@ -224,14 +225,41 @@ const checkSlugAvailability = asyncHandler(async (req, res, next) => {
   }
 
   const normalizedSlug = slug.toLowerCase().trim();
+
+  // Validate format and length constraints
+  const formatCheck = validateSlugFormat(normalizedSlug);
+  if (!formatCheck.valid) {
+    const isReserved = isSlugReserved(normalizedSlug);
+    return res.json({
+      available: false,
+      reason: isReserved ? 'reserved' : 'invalid_format',
+      message: formatCheck.reason,
+    });
+  }
+
   const existing = await College.findOne({
     $or: [{ slug: normalizedSlug }, { formerSlugs: normalizedSlug }],
   }).lean();
 
   if (existing) {
-    const suggestedSlug = `${normalizedSlug}-${Math.floor(100 + Math.random() * 900)}`;
+    let suggestedSlug;
+    let counter = 1;
+    while (!suggestedSlug) {
+      const candidate = `${normalizedSlug}-${counter}`;
+      if (
+        !isSlugReserved(candidate) &&
+        !(await College.exists({
+          $or: [{ slug: candidate }, { formerSlugs: candidate }],
+        }))
+      ) {
+        suggestedSlug = candidate;
+      }
+      counter++;
+    }
+
     return res.json({
       available: false,
+      reason: 'taken',
       suggestedSlug,
       message: 'Slug is already taken.',
     });

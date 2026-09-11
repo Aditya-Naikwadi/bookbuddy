@@ -107,7 +107,7 @@ const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
 };
 
 const returnBook = async (loanId, collegeId) => {
-  return await runInTransaction(async (session) => {
+  const txResult = await runInTransaction(async (session) => {
     // 1. Find active loan within session
     const loan = await Loan.findOne({
       _id: loanId,
@@ -145,15 +145,22 @@ const returnBook = async (loanId, collegeId) => {
     // 4. Promote next hold reservation in queue (reusable service call)
     await reservationService.promoteNextHold(loan.bookId, collegeId);
 
-    await streakService.recordQualifyingAction(loan.userId, collegeId, 'return');
-    evaluateBadges(loan.userId, 'book_returned', { loanId: loan._id, bookId: loan.bookId }).catch(
-      (err) => logger.error(`Error evaluating badges after book return: ${err.message}`)
-    );
+    return { loan, book };
+  });
 
-    // 5. Send notification with Nodemailer email fallback if target user is offline (no active socket)
+  const { loan, book } = txResult;
+
+  // Asynchronously dispatch notifications and badges outside the database transaction
+  setImmediate(async () => {
     try {
+      evaluateBadges(loan.userId, 'book_returned', { loanId: loan._id, bookId: loan.bookId }).catch(
+        (err) => logger.error(`Error evaluating badges after book return: ${err.message}`)
+      );
+
       const { sendNotificationWithEmailFallback } = require('./emailService');
       const bookTitle = book ? book.title : 'Catalog Item';
+
+      // 1. Borrower confirmation
       await sendNotificationWithEmailFallback(
         loan.userId,
         'book_returned',
@@ -163,31 +170,26 @@ const returnBook = async (loanId, collegeId) => {
           relatedType: 'Book',
           subject: `📚 Book Return Confirmation: "${bookTitle}"`,
         }
-      );
-    } catch (_err) {
-      // Email fallback is non-blocking
-    }
+      ).catch(() => {});
 
-    try {
-      const socketModule = require('../sockets');
-      const io =
-        socketModule && typeof socketModule.getIo === 'function' ? socketModule.getIo() : null;
-      if (io && collegeId) {
-        io.to(`college:${collegeId}`).emit('book:availability_updated', {
-          bookId: loan.bookId,
-          availableCopies: book ? book.copiesAvailable : undefined,
-        });
+      // 2. Realtime socket event
+      try {
+        const socketModule = require('../sockets');
+        const io =
+          socketModule && typeof socketModule.getIo === 'function' ? socketModule.getIo() : null;
+        if (io && collegeId) {
+          io.to(`college:${collegeId}`).emit('book:availability_updated', {
+            bookId: loan.bookId,
+            availableCopies: book ? book.copiesAvailable : undefined,
+          });
+        }
+      } catch {
+        // Non-blocking socket emit
       }
-    } catch (_err) {
-      // Non-blocking socket emit
-    }
 
-    try {
-      // Also notify any watchers
+      // 3. Watchers notification
       const WatchRequest = require('../models/WatchRequest');
       const watchers = await WatchRequest.find({ bookId: loan.bookId });
-      const bookTitle = book ? book.title : 'Catalog Item';
-      const { sendNotificationWithEmailFallback } = require('./emailService');
       for (const watcher of watchers) {
         await sendNotificationWithEmailFallback(
           watcher.userId,
@@ -198,14 +200,14 @@ const returnBook = async (loanId, collegeId) => {
             relatedType: 'Book',
             subject: `🔔 Book Available: "${bookTitle}"`,
           }
-        );
+        ).catch(() => {});
       }
-    } catch (_err) {
-      // Non-blocking notification dispatch
+    } catch (notifyErr) {
+      logger.error(`Error dispatching post-return notifications: ${notifyErr.message}`);
     }
-
-    return loan;
   });
+
+  return loan;
 };
 
 const renewLoan = async (loanId, userId, collegeId) => {

@@ -69,7 +69,7 @@ export const PatronCardSection = () => {
                 if (role === "college-admin") navigate("/college-admin");
                 else if (role === "general") navigate("/general-dashboard");
                 else if (role === "super-admin") navigate("/admin-portal");
-                else navigate("/student-dashboard");
+                else navigate("/student");
               } else {
                 navigate("/auth/register");
               }

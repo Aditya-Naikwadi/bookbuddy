@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useStreakData } from "../../../hooks/useStreakData";
 import { useCheckIn } from "../../../hooks/useCheckIn";
 import { CheckInButton } from "../../../components/student/achievements/CheckInButton";
@@ -5,9 +6,11 @@ import { StreakSummary } from "../../../components/student/achievements/StreakSu
 import { StreakCalendar } from "../../../components/student/achievements/StreakCalendar";
 import { BadgeGrid } from "../../../components/student/achievements/BadgeGrid";
 import { MilestoneCelebrationModal } from "../../../features/streak/MilestoneCelebrationModal";
-import { Loader2, AlertCircle } from "lucide-react";
+import Leaderboard from "../../Leaderboard";
+import { Loader2, AlertCircle, Flame, Trophy } from "lucide-react";
 
 const Achievements = () => {
+  const [activeTab, setActiveTab] = useState("streaks"); // "streaks" | "leaderboard"
   const { streak, rewards, catalog, earned, isLoading, isError } =
     useStreakData();
   const {
@@ -64,101 +67,135 @@ const Achievements = () => {
     : 100;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 px-4 py-6 text-slate-900 dark:text-ink font-sans">
+    <div className="max-w-5xl mx-auto space-y-8 px-4 py-6 text-slate-900 dark:text-ink font-sans">
       {/* Page Header */}
-      <div className="border-b border-slate-200 dark:border-edge pb-4 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="border-b border-slate-200 dark:border-edge pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-serif font-bold text-slate-900 dark:text-ink">
-            Reading Streaks & Achievements
+            Engagement & Milestones
           </h1>
           <p className="text-xs text-slate-500 dark:text-muted mt-1">
-            Check in once a day, build reading milestones, and unlock customized
-            sticker awards.
+            Build reading streaks, earn collectible badges, and rank on your
+            campus leaderboard.
           </p>
         </div>
+
+        {/* Tab Switcher */}
+        <div className="inline-flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-edge">
+          <button
+            onClick={() => setActiveTab("streaks")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === "streaks"
+                ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            <Flame className="w-4 h-4 text-orange-500" />
+            Streaks & Badges
+          </button>
+          <button
+            onClick={() => setActiveTab("leaderboard")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === "leaderboard"
+                ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            <Trophy className="w-4 h-4 text-amber-500" />
+            Campus Leaderboard
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Main Check-In Controls */}
-        <div className="md:col-span-2 space-y-6">
-          {/* Daily Check-In widget card */}
-          <div className="bg-white dark:bg-surface border border-slate-200 dark:border-edge rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center text-center space-y-4">
-            <h2 className="font-serif font-black text-xl text-slate-900 dark:text-ink">
-              Extend Your Reading Pass
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-muted max-w-sm">
-              Keep check-in streaks active by logging in once per calendar day.
-            </p>
-            <CheckInButton
-              todayComplete={todayComplete}
-              onCheckIn={checkIn}
-              isPending={isCheckInPending}
-              announcement={announcement}
-            />
+      {activeTab === "leaderboard" ? (
+        <Leaderboard />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Main Check-In Controls */}
+            <div className="md:col-span-2 space-y-6">
+              {/* Daily Check-In widget card */}
+              <div className="bg-white dark:bg-surface border border-slate-200 dark:border-edge rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center text-center space-y-4">
+                <h2 className="font-serif font-black text-xl text-slate-900 dark:text-ink">
+                  Extend Your Reading Pass
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-muted max-w-sm">
+                  Keep check-in streaks active by logging in once per calendar
+                  day.
+                </p>
+                <CheckInButton
+                  todayComplete={todayComplete}
+                  onCheckIn={checkIn}
+                  isPending={isCheckInPending}
+                  announcement={announcement}
+                />
+              </div>
+
+              {/* Streak summary and calendar */}
+              <StreakSummary
+                currentStreak={currentStreak}
+                longestStreak={longestStreak}
+                freezesAvailable={freezesAvailable}
+                todayComplete={todayComplete}
+                onRepairStreak={repairStreak}
+                isRepairPending={isRepairPending}
+              />
+            </div>
+
+            {/* Milestone status and calendar activity log */}
+            <div className="space-y-6">
+              {/* Milestone progress card */}
+              {nextMilestone && (
+                <div className="bg-white dark:bg-surface rounded-3xl border border-slate-200 dark:border-edge p-6 shadow-sm space-y-4">
+                  <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                    Next Milestone Progress
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs font-bold text-slate-900 dark:text-ink">
+                      <span>
+                        {nextMilestone.milestoneThreshold} Day Streak Badge
+                      </span>
+                      <span className="text-indigo-600 dark:text-indigo-400">
+                        {nextMilestone.milestoneThreshold - currentStreak} days
+                        left
+                      </span>
+                    </div>
+                    {/* Custom Progress Bar */}
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                      <div
+                        className="bg-orange-500 h-full transition-all duration-500 rounded-full"
+                        style={{ width: `${progressPercent}%` }}
+                        role="progressbar"
+                        aria-valuenow={currentStreak}
+                        aria-valuemin="0"
+                        aria-valuemax={nextMilestone.milestoneThreshold}
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-500 dark:text-muted leading-normal pt-1">
+                      Cross this milestone to earn a {nextMilestone.rewardType}{" "}
+                      unlock!
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Calendar weekly check-in row */}
+              <StreakCalendar
+                currentStreak={currentStreak}
+                lastQualifyingDate={lastQualifyingDate}
+                todayComplete={todayComplete}
+                timezone={streak?.timezone || "Asia/Kolkata"}
+              />
+            </div>
           </div>
 
-          {/* Streak summary and calendar */}
-          <StreakSummary
-            currentStreak={currentStreak}
-            longestStreak={longestStreak}
-            freezesAvailable={freezesAvailable}
-            todayComplete={todayComplete}
-            onRepairStreak={repairStreak}
-            isRepairPending={isRepairPending}
-          />
-        </div>
+          {/* Grid containing achieved/locked sticker badges */}
+          <BadgeGrid catalog={catalog} earned={earned} />
 
-        {/* Milestone status and calendar activity log */}
-        <div className="space-y-6">
-          {/* Milestone progress card */}
-          {nextMilestone && (
-            <div className="bg-white dark:bg-surface rounded-3xl border border-slate-200 dark:border-edge p-6 shadow-sm space-y-4">
-              <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                Next Milestone Progress
-              </h3>
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-bold text-slate-900 dark:text-ink">
-                  <span>
-                    {nextMilestone.milestoneThreshold} Day Streak Badge
-                  </span>
-                  <span className="text-indigo-600 dark:text-indigo-400">
-                    {nextMilestone.milestoneThreshold - currentStreak} days left
-                  </span>
-                </div>
-                {/* Custom Progress Bar */}
-                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="bg-orange-500 h-full transition-all duration-500 rounded-full"
-                    style={{ width: `${progressPercent}%` }}
-                    role="progressbar"
-                    aria-valuenow={currentStreak}
-                    aria-valuemin="0"
-                    aria-valuemax={nextMilestone.milestoneThreshold}
-                  />
-                </div>
-                <p className="text-[10px] text-slate-500 dark:text-muted leading-normal pt-1">
-                  Cross this milestone to earn a {nextMilestone.rewardType}{" "}
-                  unlock!
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Calendar weekly check-in row */}
-          <StreakCalendar
-            currentStreak={currentStreak}
-            lastQualifyingDate={lastQualifyingDate}
-            todayComplete={todayComplete}
-            timezone={streak?.timezone || "Asia/Kolkata"}
-          />
-        </div>
-      </div>
-
-      {/* Grid containing achieved/locked sticker badges */}
-      <BadgeGrid catalog={catalog} earned={earned} />
-
-      {/* Confetti celebration modal overlay */}
-      <MilestoneCelebrationModal />
+          {/* Confetti celebration modal overlay */}
+          <MilestoneCelebrationModal />
+        </>
+      )}
     </div>
   );
 };

@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useParams,
 } from "react-router-dom";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import useAuthStore from "./store/authStore";
@@ -131,6 +132,9 @@ const Catalog = lazy(() => import("./pages/dashboards/student/Catalog"));
 const MyLoans = lazy(() => import("./pages/dashboards/student/MyLoans"));
 const Fines = lazy(() => import("./pages/dashboards/student/Fines"));
 const PatronCard = lazy(() => import("./pages/dashboards/student/PatronCard"));
+const StudentProfileSettings = lazy(
+  () => import("./pages/dashboards/student/StudentProfileSettings"),
+);
 const EResources = lazy(() => import("./pages/dashboards/student/EResources"));
 const ReadingLists = lazy(
   () => import("./pages/dashboards/student/ReadingLists"),
@@ -176,7 +180,7 @@ const AuthRedirect = ({ children }) => {
       return <Navigate to="/general-dashboard" replace />;
     if (user.role === "super-admin" || user.role === "super_admin")
       return <Navigate to="/admin-portal" replace />;
-    return <Navigate to="/student-dashboard" replace />;
+    return <Navigate to="/student" replace />;
   }
   return children;
 };
@@ -185,6 +189,12 @@ import DashboardPageSkeleton from "./components/common/DashboardSkeleton";
 
 // Simple fallback loader for suspense with instant skeleton feedback
 const PageLoader = () => <DashboardPageSkeleton />;
+
+// Backward compatibility redirect for reading route
+const ReaderRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/student/reader/${id}`} replace />;
+};
 
 import { QueryProvider } from "./providers/QueryProvider";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -427,16 +437,16 @@ function App() {
                       />
                     </Route>
 
-                    {/* Student Specific Routes */}
+                    {/* Canonical Tenant-Scoped Student Dashboard Module */}
                     <Route
                       element={<ProtectedRoute allowedRoles={["student"]} />}
                     >
                       <Route
-                        path="student-dashboard"
+                        path="student"
                         element={<StudentDashboardHome />}
                       />
                       <Route
-                        path="catalog"
+                        path="student/catalog"
                         element={
                           <FeatureGate feature="catalog" isPageGate>
                             <Catalog />
@@ -444,7 +454,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="loans"
+                        path="student/loans"
                         element={
                           <FeatureGate feature="loans" isPageGate>
                             <MyLoans />
@@ -452,7 +462,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="fines"
+                        path="student/fines"
                         element={
                           <FeatureGate feature="fines" isPageGate>
                             <Fines />
@@ -460,7 +470,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="patron-card"
+                        path="student/card"
                         element={
                           <FeatureGate feature="patron-card" isPageGate>
                             <PatronCard />
@@ -468,7 +478,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="e-resources"
+                        path="student/e-resources"
                         element={
                           <FeatureGate feature="e-resources" isPageGate>
                             <EResources />
@@ -476,17 +486,31 @@ function App() {
                         }
                       />
                       <Route
-                        path="reading-lists"
+                        path="student/reader/:id"
+                        element={
+                          <FeatureGate feature="e-resources" isPageGate>
+                            <EbookReader />
+                          </FeatureGate>
+                        }
+                      />
+                      <Route
+                        path="student/reading-lists"
                         element={
                           <FeatureGate feature="reading-lists" isPageGate>
                             <ReadingLists />
                           </FeatureGate>
                         }
                       />
-                      <Route path="shelves" element={<MyShelves />} />
-                      <Route path="my-shelves" element={<MyShelves />} />
                       <Route
-                        path="recommendations"
+                        path="student/shelves"
+                        element={
+                          <FeatureGate feature="reading-lists" isPageGate>
+                            <MyShelves />
+                          </FeatureGate>
+                        }
+                      />
+                      <Route
+                        path="student/recommendations"
                         element={
                           <FeatureGate feature="recommendations" isPageGate>
                             <Recommendations />
@@ -494,7 +518,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="saved"
+                        path="student/saved"
                         element={
                           <FeatureGate feature="saved" isPageGate>
                             <SavedBookmarks />
@@ -502,7 +526,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="lab-booking"
+                        path="student/facilities"
                         element={
                           <FeatureGate feature="facilities" isPageGate>
                             <LabBooking />
@@ -510,7 +534,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="support"
+                        path="student/support"
                         element={
                           <FeatureGate feature="support" isPageGate>
                             <Support />
@@ -518,23 +542,137 @@ function App() {
                         }
                       />
                       <Route
-                        path="achievements"
+                        path="student/engagement"
                         element={
                           <FeatureGate feature="gamification" isPageGate>
                             <Achievements />
                           </FeatureGate>
                         }
                       />
-                      <Route path="feed" element={<Feed />} />
-                      <Route path="campus-feed" element={<Feed />} />
+                      <Route
+                        path="student/feed"
+                        element={
+                          <FeatureGate feature="bulletinBoard" isPageGate>
+                            <Feed />
+                          </FeatureGate>
+                        }
+                      />
+                      <Route
+                        path="student/cross-college"
+                        element={
+                          <FeatureGate feature="crossCollegeILL" isPageGate>
+                            <CrossCollegeCatalog />
+                          </FeatureGate>
+                        }
+                      />
+                      <Route
+                        path="student/downloads"
+                        element={
+                          <FeatureGate feature="offlineDownload" isPageGate>
+                            <Downloads />
+                          </FeatureGate>
+                        }
+                      />
+                      <Route
+                        path="student/profile"
+                        element={<StudentProfileSettings />}
+                      />
+                      <Route
+                        path="student/settings"
+                        element={<StudentProfileSettings />}
+                      />
+
+                      {/* Legacy Route Redirects (Preserving backward compatibility) */}
+                      <Route
+                        path="student-dashboard"
+                        element={<Navigate to="/student" replace />}
+                      />
+                      <Route
+                        path="catalog"
+                        element={<Navigate to="/student/catalog" replace />}
+                      />
+                      <Route
+                        path="loans"
+                        element={<Navigate to="/student/loans" replace />}
+                      />
+                      <Route
+                        path="fines"
+                        element={<Navigate to="/student/fines" replace />}
+                      />
+                      <Route
+                        path="patron-card"
+                        element={<Navigate to="/student/card" replace />}
+                      />
+                      <Route
+                        path="e-resources"
+                        element={<Navigate to="/student/e-resources" replace />}
+                      />
+                      <Route
+                        path="eresources/read/:id"
+                        element={<ReaderRedirect />}
+                      />
+                      <Route
+                        path="reading-lists"
+                        element={
+                          <Navigate to="/student/reading-lists" replace />
+                        }
+                      />
+                      <Route
+                        path="shelves"
+                        element={<Navigate to="/student/shelves" replace />}
+                      />
+                      <Route
+                        path="my-shelves"
+                        element={<Navigate to="/student/shelves" replace />}
+                      />
+                      <Route
+                        path="recommendations"
+                        element={
+                          <Navigate to="/student/recommendations" replace />
+                        }
+                      />
+                      <Route
+                        path="saved"
+                        element={<Navigate to="/student/saved" replace />}
+                      />
+                      <Route
+                        path="lab-booking"
+                        element={<Navigate to="/student/facilities" replace />}
+                      />
+                      <Route
+                        path="support"
+                        element={<Navigate to="/student/support" replace />}
+                      />
+                      <Route
+                        path="achievements"
+                        element={<Navigate to="/student/engagement" replace />}
+                      />
+                      <Route
+                        path="feed"
+                        element={<Navigate to="/student/feed" replace />}
+                      />
+                      <Route
+                        path="campus-feed"
+                        element={<Navigate to="/student/feed" replace />}
+                      />
                       <Route
                         path="cross-college"
-                        element={<CrossCollegeCatalog />}
+                        element={
+                          <Navigate to="/student/cross-college" replace />
+                        }
                       />
-                      <Route path="fines" element={<Fines />} />
-                      <Route path="checkout" element={<Fines />} />
-                      <Route path="downloads" element={<Downloads />} />
-                      <Route path="offline-downloads" element={<Downloads />} />
+                      <Route
+                        path="checkout"
+                        element={<Navigate to="/student/fines" replace />}
+                      />
+                      <Route
+                        path="downloads"
+                        element={<Navigate to="/student/downloads" replace />}
+                      />
+                      <Route
+                        path="offline-downloads"
+                        element={<Navigate to="/student/downloads" replace />}
+                      />
                     </Route>
                   </Route>
 

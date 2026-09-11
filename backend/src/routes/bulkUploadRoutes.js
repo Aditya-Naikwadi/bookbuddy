@@ -5,28 +5,53 @@ const {
   submitBulkUpload,
   getBulkUploadStatus,
   downloadUploadErrorReport,
+  downloadPrintedHandouts,
+  getUploadAuditLogs,
+  getUploadAuditLogByVersion,
+  downloadAuditLogHandouts,
 } = require('../controllers/bulkUploadController');
 
-// Bulk upload endpoints
-router.post(
-  '/students/bulk-upload',
-  protect,
-  requireRole('college-admin', 'super-admin', 'super_admin'),
-  submitBulkUpload
-);
+const allowedRoles = ['college-admin', 'super-admin', 'super_admin'];
 
-router.get(
-  '/students/upload/:jobId',
-  protect,
-  requireRole('college-admin', 'super-admin', 'super_admin'),
-  getBulkUploadStatus
-);
+// Bulk upload endpoints
+router.post('/students/bulk-upload', protect, requireRole(...allowedRoles), submitBulkUpload);
+
+router.get('/students/upload/:jobId', protect, requireRole(...allowedRoles), getBulkUploadStatus);
 
 router.get(
   '/students/upload/:jobId/errors',
   protect,
-  requireRole('college-admin', 'super-admin', 'super_admin'),
+  requireRole(...allowedRoles),
   downloadUploadErrorReport
+);
+
+router.get(
+  '/students/upload/:jobId/handouts',
+  protect,
+  requireRole(...allowedRoles),
+  downloadPrintedHandouts
+);
+
+// Versioned Upload Audit Log endpoints
+router.get(
+  '/students/upload-audit-logs',
+  protect,
+  requireRole(...allowedRoles),
+  getUploadAuditLogs
+);
+
+router.get(
+  '/students/upload-audit-logs/:version',
+  protect,
+  requireRole(...allowedRoles),
+  getUploadAuditLogByVersion
+);
+
+router.get(
+  '/students/upload-audit-logs/:version/handouts',
+  protect,
+  requireRole(...allowedRoles),
+  downloadAuditLogHandouts
 );
 
 module.exports = router;

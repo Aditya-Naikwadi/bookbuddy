@@ -42,6 +42,8 @@ const reservationSchema = new mongoose.Schema(
 );
 
 // Compound indexes
+reservationSchema.index({ collegeId: 1, status: 1, queuePosition: 1 });
+reservationSchema.index({ collegeId: 1, bookId: 1, status: 1 });
 reservationSchema.index({ bookId: 1, status: 1 });
 reservationSchema.index({ bookId: 1, status: 1, createdAt: 1 });
 reservationSchema.index({ userId: 1, status: 1 });

@@ -7,11 +7,16 @@ import {
   QrCode,
   X,
   ShieldCheck,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "../../ui/Button";
 import { QRCodeSVG } from "qrcode.react";
 
-export const MyReservationsList = ({ bookings = [], onCancelRequest }) => {
+export const MyReservationsList = ({
+  bookings = [],
+  onCancelRequest,
+  onCheckInRequest,
+}) => {
   const [qrModalBooking, setQrModalBooking] = useState(null);
 
   // Filter active/booked bookings
@@ -68,8 +73,17 @@ export const MyReservationsList = ({ bookings = [], onCancelRequest }) => {
                     <Monitor size={18} />
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm text-slate-800 dark:text-white">
-                      Seat: {booking.seatId?.seatNumber || "PC"}
+                    <h4 className="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-2">
+                      <span>Seat: {booking.seatId?.seatNumber || "PC"}</span>
+                      {booking.checkedInAt ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">
+                          <CheckCircle size={10} /> Checked In
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-950/60 px-2 py-0.5 rounded-md">
+                          <Clock size={10} /> Pending Check-in
+                        </span>
+                      )}
                     </h4>
                     <p className="text-[10px] text-slate-400 font-medium">
                       {booking.seatId?.labName || "Digital Library Lab"}
@@ -88,6 +102,16 @@ export const MyReservationsList = ({ bookings = [], onCancelRequest }) => {
                       <span>{timeRange}</span>
                     </div>
                   </div>
+
+                  {!booking.checkedInAt && onCheckInRequest && (
+                    <button
+                      onClick={() => onCheckInRequest(booking)}
+                      className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all"
+                    >
+                      <CheckCircle size={14} />
+                      <span>Check In</span>
+                    </button>
+                  )}
 
                   <button
                     onClick={() => setQrModalBooking(booking)}

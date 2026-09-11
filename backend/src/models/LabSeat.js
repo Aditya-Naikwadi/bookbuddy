@@ -19,6 +19,22 @@ const labSeatSchema = new mongoose.Schema(
     specs: {
       type: String,
     },
+    resourceType: {
+      type: String,
+      enum: ['workstation', 'quiet_seat', 'study_pod'],
+      default: 'workstation',
+      index: true,
+    },
+    zoneName: {
+      type: String,
+      default: 'Main Hall',
+    },
+    customOperatingHours: {
+      isBlocked: { type: Boolean, default: false },
+      blackoutReason: { type: String, default: '' },
+      startHour: { type: Number },
+      endHour: { type: Number },
+    },
     maintenanceStatus: {
       type: String,
       enum: ['operational', 'maintenance', 'retired'],

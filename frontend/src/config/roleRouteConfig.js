@@ -32,7 +32,28 @@ export const ROLE_ROUTE_MAP = {
   "/general-dashboard/e-resources": ["general"],
   "/general-dashboard/saved": ["general"],
 
-  // Student Routes
+  // Student Routes (Canonical /student/* prefix)
+  "/student": ["student"],
+  "/student/catalog": ["student"],
+  "/student/loans": ["student"],
+  "/student/fines": ["student"],
+  "/student/card": ["student"],
+  "/student/e-resources": ["student"],
+  "/student/reader": ["student"],
+  "/student/reading-lists": ["student"],
+  "/student/shelves": ["student"],
+  "/student/facilities": ["student"],
+  "/student/support": ["student"],
+  "/student/engagement": ["student"],
+  "/student/recommendations": ["student"],
+  "/student/saved": ["student"],
+  "/student/feed": ["student"],
+  "/student/downloads": ["student"],
+  "/student/cross-college": ["student"],
+  "/student/profile": ["student"],
+  "/student/settings": ["student"],
+
+  // Legacy Student Routes (Backward Compatibility)
   "/student-dashboard": ["student"],
   "/catalog": ["student"],
   "/loans": ["student"],
