@@ -27,6 +27,7 @@ BookBuddy is a modern, production-grade full-stack platform that transforms trad
 - ⚙️ **Production REST API & Backend (Render):** [https://bookbuddy-kcwl.onrender.com](https://bookbuddy-kcwl.onrender.com)
 - 🏥 **Backend Health Check:** [`https://bookbuddy-kcwl.onrender.com/health`](https://bookbuddy-kcwl.onrender.com/health)
 - 📌 **Live Version Metadata:** [`https://bookbuddy-kcwl.onrender.com/version`](https://bookbuddy-kcwl.onrender.com/version)
+- 📘 **Comprehensive Technical Architecture & Dashboards Reference:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
 - 📄 **Full Engineering Case Study:** [`docs/CASE_STUDY.md`](docs/CASE_STUDY.md)
 
 ---
