@@ -27,7 +27,7 @@ jobs:
           POLL_INTERVAL_SECONDS: 10
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           GITHUB_EVENT_NAME: heartbeat
-        run: node scripts/verify-deployment.js
+        run: node scripts/deployment/verify-deployment.js
 
       - name: Upload Audit History Artifact
         if: always()

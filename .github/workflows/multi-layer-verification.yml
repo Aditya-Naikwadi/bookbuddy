@@ -30,7 +30,7 @@ jobs:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           EXPECTED_COMMIT_SHA: ${{ github.sha }}
-        run: node scripts/multi-layer-verifier.js
+        run: node scripts/testing/multi-layer-verifier.js
 
       - name: Upload Multi-Layer Audit Log Artifact
         if: always()

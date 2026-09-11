@@ -26,7 +26,7 @@ jobs:
           RENDER_APP_URL: https://bookbuddy-kcwl.onrender.com
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        run: node scripts/render-monitor.js
+        run: node scripts/deployment/render-monitor.js
 
       - name: Upload Render Audit Log Artifact
         if: always()

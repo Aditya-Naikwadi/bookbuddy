@@ -34,12 +34,12 @@ jobs:
 
       - name: Install Server Dependencies
         run: |
-          cd server
+          cd backend
           npm install --legacy-peer-deps
 
       - name: Run Server Linter
         run: |
-          cd server
+          cd backend
           npm run lint
 
       - name: Validate Required Environment Variables
@@ -70,23 +70,23 @@ jobs:
           CLIENT_ORIGIN: http://localhost:5173
           PORT: 5000
         run: |
-          cd server
+          cd backend
           npm test
 
       - name: Install Client Dependencies
         run: |
-          cd client
+          cd frontend
           npm install --legacy-peer-deps --include=dev
 
       - name: Run Client Linter & Tests
         run: |
-          cd client
+          cd frontend
           npm run lint
           npm test
 
       - name: Build Client Production Bundle
         run: |
-          cd client
+          cd frontend
           npm run build
 
   deploy-vercel:
@@ -170,8 +170,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./server
-          file: ./server/Dockerfile
+          context: ./backend
+          file: ./backend/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -243,7 +243,7 @@ jobs:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           ALLOW_SHA_MISMATCH: ${{ (secrets.RENDER_API_KEY == '' && secrets.RENDER_DEPLOY_HOOK_URL == '') && 'true' || 'false' }}
-        run: node scripts/verify-deployment.js
+        run: node scripts/deployment/verify-deployment.js
 
       - name: Upload Audit History Artifact
         if: always()
