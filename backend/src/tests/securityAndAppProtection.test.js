@@ -13,6 +13,51 @@ jest.setTimeout(30000);
 
 const mongoose = require('mongoose');
 
+const mockSharedRedisStore = new Map();
+
+jest.mock('rate-limiter-flexible', () => {
+  const original = jest.requireActual('rate-limiter-flexible');
+  class MockRateLimiterRedis {
+    constructor(opts) {
+      this.keyPrefix = opts.keyPrefix;
+      this.points = opts.points;
+      this.duration = opts.duration;
+    }
+    async consume(key, pointsToConsume = 1) {
+      const fullKey = `${this.keyPrefix}:${key}`;
+      const now = Date.now();
+      let record = mockSharedRedisStore.get(fullKey);
+      if (!record || record.resetTime <= now) {
+        record = {
+          consumedPoints: 0,
+          resetTime: now + this.duration * 1000,
+        };
+      }
+      if (record.consumedPoints + pointsToConsume > this.points) {
+        const rej = {
+          msBeforeNext: Math.max(0, record.resetTime - now),
+          remainingPoints: 0,
+        };
+        throw rej;
+      }
+      record.consumedPoints += pointsToConsume;
+      mockSharedRedisStore.set(fullKey, record);
+      return {
+        remainingPoints: this.points - record.consumedPoints,
+        msBeforeNext: Math.max(0, record.resetTime - now),
+      };
+    }
+    async delete(key) {
+      const fullKey = `${this.keyPrefix}:${key}`;
+      mockSharedRedisStore.delete(fullKey);
+    }
+  }
+  return {
+    ...original,
+    RateLimiterRedis: MockRateLimiterRedis,
+  };
+});
+
 describe('security And App Protection Consolidated Suite', () => {
   afterAll(async () => {
     try {
@@ -262,54 +307,9 @@ describe('security And App Protection Consolidated Suite', () => {
   });
 
   describe('[Source: rateLimiting.test.js]', () => {
-    // Mock RateLimiterRedis to simulate a shared Redis storage across multiple instances
-    const mockSharedRedisStore = new Map();
-
-    // Clear require cache to ensure rateLimiters is re-loaded with the mocked RateLimiterRedis
-    delete require.cache[require.resolve('../middlewares/rateLimiters')];
-    delete require.cache[require.resolve('../app')];
-
-    jest.mock('rate-limiter-flexible', () => {
-      const original = jest.requireActual('rate-limiter-flexible');
-      class MockRateLimiterRedis {
-        constructor(opts) {
-          this.keyPrefix = opts.keyPrefix;
-          this.points = opts.points;
-          this.duration = opts.duration;
-        }
-        async consume(key, pointsToConsume = 1) {
-          const fullKey = `${this.keyPrefix}:${key}`;
-          const now = Date.now();
-          let record = mockSharedRedisStore.get(fullKey);
-          if (!record || record.resetTime <= now) {
-            record = {
-              consumedPoints: 0,
-              resetTime: now + this.duration * 1000,
-            };
-          }
-          if (record.consumedPoints + pointsToConsume > this.points) {
-            const rej = {
-              msBeforeNext: Math.max(0, record.resetTime - now),
-              remainingPoints: 0,
-            };
-            throw rej;
-          }
-          record.consumedPoints += pointsToConsume;
-          mockSharedRedisStore.set(fullKey, record);
-          return {
-            remainingPoints: this.points - record.consumedPoints,
-            msBeforeNext: Math.max(0, record.resetTime - now),
-          };
-        }
-      }
-      return {
-        ...original,
-        RateLimiterRedis: MockRateLimiterRedis,
-      };
-    });
-
     const request = require('supertest');
     const mongoose = require('mongoose');
+    const config = require('../config');
 
     process.env.NODE_ENV = 'test';
     process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_ratelimit_test';
@@ -318,46 +318,41 @@ describe('security And App Protection Consolidated Suite', () => {
     process.env.JWT_ACCESS_EXPIRY = '15m';
     process.env.JWT_REFRESH_EXPIRY = '7d';
 
-    // Set small limits for auth in testing to trigger easily
-    process.env.RATE_LIMIT_GLOBAL_MAX = '50';
-    process.env.RATE_LIMIT_GLOBAL_WINDOW_MS = '60000';
-    process.env.RATE_LIMIT_AUTH_MAX = '2'; // Trigger auth block at 3rd request
-    process.env.RATE_LIMIT_AUTH_IP_MAX = '2';
-    process.env.RATE_LIMIT_AUTH_EMAIL_MAX = '2';
-    process.env.RATE_LIMIT_AUTH_WINDOW_MS = '5000';
-
     const app = require('../app');
-    const { getLimiter } = require('../middlewares/rateLimiters');
+    const { getLimiter, resetAllLimiters } = require('../middlewares/rateLimiters');
 
     describe('API Rate Limiting & Input Validation Hardening Tests', () => {
       jest.setTimeout(30000);
       beforeAll(async () => {
-        // Just connect to db to satisfy server.js connection constraints if any
         if (mongoose.connection.readyState === 0) {
           await mongoose.connect(process.env.MONGO_URI);
         }
+        config.rateLimits.globalMax = 50;
+        config.rateLimits.globalWindowMs = 60000;
+        config.rateLimits.authMax = 2;
+        config.rateLimits.authIpMax = 2;
+        config.rateLimits.authEmailMax = 2;
+        config.rateLimits.authWindowMs = 5000;
+        resetAllLimiters();
       });
 
       afterAll(async () => {
-        delete process.env.RATE_LIMIT_GLOBAL_MAX;
-        delete process.env.RATE_LIMIT_AUTH_MAX;
-        delete process.env.RATE_LIMIT_AUTH_IP_MAX;
-        delete process.env.RATE_LIMIT_AUTH_EMAIL_MAX;
-        delete process.env.RATE_LIMIT_AUTH_WINDOW_MS;
-        delete require.cache[require.resolve('../config')];
-        delete require.cache[require.resolve('../middlewares/rateLimiters')];
-        delete require.cache[require.resolve('../app')];
-        const { resetAllLimiters } = require('../middlewares/rateLimiters');
+        config.rateLimits.globalMax = 100;
+        config.rateLimits.globalWindowMs = 60000;
+        config.rateLimits.authMax = 5;
+        config.rateLimits.authIpMax = 20;
+        config.rateLimits.authEmailMax = 5;
+        config.rateLimits.authWindowMs = 900000;
         resetAllLimiters();
 
         if (mongoose.connection.readyState !== 0) {
           await mongoose.connection.db.dropDatabase();
-          // await // mongoose.connection.close();
         }
       });
 
       beforeEach(() => {
         mockSharedRedisStore.clear();
+        resetAllLimiters();
       });
 
       describe('Part A: API Rate Limiting', () => {
@@ -494,7 +489,7 @@ describe('security And App Protection Consolidated Suite', () => {
           const jwt = require('jsonwebtoken');
           const tokenUser = jwt.sign(
             { sub: 'user_12345', role: 'student', collegeId: '6a579dbe4c4d0dc04452df15' },
-            'testjwtsecretkey999',
+            config.jwt.secret,
             { expiresIn: '15m' }
           );
 

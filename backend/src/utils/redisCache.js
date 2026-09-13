@@ -62,40 +62,66 @@ if (targetRedisUrl) {
   }
 }
 
+const memoryStore = new Map();
+
 const getCache = async (key) => {
-  if (!isConnected || !redisClient || !key) return null;
-  try {
-    const data = await redisClient.get(key);
-    return data ? JSON.parse(data) : null;
-  } catch (err) {
-    logger.warn(`⚠️ Redis getCache error for key "${key}": ${err.message}`);
+  if (!key) return null;
+  if (isConnected && redisClient) {
+    try {
+      const data = await redisClient.get(key);
+      return data ? JSON.parse(data) : null;
+    } catch (err) {
+      logger.warn(`⚠️ Redis getCache error for key "${key}": ${err.message}`);
+    }
+  }
+  const item = memoryStore.get(key);
+  if (!item) return null;
+  if (item.expiresAt && item.expiresAt <= Date.now()) {
+    memoryStore.delete(key);
     return null;
   }
+  return item.value;
 };
 
 const setCache = async (key, value, ttlSeconds = 300) => {
-  if (!isConnected || !redisClient || !key) return false;
-  try {
-    await redisClient.set(key, JSON.stringify(value), 'EX', ttlSeconds);
-    return true;
-  } catch (err) {
-    logger.warn(`⚠️ Redis setCache error for key "${key}": ${err.message}`);
-    return false;
+  if (!key) return false;
+  if (isConnected && redisClient) {
+    try {
+      await redisClient.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+    } catch (err) {
+      logger.warn(`⚠️ Redis setCache error for key "${key}": ${err.message}`);
+    }
   }
+  memoryStore.set(key, {
+    value,
+    expiresAt: ttlSeconds ? Date.now() + ttlSeconds * 1000 : null,
+  });
+  return true;
 };
 
 const deleteCache = async (keyPattern) => {
-  if (!isConnected || !redisClient || !keyPattern) return false;
-  try {
-    const keys = await redisClient.keys(keyPattern);
-    if (keys.length > 0) {
-      await redisClient.del(keys);
+  if (!keyPattern) return false;
+  if (isConnected && redisClient) {
+    try {
+      const keys = await redisClient.keys(keyPattern);
+      if (keys.length > 0) {
+        await redisClient.del(keys);
+      }
+    } catch (err) {
+      logger.warn(`⚠️ Redis deleteCache error for pattern "${keyPattern}": ${err.message}`);
     }
-    return true;
-  } catch (err) {
-    logger.warn(`⚠️ Redis deleteCache error for pattern "${keyPattern}": ${err.message}`);
-    return false;
   }
+  if (keyPattern.includes('*')) {
+    const regex = new RegExp('^' + keyPattern.replace(/\*/g, '.*') + '$');
+    for (const k of memoryStore.keys()) {
+      if (regex.test(k)) {
+        memoryStore.delete(k);
+      }
+    }
+  } else {
+    memoryStore.delete(keyPattern);
+  }
+  return true;
 };
 
 module.exports = {

@@ -10,6 +10,8 @@ jest.setTimeout(30000);
 
 const mongoose = require('mongoose');
 
+jest.mock('axios');
+
 describe('recommendations And Personalization Consolidated Suite', () => {
   afterAll(async () => {
     try {

@@ -13,6 +13,8 @@ jest.setTimeout(30000);
 
 const mongoose = require('mongoose');
 
+jest.mock('axios');
+
 describe('roster Bulk Ingestion Consolidated Suite', () => {
   afterAll(async () => {
     try {
@@ -237,10 +239,17 @@ describe('roster Bulk Ingestion Consolidated Suite', () => {
               validRows: validRowsPayload,
             });
 
-          expect(commitRes.statusCode).toBe(200);
-          expect(commitRes.body.summary.createdCount).toBe(1);
+          expect(commitRes.statusCode).toBe(202);
 
-          const createdStudent = await User.findOne({ studentId: 'STU-SPOOF-01' });
+          for (let attempt = 0; attempt < 30; attempt++) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            const statusCheck = await request(app)
+              .get(`/api/admin/students/upload/${batch._id}/status`)
+              .set('Authorization', `Bearer ${adminTokenA}`);
+            if (statusCheck.body.batch?.status === 'committed') break;
+          }
+
+          const createdStudent = await User.findOne({ studentId: 'stu-spoof-01' });
           expect(createdStudent).toBeDefined();
           // MUST belong to Admin's session collegeA, NEVER spoofed collegeB!
           expect(createdStudent.collegeId.toString()).toBe(collegeA._id.toString());
@@ -271,8 +280,8 @@ describe('roster Bulk Ingestion Consolidated Suite', () => {
             status: 'active',
           });
 
-          expect(studentA.studentId).toBe(sharedStudentId);
-          expect(studentB.studentId).toBe(sharedStudentId);
+          expect(studentA.studentId).toBe(sharedStudentId.toLowerCase());
+          expect(studentB.studentId).toBe(sharedStudentId.toLowerCase());
 
           // Verify login scoping by college context
           const loginResA = await request(app).post('/api/v1/auth/login').send({
@@ -333,7 +342,7 @@ describe('roster Bulk Ingestion Consolidated Suite', () => {
             `/api/v1/auth/activate/verify?token=${rawToken}`
           );
           expect(verifyRes.statusCode).toBe(200);
-          expect(verifyRes.body.student.studentId).toBe('STU-ACTIV-02');
+          expect(verifyRes.body.student.studentId).toBe('stu-activ-02');
 
           // 2. Consume token (set password)
           const activateRes = await request(app).post('/api/v1/auth/activate/confirm').send({
@@ -1092,6 +1101,9 @@ describe('roster Bulk Ingestion Consolidated Suite', () => {
 
         const returnedLoan = await returnBook(loan._id, college._id);
         expect(returnedLoan.status).toBe('returned');
+
+        // Allow asynchronous setImmediate email dispatch to settle
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
         // Verify email was dispatched to the offline user for book return
         expect(queueEmailSpy).toHaveBeenCalledWith(

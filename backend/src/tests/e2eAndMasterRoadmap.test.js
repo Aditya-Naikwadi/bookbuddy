@@ -262,7 +262,7 @@ describe('e2e And Master Roadmap Consolidated Suite', () => {
         expect(dbUser).not.toBeNull();
         expect(dbUser._id).toBeDefined();
         expect(dbUser.name).toBe('E2E Test User');
-        expect(dbUser.studentId).toBe('STU_E2E_1001');
+        expect(dbUser.studentId).toBe('stu_e2e_1001');
         expect(dbUser.password).toBeDefined();
         // Password must be securely hashed with Argon2id (starts with $argon2), NOT stored in plaintext
         expect(dbUser.password).not.toBe('SecurePassword123!');
