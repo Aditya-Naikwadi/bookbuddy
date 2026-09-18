@@ -25,7 +25,7 @@ jobs:
       - name: Run Multi-Layer Verification Orchestrator
         env:
           RENDER_APP_URL: https://bookbuddy-kcwl.onrender.com
-          FRONTEND_APP_URL: https://book-buddy-adityas-projects-3ddb703f.vercel.app
+          FRONTEND_APP_URL: https://book-buddy-eight-rosy.vercel.app
           RENDER_SERVICE_ID: srv-d9rltltbedkc73c1khkg
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

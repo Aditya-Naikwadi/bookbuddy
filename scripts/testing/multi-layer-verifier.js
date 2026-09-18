@@ -13,7 +13,7 @@ const tls = require('tls');
 const { dispatchAlert } = require('../send-alert');
 
 const RENDER_BACKEND_URL = (process.env.RENDER_APP_URL || 'https://bookbuddy-kcwl.onrender.com').replace(/\/$/, '');
-const VERCEL_FRONTEND_URL = (process.env.FRONTEND_APP_URL || 'https://book-buddy-adityas-projects-3ddb703f.vercel.app').replace(/\/$/, '');
+const VERCEL_FRONTEND_URL = (process.env.FRONTEND_APP_URL || 'https://book-buddy-eight-rosy.vercel.app').replace(/\/$/, '');
 const RENDER_SERVICE_ID = process.env.RENDER_SERVICE_ID || 'srv-d9rltltbedkc73c1khkg';
 const RENDER_API_KEY = process.env.RENDER_API_KEY || '';
 const EXPECTED_COMMIT_SHA = process.env.EXPECTED_COMMIT_SHA || process.env.GITHUB_SHA || '';
@@ -30,7 +30,7 @@ const logResult = (data) => {
   }
 };
 
-const makeRequest = (urlStr, options = {}) => {
+const makeRequest = (urlStr, options = {}, redirectCount = 0) => {
   return new Promise((resolve) => {
     const startTime = Date.now();
     try {
@@ -51,6 +51,15 @@ const makeRequest = (urlStr, options = {}) => {
           timeout: options.timeout || 60000,
         },
         (res) => {
+          // Follow HTTP redirects (301, 302, 307, 308) up to 5 times (including cross-host)
+          if (
+            [301, 302, 307, 308].includes(res.statusCode) &&
+            res.headers.location &&
+            redirectCount < 5
+          ) {
+            const nextUrlObj = new URL(res.headers.location, urlStr);
+            return makeRequest(nextUrlObj.toString(), options, redirectCount + 1).then(resolve);
+          }
           let body = '';
           res.on('data', (chunk) => (body += chunk));
           res.on('end', () => {

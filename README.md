@@ -87,32 +87,32 @@ Traditional academic libraries operate on legacy, monolithic, on-premise softwar
 
 ```mermaid
 graph TD
-    subgraph Client Tier (Vercel Global Edge)
+    subgraph ClientTier ["Client Tier (Vercel Global Edge)"]
         SPA["React 19 SPA (Vite 8 + TailwindCSS v4)"]
         ZustandStores["Zustand Client State (Auth, Toast, Saved)"]
         TanStack["TanStack Query v5 Stale-While-Revalidate Cache"]
-        ReaderEngines["Epub.js & PDF.js Rendering Engines"]
+        ReaderEngines["Epub.js and PDF.js Rendering Engines"]
     end
 
-    subgraph Network Gateway & Edge Proxy
+    subgraph NetworkGateway ["Network Gateway and Edge Proxy"]
         VercelCDN["Vercel Edge Network (SSL Termination)"]
         ViteProxy["Vite Dev Proxy (/api/v1)"]
         SocketChannel["Socket.io WebSockets (WSS)"]
     end
 
-    subgraph Application Tier (Render Cloud Cluster)
+    subgraph ApplicationTier ["Application Tier (Render Cloud Cluster)"]
         ExpressApp["Express 5 REST API Server (Node.js 24)"]
-        AuthGuard["JWT & Argon2id / Bcrypt Auth Middleware"]
+        AuthGuard["JWT and Argon2id / Bcrypt Auth Middleware"]
         CSRFGuard["CSRF Protection (_csrf cookie + X-CSRF-Token)"]
         TenantScoper["Multi-Tenant Isolation Scoper (req.tenantFilter)"]
-        FeatureGateMW["Service Catalog & Transitive Feature Guard"]
+        FeatureGateMW["Service Catalog and Transitive Feature Guard"]
         RateLimiter["Rate Limiter Flexible (Redis / In-Memory)"]
     end
 
-    subgraph Persistence & Real-Time State Layer
+    subgraph PersistenceLayer ["Persistence and Real-Time State Layer"]
         MongoDBAtlas[("MongoDB Atlas (Replica Set Clustered)")]
         RedisCluster[("Redis Store (Sessions, Sockets, Feature Cache)")]
-        CloudinaryCDN[("Cloudinary Asset CDN (Covers & E-Resources)")]
+        CloudinaryCDN[("Cloudinary Asset CDN (Covers and E-Resources)")]
         AlgoliaEngine[("Algolia Fast Full-Text Search Engine")]
     end
 
@@ -151,9 +151,9 @@ sequenceDiagram
     participant Redis as Redis Session Store
     participant DB as MongoDB Atlas
 
-    Patron->>Frontend: Enter Credentials & Submit
+    Patron->>Frontend: Enter Credentials and Submit
     Frontend->>Gateway: POST /api/v1/auth/login
-    Gateway->>DB: Lookup User & Compare Password Hash (Argon2id / bcrypt)
+    Gateway->>DB: Lookup User and Compare Password Hash (Argon2id / bcrypt)
     DB-->>Gateway: User Record Verified
     Gateway->>Redis: Initialize Session Family Graph (session:tokenHash)
     Gateway-->>Frontend: 200 OK + JWT Access Token (15m) + httpOnly Refresh Cookie (7d/30d)
@@ -291,17 +291,17 @@ The integrated digital reader (`DigitalReaderModal.jsx` & `EbookReader.jsx`) del
 
 ```mermaid
 graph LR
-    subgraph Storage Layer
+    subgraph StorageLayer ["Storage Layer"]
         BackendStream["Express HTTP 206 Partial Content Stream"]
         MongoAnnotations[("MongoDB Annotations Collection")]
     end
 
-    subgraph Client Reader Modal
+    subgraph ClientReaderModal ["Client Reader Modal"]
         EngineRouter{"File Format Router"}
         EPUB["Epub.js In-Memory Flow Engine"]
         PDF["PDF.js Canvas Renderer"]
         CFI["CFI Coordinate Tracker"]
-        Highlighter["Text Selection & Note Overlay"]
+        Highlighter["Text Selection and Note Overlay"]
     end
 
     BackendStream --> EngineRouter

@@ -12,7 +12,31 @@ const https = require('https');
 const path = require('path');
 
 // --- Configuration & Inputs ---
-const APP_URL = (process.env.APP_URL || process.argv[2] || 'https://bookbuddy-kcwl.onrender.com').replace(/\/$/, '');
+const RENDER_BACKEND_DEFAULT = 'https://bookbuddy-kcwl.onrender.com';
+const VERCEL_FRONTEND_DEFAULT = 'https://book-buddy-eight-rosy.vercel.app';
+
+let targetBackendUrl = (
+  process.env.BACKEND_APP_URL ||
+  process.env.RENDER_APP_URL ||
+  process.env.APP_URL ||
+  process.argv[2] ||
+  RENDER_BACKEND_DEFAULT
+).replace(/\/$/, '');
+
+let targetFrontendUrl = (
+  process.env.FRONTEND_APP_URL ||
+  process.env.PRODUCTION_FRONTEND_URL ||
+  VERCEL_FRONTEND_DEFAULT
+).replace(/\/$/, '');
+
+// If targetBackendUrl was passed pointing to a Vercel frontend URL, swap it to Render backend
+if (targetBackendUrl.includes('vercel.app')) {
+  targetFrontendUrl = targetBackendUrl;
+  targetBackendUrl = process.env.BACKEND_APP_URL || process.env.RENDER_APP_URL || RENDER_BACKEND_DEFAULT;
+}
+
+const APP_URL = targetBackendUrl;
+const FRONTEND_URL = targetFrontendUrl;
 const EXPECTED_COMMIT_SHA = process.env.EXPECTED_COMMIT_SHA || process.argv[3] || process.env.GITHUB_SHA || '';
 const TIMEOUT_SECONDS = parseInt(process.env.TIMEOUT_SECONDS || process.argv[4] || '300', 10);
 const POLL_INTERVAL_SECONDS = parseInt(process.env.POLL_INTERVAL_SECONDS || process.argv[5] || '10', 10);
@@ -48,7 +72,7 @@ const makeRequest = (urlStr, options = {}, redirectCount = 0) => {
       port: urlObj.port || (isHttps ? 443 : 80),
       path: urlObj.pathname + urlObj.search,
       method: options.method || 'GET',
-      timeout: 10000,
+      timeout: options.timeout || 30000,
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         Pragma: 'no-cache',
@@ -59,16 +83,14 @@ const makeRequest = (urlStr, options = {}, redirectCount = 0) => {
     };
 
     const req = client.request(reqOptions, (res) => {
-      // Follow HTTP redirects (301, 302, 307, 308) up to 5 times (same host only)
+      // Follow HTTP redirects (301, 302, 307, 308) up to 5 times (including cross-host redirects)
       if (
         [301, 302, 307, 308].includes(res.statusCode) &&
         res.headers.location &&
         redirectCount < 5
       ) {
         const nextUrlObj = new URL(res.headers.location, urlStr);
-        if (nextUrlObj.hostname === urlObj.hostname) {
-          return makeRequest(nextUrlObj.toString(), options, redirectCount + 1).then(resolve);
-        }
+        return makeRequest(nextUrlObj.toString(), options, redirectCount + 1).then(resolve);
       }
 
       let body = '';
@@ -283,17 +305,18 @@ const runVerification = async () => {
   console.log('\n🏥 STEP 2: Running critical route health checks (with retry logic)...');
 
   const healthRoutes = [
-    { path: '/health', expectedStatus: 200, name: 'System Health Check' },
-    { path: '/version', expectedStatus: 200, name: 'Version Metadata Check' },
-    { path: '/api/v1/auth/me', expectedStatus: 401, name: 'Auth Middleware Security (Unauthenticated 401)' },
-    { path: '/api/v1/colleges/slug-check?slug=test', expectedStatus: 200, name: 'Database Connectivity & Colleges API' },
+    { url: `${APP_URL}/health`, path: '/health', expectedStatus: 200, name: 'System Health Check' },
+    { url: `${APP_URL}/version`, path: '/version', expectedStatus: 200, name: 'Version Metadata Check' },
+    { url: `${APP_URL}/api/v1/auth/me`, path: '/api/v1/auth/me', expectedStatus: 401, name: 'Auth Middleware Security (Unauthenticated 401)' },
+    { url: `${APP_URL}/api/v1/colleges/slug-check?slug=test`, path: '/api/v1/colleges/slug-check', expectedStatus: 200, name: 'Database Connectivity & Colleges API' },
+    { url: `${FRONTEND_URL}/version.json`, path: '/version.json', expectedStatus: 200, name: 'Frontend Live Client Version' },
   ];
 
   const healthResults = [];
   let allHealthPassed = true;
 
   for (const route of healthRoutes) {
-    const fullUrl = `${APP_URL}${route.path}`;
+    const fullUrl = route.url;
     const res = await makeRequestWithRetry(fullUrl, {}, 2);
     const passed = res.status === route.expectedStatus;
 
