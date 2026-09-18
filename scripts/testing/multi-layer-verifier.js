@@ -10,7 +10,7 @@ const http = require('http');
 const https = require('https');
 const path = require('path');
 const tls = require('tls');
-const { dispatchAlert } = require('./send-alert');
+const { dispatchAlert } = require('../send-alert');
 
 const RENDER_BACKEND_URL = (process.env.RENDER_APP_URL || 'https://bookbuddy-kcwl.onrender.com').replace(/\/$/, '');
 const VERCEL_FRONTEND_URL = (process.env.FRONTEND_APP_URL || 'https://book-buddy-adityas-projects-3ddb703f.vercel.app').replace(/\/$/, '');

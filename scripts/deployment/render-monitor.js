@@ -9,7 +9,7 @@ const fs = require("fs");
 const http = require("http");
 const https = require("https");
 const path = require("path");
-const { dispatchAlert } = require("./send-alert");
+const { dispatchAlert } = require("../send-alert");
 
 const RENDER_SERVICE_ID =
   process.env.RENDER_SERVICE_ID || "srv-d9rltltbedkc73c1khkg";
