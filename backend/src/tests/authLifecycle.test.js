@@ -44,6 +44,9 @@ describe('auth Lifecycle Consolidated Suite', () => {
     const User = require('../models/User');
     const College = require('../models/College');
     const RefreshToken = require('../models/RefreshToken');
+    const StudentJoinRequest = require('../models/StudentJoinRequest');
+    const AuditLog = require('../models/AuditLog');
+    const { generateTokenPair } = require('../utils/token');
 
     const getCookieFromRes = (res, cookieName) => {
       const cookies = res.headers['set-cookie'];
@@ -119,18 +122,460 @@ describe('auth Lifecycle Consolidated Suite', () => {
         expect(res.body.user.refreshTokenHash).toBeUndefined();
       });
 
-      it('1b. should reject public registration without explicit collegeId (requiring tenant selection)', async () => {
+      it('1b. should reject registration without explicit collegeId when role is college-student', async () => {
+        const resCollegeStudent = await request(app).post('/api/v1/auth/register').send({
+          studentId: 'STU_COLLEGE_STUDENT',
+          name: 'College Student Without College',
+          email: 'nocollege.collegestudent@bookbuddy.com',
+          password: 'password123',
+          role: 'college-student',
+        });
+
+        expect(resCollegeStudent.status).toBe(400);
+        expect(resCollegeStudent.body.success).toBe(false);
+        expect(resCollegeStudent.body.message).toMatch(/College selection is required/i);
+      });
+
+      it('1c. should allow General Patron registration without any college field, set collegeId to null, and never create Demo College fallback', async () => {
+        const collegeCountBefore = await College.countDocuments();
+
         const res = await request(app).post('/api/v1/auth/register').send({
-          studentId: 'STU_NO_COLLEGE',
-          name: 'Public Signup User',
-          email: 'nocollege@bookbuddy.com',
+          studentId: 'PATRON_01',
+          name: 'General Public Patron',
+          email: 'general.patron@bookbuddy.com',
           password: 'password123',
           role: 'general',
         });
 
-        expect(res.status).toBe(400);
-        expect(res.body.success).toBe(false);
-        expect(res.body.message).toMatch(/College selection is required/i);
+        expect(res.status).toBe(201);
+        expect(res.body.success).toBe(true);
+        expect(res.body.user.role).toBe('general');
+        expect(res.body.user.collegeId).toBeNull();
+
+        const dbUser = await User.findOne({ email: 'general.patron@bookbuddy.com' });
+        expect(dbUser).toBeDefined();
+        expect(dbUser.collegeId).toBeNull();
+
+        const collegeCountAfter = await College.countDocuments();
+        expect(collegeCountAfter).toBe(collegeCountBefore);
+
+        const demoCollege = await College.findOne({ name: 'Demo College' });
+        expect(demoCollege).toBeNull();
+      });
+
+      it('1d. [@security-appsec-engineer] should strictly forbid direct registration of administrative roles (college-admin, super-admin)', async () => {
+        const adminRes = await request(app).post('/api/v1/auth/register').send({
+          name: 'Malicious Admin Wannabe',
+          email: 'wannabe.admin@attacker.com',
+          password: 'Password123!',
+          role: 'college-admin',
+        });
+
+        expect(adminRes.status).toBe(400);
+        expect(adminRes.body.success).toBe(false);
+        expect(adminRes.body.message).toMatch(/role/i);
+
+        const dbAdminUser = await User.findOne({ email: 'wannabe.admin@attacker.com' });
+        expect(dbAdminUser).toBeNull();
+
+        const superAdminRes = await request(app).post('/api/v1/auth/register').send({
+          name: 'Malicious Super Admin',
+          email: 'wannabe.superadmin@attacker.com',
+          password: 'Password123!',
+          role: 'super-admin',
+        });
+
+        expect(superAdminRes.status).toBe(400);
+        expect(superAdminRes.body.success).toBe(false);
+        const dbSuperUser = await User.findOne({ email: 'wannabe.superadmin@attacker.com' });
+        expect(dbSuperUser).toBeNull();
+      });
+
+      it('1e. should auto-activate pre-uploaded roster User record matching both studentId and email exactly with unactivated status', async () => {
+        // Pre-create unactivated roster student
+        const rosterUser = await User.create({
+          name: 'Roster Student Original',
+          studentId: 'STU-ROSTER-777',
+          email: 'roster777@campus.edu',
+          collegeId: collegeA._id,
+          role: 'student',
+          status: 'invited',
+          mustChangePasswordOnNextLogin: true,
+          password: 'TempPassword123!',
+          activationTokenHash: 'dummy_hash_token',
+        });
+
+        expect(rosterUser.status).toBe('invited');
+        expect(rosterUser.mustChangePasswordOnNextLogin).toBe(true);
+
+        const activationRes = await request(app).post('/api/v1/auth/register').send({
+          name: 'Roster Student Active',
+          studentId: 'STU-ROSTER-777',
+          email: 'roster777@campus.edu',
+          password: 'NewPermanentPassword123!',
+          role: 'college-student',
+          collegeId: collegeA._id.toString(),
+        });
+
+        expect(activationRes.status).toBe(201);
+        expect(activationRes.body.success).toBe(true);
+        expect(activationRes.body.isAutoActivated).toBe(true);
+        expect(activationRes.body.accessToken).toBeDefined();
+
+        const updatedRosterUser = await User.findById(rosterUser._id).select(
+          '+activationTokenHash'
+        );
+        expect(updatedRosterUser.status).toBe('active');
+        expect(updatedRosterUser.membershipStatus).toBe('active');
+        expect(updatedRosterUser.mustChangePasswordOnNextLogin).toBe(false);
+        expect(updatedRosterUser.isEmailVerified).toBe(true);
+        expect(updatedRosterUser.activationTokenHash).toBeNull();
+
+        // Verify new password works on login
+        const loginRes = await request(app).post('/api/v1/auth/login').send({
+          email: 'roster777@campus.edu',
+          password: 'NewPermanentPassword123!',
+        });
+        expect(loginRes.status).toBe(200);
+        expect(loginRes.body.success).toBe(true);
+      });
+
+      it('1f. [@security-appsec-engineer] confirms match requires both studentId and email exactly — rejects on partial/mismatch or already active', async () => {
+        // 1. Pre-create unactivated student
+        const unactivatedUser = await User.create({
+          name: 'Target Victim',
+          studentId: 'STU-VICTIM-101',
+          email: 'victim@campus.edu',
+          collegeId: collegeA._id,
+          role: 'student',
+          status: 'invited',
+          mustChangePasswordOnNextLogin: true,
+          password: 'TempPassword999!',
+        });
+
+        // Attack A: Same studentId, mismatched attacker email -> rejected with 400
+        const attackResA = await request(app).post('/api/v1/auth/register').send({
+          name: 'Attacker A',
+          studentId: 'STU-VICTIM-101',
+          email: 'attacker@evil.com',
+          password: 'HackerPassword123!',
+          role: 'college-student',
+          collegeId: collegeA._id.toString(),
+        });
+        expect(attackResA.status).toBe(400);
+
+        // Attack B: Same email, mismatched attacker studentId -> rejected with 400
+        const attackResB = await request(app).post('/api/v1/auth/register').send({
+          name: 'Attacker B',
+          studentId: 'STU-ATTACKER-999',
+          email: 'victim@campus.edu',
+          password: 'HackerPassword123!',
+          role: 'college-student',
+          collegeId: collegeA._id.toString(),
+        });
+        expect(attackResB.status).toBe(400);
+
+        // Attack C: Name-only match (different studentId and email) -> creates pending join request, does NOT hijack victim
+        const attackResC = await request(app).post('/api/v1/auth/register').send({
+          name: 'Target Victim',
+          studentId: 'STU-SEPARATE-888',
+          email: 'unrelated@campus.edu',
+          password: 'Password123!',
+          role: 'college-student',
+          collegeId: collegeA._id.toString(),
+        });
+        expect(attackResC.status).toBe(201);
+        expect(attackResC.body.requiresApproval).toBe(true);
+        expect(attackResC.body.status).toBe('pending');
+        expect(attackResC.body.accessToken).toBeUndefined();
+
+        // Victim account remains unchanged in unactivated state
+        const freshVictim = await User.findById(unactivatedUser._id);
+        expect(freshVictim.status).toBe('invited');
+        expect(freshVictim.mustChangePasswordOnNextLogin).toBe(true);
+      });
+
+      it('1g. should create a StudentJoinRequest with status: pending and issue no tokens when no roster match is found', async () => {
+        const res = await request(app).post('/api/v1/auth/register').send({
+          name: 'Off Roster Student',
+          studentId: 'STU-OFF-ROSTER-001',
+          email: 'offroster@campus.edu',
+          password: 'Password123!',
+          role: 'college-student',
+          collegeId: collegeA._id.toString(),
+        });
+
+        expect(res.status).toBe(201);
+        expect(res.body.success).toBe(true);
+        expect(res.body.requiresApproval).toBe(true);
+        expect(res.body.status).toBe('pending');
+        expect(res.body.accessToken).toBeUndefined();
+        expect(res.body.data.studentId).toBe('stu-off-roster-001');
+        expect(res.body.data.collegeName).toBe('Test College A');
+
+        // Confirm database record in StudentJoinRequest
+        const savedRequest = await StudentJoinRequest.findOne({
+          collegeId: collegeA._id,
+          studentId: 'stu-off-roster-001',
+        });
+        expect(savedRequest).toBeDefined();
+        expect(savedRequest.status).toBe('pending');
+        expect(savedRequest.email).toBe('offroster@campus.edu');
+
+        // Confirm NO User record was created in the User collection
+        const dbUser = await User.findOne({ email: 'offroster@campus.edu' });
+        expect(dbUser).toBeNull();
+      });
+
+      it('1h. [@security-appsec-engineer] verifies no active User record or tenant dashboard access is granted while request is pending', async () => {
+        // Attempt login with the pending join request student credentials
+        const loginAttempt = await request(app).post('/api/v1/auth/login').send({
+          email: 'offroster@campus.edu',
+          password: 'Password123!',
+        });
+
+        // Must NOT log in or grant any tenant dashboard access
+        expect(loginAttempt.status).toBe(401);
+        expect(loginAttempt.body.accessToken).toBeUndefined();
+
+        // Attempting to access protected tenant student route with no token fails with 401
+        const dashboardAccess = await request(app).get('/api/v1/dashboards/student/home');
+        expect(dashboardAccess.status).toBe(401);
+      });
+
+      it('1i. [@security-appsec-engineer] should prevent duplicate pending join requests for the same studentId or email in the same college', async () => {
+        const dupRes = await request(app).post('/api/v1/auth/register').send({
+          name: 'Duplicate Off Roster',
+          studentId: 'STU-OFF-ROSTER-001',
+          email: 'different.email@campus.edu',
+          password: 'Password123!',
+          role: 'college-student',
+          collegeId: collegeA._id.toString(),
+        });
+
+        expect(dupRes.status).toBe(400);
+        expect(dupRes.body.success).toBe(false);
+        expect(dupRes.body.message).toMatch(/already pending review/i);
+      });
+
+      it('1j. College Admin can list pending student join requests via GET /college-admin/student-join-requests and aliases', async () => {
+        // Ensure student join request exists
+        let pending = await StudentJoinRequest.findOne({
+          collegeId: collegeA._id,
+          studentId: 'stu-off-roster-001',
+        });
+        if (!pending) {
+          await request(app).post('/api/v1/auth/register').send({
+            name: 'Off Roster Student',
+            studentId: 'STU-OFF-ROSTER-001',
+            email: 'offroster@campus.edu',
+            password: 'Password123!',
+            role: 'college-student',
+            collegeId: collegeA._id.toString(),
+          });
+        }
+
+        // Create College Admin A user and token
+        const adminA = await User.create({
+          name: 'Admin College A',
+          email: 'admin.a@testcollege.edu',
+          password: 'AdminPassword123!',
+          role: 'college-admin',
+          collegeId: collegeA._id,
+          status: 'active',
+        });
+        const adminAToken = generateTokenPair(adminA).accessToken;
+
+        // Verify GET /api/v1/college-admin/student-join-requests
+        const resV1 = await request(app)
+          .get('/api/v1/college-admin/student-join-requests?status=pending')
+          .set('Authorization', `Bearer ${adminAToken}`);
+
+        expect(resV1.status).toBe(200);
+        expect(resV1.body.success).toBe(true);
+        expect(Array.isArray(resV1.body.data)).toBe(true);
+        expect(resV1.body.data.length).toBeGreaterThanOrEqual(1);
+
+        const foundReq = resV1.body.data.find((r) => r.studentId === 'stu-off-roster-001');
+        expect(foundReq).toBeDefined();
+        expect(foundReq.status).toBe('pending');
+        expect(foundReq.email).toBe('offroster@campus.edu');
+        // Password hash must NOT be leaked
+        expect(foundReq.password).toBeUndefined();
+
+        // Also verify /api/college-admin/student-join-requests alias
+        const resAlias = await request(app)
+          .get('/api/college-admin/student-join-requests')
+          .set('Authorization', `Bearer ${adminAToken}`);
+        expect(resAlias.status).toBe(200);
+        expect(resAlias.body.success).toBe(true);
+      });
+
+      it('1k. College Admin can approve a join request via POST /college-admin/student-join-requests/:id/approve, activating User account and writing to AuditLog', async () => {
+        const adminA = await User.findOne({ email: 'admin.a@testcollege.edu' });
+        const adminAToken = generateTokenPair(adminA).accessToken;
+
+        const pendingReq = await StudentJoinRequest.findOne({
+          collegeId: collegeA._id,
+          studentId: 'stu-off-roster-001',
+          status: 'pending',
+        });
+        expect(pendingReq).toBeDefined();
+
+        const approveRes = await request(app)
+          .post(`/api/v1/college-admin/student-join-requests/${pendingReq._id}/approve`)
+          .set('Authorization', `Bearer ${adminAToken}`);
+
+        expect(approveRes.status).toBe(200);
+        expect(approveRes.body.success).toBe(true);
+        expect(approveRes.body.message).toMatch(/approved successfully/i);
+        expect(approveRes.body.data.request.status).toBe('approved');
+        expect(approveRes.body.data.request.password).toBeUndefined();
+
+        // Verify request updated in database
+        const updatedReq = await StudentJoinRequest.findById(pendingReq._id);
+        expect(updatedReq.status).toBe('approved');
+        expect(String(updatedReq.reviewedBy)).toBe(String(adminA._id));
+        expect(updatedReq.reviewedAt).toBeDefined();
+
+        // Verify User record was provisioned and activated
+        const activatedUser = await User.findOne({ email: 'offroster@campus.edu' });
+        expect(activatedUser).toBeDefined();
+        expect(activatedUser.status).toBe('active');
+        expect(activatedUser.isActive).toBe(true);
+        expect(activatedUser.studentId).toBe('stu-off-roster-001');
+        expect(String(activatedUser.collegeId)).toBe(String(collegeA._id));
+
+        // Verify AuditLog entry was created
+        const auditEntry = await AuditLog.findOne({
+          action: 'student.join_request_approved',
+          targetId: pendingReq._id,
+        });
+        expect(auditEntry).toBeDefined();
+        expect(String(auditEntry.actorId)).toBe(String(adminA._id));
+        expect(String(auditEntry.collegeId)).toBe(String(collegeA._id));
+        expect(auditEntry.severity).toBe('info');
+      });
+
+      it('1l. Newly approved student can now successfully login with original credentials and receive tokens', async () => {
+        const loginRes = await request(app).post('/api/v1/auth/login').send({
+          email: 'offroster@campus.edu',
+          password: 'Password123!',
+        });
+
+        expect(loginRes.status).toBe(200);
+        expect(loginRes.body.success).toBe(true);
+        expect(loginRes.body.accessToken).toBeDefined();
+        expect(loginRes.body.user.email).toBe('offroster@campus.edu');
+        expect(loginRes.body.user.role).toBe('student');
+      });
+
+      it('1m. College Admin can reject a join request via POST /college-admin/student-join-requests/:id/reject with reason, writing to AuditLog', async () => {
+        // Register a second student who needs approval
+        await request(app).post('/api/v1/auth/register').send({
+          name: 'Reject Candidate Student',
+          studentId: 'STU-REJECT-001',
+          email: 'reject.me@campus.edu',
+          password: 'Password123!',
+          role: 'college-student',
+          collegeId: collegeA._id.toString(),
+        });
+
+        const rejectReq = await StudentJoinRequest.findOne({
+          collegeId: collegeA._id,
+          studentId: 'stu-reject-001',
+          status: 'pending',
+        });
+        expect(rejectReq).toBeDefined();
+
+        const adminA = await User.findOne({ email: 'admin.a@testcollege.edu' });
+        const adminAToken = generateTokenPair(adminA).accessToken;
+
+        const rejectRes = await request(app)
+          .post(`/api/v1/college-admin/student-join-requests/${rejectReq._id}/reject`)
+          .set('Authorization', `Bearer ${adminAToken}`)
+          .send({ reason: 'Student ID not recognized by registrar office' });
+
+        expect(rejectRes.status).toBe(200);
+        expect(rejectRes.body.success).toBe(true);
+        expect(rejectRes.body.data.status).toBe('rejected');
+        expect(rejectRes.body.data.rejectionReason).toBe(
+          'Student ID not recognized by registrar office'
+        );
+
+        // Verify request updated in database
+        const updatedRejectReq = await StudentJoinRequest.findById(rejectReq._id);
+        expect(updatedRejectReq.status).toBe('rejected');
+        expect(updatedRejectReq.rejectionReason).toBe(
+          'Student ID not recognized by registrar office'
+        );
+        expect(String(updatedRejectReq.reviewedBy)).toBe(String(adminA._id));
+
+        // Verify NO User record exists for rejected student
+        const rejectedUser = await User.findOne({ email: 'reject.me@campus.edu' });
+        expect(rejectedUser).toBeNull();
+
+        // Verify AuditLog entry was created
+        const auditEntry = await AuditLog.findOne({
+          action: 'student.join_request_rejected',
+          targetId: rejectReq._id,
+        });
+        expect(auditEntry).toBeDefined();
+        expect(String(auditEntry.actorId)).toBe(String(adminA._id));
+        expect(auditEntry.severity).toBe('warning');
+        expect(auditEntry.metadata.reason).toBe('Student ID not recognized by registrar office');
+      });
+
+      it('1n. Cross-tenant isolation: College Admin B cannot access, approve, or reject College Admin A join requests (403 forbidden)', async () => {
+        // Create College Admin B user and token
+        const adminB = await User.create({
+          name: 'Admin College B',
+          email: 'admin.b@testcollegeb.edu',
+          password: 'AdminPassword123!',
+          role: 'college-admin',
+          collegeId: collegeB._id,
+          status: 'active',
+        });
+        const adminBToken = generateTokenPair(adminB).accessToken;
+
+        // Register a join request for College A
+        await request(app).post('/api/v1/auth/register').send({
+          name: 'College A Target Student',
+          studentId: 'STU-COLLEGEA-999',
+          email: 'collegea.target@campus.edu',
+          password: 'Password123!',
+          role: 'college-student',
+          collegeId: collegeA._id.toString(),
+        });
+
+        const targetReq = await StudentJoinRequest.findOne({
+          collegeId: collegeA._id,
+          studentId: 'stu-collegea-999',
+        });
+        expect(targetReq).toBeDefined();
+
+        // Admin B attempts to list requests - should NOT see College A's request
+        const listB = await request(app)
+          .get('/api/v1/college-admin/student-join-requests')
+          .set('Authorization', `Bearer ${adminBToken}`);
+        expect(listB.status).toBe(200);
+        const leakedReq = listB.body.data.find((r) => r.studentId === 'stu-collegea-999');
+        expect(leakedReq).toBeUndefined();
+
+        // Admin B attempts to approve College A's join request -> 403 Forbidden
+        const crossApprove = await request(app)
+          .post(`/api/v1/college-admin/student-join-requests/${targetReq._id}/approve`)
+          .set('Authorization', `Bearer ${adminBToken}`);
+        expect(crossApprove.status).toBe(403);
+        expect(crossApprove.body.message).toMatch(/cross-tenant/i);
+
+        // Admin B attempts to reject College A's join request -> 403 Forbidden
+        const crossReject = await request(app)
+          .post(`/api/v1/college-admin/student-join-requests/${targetReq._id}/reject`)
+          .set('Authorization', `Bearer ${adminBToken}`)
+          .send({ reason: 'Malicious cross-tenant attempt' });
+        expect(crossReject.status).toBe(403);
+        expect(crossReject.body.message).toMatch(/cross-tenant/i);
       });
 
       // Assertion 2: Login with correct credentials returns tokens
@@ -858,13 +1303,17 @@ describe('auth Lifecycle Consolidated Suite', () => {
       });
 
       describe('GET /api/registration/colleges', () => {
-        it('should return list of ACTIVE colleges only', async () => {
+        it('should return list of ACTIVE colleges only with slugs for tenant redirection', async () => {
           const res = await request(app).get('/api/v1/registration/colleges');
           expect(res.status).toBe(200);
           expect(res.body.success).toBe(true);
           const names = res.body.data.map((c) => c.name);
           expect(names).toContain('MIT University');
           expect(names).not.toContain('Pending College');
+          const mitCollege = res.body.data.find((c) => c.name === 'MIT University');
+          expect(mitCollege).toBeDefined();
+          expect(mitCollege.slug).toBeDefined();
+          expect(typeof mitCollege.slug).toBe('string');
         });
       });
 

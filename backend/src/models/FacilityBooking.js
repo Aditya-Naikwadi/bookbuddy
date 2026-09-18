@@ -6,7 +6,6 @@ const facilityBookingSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'College',
       required: [true, 'College ID is required'],
-      index: true,
     },
     branchId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -18,7 +17,6 @@ const facilityBookingSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'FacilityResource',
       required: [true, 'Resource ID is required'],
-      index: true,
     },
     studentId: {
       type: mongoose.Schema.Types.ObjectId,

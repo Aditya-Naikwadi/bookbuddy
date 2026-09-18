@@ -6,8 +6,12 @@ const AppError = require('./AppError');
  * never from client-supplied params or bodies.
  */
 const tenantScope = (model, req) => {
-  if (!req.user || !req.user.collegeId) {
+  if (!req.user) {
     throw new AppError('Tenant scoping requires authenticated request.', 401);
+  }
+
+  if (!req.user.collegeId) {
+    throw new AppError('Access denied: tenant association required.', 403);
   }
 
   const tenantFilter = { collegeId: req.user.collegeId };

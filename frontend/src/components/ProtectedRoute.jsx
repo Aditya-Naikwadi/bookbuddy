@@ -21,7 +21,9 @@ const ProtectedRoute = ({ allowedRoles }) => {
 
   // Verify explicit allowedRoles prop or role-route configuration
   const isRolePermitted = allowedRoles
-    ? user && allowedRoles.includes(user.role)
+    ? user &&
+      (allowedRoles.includes(user.role) ||
+        (allowedRoles.includes("student") && user.role === "college-student"))
     : isUserAllowedForRoute(user, location.pathname);
 
   if (!isRolePermitted) {

@@ -7,7 +7,10 @@ const {
 } = require('../controllers/patronCardController');
 const { protect } = require('../middlewares/auth');
 
-router.post('/verify', verifyPatronCardToken); // Public / Scanner verification
+const requireScannerOrStaffAuth = require('../middlewares/scannerOrStaffAuth');
+const { patronCardVerifyLimiter } = require('../middlewares/rateLimiters');
+
+router.post('/verify', patronCardVerifyLimiter, requireScannerOrStaffAuth, verifyPatronCardToken); // Scanner / Staff Gate verification
 
 router.use(protect);
 

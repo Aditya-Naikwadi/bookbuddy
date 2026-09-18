@@ -5,7 +5,9 @@ const userSchema = new mongoose.Schema(
   {
     studentId: {
       type: String,
-      required: true,
+      required: function () {
+        return this.role === 'student' || this.role === 'college-student';
+      },
       trim: true,
       lowercase: true,
     },
@@ -77,8 +79,9 @@ const userSchema = new mongoose.Schema(
     collegeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'College',
+      default: null,
       required: function () {
-        return this.role !== 'super-admin';
+        return this.role === 'college-student';
       },
       index: true,
     },
@@ -108,7 +111,15 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['student', 'college-admin', 'super-admin', 'general'],
+      enum: [
+        'student',
+        'college-student',
+        'college-admin',
+        'college_admin',
+        'super-admin',
+        'super_admin',
+        'general',
+      ],
       default: 'student',
     },
     membershipStatus: {
@@ -290,8 +301,8 @@ userSchema.pre('save', async function () {
   } else if (this.major && !this.department) {
     this.department = this.major;
   }
-  if (this.collegeId === null) {
-    this.collegeId = undefined;
+  if (this.collegeId === undefined) {
+    this.collegeId = null;
   }
   if (!this.cardSecret) {
     const crypto = require('crypto');

@@ -1,13 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import useAuthStore from "../store/authStore";
 import { useConfig } from "../context/ConfigContext";
 import { isUserAllowedForRoute } from "../config/roleRouteConfig";
-import { Loader2, Eye, EyeOff, CheckCircle2, Building2 } from "lucide-react";
+import {
+  Loader2,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  Building2,
+  Search,
+  ChevronDown,
+  X,
+  School,
+  ArrowRight,
+} from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGoogleLogin } from "@react-oauth/google";
 import { getSubdomainTenantSlug } from "../utils/tenantSubdomain";
+import { registrationApi } from "../api/registrationApi";
 
 const GoogleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -108,12 +120,145 @@ export default function Login() {
   };
 
   const subdomainSlug = getSubdomainTenantSlug();
-  const queryParams = new URLSearchParams(location.search);
-  const effectiveCollegeSlug =
-    subdomainSlug ||
-    location.state?.collegeSlug ||
-    queryParams.get("tenant") ||
-    queryParams.get("collegeSlug");
+  const isCentralLogin = !subdomainSlug;
+  // Strictly isolate tenant login: on root domain, no parallel tenant resolution
+  const effectiveCollegeSlug = subdomainSlug;
+
+  // Searchable College Picker states for Central Login (active colleges only)
+  const [colleges, setColleges] = useState([]);
+  const [isLoadingColleges, setIsLoadingColleges] = useState(
+    Boolean(isCentralLogin),
+  );
+  const [collegeSearch, setCollegeSearch] = useState("");
+  const [isCollegeDropdownOpen, setIsCollegeDropdownOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const collegeDropdownRef = useRef(null);
+  const listboxRef = useRef(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (isCentralLogin && colleges.length === 0) {
+      const fetchActiveColleges = async () => {
+        setIsLoadingColleges(true);
+        try {
+          const data = await registrationApi.getActiveColleges();
+          if (isMounted) {
+            setColleges(Array.isArray(data) ? data : []);
+          }
+        } catch (err) {
+          console.error(
+            "Failed to load active colleges for login picker:",
+            err,
+          );
+        } finally {
+          if (isMounted) {
+            setIsLoadingColleges(false);
+          }
+        }
+      };
+
+      fetchActiveColleges();
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [isCentralLogin, colleges.length]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        collegeDropdownRef.current &&
+        !collegeDropdownRef.current.contains(e.target)
+      ) {
+        setIsCollegeDropdownOpen(false);
+        setHighlightedIndex(-1);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredColleges = useMemo(() => {
+    const term = collegeSearch.toLowerCase().trim();
+    if (!term) return colleges;
+    return colleges.filter((c) => {
+      return (
+        c.name?.toLowerCase().includes(term) ||
+        c.shortName?.toLowerCase().includes(term) ||
+        c.code?.toLowerCase().includes(term) ||
+        c.domain?.toLowerCase().includes(term) ||
+        c.slug?.toLowerCase().includes(term)
+      );
+    });
+  }, [colleges, collegeSearch]);
+
+  // Auto-scroll highlighted combobox option into view
+  useEffect(() => {
+    if (isCollegeDropdownOpen && highlightedIndex >= 0 && listboxRef.current) {
+      const activeEl = listboxRef.current.querySelector(
+        `[data-index="${highlightedIndex}"]`,
+      );
+      if (activeEl && typeof activeEl.scrollIntoView === "function") {
+        activeEl.scrollIntoView({ block: "nearest" });
+      }
+    }
+  }, [highlightedIndex, isCollegeDropdownOpen]);
+
+  const handleSelectCollege = (college) => {
+    if (!college || !college.slug) return;
+    setIsCollegeDropdownOpen(false);
+    setHighlightedIndex(-1);
+    const targetUrl = `https://${college.slug}.bookbuddy.com/login`;
+    setRedirectingMsg(
+      `Redirecting to ${college.name} portal (${college.slug}.bookbuddy.com)...`,
+    );
+    if (typeof window !== "undefined") {
+      window.location.assign(targetUrl);
+    }
+  };
+
+  const handleCollegeKeyDown = (e) => {
+    if (isLoadingColleges) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (!isCollegeDropdownOpen) {
+        setIsCollegeDropdownOpen(true);
+        setHighlightedIndex(filteredColleges.length > 0 ? 0 : -1);
+      } else if (filteredColleges.length > 0) {
+        setHighlightedIndex((prev) =>
+          prev < filteredColleges.length - 1 ? prev + 1 : 0,
+        );
+      }
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (!isCollegeDropdownOpen) {
+        setIsCollegeDropdownOpen(true);
+        setHighlightedIndex(
+          filteredColleges.length > 0 ? filteredColleges.length - 1 : -1,
+        );
+      } else if (filteredColleges.length > 0) {
+        setHighlightedIndex((prev) =>
+          prev > 0 ? prev - 1 : filteredColleges.length - 1,
+        );
+      }
+    } else if (e.key === "Enter") {
+      if (
+        isCollegeDropdownOpen &&
+        highlightedIndex >= 0 &&
+        filteredColleges[highlightedIndex]
+      ) {
+        e.preventDefault();
+        handleSelectCollege(filteredColleges[highlightedIndex]);
+      }
+    } else if (e.key === "Escape") {
+      if (isCollegeDropdownOpen) {
+        e.preventDefault();
+        setIsCollegeDropdownOpen(false);
+        setHighlightedIndex(-1);
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -208,6 +353,200 @@ export default function Login() {
         >
           Please contact your college IT Helpdesk or library administrator to
           reset your password.
+        </motion.div>
+      )}
+
+      {/* Central Login: Searchable College Picker with Instant Redirection */}
+      {isCentralLogin && (
+        <motion.div
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 bg-surface/60 border border-edge/80 rounded-2xl shadow-lg backdrop-blur-sm relative"
+          ref={collegeDropdownRef}
+        >
+          <div className="flex items-center gap-2.5 mb-2">
+            <div className="p-1.5 rounded-lg bg-ember/10 text-ember border border-ember/20 shrink-0">
+              <School className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold text-ink">
+                Student or Faculty Member?
+              </h3>
+              <p className="text-[11px] text-muted">
+                Find your institution to sign in to your campus library
+              </p>
+            </div>
+          </div>
+
+          <div className="relative mt-2.5">
+            <div className="relative">
+              <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                id="college-search-picker"
+                type="text"
+                role="combobox"
+                aria-expanded={isCollegeDropdownOpen}
+                aria-haspopup="listbox"
+                aria-controls="college-picker-options"
+                aria-autocomplete="list"
+                aria-activedescendant={
+                  isCollegeDropdownOpen &&
+                  highlightedIndex >= 0 &&
+                  filteredColleges[highlightedIndex]
+                    ? `login-college-opt-${filteredColleges[highlightedIndex]._id || filteredColleges[highlightedIndex].slug}`
+                    : undefined
+                }
+                aria-label="Search college institution"
+                value={collegeSearch}
+                onChange={(e) => {
+                  setCollegeSearch(e.target.value);
+                  setIsCollegeDropdownOpen(true);
+                  setHighlightedIndex(-1);
+                }}
+                onFocus={() => {
+                  setIsCollegeDropdownOpen(true);
+                  setHighlightedIndex(-1);
+                }}
+                onKeyDown={handleCollegeKeyDown}
+                placeholder={
+                  isLoadingColleges
+                    ? "Loading partner institutions..."
+                    : "Search active colleges (e.g. MIT, Stanford)..."
+                }
+                disabled={isLoadingColleges}
+                autoComplete="off"
+                className="w-full pl-9 pr-16 py-2.5 text-xs bg-surface/80 border border-edge rounded-xl text-ink focus:outline-none focus:ring-2 focus:ring-ember/50 placeholder-muted/50 transition-all shadow-inner"
+              />
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                {isLoadingColleges ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-muted" />
+                ) : (
+                  <>
+                    {collegeSearch && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCollegeSearch("");
+                          setHighlightedIndex(-1);
+                        }}
+                        className="p-1 text-muted hover:text-ink transition-colors"
+                        aria-label="Clear college search"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCollegeDropdownOpen((prev) => !prev);
+                        setHighlightedIndex(-1);
+                      }}
+                      className="p-1 text-muted hover:text-ink transition-colors"
+                      aria-label="Toggle college list"
+                    >
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                          isCollegeDropdownOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <AnimatePresence>
+              {isCollegeDropdownOpen && !isLoadingColleges && (
+                <motion.div
+                  id="college-picker-options"
+                  ref={listboxRef}
+                  role="listbox"
+                  aria-label="Partner institutions"
+                  initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute left-0 right-0 top-full mt-1.5 z-40 max-h-56 overflow-y-auto bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl divide-y divide-slate-800/60"
+                >
+                  {filteredColleges.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-muted">
+                      No active institutions found matching "{collegeSearch}".
+                    </div>
+                  ) : (
+                    filteredColleges.map((college, index) => {
+                      const isHighlighted = highlightedIndex === index;
+                      const optId = `login-college-opt-${college._id || college.slug}`;
+                      return (
+                        <button
+                          key={college._id || college.slug}
+                          id={optId}
+                          data-index={index}
+                          role="option"
+                          aria-selected={isHighlighted}
+                          type="button"
+                          onClick={() => handleSelectCollege(college)}
+                          onMouseEnter={() => setHighlightedIndex(index)}
+                          className={`w-full text-left p-2.5 transition-all group flex items-center justify-between gap-3 focus:outline-none ${
+                            isHighlighted
+                              ? "bg-ember/20 border-l-2 border-ember text-ember"
+                              : "hover:bg-ember/10 hover:border-l-2 hover:border-ember"
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={`text-xs font-medium transition-colors truncate ${
+                                  isHighlighted
+                                    ? "text-ember"
+                                    : "text-slate-100 group-hover:text-ember"
+                                }`}
+                              >
+                                {college.name}
+                              </span>
+                              {(college.shortName || college.code) && (
+                                <span className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-slate-300 shrink-0 border border-slate-700">
+                                  {college.shortName || college.code}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1 mt-0.5">
+                              <span className="text-indigo-400 font-sans">
+                                {college.slug}.bookbuddy.com
+                              </span>
+                              {college.domain && (
+                                <span className="text-slate-500 truncate">
+                                  • {college.domain}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div
+                            className={`flex items-center gap-1 text-[11px] text-ember font-medium transition-opacity shrink-0 ${
+                              isHighlighted
+                                ? "opacity-100"
+                                : "opacity-0 group-hover:opacity-100"
+                            }`}
+                          >
+                            <span>Go</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="relative mt-5 mb-1 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-edge/60"></div>
+            </div>
+            <div className="relative bg-slate-950/80 px-3 text-[10px] uppercase tracking-wider text-muted font-medium rounded-full">
+              Or General / Admin Sign In
+            </div>
+          </div>
         </motion.div>
       )}
 

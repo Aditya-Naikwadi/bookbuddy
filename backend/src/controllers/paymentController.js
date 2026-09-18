@@ -253,7 +253,16 @@ const verifyPayment = asyncHandler(async (req, res) => {
     );
   }
 
-  const keySecret = process.env.RAZORPAY_KEY_SECRET || 'e7CkAkfrsJzdLz3fTvAwg2MY';
+  const keySecret =
+    process.env.RAZORPAY_KEY_SECRET ||
+    (process.env.NODE_ENV === 'test' ? 'test_razorpay_key_secret_12345' : '');
+
+  if (!keySecret) {
+    throw new AppError(
+      'Payment verification unavailable: RAZORPAY_KEY_SECRET is not configured.',
+      500
+    );
+  }
   const expectedSignature = crypto
     .createHmac('sha256', keySecret)
     .update(`${razorpay_order_id}|${razorpay_payment_id}`)

@@ -187,7 +187,7 @@ const issueOfflineToken = asyncHandler(async (req, res) => {
       resourceId: resource._id,
       downloadAllowed: true,
     },
-    process.env.JWT_SECRET || 'bookbuddy-secret-key-2026',
+    process.env.JWT_SECRET || (process.env.NODE_ENV === 'test' ? 'testjwtsecretkey999' : ''),
     { expiresIn: '15m' }
   );
 
@@ -242,7 +242,7 @@ const getSignedDownloadUrl = asyncHandler(async (req, res) => {
       resourceId: resource._id,
       isDownloadable: true,
     },
-    process.env.JWT_SECRET || 'bookbuddy-secret-key-2026',
+    process.env.JWT_SECRET || (process.env.NODE_ENV === 'test' ? 'testjwtsecretkey999' : ''),
     { expiresIn: '15m' }
   );
 

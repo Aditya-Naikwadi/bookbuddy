@@ -68,6 +68,22 @@ const bookSchema = new mongoose.Schema(
         type: String,
       },
     ],
+    publishedYear: {
+      type: Number,
+      default: null,
+      index: true,
+    },
+    publishYear: {
+      type: Number,
+      default: null,
+      index: true,
+    },
+    language: {
+      type: String,
+      default: 'English',
+      trim: true,
+      index: true,
+    },
     // F6.1: ILL-Style Cross-College sharing opt-in flag (defaults to false)
     isShareableAcrossColleges: {
       type: Boolean,
@@ -88,8 +104,13 @@ const bookSchema = new mongoose.Schema(
 const tenantScopingPlugin = require('../plugins/tenantScopingPlugin');
 bookSchema.plugin(tenantScopingPlugin);
 
-// Keep isILLShared and isShareableAcrossColleges in sync on save
+// Keep isILLShared/isShareableAcrossColleges and publishedYear/publishYear in sync on save
 bookSchema.pre('save', function () {
+  if (this.publishedYear && !this.publishYear) {
+    this.publishYear = this.publishedYear;
+  } else if (this.publishYear && !this.publishedYear) {
+    this.publishedYear = this.publishYear;
+  }
   if (this.isILLShared || this.isShareableAcrossColleges) {
     this.isILLShared = true;
     this.isShareableAcrossColleges = true;

@@ -29,6 +29,9 @@ const {
   getFeedback,
   getStaffDashboardWidgets,
   getCustomReport,
+  getStudentJoinRequests,
+  approveStudentJoinRequest,
+  rejectStudentJoinRequest,
 } = require('../../controllers/dashboards/collegeAdminController');
 const { protect, requireRole } = require('../../middlewares/auth');
 const scopeToTenant = require('../../middlewares/scopeToTenant');
@@ -54,10 +57,19 @@ const {
 
 const { userLimiter, expensiveRouteLimiter } = require('../../middlewares/rateLimiters');
 
-// Note: `college-admin` acts as the College Admin verifier. We also support 'admin' and 'librarian' as fallbacks.
-router.use(protect, requireRole('college-admin', 'admin', 'librarian'));
+// Note: `college-admin` acts as the College Admin verifier. We also support 'college_admin', 'admin' and 'librarian' as fallbacks.
+router.use(protect, requireRole('college-admin', 'college_admin', 'admin', 'librarian'));
 router.use(scopeToTenant);
 router.use(userLimiter);
+
+// Student Join Requests (Awaiting college-admin review)
+router.route('/student-join-requests').get(getStudentJoinRequests);
+router
+  .route('/student-join-requests/:id/approve')
+  .post(validate(paramIdSchema), approveStudentJoinRequest);
+router
+  .route('/student-join-requests/:id/reject')
+  .post(validate(paramIdSchema), rejectStudentJoinRequest);
 
 // Patron Management
 router.route('/patrons').get(getAllPatrons).post(validate(createStudentSchema), createStudent);

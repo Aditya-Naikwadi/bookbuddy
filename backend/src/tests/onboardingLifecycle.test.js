@@ -962,6 +962,49 @@ describe('onboarding Lifecycle Consolidated Suite', () => {
           // Verify no overlap between page 1 and page 2
           expect(page2Titles.some((t) => page1Titles.includes(t))).toBe(false);
         });
+
+        it('should correctly filter available books with copiesAvailable > 0 when available=true', async () => {
+          // Create an unavailable book with copiesAvailable: 0
+          const unavailableBook = await Book.create({
+            collegeId: college._id,
+            title: 'Zero Copies Book Out Of Stock',
+            author: 'Unavailable Author',
+            isbn: '9780009998877',
+            category: 'Engineering',
+            format: 'physical',
+            copiesTotal: 2,
+            copiesAvailable: 0,
+          });
+
+          // Test canonical route: /api/v1/books?available=true
+          const resV1 = await request(app)
+            .get('/api/v1/books?available=true&limit=50')
+            .set('Authorization', `Bearer ${studentToken}`);
+
+          expect(resV1.status).toBe(200);
+          expect(resV1.body.success).toBe(true);
+          expect(resV1.body.books.length).toBeGreaterThan(0);
+          for (const b of resV1.body.books) {
+            expect(b.copiesAvailable).toBeGreaterThan(0);
+            expect(b.availableCopies).toBeGreaterThan(0);
+            expect(b.availabilityStatus).toBe('available');
+          }
+          expect(
+            resV1.body.books.some((b) => b._id.toString() === unavailableBook._id.toString())
+          ).toBe(false);
+
+          // Test legacy route: /api/books?available=true
+          const resLegacy = await request(app)
+            .get('/api/books?available=true&limit=50')
+            .set('Authorization', `Bearer ${studentToken}`);
+
+          expect(resLegacy.status).toBe(200);
+          expect(resLegacy.body.success).toBe(true);
+          expect(resLegacy.body.books.length).toBeGreaterThan(0);
+          expect(
+            resLegacy.body.books.some((b) => b._id.toString() === unavailableBook._id.toString())
+          ).toBe(false);
+        });
       });
 
       describe('Item 15: Compound Index & Cursor Pagination on EResource', () => {

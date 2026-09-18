@@ -585,7 +585,8 @@ const GeneralDashboardHome = () => {
                     <Upload className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" />
                     <span>Upload Students</span>
                   </button>
-                ) : user?.role === "student" ? (
+                ) : user?.role === "student" ||
+                  user?.role === "college-student" ? (
                   <button
                     onClick={() => navigate("/lab-booking")}
                     className="flex items-center justify-center sm:justify-start gap-2 p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-edge text-slate-900 dark:text-ink hover:bg-white dark:hover:bg-slate-800 hover:border-sky-500/50 transition-all text-xs font-bold shadow-xs cursor-pointer"

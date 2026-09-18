@@ -57,7 +57,7 @@ const toggleRSVP = asyncHandler(async (req, res) => {
     const updated = await Announcement.findByIdAndUpdate(
       req.params.id,
       { $pull: { rsvpUsers: { userId } } },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     return res.json({
@@ -83,7 +83,7 @@ const toggleRSVP = asyncHandler(async (req, res) => {
     {
       $addToSet: { rsvpUsers: { userId, rsvpAt: new Date() } },
     },
-    { new: true }
+    { returnDocument: 'after' }
   );
 
   if (!updated) {

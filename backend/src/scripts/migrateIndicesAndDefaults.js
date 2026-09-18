@@ -13,14 +13,15 @@ const LabBooking = require('../models/LabBooking');
 const ReadingPosition = require('../models/ReadingPosition');
 const Complaint = require('../models/Complaint');
 
-const runMigration = async () => {
+const runMigration = async ({ shouldExit = true } = {}) => {
   try {
     logger.info('Starting Database Schema Migration and Index Creation...');
-    const mongoUri =
-      process.env.MONGO_URI || config.mongoUri || 'mongodb://localhost:27017/bookbuddy';
-
-    await mongoose.connect(mongoUri);
-    logger.info('Connected to MongoDB for migration script execution.');
+    if (mongoose.connection.readyState === 0) {
+      const mongoUri =
+        process.env.MONGO_URI || config.mongoUri || 'mongodb://localhost:27017/bookbuddy';
+      await mongoose.connect(mongoUri);
+      logger.info('Connected to MongoDB for migration script execution.');
+    }
 
     // 1. Seed default maxFineLimit: 100 on existing College documents
     const collegeUpdateResult = await College.updateMany(
@@ -31,17 +32,42 @@ const runMigration = async () => {
       `Updated ${collegeUpdateResult.modifiedCount} College documents with default maxFineLimit: 100.`
     );
 
-    // 2. Populate cardSecret on existing User documents
-    const usersWithoutSecret = await User.find({
+    // 2. Populate cardSecret on existing User documents via cursor streaming and bulkWrite batching
+    logger.info(
+      'Populating cardSecret for existing User documents via cursor streaming and bulkWrite...'
+    );
+    const userCursor = User.find({
       $or: [{ cardSecret: { $exists: false } }, { cardSecret: null }, { cardSecret: '' }],
-    }).select('+cardSecret');
+    })
+      .select('_id')
+      .lean()
+      .cursor({ batchSize: 500 });
 
+    let bulkOps = [];
     let updatedUsersCount = 0;
-    for (const u of usersWithoutSecret) {
-      u.cardSecret = crypto.randomBytes(32).toString('hex');
-      await u.save({ validateBeforeSave: false });
-      updatedUsersCount++;
+    const BATCH_SIZE = 500;
+
+    for await (const doc of userCursor) {
+      bulkOps.push({
+        updateOne: {
+          filter: { _id: doc._id },
+          update: { $set: { cardSecret: crypto.randomBytes(32).toString('hex') } },
+        },
+      });
+
+      if (bulkOps.length >= BATCH_SIZE) {
+        const res = await User.bulkWrite(bulkOps, { ordered: false });
+        updatedUsersCount += res.modifiedCount || bulkOps.length;
+        bulkOps = [];
+      }
     }
+
+    if (bulkOps.length > 0) {
+      const res = await User.bulkWrite(bulkOps, { ordered: false });
+      updatedUsersCount += res.modifiedCount || bulkOps.length;
+      bulkOps = [];
+    }
+
     logger.info(`Populated cardSecret for ${updatedUsersCount} existing User documents.`);
 
     // 3. Synchronize / Ensure Index Creation
@@ -56,11 +82,21 @@ const runMigration = async () => {
     await Complaint.syncIndexes();
 
     logger.info('All Mongoose indexes synchronized successfully.');
-    process.exit(0);
+    if (shouldExit) {
+      process.exit(0);
+    }
+    return { collegeModifiedCount: collegeUpdateResult.modifiedCount, updatedUsersCount };
   } catch (err) {
     logger.error(`Migration Script Failed: ${err.message}`, { stack: err.stack });
-    process.exit(1);
+    if (shouldExit) {
+      process.exit(1);
+    }
+    throw err;
   }
 };
 
-runMigration();
+if (require.main === module) {
+  runMigration({ shouldExit: true });
+}
+
+module.exports = { runMigration };

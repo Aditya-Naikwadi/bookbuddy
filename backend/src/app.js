@@ -435,6 +435,7 @@ const { getOpenApiSpec } = require('./docs/openapi');
 app.get('/api/v1/docs/swagger.json', (req, res) => res.json(getOpenApiSpec()));
 app.use('/api/v1/dashboards/admin-portal', require('./routes/dashboards/adminPortalRoutes'));
 app.use('/api/v1/dashboards/college-admin', require('./routes/dashboards/collegeAdminRoutes'));
+app.use('/api/v1/college-admin', require('./routes/dashboards/collegeAdminRoutes'));
 app.use('/api/v1/dashboards/student', require('./routes/dashboards/studentDashboardRoutes'));
 app.use('/api/v1/dashboards/general', require('./routes/dashboards/generalDashboardRoutes'));
 app.use('/api/v1/college', require('./routes/dashboards/generalDashboardRoutes'));
@@ -569,6 +570,12 @@ app.use(
   deprecationWarning,
   require('./routes/dashboards/collegeAdminRoutes')
 );
+app.use(
+  '/api/college-admin',
+  deprecationWarning,
+  require('./routes/dashboards/collegeAdminRoutes')
+);
+app.use('/college-admin', deprecationWarning, require('./routes/dashboards/collegeAdminRoutes'));
 app.use(
   '/api/dashboards/student',
   deprecationWarning,

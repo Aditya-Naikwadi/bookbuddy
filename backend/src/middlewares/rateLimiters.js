@@ -151,6 +151,11 @@ const limiters = {
   ),
   generalDashboard: getLimiter('generalDashboard', 100, 900),
   college: getLimiter('collegeRateLimit', 1000, 900),
+  patronCardVerify: getLimiter(
+    'patronCardVerify',
+    config.rateLimits.patronCardVerifyMax || 60,
+    Math.ceil((config.rateLimits.patronCardVerifyWindowMs || 60000) / 1000)
+  ),
 };
 
 // Helper to extract clean client IP
@@ -347,6 +352,32 @@ const resetAllLimiters = () => {
   );
   limiters.generalDashboard = getLimiter('generalDashboard', 100, 900);
   limiters.college = getLimiter('collegeRateLimit', 1000, 900);
+  limiters.patronCardVerify = getLimiter(
+    'patronCardVerify',
+    config.rateLimits.patronCardVerifyMax || 60,
+    Math.ceil((config.rateLimits.patronCardVerifyWindowMs || 60000) / 1000)
+  );
+};
+
+const patronCardVerifyLimiter = async (req, res, next) => {
+  if (isSystemProbeRoute(req.path)) {
+    return next();
+  }
+
+  const apiKey =
+    req.headers['x-api-key'] ||
+    req.headers['x-scanner-key'] ||
+    req.headers['x-scanner-api-key'] ||
+    '';
+  const ip = getClientIp(req);
+  const key = apiKey ? `scanner:${apiKey}` : `ip:${ip}`;
+
+  try {
+    await limiters.patronCardVerify(key);
+    next();
+  } catch (rej) {
+    handleRejection(key, 'patronCardVerify', req, res, next, rej);
+  }
 };
 
 const collegeRateLimiter = async (req, res, next) => {
@@ -384,6 +415,7 @@ module.exports = {
   expensiveRouteLimiter,
   generalDashboardLimiter,
   collegeRateLimiter,
+  patronCardVerifyLimiter,
   getLimiter,
   redisClient,
   resetAllLimiters,

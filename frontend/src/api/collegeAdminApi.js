@@ -150,6 +150,29 @@ export const getCustomReport = async (type, params = {}) => {
   return data;
 };
 
+export const getStudentJoinRequests = async (params = {}) => {
+  const { data } = await apiClient.get(
+    "/college-admin/student-join-requests",
+    { params },
+  );
+  return data;
+};
+
+export const approveStudentJoinRequest = async (id) => {
+  const { data } = await apiClient.post(
+    `/college-admin/student-join-requests/${id}/approve`,
+  );
+  return data;
+};
+
+export const rejectStudentJoinRequest = async (id, payload) => {
+  const { data } = await apiClient.post(
+    `/college-admin/student-join-requests/${id}/reject`,
+    payload,
+  );
+  return data;
+};
+
 const collegeAdminApi = {
   getCirculationQueue,
   checkoutBook,
@@ -172,6 +195,9 @@ const collegeAdminApi = {
   getAnalyticsSummary,
   getStaffDashboardWidgets,
   getCustomReport,
+  getStudentJoinRequests,
+  approveStudentJoinRequest,
+  rejectStudentJoinRequest,
 };
 
 export default collegeAdminApi;

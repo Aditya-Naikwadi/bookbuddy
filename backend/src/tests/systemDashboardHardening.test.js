@@ -1,11 +1,3 @@
-/**
- * Consolidated Suite: system Dashboard Hardening
- * Merged from:
- *  - backendDashboardHardening.test.js
- *  - databaseDashboardHardening.test.js
- *  - generalDashboardHardening.test.js
- */
-
 process.env.NODE_ENV = 'test';
 jest.setTimeout(30000);
 
@@ -50,22 +42,24 @@ describe('system Dashboard Hardening Consolidated Suite', () => {
           await mongoose.connect(process.env.MONGO_URI);
         }
 
+        const uniqueSuffix = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
         collegeA = await College.create({
           name: 'College Alpha',
-          code: 'ALPHA_COL',
+          code: 'ALPHA_' + uniqueSuffix,
           status: 'active',
         });
 
         collegeB = await College.create({
           name: 'College Beta',
-          code: 'BETA_COL',
+          code: 'BETA_' + uniqueSuffix,
           status: 'active',
         });
 
         userA = await User.create({
-          studentId: 'STU_ALPHA_101',
+          studentId: 'STU_ALPHA_' + uniqueSuffix,
           name: 'Alpha Student',
-          email: 'student@alpha.edu',
+          email: `student_${uniqueSuffix}@alpha.edu`,
           password: 'Password123!',
           role: 'student',
           collegeId: collegeA._id,
@@ -101,11 +95,18 @@ describe('system Dashboard Hardening Consolidated Suite', () => {
       });
 
       afterAll(async () => {
-        await Announcement.deleteMany({ _id: { $in: [collegeA._id, collegeB._id] } });
-        await Book.deleteMany({ _id: { $in: [collegeA._id, collegeB._id] } });
-        await User.deleteMany({ _id: userA._id });
-        await College.deleteMany({ _id: { $in: [collegeA._id, collegeB._id] } });
-        // await // mongoose.connection.close();
+        await Announcement.deleteMany({
+          collegeId: { $in: [collegeA?._id, collegeB?._id].filter(Boolean) },
+        });
+        await Book.deleteMany({
+          collegeId: { $in: [collegeA?._id, collegeB?._id].filter(Boolean) },
+        });
+        if (userA?._id) {
+          await User.deleteMany({ _id: userA._id });
+        }
+        await College.deleteMany({
+          _id: { $in: [collegeA?._id, collegeB?._id].filter(Boolean) },
+        });
       });
 
       it('1. Aggregate Payload: GET /api/v1/college/:id/dashboard returns stats, hours, announcements, popular & new arrivals', async () => {

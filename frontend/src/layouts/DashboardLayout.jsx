@@ -60,7 +60,8 @@ export default function DashboardLayout() {
     "librarian",
   ].includes(user?.role);
   const isGeneralDashboard = user?.role === "general";
-  const isStudent = user?.role === "student";
+  const isStudent =
+    user?.role === "student" || user?.role === "college-student";
 
   const visibleStudentItems = STUDENT_NAV_ITEMS.filter(
     (item) => !item.feature || isFeatureEnabled(item.feature),

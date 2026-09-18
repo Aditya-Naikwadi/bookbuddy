@@ -120,7 +120,7 @@ export const PaymentDialog = ({
         import.meta.env.VITE_RAZORPAY_KEY_ID ||
         orderData.key_id ||
         razorpayKeyId ||
-        "rzp_test_TOm6pPV3QhF4Vr";
+        "";
 
       // STEP 2: Configure Razorpay modal options with order_id
       const options = {

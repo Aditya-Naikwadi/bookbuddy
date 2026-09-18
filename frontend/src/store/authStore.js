@@ -214,17 +214,34 @@ const useAuthStore = create((set) => {
       }
     },
 
-    register: async (name, email, password, idNumber, role) => {
+    register: async (name, email, password, idNumber, role, collegeId = null) => {
       set({ isLoading: true, error: null });
       try {
         await fetchCsrfToken();
-        const { data } = await apiClient.post("/auth/register", {
+        const payload = {
           name,
           email,
           password,
-          studentId: idNumber,
           role,
-        });
+        };
+        if (idNumber && idNumber.trim()) {
+          payload.studentId = idNumber.trim();
+        }
+        if (collegeId && role === "college-student") {
+          payload.collegeId = collegeId;
+        }
+        const { data } = await apiClient.post("/auth/register", payload);
+
+        if (data.requiresApproval || data.status === "pending") {
+          set({
+            isLoading: false,
+            user: null,
+            token: null,
+            isAuthenticated: false,
+          });
+          return { requiresApproval: true, joinRequest: data.data };
+        }
+
         const accessToken = data.accessToken;
         setInMemoryToken(accessToken);
         localStorage.setItem("token", accessToken);

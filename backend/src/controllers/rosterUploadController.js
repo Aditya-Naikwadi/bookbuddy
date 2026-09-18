@@ -267,6 +267,38 @@ exports.validateRosterUpload = asyncHandler(async (req, res, next) => {
   });
 });
 
+const NOTIFICATION_CONCURRENCY = parseInt(process.env.ROSTER_NOTIFICATION_CONCURRENCY || '25', 10);
+
+/**
+ * Concurrently processes an array of notification tasks with a bounded concurrency pool (backpressure).
+ * Ensures at most `concurrency` asynchronous workers run simultaneously, preventing socket exhaustion.
+ *
+ * @param {Array} items
+ * @param {number} concurrency
+ * @param {Function} workerFn
+ * @returns {Promise<Array>}
+ */
+async function dispatchWithBackpressure(items, concurrency, workerFn) {
+  if (!items || items.length === 0) return [];
+  const results = new Array(items.length);
+  let cursor = 0;
+  const workerLimit = Math.max(1, Math.min(concurrency, items.length));
+
+  const workers = Array.from({ length: workerLimit }, async () => {
+    while (cursor < items.length) {
+      const idx = cursor++;
+      try {
+        results[idx] = await workerFn(items[idx], idx);
+      } catch (err) {
+        results[idx] = { error: err };
+      }
+    }
+  });
+
+  await Promise.all(workers);
+  return results;
+}
+
 /**
  * Background Processor for Asynchronous Roster Ingestion
  */
@@ -306,6 +338,10 @@ async function processRosterBatchAsync(
       });
       const existingMap = new Map(existingInChunk.map((u) => [u.studentId.toLowerCase(), u]));
 
+      const newUsersToCreate = [];
+      const notificationTasks = [];
+      const existingUpdatePromises = [];
+
       for (let i = 0; i < chunk.length; i++) {
         const row = chunk[i];
         const overallIndex = c + i;
@@ -330,7 +366,7 @@ async function processRosterBatchAsync(
             existing.status = 'active';
           }
 
-          await existing.save();
+          existingUpdatePromises.push(existing.save());
           updatedCount += 1;
 
           rowResults.push({
@@ -349,7 +385,7 @@ async function processRosterBatchAsync(
           const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
           const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
 
-          await User.create({
+          newUsersToCreate.push({
             collegeId: adminCollegeId,
             studentId: normalizedStudentId,
             name,
@@ -368,140 +404,212 @@ async function processRosterBatchAsync(
             uploadedAt: new Date(),
           });
 
+          notificationTasks.push({
+            rowNumber: rowNumber || overallIndex + 2,
+            overallIndex,
+            studentId: normalizedStudentId,
+            name,
+            email,
+            phone,
+            program,
+            tempPassword,
+            rawToken,
+          });
+
           createdCount += 1;
+        }
+      }
 
-          if (email) {
-            try {
-              const activationLink = `${domain}/c/${college.slug}/activate?token=${rawToken}`;
-              await mailer.sendMail({
-                to: email,
-                subject: `Welcome to ${college.name} BookBuddy Library`,
-                html: `
-                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-                    <h2 style="color: #4f46e5;">Welcome to ${college.name} BookBuddy!</h2>
-                    <p>Hello ${name},</p>
-                    <p>Your official student library account has been created by your institution.</p>
-                    <p><strong>Temporary Password:</strong> <code style="background: #f3f4f6; padding: 2px 6px; font-weight: bold;">${tempPassword}</code></p>
-                    <p>Please activate your account and choose a new password using the button below:</p>
-                    <p style="margin: 25px 0;">
-                      <a href="${activationLink}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Activate My Account</a>
-                    </p>
-                    <p style="color: #6b7280; font-size: 12px;">Link valid for 48 hours. Student ID: ${normalizedStudentId}</p>
-                  </div>
-                `,
-              });
+      // Execute existing updates concurrently
+      if (existingUpdatePromises.length > 0) {
+        await Promise.all(existingUpdatePromises);
+      }
 
-              rowResults.push({
-                rowNumber: rowNumber || overallIndex + 2,
-                studentId: normalizedStudentId,
-                name,
-                email,
-                action: 'created',
-                deliveryStatus: 'sent',
-                reason: 'Activation email and temporary credentials dispatched.',
-              });
-            } catch (mailErr) {
-              rowResults.push({
-                rowNumber: rowNumber || overallIndex + 2,
-                studentId: normalizedStudentId,
-                name,
-                email,
-                action: 'created',
-                deliveryStatus: 'bounced',
-                reason: `Email delivery failed: ${mailErr.message}`,
-              });
-              credentialSlips.push({
-                studentId: normalizedStudentId,
-                name,
-                email,
-                program,
-                tempPassword,
-                deliveryChannel: 'bounced_email_fallback',
-              });
-            }
-          } else if (phone && isTwilioConfigured()) {
-            try {
-              const smsResult = await sendCredentialSMS({
-                to: phone,
-                studentId: normalizedStudentId,
-                tempPassword,
-                name,
-                collegeName: college.name,
-                collegeSlug: college.slug,
-              });
+      // Execute new user creations concurrently with pre-hashed passwords
+      if (newUsersToCreate.length > 0) {
+        const argon2 = require('argon2');
+        const argonOptions =
+          process.env.NODE_ENV === 'test'
+            ? { type: argon2.argon2id, timeCost: 1, memoryCost: 2048 }
+            : { type: argon2.argon2id };
+        await Promise.all(
+          newUsersToCreate.map(async (u) => {
+            u.cardSecret = crypto.randomBytes(32).toString('hex');
+            u.studentId = u.studentId.trim().toLowerCase();
+            if (u.email) u.email = u.email.trim().toLowerCase();
+            u.password = await argon2.hash(u.password, argonOptions);
+          })
+        );
+        await User.insertMany(newUsersToCreate, { ordered: false });
+      }
 
-              if (smsResult.success) {
-                rowResults.push({
-                  rowNumber: rowNumber || overallIndex + 2,
-                  studentId: normalizedStudentId,
-                  name,
-                  email: phone,
-                  action: 'created',
-                  deliveryStatus: 'sms_queued',
-                  reason: 'Temporary credentials dispatched via Twilio SMS.',
+      // Dispatch activation emails / SMS using bounded concurrent batching with backpressure
+      if (notificationTasks.length > 0) {
+        const dispatchResults = await dispatchWithBackpressure(
+          notificationTasks,
+          NOTIFICATION_CONCURRENCY,
+          async (task) => {
+            const {
+              rowNumber,
+              overallIndex,
+              studentId: nStudentId,
+              name: sName,
+              email: sEmail,
+              phone: sPhone,
+              program: sProg,
+              tempPassword: sPwd,
+              rawToken: sToken,
+            } = task;
+
+            if (sEmail) {
+              try {
+                const activationLink = `${domain}/c/${college.slug}/activate?token=${sToken}`;
+                await mailer.sendMail({
+                  to: sEmail,
+                  subject: `Welcome to ${college.name} BookBuddy Library`,
+                  html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                      <h2 style="color: #4f46e5;">Welcome to ${college.name} BookBuddy!</h2>
+                      <p>Hello ${sName},</p>
+                      <p>Your official student library account has been created by your institution.</p>
+                      <p><strong>Temporary Password:</strong> <code style="background: #f3f4f6; padding: 2px 6px; font-weight: bold;">${sPwd}</code></p>
+                      <p>Please activate your account and choose a new password using the button below:</p>
+                      <p style="margin: 25px 0;">
+                        <a href="${activationLink}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Activate My Account</a>
+                      </p>
+                      <p style="color: #6b7280; font-size: 12px;">Link valid for 48 hours. Student ID: ${nStudentId}</p>
+                    </div>
+                  `,
                 });
-              } else {
-                rowResults.push({
+
+                return {
+                  rowResult: {
+                    rowNumber: rowNumber || overallIndex + 2,
+                    studentId: nStudentId,
+                    name: sName,
+                    email: sEmail,
+                    action: 'created',
+                    deliveryStatus: 'sent',
+                    reason: 'Activation email and temporary credentials dispatched.',
+                  },
+                };
+              } catch (mailErr) {
+                return {
+                  rowResult: {
+                    rowNumber: rowNumber || overallIndex + 2,
+                    studentId: nStudentId,
+                    name: sName,
+                    email: sEmail,
+                    action: 'created',
+                    deliveryStatus: 'bounced',
+                    reason: `Email delivery failed: ${mailErr.message}`,
+                  },
+                  credentialSlip: {
+                    studentId: nStudentId,
+                    name: sName,
+                    email: sEmail,
+                    program: sProg,
+                    tempPassword: sPwd,
+                    deliveryChannel: 'bounced_email_fallback',
+                  },
+                };
+              }
+            } else if (sPhone && isTwilioConfigured()) {
+              try {
+                const smsResult = await sendCredentialSMS({
+                  to: sPhone,
+                  studentId: nStudentId,
+                  tempPassword: sPwd,
+                  name: sName,
+                  collegeName: college.name,
+                  collegeSlug: college.slug,
+                });
+
+                if (smsResult.success) {
+                  return {
+                    rowResult: {
+                      rowNumber: rowNumber || overallIndex + 2,
+                      studentId: nStudentId,
+                      name: sName,
+                      email: sPhone,
+                      action: 'created',
+                      deliveryStatus: 'sms_queued',
+                      reason: 'Temporary credentials dispatched via Twilio SMS.',
+                    },
+                  };
+                } else {
+                  return {
+                    rowResult: {
+                      rowNumber: rowNumber || overallIndex + 2,
+                      studentId: nStudentId,
+                      name: sName,
+                      email: sPhone,
+                      action: 'created',
+                      deliveryStatus: 'no_contact_info',
+                      reason: `SMS delivery failed (${smsResult.error || 'provider error'}). Generated offline credential slip for handout.`,
+                    },
+                    credentialSlip: {
+                      studentId: nStudentId,
+                      name: sName,
+                      email: sEmail,
+                      program: sProg,
+                      tempPassword: sPwd,
+                      deliveryChannel: 'printed_handout',
+                    },
+                  };
+                }
+              } catch (smsErr) {
+                return {
+                  rowResult: {
+                    rowNumber: rowNumber || overallIndex + 2,
+                    studentId: nStudentId,
+                    name: sName,
+                    email: sPhone,
+                    action: 'created',
+                    deliveryStatus: 'no_contact_info',
+                    reason: `SMS dispatch exception: ${smsErr.message}. Generated offline credential slip for handout.`,
+                  },
+                  credentialSlip: {
+                    studentId: nStudentId,
+                    name: sName,
+                    email: sEmail,
+                    program: sProg,
+                    tempPassword: sPwd,
+                    deliveryChannel: 'printed_handout',
+                  },
+                };
+              }
+            } else {
+              // Missing email & phone fallback path -> Handout slip generated
+              return {
+                rowResult: {
                   rowNumber: rowNumber || overallIndex + 2,
-                  studentId: normalizedStudentId,
-                  name,
-                  email: phone,
+                  studentId: nStudentId,
+                  name: sName,
+                  email: sPhone || '',
                   action: 'created',
                   deliveryStatus: 'no_contact_info',
-                  reason: `SMS delivery failed (${smsResult.error || 'provider error'}). Generated offline credential slip for handout.`,
-                });
-                credentialSlips.push({
-                  studentId: normalizedStudentId,
-                  name,
-                  email,
-                  program,
-                  tempPassword,
+                  reason:
+                    sPhone && !isTwilioConfigured()
+                      ? 'Twilio SMS unconfigured. Generated offline credential slip for handout.'
+                      : 'No email address on file. Generated offline credential slip for handout.',
+                },
+                credentialSlip: {
+                  studentId: nStudentId,
+                  name: sName,
+                  email: sEmail,
+                  program: sProg,
+                  tempPassword: sPwd,
                   deliveryChannel: 'printed_handout',
-                });
-              }
-            } catch (smsErr) {
-              rowResults.push({
-                rowNumber: rowNumber || overallIndex + 2,
-                studentId: normalizedStudentId,
-                name,
-                email: phone,
-                action: 'created',
-                deliveryStatus: 'no_contact_info',
-                reason: `SMS dispatch exception: ${smsErr.message}. Generated offline credential slip for handout.`,
-              });
-              credentialSlips.push({
-                studentId: normalizedStudentId,
-                name,
-                email,
-                program,
-                tempPassword,
-                deliveryChannel: 'printed_handout',
-              });
+                },
+              };
             }
-          } else {
-            // Missing email fallback path -> Handout slip generated
-            rowResults.push({
-              rowNumber: rowNumber || overallIndex + 2,
-              studentId: normalizedStudentId,
-              name,
-              email: phone || '',
-              action: 'created',
-              deliveryStatus: 'no_contact_info',
-              reason:
-                phone && !isTwilioConfigured()
-                  ? 'Twilio SMS unconfigured. Generated offline credential slip for handout.'
-                  : 'No email address on file. Generated offline credential slip for handout.',
-            });
-
-            credentialSlips.push({
-              studentId: normalizedStudentId,
-              name,
-              email,
-              program,
-              tempPassword,
-              deliveryChannel: 'printed_handout',
-            });
           }
+        );
+
+        for (const res of dispatchResults) {
+          if (res?.rowResult) rowResults.push(res.rowResult);
+          if (res?.credentialSlip) credentialSlips.push(res.credentialSlip);
         }
       }
 
@@ -509,33 +617,24 @@ async function processRosterBatchAsync(
       batch.processedRows = Math.min(c + chunk.length, validRows.length);
     }
 
-    // Step 3: Non-destructive Bulk Deactivation for absent students
+    // Step 3: Non-destructive Bulk Deactivation for absent students in a single query
     if (bulkDeactivateAbsent) {
-      const allActiveStudents = await User.find({
+      const absentFilter = {
         collegeId: adminCollegeId,
-        role: 'student',
+        role: { $in: ['student', 'college-student'] },
         status: { $in: ['active', 'invited'] },
+        studentId: { $nin: Array.from(processedStudentIds) },
+      };
+
+      const deactivationResult = await User.updateMany(absentFilter, {
+        $set: {
+          status: 'inactive',
+          deactivatedAt: new Date(),
+          deactivationReason: `Omitted from roster upload batch #${batch._id}`,
+        },
       });
 
-      for (const student of allActiveStudents) {
-        if (!processedStudentIds.has(student.studentId.toLowerCase())) {
-          student.status = 'inactive';
-          student.deactivatedAt = new Date();
-          student.deactivationReason = `Omitted from roster upload batch #${batch._id}`;
-          await student.save();
-          deactivatedCount += 1;
-
-          rowResults.push({
-            rowNumber: null,
-            studentId: student.studentId,
-            name: student.name,
-            email: student.email || '',
-            action: 'deactivated',
-            deliveryStatus: 'inactive',
-            reason: `Absent from new roster upload (marked inactive, account preserved).`,
-          });
-        }
-      }
+      deactivatedCount = deactivationResult.modifiedCount || 0;
     }
 
     batch.status = 'committed';
@@ -662,7 +761,27 @@ exports.getBatchDeliveryStatus = asyncHandler(async (req, res, next) => {
     return next(new AppError('Batch record not found', 404));
   }
 
-  const rowResults = batch.rowResults || [];
+  let rowResults = batch.rowResults || [];
+
+  if (batch.deactivatedCount > 0 && !rowResults.some((r) => r.action === 'deactivated')) {
+    const deactivatedUsers = await User.find({
+      collegeId: adminCollegeId,
+      deactivationReason: `Omitted from roster upload batch #${batch._id}`,
+    })
+      .select('studentId name email')
+      .lean();
+
+    const deactivatedRows = deactivatedUsers.map((u) => ({
+      rowNumber: null,
+      studentId: u.studentId,
+      name: u.name,
+      email: u.email || '',
+      action: 'deactivated',
+      deliveryStatus: 'inactive',
+      reason: 'Absent from new roster upload (marked inactive, account preserved).',
+    }));
+    rowResults = [...rowResults, ...deactivatedRows];
+  }
 
   const deliverySummary = {
     totalProcessed: rowResults.length,
@@ -754,3 +873,6 @@ exports.exportRoster = asyncHandler(async (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename=roster_export_${Date.now()}.csv`);
   res.status(200).send(csvBuffer);
 });
+
+exports.processRosterBatchAsync = processRosterBatchAsync;
+exports.dispatchWithBackpressure = dispatchWithBackpressure;

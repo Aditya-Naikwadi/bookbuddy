@@ -930,7 +930,10 @@ describe('admin Dashboard And I L S Consolidated Suite', () => {
         test('POST /api/patron-card/verify successfully verifies a valid scanned token', async () => {
           const { token } = generatePatronToken(studentUser._id, studentUser.studentId);
 
-          const res = await request(app).post('/api/v1/patron-card/verify').send({ token });
+          const res = await request(app)
+            .post('/api/v1/patron-card/verify')
+            .set('x-api-key', process.env.SCANNER_API_KEY || 'bookbuddy_scanner_secret_2026')
+            .send({ token });
 
           expect(res.statusCode).toBe(200);
           expect(res.body.success).toBe(true);
@@ -942,6 +945,7 @@ describe('admin Dashboard And I L S Consolidated Suite', () => {
         test('POST /api/patron-card/verify rejects an expired or invalid token', async () => {
           const res = await request(app)
             .post('/api/v1/patron-card/verify')
+            .set('x-api-key', process.env.SCANNER_API_KEY || 'bookbuddy_scanner_secret_2026')
             .send({ token: 'bogus-scanned-qr-code' });
 
           expect(res.statusCode).toBe(400);

@@ -16,7 +16,7 @@ const {
 const getActiveColleges = async (req, res, next) => {
   try {
     const colleges = await College.find({ status: 'active', isActive: true })
-      .select('_id name shortName code domain configuredDepartments')
+      .select('_id name shortName code slug domain configuredDepartments')
       .sort({ name: 1 })
       .lean();
 
@@ -37,26 +37,13 @@ const registerStudent = async (req, res, next) => {
     const { name, email, password, collegeId, studentId, department, phone } = req.body;
     const normalizedEmail = email.toLowerCase().trim();
 
-    // 1. Verify target college exists and is ACTIVE, or fallback if collegeId not provided
-    let college = null;
-    if (collegeId) {
-      college = await College.findById(collegeId);
-      if (!college || college.status !== 'active' || !college.isActive) {
-        return next(new AppError('Target college is not active or does not exist.', 400));
-      }
-    } else {
-      college = await College.findOne({ status: 'active', isActive: true });
-      if (!college) {
-        college = await College.findOne({ isActive: true });
-      }
-      if (!college) {
-        college = await College.create({
-          name: 'Demo College',
-          code: 'COLLEGE_A',
-          status: 'active',
-          isActive: true,
-        });
-      }
+    // 1. Verify target college exists and is ACTIVE
+    if (!collegeId) {
+      return next(new AppError('Target college is required.', 400));
+    }
+    const college = await College.findById(collegeId);
+    if (!college || college.status !== 'active' || !college.isActive) {
+      return next(new AppError('Target college is not active or does not exist.', 400));
     }
 
     // 2. Validate student email domain against college domain if registered

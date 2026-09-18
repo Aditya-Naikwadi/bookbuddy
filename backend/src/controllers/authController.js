@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const College = require('../models/College');
+const StudentJoinRequest = require('../models/StudentJoinRequest');
 const AppError = require('../utils/AppError');
 const { getAuthCookieOptions } = require('../utils/cookieOptions');
 const sessionService = require('../services/sessionService');
@@ -31,11 +32,18 @@ const registerUser = async (req, res, next) => {
   try {
     let { studentId, name, email, password, role, collegeId } = req.body;
 
-    if (role === 'super-admin' || role === 'college-admin') {
+    if (
+      role === 'super-admin' ||
+      role === 'college-admin' ||
+      role === 'college_admin' ||
+      role === 'super_admin'
+    ) {
       return next(new AppError('Public registration of administrative roles is forbidden.', 403));
     }
 
-    if (role !== 'super-admin') {
+    const isCollegeStudent = role === 'college-student';
+
+    if (isCollegeStudent) {
       if (!collegeId) {
         return next(
           new AppError('College selection is required. Please select your institution.', 400)
@@ -45,32 +53,159 @@ const registerUser = async (req, res, next) => {
       if (!college || !college.isActive) {
         return next(new AppError('The specified college is inactive or does not exist.', 400));
       }
+    } else if (role === 'student' && collegeId) {
+      const college = await College.findById(collegeId);
+      if (!college || !college.isActive) {
+        return next(new AppError('The specified college is inactive or does not exist.', 400));
+      }
+    } else {
+      collegeId = null;
     }
 
     const normalizedEmail = email.toLowerCase().trim();
     const normalizedStudentId = studentId ? studentId.toLowerCase().trim() : '';
-    const targetCollegeId = role === 'super-admin' ? undefined : collegeId;
+    const targetCollegeId =
+      isCollegeStudent || (role === 'student' && collegeId) ? collegeId : null;
 
-    const userExists = await User.findOne({
-      $or: [
-        { email: normalizedEmail },
-        ...(targetCollegeId
-          ? [{ collegeId: targetCollegeId, studentId: normalizedStudentId }]
-          : [{ studentId: normalizedStudentId }]),
-      ],
-    });
+    // Roster reconciliation: If college student, check for pre-uploaded roster record
+    // matching BOTH studentId and email exactly (no fuzzy/name-only matching) with unactivated status
+    if (targetCollegeId && normalizedStudentId && normalizedEmail) {
+      const rosterUser = await User.findOne({
+        collegeId: targetCollegeId,
+        studentId: normalizedStudentId,
+        email: normalizedEmail,
+        $or: [
+          { mustChangePasswordOnNextLogin: true },
+          { status: 'invited' },
+          { status: 'unactivated' },
+        ],
+      });
+
+      if (rosterUser) {
+        // Auto-activate immediately
+        rosterUser.password = password;
+        if (name && name.trim()) {
+          rosterUser.name = name.trim();
+        }
+        rosterUser.role = 'student';
+        rosterUser.status = 'active';
+        rosterUser.membershipStatus = 'active';
+        rosterUser.isEmailVerified = true;
+        rosterUser.mustChangePasswordOnNextLogin = false;
+        rosterUser.activationTokenHash = null;
+        rosterUser.activationTokenExpiresAt = null;
+
+        await rosterUser.save();
+
+        const logger = require('../utils/logger');
+        logger.info(
+          `[DB WRITE CONFIRMED] Model: User | _id: ${rosterUser._id} | email: ${rosterUser.email} | collegeId: ${rosterUser.collegeId} | role: student | status: active | auto-activated: true`
+        );
+
+        const deviceInfo = req.headers['user-agent'] || 'Web Browser';
+        const { accessToken, refreshToken } = await sessionService.createSession({
+          user: rosterUser,
+          deviceInfo,
+        });
+
+        setRefreshTokenCookie(res, refreshToken, req);
+
+        return res.status(201).json({
+          success: true,
+          message: 'Account matched with campus roster and auto-activated successfully.',
+          user: {
+            _id: rosterUser._id,
+            studentId: rosterUser.studentId,
+            name: rosterUser.name,
+            email: rosterUser.email,
+            role: rosterUser.role,
+            collegeId: rosterUser.collegeId ?? null,
+          },
+          accessToken,
+          isAutoActivated: true,
+        });
+      }
+    }
+
+    const orConditions = [{ email: normalizedEmail }];
+    if (targetCollegeId && normalizedStudentId) {
+      orConditions.push({ collegeId: targetCollegeId, studentId: normalizedStudentId });
+    } else if (normalizedStudentId) {
+      orConditions.push({ studentId: normalizedStudentId });
+    }
+
+    const userExists = await User.findOne({ $or: orConditions });
     if (userExists) {
       return next(
         new AppError('User with this email or Student ID already exists for this college.', 400)
       );
     }
 
+    // Task 7: If no roster match is found for a College Student, create a StudentJoinRequest (pending)
+    // instead of an active account. Zero tenant dashboard access until approved by college admin.
+    if (isCollegeStudent) {
+      const pendingRequest = await StudentJoinRequest.findOne({
+        collegeId: targetCollegeId,
+        $or: [{ email: normalizedEmail }, { studentId: normalizedStudentId }],
+        status: 'pending',
+      });
+
+      if (pendingRequest) {
+        return next(
+          new AppError(
+            'A registration request for this student ID or email is already pending review by your college administrator.',
+            400
+          )
+        );
+      }
+
+      const argon2 = require('argon2');
+      const hashedPassword = await argon2.hash(password, { type: argon2.argon2id });
+
+      const targetCollege = await College.findById(targetCollegeId).select('name shortName');
+
+      const joinRequest = await StudentJoinRequest.create({
+        collegeId: targetCollegeId,
+        studentId: normalizedStudentId,
+        name: name.trim(),
+        email: normalizedEmail,
+        password: hashedPassword,
+        status: 'pending',
+      });
+
+      const logger = require('../utils/logger');
+      logger.info(
+        `[DB WRITE CONFIRMED] Model: StudentJoinRequest | _id: ${joinRequest._id} | email: ${joinRequest.email} | collegeId: ${joinRequest.collegeId} | status: pending`
+      );
+
+      return res.status(201).json({
+        success: true,
+        requiresApproval: true,
+        status: 'pending',
+        message: 'Join request submitted. Awaiting college administrator approval.',
+        data: {
+          requestId: joinRequest._id,
+          studentId: joinRequest.studentId,
+          name: joinRequest.name,
+          email: joinRequest.email,
+          collegeId: joinRequest.collegeId,
+          collegeName: targetCollege?.name || 'Your Institution',
+          status: 'pending',
+          submittedAt: joinRequest.submittedAt,
+        },
+      });
+    }
+
+    const effectiveRole = role || 'student';
+    const effectiveStudentId =
+      normalizedStudentId || (effectiveRole === 'general' ? undefined : `stu_${Date.now()}`);
+
     const user = await User.create({
-      studentId: normalizedStudentId,
+      studentId: effectiveStudentId,
       name: name.trim(),
       email: normalizedEmail,
       password,
-      role: role || 'student',
+      role: effectiveRole,
       collegeId: targetCollegeId,
     });
 
@@ -92,7 +227,7 @@ const registerUser = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        collegeId: user.collegeId,
+        collegeId: user.collegeId ?? null,
       },
       accessToken,
     });

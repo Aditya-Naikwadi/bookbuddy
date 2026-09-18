@@ -45,39 +45,39 @@ export const ROLE_ROUTE_MAP = {
   "/general-dashboard/saved": ["general"],
 
   // Student Routes (Canonical /student/* prefix)
-  "/student": ["student"],
-  "/student/catalog": ["student"],
-  "/student/loans": ["student"],
-  "/student/fines": ["student"],
-  "/student/card": ["student"],
-  "/student/e-resources": ["student"],
-  "/student/reader": ["student"],
-  "/student/reading-lists": ["student"],
-  "/student/shelves": ["student"],
-  "/student/facilities": ["student"],
-  "/student/support": ["student"],
-  "/student/engagement": ["student"],
-  "/student/recommendations": ["student"],
-  "/student/saved": ["student"],
-  "/student/feed": ["student"],
-  "/student/downloads": ["student"],
-  "/student/cross-college": ["student"],
-  "/student/profile": ["student"],
-  "/student/settings": ["student"],
+  "/student": ["student", "college-student"],
+  "/student/catalog": ["student", "college-student"],
+  "/student/loans": ["student", "college-student"],
+  "/student/fines": ["student", "college-student"],
+  "/student/card": ["student", "college-student"],
+  "/student/e-resources": ["student", "college-student"],
+  "/student/reader": ["student", "college-student"],
+  "/student/reading-lists": ["student", "college-student"],
+  "/student/shelves": ["student", "college-student"],
+  "/student/facilities": ["student", "college-student"],
+  "/student/support": ["student", "college-student"],
+  "/student/engagement": ["student", "college-student"],
+  "/student/recommendations": ["student", "college-student"],
+  "/student/saved": ["student", "college-student"],
+  "/student/feed": ["student", "college-student"],
+  "/student/downloads": ["student", "college-student"],
+  "/student/cross-college": ["student", "college-student"],
+  "/student/profile": ["student", "college-student"],
+  "/student/settings": ["student", "college-student"],
 
   // Legacy Student Routes (Backward Compatibility)
-  "/student-dashboard": ["student"],
-  "/catalog": ["student"],
-  "/loans": ["student"],
-  "/fines": ["student"],
-  "/patron-card": ["student"],
-  "/e-resources": ["student"],
-  "/reading-lists": ["student"],
-  "/recommendations": ["student"],
-  "/saved": ["student"],
-  "/lab-booking": ["student"],
-  "/support": ["student"],
-  "/achievements": ["student"],
+  "/student-dashboard": ["student", "college-student"],
+  "/catalog": ["student", "college-student"],
+  "/loans": ["student", "college-student"],
+  "/fines": ["student", "college-student"],
+  "/patron-card": ["student", "college-student"],
+  "/e-resources": ["student", "college-student"],
+  "/reading-lists": ["student", "college-student"],
+  "/recommendations": ["student", "college-student"],
+  "/saved": ["student", "college-student"],
+  "/lab-booking": ["student", "college-student"],
+  "/support": ["student", "college-student"],
+  "/achievements": ["student", "college-student"],
 };
 
 export const getRequiredRolesForRoute = (pathname) => {
@@ -97,5 +97,8 @@ export const isUserAllowedForRoute = (user, pathname) => {
   const requiredRoles = getRequiredRolesForRoute(pathname);
   if (!requiredRoles) return true; // Public route
   if (!user || !user.role) return false;
-  return requiredRoles.includes(user.role);
+  return (
+    requiredRoles.includes(user.role) ||
+    (requiredRoles.includes("student") && user.role === "college-student")
+  );
 };

@@ -154,7 +154,7 @@ describe("General Dashboard Consolidated Suite", () => {
       });
     });
 
-    it("1. renders General Patron Dashboard header, operational hours (8:00 AM - 5:00 PM), and catalog stats", () => {
+    it("1. renders General Patron Dashboard header, operational hours (8:00 AM - 5:00 PM), and catalog stats", async () => {
       render(
         <QueryClientProvider client={queryClient}>
           <MemoryRouter>
@@ -163,10 +163,14 @@ describe("General Dashboard Consolidated Suite", () => {
         </QueryClientProvider>,
       );
 
-      expect(screen.getByText(/General Patron Dashboard/i)).toBeInTheDocument();
-      expect(screen.getByText(/08:00 AM - 05:00 PM/i)).toBeInTheDocument();
-      expect(screen.getByText("1,420")).toBeInTheDocument();
-      expect(screen.getByText(/New Arrivals/i)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(
+          screen.getByText(/General Patron Dashboard/i),
+        ).toBeInTheDocument();
+        expect(screen.getByText(/08:00 AM - 05:00 PM/i)).toBeInTheDocument();
+        expect(screen.getByText("1,420")).toBeInTheDocument();
+        expect(screen.getByText(/New Arrivals/i)).toBeInTheDocument();
+      });
     });
 
     it("2. verifies Quick Action buttons correctly navigate to their target routes without dead links", () => {
@@ -609,7 +613,7 @@ describe("General Dashboard Consolidated Suite", () => {
         });
       });
 
-      it("renders polished SaaS dashboard with metric cards and library hours", () => {
+      it("renders polished SaaS dashboard with metric cards and library hours", async () => {
         render(
           <QueryClientProvider client={queryClient}>
             <MemoryRouter>
@@ -618,21 +622,23 @@ describe("General Dashboard Consolidated Suite", () => {
           </QueryClientProvider>,
         );
 
-        expect(
-          screen.getByText("General Patron Dashboard"),
-        ).toBeInTheDocument();
-        expect(screen.getByText("Library Hours")).toBeInTheDocument();
-        expect(screen.getByText(/08:00 AM - 05:00 PM/i)).toBeInTheDocument();
-        expect(screen.getByText("Total Catalog Books")).toBeInTheDocument();
-        expect(screen.getByText("1,540")).toBeInTheDocument();
-        expect(screen.getByText("+32 added this month")).toBeInTheDocument();
-        expect(screen.getByText("Search Catalog")).toBeInTheDocument();
-        expect(screen.getByText("E-Resources")).toBeInTheDocument();
-        expect(screen.getByText("My Bookmarks")).toBeInTheDocument();
-        expect(screen.getByText("Popular This Week")).toBeInTheDocument();
-        expect(
-          screen.getAllByText("Operating System Concepts").length,
-        ).toBeGreaterThanOrEqual(1);
+        await waitFor(() => {
+          expect(
+            screen.getByText("General Patron Dashboard"),
+          ).toBeInTheDocument();
+          expect(screen.getByText("Library Hours")).toBeInTheDocument();
+          expect(screen.getByText(/08:00 AM - 05:00 PM/i)).toBeInTheDocument();
+          expect(screen.getByText("Total Catalog Books")).toBeInTheDocument();
+          expect(screen.getByText("1,540")).toBeInTheDocument();
+          expect(screen.getByText("+32 added this month")).toBeInTheDocument();
+          expect(screen.getByText("Search Catalog")).toBeInTheDocument();
+          expect(screen.getByText("E-Resources")).toBeInTheDocument();
+          expect(screen.getByText("My Bookmarks")).toBeInTheDocument();
+          expect(screen.getByText("Popular This Week")).toBeInTheDocument();
+          expect(
+            screen.getAllByText("Operating System Concepts").length,
+          ).toBeGreaterThanOrEqual(1);
+        });
       });
 
       it("opens book details modal and displays 'Read Online' for digital titles", async () => {
@@ -735,7 +741,7 @@ describe("General Dashboard Consolidated Suite", () => {
       });
     });
 
-    it("1. renders GeneralSearch and verifies filters and search inputs", () => {
+    it("1. renders GeneralSearch and verifies filters and search inputs", async () => {
       render(
         <QueryClientProvider client={queryClient}>
           <MemoryRouter
@@ -746,12 +752,14 @@ describe("General Dashboard Consolidated Suite", () => {
         </QueryClientProvider>,
       );
 
-      expect(
-        screen.getAllByText(/Database System Concepts/i).length,
-      ).toBeGreaterThan(0);
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(/Database System Concepts/i).length,
+        ).toBeGreaterThan(0);
+      });
     });
 
-    it("2. renders GeneralSaved and displays bookmarks with real-time status and clear action", () => {
+    it("2. renders GeneralSaved and displays bookmarks with real-time status and clear action", async () => {
       localStorage.setItem(
         "bookbuddy_public_bookmarks",
         JSON.stringify([
@@ -773,16 +781,18 @@ describe("General Dashboard Consolidated Suite", () => {
         </QueryClientProvider>,
       );
 
-      expect(
-        screen.getAllByText(/Operating Systems Principles/i).length,
-      ).toBeGreaterThan(0);
-      expect(screen.getByText(/2 Available/i)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(/Operating Systems Principles/i).length,
+        ).toBeGreaterThan(0);
+        expect(screen.getByText(/2 Available/i)).toBeInTheDocument();
+      });
 
       const clearBtn = screen.getByTitle(/Clear all saved bookmarks/i);
       expect(clearBtn).toBeInTheDocument();
     });
 
-    it("3. renders GeneralEResources with open-access books and reader triggers", () => {
+    it("3. renders GeneralEResources with open-access books and reader triggers", async () => {
       render(
         <QueryClientProvider client={queryClient}>
           <MemoryRouter initialEntries={["/general-dashboard/e-resources"]}>
@@ -791,8 +801,10 @@ describe("General Dashboard Consolidated Suite", () => {
         </QueryClientProvider>,
       );
 
-      expect(screen.getByText(/Frankenstein/i)).toBeInTheDocument();
-      expect(screen.getAllByText(/Preview In-App/i).length).toBeGreaterThan(0);
+      await waitFor(() => {
+        expect(screen.getByText(/Frankenstein/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/Preview In-App/i).length).toBeGreaterThan(0);
+      });
     });
   });
 });

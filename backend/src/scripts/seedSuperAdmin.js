@@ -15,7 +15,14 @@ async function seedSuperAdmin() {
     console.log('Database connection established.');
 
     const seedEmail = 'SuperAdmin@bookbuddy.com';
-    const plainPassword = process.env.SEED_SUPER_ADMIN_PASSWORD || 'SuperAdminPass@2026!';
+    const plainPassword = process.env.SEED_SUPER_ADMIN_PASSWORD || process.env.SUPERADMIN_PASSWORD;
+
+    if (!plainPassword && process.env.NODE_ENV === 'production') {
+      throw new Error(
+        '❌ FATAL: SEED_SUPER_ADMIN_PASSWORD environment variable is required to provision the super admin in production.'
+      );
+    }
+    const finalPlainPassword = plainPassword || 'DevSuperAdminPass@2026!';
 
     let superAdmin = await User.findOne({
       $or: [{ email: seedEmail.toLowerCase() }, { role: { $in: ['super-admin', 'super_admin'] } }],
@@ -39,7 +46,7 @@ async function seedSuperAdmin() {
 
       // Explicitly hash password using bcrypt before storage
       const salt = await bcrypt.genSalt(12);
-      const hashedPassword = await bcrypt.hash(plainPassword, salt);
+      const hashedPassword = await bcrypt.hash(finalPlainPassword, salt);
 
       superAdmin = await User.create({
         studentId: 'SUPERADMIN-001',

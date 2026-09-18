@@ -90,8 +90,10 @@ const envSchema = z.object({
   GITHUB_CALLBACK_URL: z.string().optional(),
 
   // Razorpay
-  RAZORPAY_KEY_ID: z.string().default('rzp_test_TOm6pPV3QhF4Vr'),
-  RAZORPAY_KEY_SECRET: z.string().default('e7CkAkfrsJzdLz3fTvAwg2MY'),
+  RAZORPAY_KEY_ID: isTest ? z.string().default('rzp_test_placeholder_id') : z.string().optional(),
+  RAZORPAY_KEY_SECRET: isTest
+    ? z.string().default('placeholder_razorpay_secret_key')
+    : z.string().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
 
   // Business logic settings
@@ -117,6 +119,11 @@ const envSchema = z.object({
   RATE_LIMIT_USER_WINDOW_MS: z.coerce.number().default(60000),
   RATE_LIMIT_EXPENSIVE_MAX: z.coerce.number().default(10),
   RATE_LIMIT_EXPENSIVE_WINDOW_MS: z.coerce.number().default(60000),
+  RATE_LIMIT_PATRON_CARD_VERIFY_MAX: z.coerce.number().default(60),
+  RATE_LIMIT_PATRON_CARD_VERIFY_WINDOW_MS: z.coerce.number().default(60000),
+
+  // Scanner Gate Verification Security
+  SCANNER_API_KEY: z.string().default('bookbuddy_scanner_secret_2026'),
 
   // Deployment / Platform flags
   VERCEL: z.string().optional(),

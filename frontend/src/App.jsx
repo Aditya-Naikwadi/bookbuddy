@@ -409,6 +409,7 @@ function App() {
                           allowedRoles={[
                             "general",
                             "student",
+                            "college-student",
                             "college-admin",
                             "college_admin",
                             "admin",
@@ -439,7 +440,11 @@ function App() {
 
                     {/* Canonical Tenant-Scoped Student Dashboard Module */}
                     <Route
-                      element={<ProtectedRoute allowedRoles={["student"]} />}
+                      element={
+                        <ProtectedRoute
+                          allowedRoles={["student", "college-student"]}
+                        />
+                      }
                     >
                       <Route
                         path="student"
@@ -682,6 +687,7 @@ function App() {
                       <ProtectedRoute
                         allowedRoles={[
                           "student",
+                          "college-student",
                           "general",
                           "college-admin",
                           "super-admin",
@@ -695,7 +701,9 @@ function App() {
                   {/* Fullscreen Reader Route (Protected but outside dashboard layout) */}
                   <Route
                     element={
-                      <ProtectedRoute allowedRoles={["student", "general"]} />
+                      <ProtectedRoute
+                        allowedRoles={["student", "college-student", "general"]}
+                      />
                     }
                   >
                     <Route

@@ -10,10 +10,8 @@ router.get('/public', (req, res) => {
   res.json({
     success: true,
     config: {
-      googleClientId:
-        process.env.GOOGLE_CLIENT_ID ||
-        '404307478076-2oun4gi0qop5pgnc6ndua8auaiqbhf0a.apps.googleusercontent.com',
-      razorpayKeyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_bookbuddy_demo',
+      googleClientId: process.env.GOOGLE_CLIENT_ID || null,
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID || null,
       apiUrl: '/api/v1',
     },
   });

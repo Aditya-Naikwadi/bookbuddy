@@ -1,5 +1,7 @@
 // Controller managing college-admin operational endpoints (circulation, patrons, and fines).
 const User = require('../../models/User');
+const StudentJoinRequest = require('../../models/StudentJoinRequest');
+const AuditLog = require('../../models/AuditLog');
 const Book = require('../../models/Book');
 const Loan = require('../../models/Loan');
 const Reservation = require('../../models/Reservation');
@@ -1170,6 +1172,270 @@ const getCustomReport = async (req, res, next) => {
   }
 };
 
+// @desc    Get student join requests awaiting college-admin review
+// @route   GET /api/v1/college-admin/student-join-requests
+// @access  Private/CollegeAdmin
+const getStudentJoinRequests = async (req, res, next) => {
+  try {
+    const collegeId = req.user.collegeId;
+    if (!collegeId && req.user.role !== 'super-admin' && req.user.role !== 'super_admin') {
+      return next(new AppError('No college associated with this administrative account.', 400));
+    }
+
+    const filter = {};
+    if (collegeId) {
+      filter.collegeId = collegeId;
+    } else if (req.query.collegeId) {
+      filter.collegeId = req.query.collegeId;
+    }
+
+    if (req.query.status) {
+      filter.status = req.query.status;
+    }
+
+    const search = req.query.search ? String(req.query.search).trim() : '';
+    if (search) {
+      const escaped = search.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      filter.$or = [
+        { name: { $regex: escaped, $options: 'i' } },
+        { studentId: { $regex: escaped, $options: 'i' } },
+        { email: { $regex: escaped, $options: 'i' } },
+      ];
+    }
+
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
+    const skip = (page - 1) * limit;
+
+    const total = await StudentJoinRequest.countDocuments(filter);
+    const requests = await StudentJoinRequest.find(filter)
+      .select('-password')
+      .populate('reviewedBy', 'name email role')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    res.json({
+      success: true,
+      data: requests,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Approve student join request
+// @route   POST /api/v1/college-admin/student-join-requests/:id/approve
+// @access  Private/CollegeAdmin
+const approveStudentJoinRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const joinRequest = await StudentJoinRequest.findById(id);
+
+    if (!joinRequest) {
+      return next(new AppError('Student join request not found.', 404));
+    }
+
+    // Tenant isolation check
+    const isSuperAdmin = req.user.role === 'super-admin' || req.user.role === 'super_admin';
+    if (!isSuperAdmin && String(joinRequest.collegeId) !== String(req.user.collegeId)) {
+      return next(
+        new AppError(
+          'Cross-tenant access violation: Request belongs to a different institution.',
+          403
+        )
+      );
+    }
+
+    if (joinRequest.status === 'approved') {
+      return next(new AppError('Student join request has already been approved.', 400));
+    }
+
+    // Provision or activate User account
+    let user = await User.findOne({
+      collegeId: joinRequest.collegeId,
+      $or: [
+        { email: joinRequest.email.toLowerCase() },
+        { studentId: joinRequest.studentId.toLowerCase() },
+      ],
+    }).select('+password');
+
+    if (user) {
+      // Activate existing/invited user
+      user.status = 'active';
+      user.isActive = true;
+      user.membershipStatus = 'active';
+      user.mustChangePasswordOnNextLogin = false;
+      user.isEmailVerified = true;
+      if (joinRequest.password) {
+        user.password = joinRequest.password;
+      }
+      if (joinRequest.name && !user.name) {
+        user.name = joinRequest.name;
+      }
+      if (joinRequest.department && !user.department) {
+        user.department = joinRequest.department;
+        user.major = joinRequest.department;
+      }
+      if (joinRequest.phone && !user.phone) {
+        user.phone = joinRequest.phone;
+      }
+      await user.save();
+    } else {
+      user = await User.create({
+        collegeId: joinRequest.collegeId,
+        studentId: joinRequest.studentId.toLowerCase(),
+        name: joinRequest.name,
+        email: joinRequest.email.toLowerCase(),
+        password: joinRequest.password,
+        department: joinRequest.department || undefined,
+        major: joinRequest.department || undefined,
+        phone: joinRequest.phone || undefined,
+        role: 'student',
+        status: 'active',
+        isActive: true,
+        membershipStatus: 'active',
+        isEmailVerified: true,
+        mustChangePasswordOnNextLogin: false,
+        invitedVia: 'self_registration',
+      });
+    }
+
+    joinRequest.status = 'approved';
+    joinRequest.rejectionReason = null;
+    joinRequest.reviewedBy = req.user._id || req.user.id;
+    joinRequest.reviewedAt = new Date();
+    await joinRequest.save();
+
+    // Log approval to AuditLog
+    await AuditLog.create({
+      actorId: req.user._id || req.user.id,
+      actorRole: req.user.role,
+      action: 'student.join_request_approved',
+      actionType: 'student.join_request_approved',
+      targetType: 'StudentJoinRequest',
+      targetId: joinRequest._id,
+      collegeId: joinRequest.collegeId,
+      severity: 'info',
+      metadata: {
+        requestId: joinRequest._id,
+        studentId: joinRequest.studentId,
+        email: joinRequest.email,
+        userId: user._id,
+      },
+      ipAddress:
+        req?.ip || req?.headers?.['x-forwarded-for'] || req?.socket?.remoteAddress || '127.0.0.1',
+    });
+
+    const sanitizedRequest = joinRequest.toObject();
+    delete sanitizedRequest.password;
+
+    res.json({
+      success: true,
+      message: 'Student join request approved successfully.',
+      data: {
+        request: sanitizedRequest,
+        user: {
+          _id: user._id,
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          studentId: user.studentId,
+          department: user.department,
+          role: user.role,
+          status: user.status,
+          collegeId: user.collegeId,
+          membershipStatus: user.membershipStatus,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Reject student join request
+// @route   POST /api/v1/college-admin/student-join-requests/:id/reject
+// @access  Private/CollegeAdmin
+const rejectStudentJoinRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const joinRequest = await StudentJoinRequest.findById(id);
+
+    if (!joinRequest) {
+      return next(new AppError('Student join request not found.', 404));
+    }
+
+    // Tenant isolation check
+    const isSuperAdmin = req.user.role === 'super-admin' || req.user.role === 'super_admin';
+    if (!isSuperAdmin && String(joinRequest.collegeId) !== String(req.user.collegeId)) {
+      return next(
+        new AppError(
+          'Cross-tenant access violation: Request belongs to a different institution.',
+          403
+        )
+      );
+    }
+
+    if (joinRequest.status === 'rejected') {
+      return next(new AppError('Student join request has already been rejected.', 400));
+    }
+
+    if (joinRequest.status === 'approved') {
+      return next(new AppError('Cannot reject an already approved join request.', 400));
+    }
+
+    const reason =
+      req.body?.reason ||
+      req.body?.rejectionReason ||
+      'Application rejected by college administrator.';
+
+    joinRequest.status = 'rejected';
+    joinRequest.rejectionReason = reason;
+    joinRequest.reviewedBy = req.user._id || req.user.id;
+    joinRequest.reviewedAt = new Date();
+    await joinRequest.save();
+
+    // Log rejection to AuditLog
+    await AuditLog.create({
+      actorId: req.user._id || req.user.id,
+      actorRole: req.user.role,
+      action: 'student.join_request_rejected',
+      actionType: 'student.join_request_rejected',
+      targetType: 'StudentJoinRequest',
+      targetId: joinRequest._id,
+      collegeId: joinRequest.collegeId,
+      severity: 'warning',
+      metadata: {
+        requestId: joinRequest._id,
+        studentId: joinRequest.studentId,
+        email: joinRequest.email,
+        reason,
+      },
+      ipAddress:
+        req?.ip || req?.headers?.['x-forwarded-for'] || req?.socket?.remoteAddress || '127.0.0.1',
+    });
+
+    const sanitizedRequest = joinRequest.toObject();
+    delete sanitizedRequest.password;
+
+    res.json({
+      success: true,
+      message: 'Student join request rejected successfully.',
+      data: sanitizedRequest,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createStudent,
   getAllPatrons,
@@ -1198,4 +1464,7 @@ module.exports = {
   getFeedback,
   getStaffDashboardWidgets,
   getCustomReport,
+  getStudentJoinRequests,
+  approveStudentJoinRequest,
+  rejectStudentJoinRequest,
 };

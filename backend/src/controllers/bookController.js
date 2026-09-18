@@ -40,17 +40,18 @@ const getBooks = asyncHandler(async (req, res) => {
   }
 
   if (available === 'true') {
-    queryFilter.availableCopies = { $gt: 0 };
+    queryFilter.copiesAvailable = { $gt: 0 };
   }
 
   if (yearFrom || yearTo) {
-    queryFilter.publishedYear = {};
-    if (yearFrom) queryFilter.publishedYear.$gte = Number(yearFrom);
-    if (yearTo) queryFilter.publishedYear.$lte = Number(yearTo);
+    const yearCond = {};
+    if (yearFrom) yearCond.$gte = Number(yearFrom);
+    if (yearTo) yearCond.$lte = Number(yearTo);
+    queryFilter.$or = [{ publishedYear: yearCond }, { publishYear: yearCond }];
   }
 
   if (lang) {
-    queryFilter.language = lang;
+    queryFilter.language = { $regex: new RegExp(`^${lang}$`, 'i') };
   }
 
   const scopedQuery = scopeToCollege(queryFilter, req.user?.collegeId);
@@ -152,7 +153,9 @@ const getBookById = asyncHandler(async (req, res, next) => {
 // @access  Public
 const getBookAvailability = asyncHandler(async (req, res, next) => {
   const scopedFilter = scopeToCollege({ _id: req.params.id }, req.user?.collegeId);
-  const book = await Book.findOne(scopedFilter).select('totalCopies availableCopies');
+  const book = await Book.findOne(scopedFilter).select(
+    'copiesTotal copiesAvailable totalCopies availableCopies'
+  );
 
   if (!book) {
     return next(new AppError('Book not found', 404));

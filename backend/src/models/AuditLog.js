@@ -174,7 +174,6 @@ auditLogSchema.index({ collegeId: 1, createdAt: -1 });
 auditLogSchema.index({ collegeId: 1, action: 1, createdAt: -1 });
 auditLogSchema.index({ collegeId: 1, severity: 1, createdAt: -1 });
 auditLogSchema.index({ severity: 1, actionType: 1, createdAt: -1 });
-auditLogSchema.index({ category: 1, actorRole: 1, createdAt: -1 });
 
 // Audit trails default to indefinite retention for compliance (No TTL Index)
 

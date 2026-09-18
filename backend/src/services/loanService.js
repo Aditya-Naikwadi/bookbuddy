@@ -12,7 +12,7 @@ const logger = require('../utils/logger');
 const { runInTransaction } = require('../utils/transactionHelper');
 
 const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
-  return await runInTransaction(async (session) => {
+  const txResult = await runInTransaction(async (session) => {
     // 1. Check unpaid fines limit
     const unpaidFines = await Fine.find({ userId, status: 'unpaid' }).session(session);
     const totalUnpaidFine = unpaidFines.reduce((sum, f) => sum + f.amount, 0);
@@ -78,32 +78,46 @@ const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
         { session }
       );
 
-      await streakService.recordQualifyingAction(userId, collegeId, 'checkout');
-      evaluateBadges(userId, 'book_borrowed', { bookId, loanId: loan._id }).catch((err) =>
-        logger.error(`Error evaluating badges after book checkout: ${err.message}`)
-      );
-
-      try {
-        const socketModule = require('../sockets');
-        const io =
-          socketModule && typeof socketModule.getIo === 'function' ? socketModule.getIo() : null;
-        if (io && collegeId) {
-          io.to(`college:${collegeId}`).emit('book:availability_updated', {
-            bookId,
-            availableCopies: book.copiesAvailable,
-          });
-        }
-      } catch (_err) {
-        // Non-blocking socket emit
-      }
-
-      return loan;
+      return { loan, book };
     } catch (err) {
       // Rollback the atomic decrement if loan creation failed
       await Book.updateOne({ _id: bookId }, { $inc: { copiesAvailable: 1 } }).session(session);
       throw err;
     }
   });
+
+  if (txResult && txResult.loan) {
+    const { loan, book } = txResult;
+
+    // Post-transaction side-effects execute only after transaction commits successfully
+    try {
+      await streakService.recordQualifyingAction(userId, collegeId, 'checkout');
+    } catch (err) {
+      logger.error(`Error recording qualifying streak action after book checkout: ${err.message}`);
+    }
+
+    evaluateBadges(userId, 'book_borrowed', { bookId, loanId: loan._id }).catch((err) =>
+      logger.error(`Error evaluating badges after book checkout: ${err.message}`)
+    );
+
+    try {
+      const socketModule = require('../sockets');
+      const io =
+        socketModule && typeof socketModule.getIo === 'function' ? socketModule.getIo() : null;
+      if (io && collegeId) {
+        io.to(`college:${collegeId}`).emit('book:availability_updated', {
+          bookId,
+          availableCopies: book.copiesAvailable,
+        });
+      }
+    } catch (_err) {
+      // Non-blocking socket emit
+    }
+
+    return loan;
+  }
+
+  return txResult;
 };
 
 const returnBook = async (loanId, collegeId) => {

@@ -39,7 +39,7 @@ describe('payments Consolidated Suite', () => {
       let sampleFine;
       let sampleCollege;
       let userToken;
-      const keySecret = process.env.RAZORPAY_KEY_SECRET || 'e7CkAkfrsJzdLz3fTvAwg2MY';
+      const keySecret = process.env.RAZORPAY_KEY_SECRET || 'test_razorpay_key_secret_12345';
 
       beforeEach(async () => {
         const uniqueSuffix = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -169,7 +169,10 @@ describe('payments Consolidated Suite', () => {
           const orderId = 'order_valid_789';
           const paymentId = 'pay_valid_987';
           const validSignature = crypto
-            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'e7CkAkfrsJzdLz3fTvAwg2MY')
+            .createHmac(
+              'sha256',
+              process.env.RAZORPAY_KEY_SECRET || 'test_razorpay_key_secret_12345'
+            )
             .update(`${orderId}|${paymentId}`)
             .digest('hex');
 
@@ -197,7 +200,10 @@ describe('payments Consolidated Suite', () => {
           const orderId = 'order_root_111';
           const paymentId = 'pay_root_222';
           const validSignature = crypto
-            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'e7CkAkfrsJzdLz3fTvAwg2MY')
+            .createHmac(
+              'sha256',
+              process.env.RAZORPAY_KEY_SECRET || 'test_razorpay_key_secret_12345'
+            )
             .update(`${orderId}|${paymentId}`)
             .digest('hex');
 

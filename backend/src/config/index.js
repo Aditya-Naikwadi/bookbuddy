@@ -37,7 +37,10 @@ const config = {
     userWindowMs: env.RATE_LIMIT_USER_WINDOW_MS,
     expensiveMax: env.RATE_LIMIT_EXPENSIVE_MAX,
     expensiveWindowMs: env.RATE_LIMIT_EXPENSIVE_WINDOW_MS,
+    patronCardVerifyMax: env.RATE_LIMIT_PATRON_CARD_VERIFY_MAX,
+    patronCardVerifyWindowMs: env.RATE_LIMIT_PATRON_CARD_VERIFY_WINDOW_MS,
   },
+  scannerApiKey: env.SCANNER_API_KEY,
   razorpayKeyId: env.RAZORPAY_KEY_ID,
   razorpayKeySecret: env.RAZORPAY_KEY_SECRET,
 };
