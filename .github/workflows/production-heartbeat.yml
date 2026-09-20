@@ -28,6 +28,8 @@ jobs:
           APP_URL: ${{ vars.PRODUCTION_BACKEND_URL || 'https://bookbuddy-kcwl.onrender.com' }}
           TIMEOUT_SECONDS: 60
           POLL_INTERVAL_SECONDS: 10
+          ALLOW_SHA_MISMATCH: ${{ secrets.RENDER_API_KEY == '' && 'true' || 'false' }}
+          EXPECTED_COMMIT_SHA: ${{ secrets.RENDER_API_KEY != '' && github.sha || '' }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           GITHUB_EVENT_NAME: heartbeat
         run: node scripts/deployment/verify-deployment.js
