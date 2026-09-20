@@ -10,6 +10,7 @@ jobs:
   heartbeat-verify:
     name: Verify Production Live Heartbeat & Version Lock
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout Repository

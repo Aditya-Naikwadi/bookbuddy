@@ -12,6 +12,7 @@ jobs:
   multi-layer-verify:
     name: Execute 6-Layer System Verification
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout Repository
