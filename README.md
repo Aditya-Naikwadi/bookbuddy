@@ -49,11 +49,14 @@ BookBuddy is a production-grade, multi-tenant Integrated Library System (ILS) an
 - [🖥️ Specialized Role Portals \& Dashboards](#️-specialized-role-portals--dashboards)
   - [1. General / Public Discovery Dashboard](#1-general--public-discovery-dashboard)
   - [2. Student Learning \& Engagement Portal](#2-student-learning--engagement-portal)
-  - [3. College Admin Operations Hub (12 Desk Modules)](#3-college-admin-operations-hub-12-desk-modules)
-  - [4. Super Admin Platform Command Center](#4-super-admin-platform-command-center)
+  - [3. College Admin Operations Hub (13 Desk Modules)](#3-college-admin-operations-hub-13-desk-modules)
+  - [4. Super Admin Platform Command Center (10 Management Consoles)](#4-super-admin-platform-command-center-10-management-consoles)
 - [✨ Complete Portal Feature Matrix](#-complete-portal-feature-matrix)
 - [📖 In-Browser Digital Reader \& Persistent Annotations](#-in-browser-digital-reader--persistent-annotations)
 - [⚡ Asynchronous Pipelines \& Performance Optimizations](#-asynchronous-pipelines--performance-optimizations)
+- [⏱️ Automated Background Cron \& Worker Architecture](#️-automated-background-cron--worker-architecture)
+- [📱 Offline PWA \& Hardware Gate Kiosk Integration](#-offline-pwa--hardware-gate-kiosk-integration)
+- [🗄️ Entity Data Architecture \& Domain Models (73 Schemas)](#️-entity-data-architecture--domain-models-73-schemas)
 - [🔌 REST API Route Directory](#-rest-api-route-directory)
 - [⚙️ Environment Configuration Guide](#️-environment-configuration-guide)
 - [💻 Local Development, Migration \& Seeding Runbook](#-local-development-migration--seeding-runbook)
@@ -192,96 +195,140 @@ _Location:_ `frontend/src/pages/dashboards/general/` | _Route:_ `/general-dashbo
 
 Designed for casual campus visitors, external guests, and prospective students:
 
-- **Aggregated Home Hub (`GeneralDashboardHome.jsx`)**: Displays library hours, active workstation availability, trending e-books, and campus reading metrics.
-- **Unified OPAC Search (`GeneralSearch.jsx`)**: High-speed physical inventory search with multi-faceted filtering (discipline, department, availability status, media type) and fallback to external providers.
-- **Digital E-Resources Browser (`GeneralEResources.jsx`)**: Institutional digital repository of open-access EPUB/PDF publications with instant in-browser reading.
-- **Saved Items & Reading Lists (`GeneralSaved.jsx`)**: Personal bookmarking interface with external catalog metadata sync.
-- **Live Announcement Ticker**: Real-time ticker for campus announcements and holiday schedules.
+- **Aggregated Home Hub (`GeneralDashboardHome.jsx`)**: Loads operating hours, real-time lab workstation seat availability, trending e-books, and campus reading metrics via a single-round-trip unified endpoint (`/api/v1/dashboards/general/home-data`).
+- **Unified OPAC Catalog Search (`GeneralSearch.jsx`)**: High-speed physical inventory search with debounced autocomplete, multi-faceted filtering (discipline, department, availability status, media type), real-time physical copy counters (`copiesAvailable` vs `totalCopies`), and external provider fallbacks.
+- **External Catalog Harvesting (Open Library, Google Books & Project Gutenberg)**: Integrates external book metadata through `googleBooksClient.js`, `openLibraryClient.js`, and `gutendexClient.js`, allowing patrons to discover public domain literature and global publications directly within the institutional portal.
+- **Institutional Subdomain & Deep Link Resolution (`CollegeDeepLinkEntry.jsx`)**: Supports wildcard institution subdomains (`https://<tenant>.bookbuddy.com`) and custom routing paths (`/c/:collegeSlug/*`), dynamically scoping catalog searches and campus data to the active academic institution.
+- **Dual Self-Registration & Activation Portal (`RegistrationPage.jsx`, `CollegeStudentRegister.jsx`, `StudentActivationPage.jsx`)**: Provides dedicated application workflows for new institutional tenant onboardings as well as tenant-scoped student enrollment (`/register/:collegeSlug`) and single-use token account activation (`/c/:collegeSlug/activate`).
+- **Digital E-Resources Browser & Preview Reader (`GeneralEResources.jsx`, `DigitalReaderModal.jsx`)**: Institutional digital repository of open-access EPUB/PDF publications with instant in-browser sample reading without requiring account registration.
+- **Guest Local Bookmarks (`GeneralSaved.jsx`)**: Browser-local bookmarking engine powered by `useLocalBookmarks` and `localStorage`, enabling visitors to save titles across sessions without an account.
+- **Live Announcement Ticker**: Real-time ticker for campus library announcements, book fairs, and holiday schedules backed by Socket.io broadcast events.
 
 ### 2. Student Learning & Engagement Portal
 
 _Location:_ `frontend/src/pages/dashboards/student/` | _Route:_ `/student`
 
-A personalized student workstation engineered for academic success:
+A personalized student workstation engineered for academic success and daily library interaction:
 
-- **Personalized Home Hub (`StudentDashboardHome.jsx`)**: Real-time snapshot of active physical loans, pending hold queue positions, outstanding fines, current reading streak, and quick-access reading lists.
-- **Catalog & Holds (`Catalog.jsx`)**: Browse physical volumes, reserve unavailable titles, and monitor real-time hold queue queue position with auto-fulfillment upon check-in.
-- **My Loans & Renewals (`MyLoans.jsx`)**: Active loan tracker with color-coded return countdown timers, automated 2-day due reminder alerts, and single-click online renewal (up to 2 times).
-- **Fines & Digital Payments (`Fines.jsx`)**: Clear breakdown of overdue fines with integrated Razorpay checkout and instant receipt generation.
-- **Digital Patron Card (`PatronCard.jsx`)**: Mobile-friendly digital library card rendering QR and barcode identifiers for rapid gate scanner and circulation desk verification.
-- **E-Resources & E-Book Reader (`EResources.jsx`, `EbookReader.jsx`)**: Fullscreen reading environment for institutional EPUB and PDF textbooks with persistent highlights, notes, and CFI sync.
-- **Reading Lists & Custom Shelves (`ReadingLists.jsx`, `MyShelves.jsx`)**: Organize books into custom categories ("Currently Reading", "Thesis Research", "Favorites") with drag-and-drop ordering.
-- **Smart Recommendations (`Recommendations.jsx`)**: Personalized book suggestions driven by student course major, past reading history, and campus popularity trends.
-- **Facility & Lab Workstation Booking (`LabBooking.jsx`)**: Visual seat layout of campus computer labs allowing students to reserve specific workstation seats for study sessions.
-- **Helpdesk & Support (`Support.jsx`)**: Direct ticket creation and complaint tracking with library administrative staff.
-- **Gamified Achievements & Streaks (`Achievements.jsx`)**: Daily check-in button, streak counter, streak-freeze buffer tracking, and unlockable milestone badges.
-- **Campus Bulletin Board / Community Feed (`Feed.jsx`)**: Campus-wide discussion feed with peer book reviews, book clubs, and study group discussions.
-- **Inter-Library Loan / Cross-College Catalog (`CrossCollegeCatalog.jsx`)**: Search and request books from partner academic institutions within the consortium network.
-- **Offline Downloads Manager (`Downloads.jsx`)**: Client-side storage engine using IndexedDB (`idb`) allowing students to download e-books for offline reading without internet access.
+- **Personalized Home Hub (`StudentDashboardHome.jsx`)**: Real-time snapshot of active physical loans, pending hold queue positions, outstanding fines, current reading streak, freeze token buffer, quick-access reading lists, and personalized book recommendations.
+- **Interactive Onboarding Walkthrough Tour (`OnboardingTour.jsx`)**: Step-by-step guided tour welcoming newly enrolled students and explaining key ILS features, digital reader shortcuts, and lab reservation workflows.
+- **Forced Password Change Enforcement**: Accounts provisioned via bulk CSV roster imports carry `mustChangePasswordOnNextLogin: true`. First-time student logins are automatically intercepted with a mandatory password change modal before dashboard access is unlocked.
+- **Dynamic Feature-Gated Navigation (`FeatureGate.jsx`, `FeatureFlagContext.jsx`)**: Sidebar navigation items and page routes are dynamically rendered based on the college's active service catalog. If a module (e.g. `facilities_booking` or `crossCollegeILL`) is disabled by the administrator, navigation links are hidden and direct URL access is blocked.
+- **Catalog & Holds Queue (`Catalog.jsx`)**: Browse physical volumes, reserve unavailable titles, and monitor real-time hold queue queue position (`queuePosition`) with automatic notice dispatch upon item check-in.
+- **Availability Watch Alerts (`/api/v1/availability-alerts`)**: Students can subscribe to out-of-stock or currently checked-out titles to receive instantaneous push/email notifications the moment a copy is returned.
+- **My Loans & Instant Online Renewals (`MyLoans.jsx`)**: Active loan ledger with color-coded return countdown timers, automated 2-day due reminder alerts, and single-click online renewal (up to `MAX_RENEWALS`, default: 2 times).
+- **Fines & Digital Payments (`Fines.jsx`)**: Clear breakdown of overdue fines by loan with integrated Razorpay checkout, counter cash settlement status, and downloadable payment receipts.
+- **Digital Patron Card with Gate Scanner Compatibility (`PatronCard.jsx`)**: Mobile-friendly digital library card rendering both high-resolution Code128 barcodes and dynamic QR codes for rapid verification at physical circulation desks and hardware entrance scanner kiosks (`SCANNER_API_KEY`).
+- **Fullscreen E-Book Reader & Digital Assets (`EResources.jsx`, `EbookReader.jsx`, `/student/reader/:id`)**: Academic reading environment for institutional EPUB and PDF textbooks with HTTP 206 chunked range streaming, font scaling (80% to 160%), reading themes (Light / Dark / Sepia), table-of-contents navigation, PDF canvas thumbnail browsing, and persistent text highlights and contextual sticky notes synced to MongoDB (`Annotation`).
+- **Reading Progress & CFI Coordinate Sync (`ReadingProgress`, `ReadingPosition`)**: Canonical Content Fragment Identifier (CFI) coordinate tracking that saves exact reading position and progress percentage across devices.
+- **Reading Lists & Custom Shelves (`ReadingLists.jsx`, `MyShelves.jsx`, `AddToListPicker.jsx`)**: Organize books into custom shelves ("Currently Reading", "Thesis Research", "Favorites", "Completed") with drag-and-drop reordering (`@dnd-kit`), custom tags, and public/private privacy controls.
+- **Star Ratings & Peer Book Reviews (`ReviewList.jsx`, `StarRatingInput.jsx`, `/api/v1/reviews`)**: 1-to-5 star rating system with peer book reviews, helpfulness upvotes, and campus community moderation.
+- **Smart Personalized Recommendations (`Recommendations.jsx`)**: Machine-assisted book suggestions tailored to the student's academic major/course, past borrowing history, and campus-wide reading velocity.
+- **Facility & Lab Workstation Booking Grid (`LabBooking.jsx`)**: Interactive seat layout of campus computer labs displaying workstation hardware specifications (RAM, GPU, OS, dual monitors), hourly timeslot reservations, 10-minute no-show auto-release sweeps, and automated waitlist queue promotions.
+- **Helpdesk, Complaints & Purchase Suggestions (`Support.jsx`)**: Centralized patron support ticket submission, institutional complaint filing (`Complaint`), and new book acquisition requests (`BookSuggestion`).
+- **Item Damage & Lost Reporting (`ItemReport`)**: Direct reporting module allowing students to report damaged covers, missing pages, or lost physical items to library staff.
+- **Gamified Achievements & Daily Streaks (`Achievements.jsx`)**: Daily check-in button, streak counter, streak-freeze buffer tokens (protecting streaks during exam breaks), milestone achievement stickers, and campus-wide reading leaderboards.
+- **Campus Community Feed (`Feed.jsx`)**: Real-time campus-wide bulletin board for student book discussions, peer reading recommendations, and study group formation.
+- **Inter-Library Loan / Cross-College Catalog (`CrossCollegeCatalog.jsx`, `ShareRequestStatusTracker.jsx`)**: Search shared catalogs of partner institutions in the university consortium and track inter-library loan shipment status.
+- **Offline Downloads Manager (`Downloads.jsx`)**: Client-side storage engine using IndexedDB (`idb`) and Service Worker caching, allowing students to download textbooks for completely offline reading without network connectivity.
+- **Student Profile & Preferences (`StudentProfileSettings.jsx`)**: Comprehensive account management including avatar customization, academic details, password update, dark/light theme switching, and multi-channel notification preferences (In-App, Email, SMS via Twilio).
 
-### 3. College Admin Operations Hub (12 Desk Modules)
+### 3. College Admin Operations Hub (13 Desk Modules)
 
 _Location:_ `frontend/src/pages/dashboards/college-admin/` | _Route:_ `/college-admin`
 
-A comprehensive ERP back-office providing complete control over campus library operations:
+A comprehensive ERP back-office providing complete operational control over campus library holdings, student rosters, facilities, and financial collections across 13 dedicated desk modules:
 
-| Desk Module                  | Route                           | Operational Functionality                                                                                                              |
-| :--------------------------- | :------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------- |
-| **Circulation Desk**         | `/college-admin/circulation`    | High-speed barcode-driven book issue, check-in, renewal, lost item marking, and automated hold pickup notice dispatch.                 |
-| **Patrons Desk**             | `/college-admin/patrons`        | Student roster management, profile verification, borrowing privilege suspension, and physical card printing.                           |
-| **Cataloging Desk**          | `/college-admin/cataloging`     | Add new titles with automated ISBN metadata auto-fetch from Google Books and Open Library, copy management, and barcode generation.    |
-| **Inventory Overview**       | `/college-admin/inventory`      | Real-time shelf auditing, missing copy reporting, condition assessment (Good, Fair, Damaged), and withdrawal tracking.                 |
-| **Finances Desk**            | `/college-admin/finances`       | Overdue fee audits, manual fine waivers, Razorpay transaction reconciliation, and cash fine collection receipts.                       |
-| **Facilities Desk**          | `/college-admin/facilities`     | Computer lab workstation layout designer, seat maintenance toggles, and reservation approval queue.                                    |
-| **Digital Assets Desk**      | `/college-admin/digital-assets` | Upload and manage institutional EPUB and PDF e-resources, set access permissions, and monitor download counts.                         |
-| **Acquisitions Desk**        | `/college-admin/acquisitions`   | Purchase requisition pipeline, departmental budget allocation, vendor quote comparison, and order receiving.                           |
-| **Feature Manager Settings** | `/college-admin/features`       | Granular toggle for institution-specific service modules (Gamification, Inter-Library Loan, Community Feed, Razorpay Online Payments). |
-| **Bulk Student Upload**      | `/college-admin/bulk-upload`    | Asynchronous CSV roster ingestion pipeline with live Socket.io progress tracking, field validation, and error log generation.          |
-| **Share Requests (ILL)**     | `/college-admin/share-requests` | Manage inter-library loan requests received from other colleges in the consortium, approve shipments, and track returns.               |
-| **Helpdesk Desk**            | `/college-admin/helpdesk`       | Centralized patron support ticket resolution desk with internal staff notes and status update notifications.                           |
-| **Analytics Overview**       | `/college-admin/analytics`      | Interactive charts showing circulation velocity, peak lab usage hours, top-borrowed disciplines, and overdue patterns.                 |
+| Desk Module | Route | Operational Functionality |
+| :--- | :--- | :--- |
+| **Circulation Desk** | `/college-admin/circulation` | High-speed barcode/RFID book checkout with atomic copy decrements (`copiesAvailable - 1`), return processing with automatic overdue calculation, renewal overrides, lost item marking, and ready-for-pickup hold notice dispatch. |
+| **Patrons Desk** | `/college-admin/patrons` | Student roster directory with search by name, email, or Student ID; active loan auditing, unpaid fine reviews, profile verification, borrowing suspension toggles, and physical card printing. |
+| **Cataloging Desk** | `/college-admin/cataloging` | Add and update physical catalog records with automated ISBN metadata auto-fetch from Google Books and Open Library, physical shelf address assignment (`Shelf A-12-04`), copy barcode generation, and media categorization. |
+| **Inventory Overview** | `/college-admin/inventory` | Real-time shelf auditing, missing/damaged item tracking (`ItemReport`), condition assessment (Good, Fair, Damaged), low-stock alerts, and book withdrawal workflows. |
+| **Finances Desk** | `/college-admin/finances` | Overdue penalty audit trails, counter cash fine collection receipts, manual fine waivers with required justification notes logged to `AuditLog`, and Razorpay transaction reconciliations. |
+| **Facilities Desk** | `/college-admin/facilities` | Computer lab workstation designer, bulk workstation seat generation, hardware specification tagging (RAM, GPU, OS, dual monitors), maintenance mode toggles (`operational` vs `under_maintenance`), and live hourly seat occupancy monitoring. |
+| **Digital Assets Desk** | `/college-admin/digital-assets` | Institutional EPUB/PDF e-resource uploads, digital access permission settings, download count analytics, and review/moderation queue for student-submitted study notes and thesis guides (`EResourceSubmission`). |
+| **Acquisitions Desk** | `/college-admin/acquisitions` | Procurement pipeline management: create purchase orders (`AcquisitionOrder`), compare supplier vendor quotes, track ISBN receiving batches, monitor departmental budgets, and log serial subscription renewals (gated by `canManageAcquisitions`). |
+| **Feature Manager Settings** | `/college-admin/features` | Granular toggle for institution-specific service catalog modules (Gamification, Inter-Library Loan, Community Feed, Facilities Booking, Razorpay Payments); borrowing policy customization (loan period, renewal limits, fine rate/day); automatically purges tenant Redis cache. |
+| **Bulk Student Upload** | `/college-admin/bulk-upload` | Non-blocking asynchronous CSV student roster ingestion (HTTP 202 Accepted) processing 5,000+ records in 500-item chunks with live Socket.io progress updates, downloadable validation error CSVs, and printable single-use account activation handouts. |
+| **Share Requests (ILL Desk)** | `/college-admin/share-requests` | Manage consortium Inter-Library Loan requests received from partner colleges: review requested titles, approve outbound courier shipments, track transit tracking numbers, and confirm loan return check-ins. |
+| **Helpdesk Desk** | `/college-admin/helpdesk` | Centralized patron support desk: resolve student library complaints (`Complaint`), review patron book acquisition suggestions (`BookSuggestion`), add internal staff notes, and send status notifications. |
+| **Analytics Overview** | `/college-admin/analytics` | Interactive visual ILS reporting: circulation velocity graphs, top borrowed books leaderboard, departmental borrowing distributions, peak lab usage hours, and on-demand CSV data export (`/reports/:type`). |
 
-### 4. Super Admin Platform Command Center
+### 4. Super Admin Platform Command Center (10 Management Consoles)
 
 _Location:_ `frontend/src/pages/dashboards/admin-portal/` | _Route:_ `/admin-portal`
 
-Platform-wide command center for managing tenants, platform health, and security:
+Platform-wide command center for managing tenants, platform health, security compliance, and disaster recovery across 10 specialized administrative consoles:
 
-- **System Overview & Health (`SystemOverview.jsx`, `AdminDashboardHome.jsx`)**: Real-time cluster metrics, active socket connections, database latency, memory footprint, and multi-tenant aggregates.
-- **College Admin Manager (`CollegeAdminManager.jsx`)**: Provision new college tenants, assign institutional administrators, configure custom subdomains, and adjust subscription tiers.
-- **Onboarding Review Queue (`OnboardingReviewQueue.jsx`)**: Review and approve self-service institution registration applications.
-- **Global Content Moderation (`GlobalContentModeration.jsx`)**: Audit reported reviews, public bulletin posts, and comments across all college feeds with one-click content removal.
-- **Immutable Audit Logs (`AuditLogs.jsx`)**: Security event log tracking administrative logins, permission changes, fine adjustments, and student data exports.
-- **Global Data Oversight (`GlobalDataOversight.jsx`)**: Aggregated system-wide intelligence comparing circulation metrics, digital asset usage, and patron growth across all colleges.
-- **System Settings & Defaults (`SystemSettings.jsx`)**: Configure global rate limiters, SMTP mail server defaults, Razorpay master credentials, and Sentry telemetry.
-- **User Management (`UserManagement.jsx`)**: Global user directory with cross-tenant search, role promotion, and account deactivation.
-- **Global Support Queue (`GlobalSupportQueue.jsx`)**: Platform-level escalations submitted by college administrators.
-- **MFA-Gated User Impersonation Engine (`ImpersonationBanner.jsx`)**: Allows super-administrators to securely assume any college admin or student persona for debugging, displaying an omnipresent persistent warning banner with one-click exit and rigorous action auditing.
+1. **System Overview & Health (`SystemOverview.jsx`, `AdminDashboardHome.jsx`)**:
+   - Real-time platform cluster metrics: active tenant count, aggregate users by role, global circulation volume, total digital assets, and system health status (`/api/dashboards/admin-portal/system/health`).
+   - Predictive database storage forecasting using moving averages to project system-wide collection growth.
+   - Background cron execution history and run status tracking (`CronRunLog`).
+2. **College Admin Manager (`CollegeAdminManager.jsx`)**:
+   - Provision new academic institutions (`College`).
+   - Assign custom subdomains (`<slug>.bookbuddy.com`) and institute branding logos.
+   - Provision Chief College Librarian root administrator credentials.
+   - Configure institution subscription tiers (`Free`, `Standard`, `Enterprise`) and toggle platform lifecycle status (`active`, `suspended`, `archived`).
+3. **Onboarding Review Queue (`OnboardingReviewQueue.jsx`)**:
+   - Review, verify, and approve incoming self-service institution registration applications.
+   - Inspect accreditation documents, institutional domain verification, and initial administrator contact details.
+4. **Global Content Moderation (`GlobalContentModeration.jsx`)**:
+   - Audit reported book reviews, public bulletin posts, and comments across all college feeds.
+   - One-click content removal, content warnings, and patron feed privilege suspensions.
+5. **Immutable Audit Logs (`AuditLogs.jsx`)**:
+   - Security event log tracking administrative logins, permission changes, fine waivers, and student data exports.
+   - Search and filter by actor, action type, IP address, timestamp, and college tenant.
+6. **System Settings & Defaults (`SystemSettings.jsx`)**:
+   - Configure global rate limiters, fallback SMTP mail server credentials, master Razorpay keys, and Sentry error telemetry.
+7. **User Management Directory (`UserManagement.jsx`)**:
+   - Global user directory with cross-tenant search, role promotion (e.g. promoting student to librarian), and global account deactivation.
+8. **Global Data Oversight (`GlobalDataOversight.jsx`)**:
+   - Aggregated system-wide intelligence comparing circulation velocity, digital asset consumption, and patron growth across all colleges.
+9. **Global Support Queue (`GlobalSupportQueue.jsx`)**:
+   - Platform-level support ticketing queue for technical escalations submitted by college administrators.
+10. **MFA-Gated User Impersonation Engine (`ImpersonationBanner.jsx`)**:
+    - Secure persona assumption allowing super-administrators to step into any college admin or student persona for debugging.
+    - Displays an omnipresent persistent amber warning banner with one-click session exit and logs all actions to the immutable audit trail.
 
 ---
 
 ## ✨ Complete Portal Feature Matrix
 
-| Functional Module                                      | Public / Visitor 🌐 | Student Portal 🎓 |   College Admin 🏛️    |     Super Admin 🛡️     |
-| :----------------------------------------------------- | :-----------------: | :---------------: | :-------------------: | :--------------------: |
-| **Public OPAC Catalog Search**                         |         ✅          |        ✅         |          ✅           |           ✅           |
-| **External Catalog Fallback (OpenLib / Google Books)** |         ✅          |        ✅         |          ✅           |           ✅           |
-| **In-Browser EPUB & PDF Reader**                       |    ✅ (Previews)    | ✅ (Full Access)  |          ✅           |           ✅           |
-| **Persistent Text Highlights & Notes**                 |         ❌          |        ✅         |          ✅           |           ✅           |
-| **Physical Book Hold Reservations**                    |         ❌          |        ✅         |   ✅ (Issue/Manage)   |           ✅           |
-| **Automated Due Alerts & Online Renewals**             |         ❌          |        ✅         | ✅ (Manual Override)  |           ✅           |
-| **Computer Lab Seat Grid Reservation**                 |         ❌          |        ✅         |   ✅ (Grid Config)    |           ✅           |
-| **Daily Reading Streaks & Milestone Badges**           |         ❌          |        ✅         |          ❌           |           ❌           |
-| **Campus Bulletin Board & Book Reviews**               |         ❌          |        ✅         | ✅ (Staff Moderation) | ✅ (Global Moderation) |
-| **Inter-Library Loan (ILL) Consortium Sharing**        |         ❌          |   ✅ (Request)    |  ✅ (Fulfill & Ship)  | ✅ (Network Oversight) |
-| **Digital Fine Settlement via Razorpay**               |         ❌          |        ✅         |  ✅ (Waiver / Cash)   |           ✅           |
-| **Digital Patron Card with QR/Barcode**                |         ❌          |        ✅         |  ✅ (Scan / Verify)   |           ✅           |
-| **Offline E-Book Storage (IndexedDB)**                 |         ❌          |        ✅         |          ❌           |           ❌           |
-| **Async Bulk CSV Patron Ingestion (5,000+)**           |         ❌          |        ❌         |          ✅           |           ✅           |
-| **Transitive Feature Flag Management**                 |         ❌          |        ❌         |  ✅ (Tenant Scoped)   |  ✅ (Platform Global)  |
-| **Multi-Branch Physical Shelf Auditing**               |         ❌          |        ❌         |          ✅           |           ✅           |
-| **MFA-Gated User Impersonation**                       |         ❌          |        ❌         |          ❌           |           ✅           |
-| **Cluster Health & Platform Audit Logs**               |         ❌          |        ❌         |          ❌           |           ✅           |
+| Functional Module | Public / Visitor 🌐 | Student Portal 🎓 | College Admin 🏛️ | Super Admin 🛡️ |
+| :--- | :---: | :---: | :---: | :---: |
+| **Public OPAC Catalog Search** | ✅ | ✅ | ✅ | ✅ |
+| **External Catalog Fallback (OpenLib / Google Books / Gutenberg)** | ✅ | ✅ | ✅ | ✅ |
+| **Institutional Subdomain & Deep Link Routing** | ✅ | ✅ | ✅ | ✅ |
+| **Dual Self-Registration (College Application & Student Signup)** | ✅ | ❌ | ❌ | ✅ (Approve) |
+| **Guest Local Bookmarks (localStorage)** | ✅ | ❌ | ❌ | ❌ |
+| **In-Browser EPUB & PDF Reader** | ✅ (Previews) | ✅ (Full Access) | ✅ | ✅ |
+| **Persistent Text Highlights & Notes (Annotations)** | ❌ | ✅ | ✅ | ✅ |
+| **Reading Progress & CFI Coordinate Sync** | ❌ | ✅ | ❌ | ❌ |
+| **Physical Book Hold Reservations & Queue Position** | ❌ | ✅ | ✅ (Issue/Manage) | ✅ |
+| **Availability Watch Alerts (Out-of-Stock Notifications)** | ❌ | ✅ | ❌ | ❌ |
+| **Automated Due Alerts & Online Renewals** | ❌ | ✅ | ✅ (Manual Override) | ✅ |
+| **Computer Lab Seat Grid Reservation & Waitlist** | ❌ | ✅ | ✅ (Grid Config) | ✅ |
+| **Facility 10-Min No-Show Auto-Release & Queue Sweep** | ❌ | ✅ | ✅ (Automated) | ✅ |
+| **Daily Reading Streaks, Freezes & Milestone Badges** | ❌ | ✅ | ❌ | ❌ |
+| **Star Ratings & Peer Book Reviews** | ❌ | ✅ | ✅ (Staff Moderation) | ✅ (Global Moderation) |
+| **Campus Bulletin Board / Community Feed** | ❌ | ✅ | ✅ (Staff Moderation) | ✅ (Global Moderation) |
+| **Inter-Library Loan (ILL) Consortium Sharing** | ❌ | ✅ | ✅ (Fulfill & Ship) | ✅ (Network Oversight) |
+| **Digital Fine Settlement via Razorpay** | ❌ | ✅ | ✅ (Waiver / Cash) | ✅ |
+| **Digital Patron Card with QR & Code128 Barcode** | ❌ | ✅ | ✅ (Scan / Verify) | ✅ |
+| **Hardware Kiosk Scanner Gate API (`SCANNER_API_KEY`)** | ❌ | ❌ | ✅ | ✅ |
+| **Offline E-Book Storage (IndexedDB + PWA)** | ❌ | ✅ | ❌ | ❌ |
+| **Custom Reading Lists & Drag-and-Drop Shelves** | ❌ | ✅ | ❌ | ❌ |
+| **Book Suggestions & Item Damage Reporting** | ❌ | ✅ | ✅ (Review/Action) | ✅ |
+| **Interactive Onboarding Walkthrough Tour** | ❌ | ✅ | ❌ | ❌ |
+| **Student Profile & Multi-Channel Notifications (SMS/Email)** | ❌ | ✅ | ❌ | ❌ |
+| **Async Bulk CSV Patron Ingestion (5,000+ Records)** | ❌ | ❌ | ✅ | ✅ |
+| **Printable Single-Use Student Credential Handouts** | ❌ | ❌ | ✅ | ✅ |
+| **Acquisitions Procurement Pipeline & Purchase Orders** | ❌ | ❌ | ✅ (Budget/Quotes) | ✅ |
+| **Transitive Feature Flag Management (Redis Cached)** | ❌ | ❌ | ✅ (Tenant Scoped) | ✅ (Platform Global) |
+| **Multi-Branch Physical Shelf Inventory Auditing** | ❌ | ❌ | ✅ | ✅ |
+| **MFA-Gated User Impersonation with Warning Banner** | ❌ | ❌ | ❌ | ✅ |
+| **Cluster Telemetry, Storage Forecast & Audit Logs** | ❌ | ❌ | ❌ | ✅ |
 
 ---
 
@@ -360,100 +407,290 @@ graph LR
 
 ---
 
+## ⏱️ Automated Background Cron & Worker Architecture
+
+BookBuddy runs a hardened background task scheduler in [`backend/src/services/cronService.js`](backend/src/services/cronService.js) using `node-cron`. The engine features **atomic execution locking** (preventing overlapping runs via an in-memory `runningJobs` set), **failure isolation** (Sentry exception capture without crashing the service), and **persistent run auditing** via `CronRunLog`.
+
+| Job Name | Cron Schedule | Frequency | Primary Responsibility & Logic Flow | Key Models |
+| :--- | :--- | :--- | :--- | :--- |
+| **Overdue Fine Accrual** | `0 0 * * *` | Daily at 00:00 UTC | Scans all `active` and `overdue` loans past their `dueDate`. Updates loan status to `overdue`, calculates timezone-aware overdue days, and upserts fine records in `Fine` collection up to `FINE_MAX_AMOUNT`. | `Loan`, `Fine` |
+| **Hold Queue Expiry Sweep** | `*/15 * * * *` | Every 15 minutes | Sweeps hold reservations in `ready_for_pickup` status where the pickup window (`HOLD_PICKUP_WINDOW_HOURS`, default: 48h) has lapsed. Cancels expired hold and auto-promotes next student in queue. | `Reservation`, `Loan` |
+| **Due Date Reminders** | `0 8 * * *` | Daily at 08:00 UTC | Identifies loans maturing within `DUE_REMINDER_DAYS_BEFORE` (default: 2 days). Sends automated reminder notices via multi-channel notification service (In-App, Email, SMS). | `Loan`, `User`, `Notification` |
+| **Streak Expiry Sweep** | `5 0 * * *` | Daily at 00:05 UTC | Evaluates active patron reading streaks. If student missed daily check-in, automatically consumes a streak freeze buffer token (`freezesAvailable`). If no freezes remain, resets streak to 0. | `Streak`, `CheckInLog` |
+| **Streak Cutoff Reminders** | `0 21 * * *` | Daily at 21:00 UTC | Identifies students with active reading streaks who have not checked in today (`STREAK_REMINDER_HOURS_BEFORE`, default: 3h before cutoff). Dispatches urgent check-in nudge alerts. | `Streak`, `Notification` |
+| **Metrics Aggregation** | `0 1 * * *` | Daily at 01:00 UTC | Precalculates multi-tenant circulation velocity, active patron ratios, outstanding fine totals, and lab occupancy statistics, persisting snapshots to `DashboardStatsSnapshot`. | `DashboardStatsSnapshot` |
+| **Weekly Leaderboard Snapshot** | `0 0 * * 0` | Weekly Sun at 00:00 UTC | Compiles the top 10 campus readers by gamification points for the preceding week and saves immutable record in `LeaderboardSnapshot` for historical trophies. | `User`, `LeaderboardSnapshot` |
+| **Nightly Recommendations** | `0 2 * * *` | Daily at 02:00 UTC | Recomputes machine-assisted book recommendations college-by-college to bound RAM usage, factoring in patron course major, borrowing history, and campus popularity trends. | `UserRecommendation`, `Book` |
+| **Daily Payment Reconciliation** | `0 3 * * *` | Daily at 03:00 UTC | Cross-checks local `Payment` records against the Razorpay REST API for orders within the last 48 hours. Flags status mismatches and missing transactions in audit logs. | `Payment`, `AuditLog` |
+| **Stale Registration Cleanup** | `0 4 * * *` | Daily at 04:00 UTC | Automatically prunes unverified self-service student registration requests (`RegistrationRequest`) older than 7 days to keep database indexes lean. | `RegistrationRequest` |
+| **Workstation No-Show Auto-Release** | `*/2 * * * *` | Every 2 minutes | Evaluates computer lab bookings. If a student does not check in within the 10-minute grace window, marks booking as `no_show`, increments patron strike count, and immediately frees seat. | `LabBooking`, `LabSeat` |
+| **Facility Queue Promotion Expiry** | `* * * * *` | Every 1 minute | Sweeps lab waitlist queue promotions. If an auto-promoted student does not confirm their seat reservation within 10 minutes, expires claim and promotes the next student in line. | `FacilityBookingQueue` |
+
+---
+
+## 📱 Offline PWA & Hardware Gate Kiosk Integration
+
+### 1. Offline E-Book Engine (IndexedDB + Service Worker)
+
+- **Client-Side Cache (`idb`)**: Built on browser IndexedDB, allowing students to download entire EPUB and PDF textbook packages directly to their local browser storage via [`Downloads.jsx`](frontend/src/pages/Downloads.jsx).
+- **Zero-Network Reader Hydration**: When internet access is disconnected, the e-reader detects offline state and loads files, highlights, and annotations directly from IndexedDB without server requests.
+- **PWA Manifest & App Shell**: Configured with full PWA manifests (`manifest.json`) and caching service workers for standalone mobile app installation on Android, iOS, and desktop browsers.
+
+### 2. Physical Hardware Gate Scanner API
+
+- **Dedicated Scanner Security**: Hardware barcode/RFID turnstiles and library entrance kiosks authenticate against `/api/v1/patron-card/verify` using a secure header secret (`x-scanner-key: SCANNER_API_KEY`).
+- **High-Throughput Verification**: Rate-limited up to 60 verifications per minute with sub-50ms response latency, returning patron status (`active`, `suspended`, `expired`), photo avatar, borrowing eligibility, and current overdue loan flags.
+- **Dual Format Support**: Validates both Code128 physical barcodes printed on ID cards and dynamic cryptographic QR codes rendered in the student's mobile patron card.
+
+---
+
+## 🗄️ Entity Data Architecture & Domain Models (73 Schemas)
+
+BookBuddy structures its MongoDB domain layer across 73 purpose-built Mongoose models organized into 7 primary architectural clusters:
+
+```mermaid
+graph TD
+    subgraph AuthTenants ["1. Auth & Multi-Tenancy"]
+        M_College["College & CollegeFeatureConfig"]
+        M_User["User & PendingAdminSetup"]
+        M_Tokens["RefreshToken & RevokedToken"]
+        M_Registration["RegistrationRequest & StudentJoinRequest"]
+    end
+
+    subgraph PhysicalILS ["2. Physical Catalog & Circulation"]
+        M_Book["Book & UnifiedBook"]
+        M_Loan["Loan & Reservation"]
+        M_Fine["Fine & ItemReport"]
+        M_Availability["AvailabilityAlert & WatchRequest"]
+    end
+
+    subgraph DigitalLib ["3. Digital Library & Reader"]
+        M_EResource["EResource & EResourceSubmission"]
+        M_Annotation["Annotation (Highlights & Sticky Notes)"]
+        M_Progress["ReadingProgress & ReadingPosition"]
+        M_Download["DownloadLog & OpenLibraryBook"]
+    end
+
+    subgraph Facilities ["4. Facilities & Computer Labs"]
+        M_LabSeat["LabSeat & FacilityResource"]
+        M_LabBooking["LabBooking & FacilityBooking"]
+        M_Queue["FacilityBookingQueue & NoShowStrike"]
+        M_Usage["FacilityUsageWeekly & FacilityResourceGroup"]
+    end
+
+    subgraph SocialGamify ["5. Gamification & Community"]
+        M_Streak["Streak, CheckInLog & StreakReward"]
+        M_Badge["Badge, Sticker, UserBadge & UserSticker"]
+        M_Feed["FeedPost, Review & Shelf"]
+        M_ILL["ILLRequest & ShareRequest"]
+    end
+
+    subgraph FinancialProcurement ["6. Financials & Acquisitions"]
+        M_Payment["Payment (Razorpay Ledger)"]
+        M_Acquisition["AcquisitionOrder & BookRequest"]
+        M_Suggestion["BookSuggestion & Complaint"]
+    end
+
+    subgraph TelemetryAuditing ["7. Observability & Auditing"]
+        M_Audit["AuditLog & UploadAuditLog"]
+        M_Cron["CronRunLog & PlatformMetricSnapshot"]
+        M_Stats["DashboardStatsSnapshot & DeviceToken"]
+        M_Jobs["UploadJob & StudentUploadBatch"]
+    end
+```
+
+---
+
 ## 🔌 REST API Route Directory
 
 All endpoints are versioned under `/api/v1`. Unversioned legacy endpoints emit a 90-day deprecation header.
 
-### Authentication & Sessions (`/api/v1/auth`)
+### 1. Authentication, Sessions & Personas (`/api/v1/auth`)
 
-| Method | Endpoint                   | Description                                                          | Access          |
-| :----- | :------------------------- | :------------------------------------------------------------------- | :-------------- |
-| `POST` | `/api/v1/auth/login`       | Authenticate credentials; returns access token + sets refresh cookie | Public          |
-| `POST` | `/api/v1/auth/register`    | Student self-registration with college domain validation             | Public          |
-| `POST` | `/api/v1/auth/refresh`     | Silent refresh token rotation; issues new access token               | Public (Cookie) |
-| `POST` | `/api/v1/auth/logout`      | Revoke active refresh session and clear cookies                      | Authenticated   |
-| `GET`  | `/api/v1/auth/me`          | Fetch currently authenticated user profile and permissions           | Authenticated   |
-| `POST` | `/api/v1/auth/impersonate` | Assume another user persona (requires super-admin role)              | Super Admin     |
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/auth/login` | Authenticate credentials; returns access token + sets refresh cookie | Public |
+| `POST` | `/api/v1/auth/register` | Student self-registration with college domain validation | Public |
+| `POST` | `/api/v1/auth/refresh` | Silent refresh token rotation; issues new access token | Public (Cookie) |
+| `POST` | `/api/v1/auth/logout` | Revoke active refresh session and clear cookies | Authenticated |
+| `GET` | `/api/v1/auth/me` | Fetch currently authenticated user profile and permissions | Authenticated |
+| `POST` | `/api/v1/auth/impersonate` | Assume another user persona for debugging (super-admin only) | Super Admin |
+| `POST` | `/api/v1/auth/change-password` | Mandatory initial password change or profile password update | Authenticated |
 
-### Physical Books & Catalog (`/api/v1/books`, `/api/v1/catalog`)
+### 2. Registration, Activation & Public Onboarding (`/api/v1/registration`)
 
-| Method   | Endpoint                          | Description                                                     | Access        |
-| :------- | :-------------------------------- | :-------------------------------------------------------------- | :------------ |
-| `GET`    | `/api/v1/books`                   | Search institution physical inventory with pagination & filters | Authenticated |
-| `GET`    | `/api/v1/books/:id`               | Get detailed metadata, copies, and hold queue status            | Authenticated |
-| `POST`   | `/api/v1/books`                   | Add new physical book title and initialize barcode copies       | College Admin |
-| `PUT`    | `/api/v1/books/:id`               | Update book metadata or shelf location                          | College Admin |
-| `DELETE` | `/api/v1/books/:id`               | Remove a book title from the catalog                            | College Admin |
-| `GET`    | `/api/v1/catalog/external-search` | Aggregate search across Google Books & Open Library             | Authenticated |
-| `GET`    | `/api/v1/catalog/cross-college`   | Search shared catalogs of partner consortium colleges           | Authenticated |
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/registration/college` | Submit self-service institutional onboarding application | Public |
+| `POST` | `/api/v1/registration/student` | Register student under a verified college tenant | Public |
+| `GET` | `/api/v1/registration/verify-token` | Validate single-use student activation token | Public |
+| `POST` | `/api/v1/registration/activate` | Complete account activation and set initial password | Public |
 
-### Circulation, Loans & Holds (`/api/v1/loans`, `/api/v1/reservations`)
+### 3. Public Discovery & General Home Aggregator (`/api/v1/dashboards/general`, `/api/v1/aggregator`)
 
-| Method   | Endpoint                   | Description                                                 | Access          |
-| :------- | :------------------------- | :---------------------------------------------------------- | :-------------- |
-| `GET`    | `/api/v1/loans/my-loans`   | Fetch active and historical book loans for current user     | Student         |
-| `POST`   | `/api/v1/loans/checkout`   | Check out a book copy to a student via barcode scan         | College Admin   |
-| `POST`   | `/api/v1/loans/return`     | Process book return, calculate fines, and promote next hold | College Admin   |
-| `POST`   | `/api/v1/loans/:id/renew`  | Request renewal of an active loan (up to max limit)         | Student / Admin |
-| `POST`   | `/api/v1/reservations`     | Place a hold reservation on an unavailable title            | Student         |
-| `DELETE` | `/api/v1/reservations/:id` | Cancel a pending hold reservation                           | Student / Admin |
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/dashboards/general/home-data` | Single-round-trip public discovery metrics, arrivals, and hours | Public |
+| `GET` | `/api/v1/dashboards/general/:id/dashboard` | Tenant-scoped public discovery dashboard data | Public |
+| `GET` | `/api/v1/aggregator/stats` | Aggregated catalog and workstation telemetry | Public |
 
-### Digital E-Resources & Annotations (`/api/v1/eresources`, `/api/v1/annotations`)
+### 4. Physical Books & Internal Catalog (`/api/v1/books`, `/api/v1/catalog`)
 
-| Method   | Endpoint                        | Description                                                 | Access        |
-| :------- | :------------------------------ | :---------------------------------------------------------- | :------------ |
-| `GET`    | `/api/v1/eresources`            | List digital e-books with format, category, and tag filters | Authenticated |
-| `POST`   | `/api/v1/eresources`            | Upload new institutional EPUB/PDF e-resource                | College Admin |
-| `GET`    | `/api/v1/eresources/:id/stream` | Stream e-book content via HTTP 206 Partial Content          | Authenticated |
-| `GET`    | `/api/v1/annotations`           | Retrieve student's highlights and notes for an e-resource   | Authenticated |
-| `POST`   | `/api/v1/annotations`           | Save new highlight or sticky note to MongoDB                | Authenticated |
-| `DELETE` | `/api/v1/annotations/:id`       | Delete an annotation                                        | Authenticated |
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/books` | Search institution physical inventory with pagination & filters | Authenticated |
+| `GET` | `/api/v1/books/:id` | Get detailed metadata, copies, and hold queue status | Authenticated |
+| `POST` | `/api/v1/books` | Add new physical book title and initialize barcode copies | College Admin |
+| `PUT` | `/api/v1/books/:id` | Update book metadata or shelf location | College Admin |
+| `DELETE` | `/api/v1/books/:id` | Remove a book title from the catalog | College Admin |
+| `GET` | `/api/v1/catalog/search` | Fast full-text OPAC catalog search with category facets | Authenticated |
 
-### Facilities & Computer Lab Booking (`/api/v1/lab`)
+### 5. External Catalog Harvesting (`/api/v1/google-books`, `/api/v1/eresources/external`)
 
-| Method   | Endpoint                   | Description                                                | Access          |
-| :------- | :------------------------- | :--------------------------------------------------------- | :-------------- |
-| `GET`    | `/api/v1/lab/seats`        | Fetch real-time computer lab workstation availability grid | Authenticated   |
-| `POST`   | `/api/v1/lab/bookings`     | Reserve a workstation seat for a specific time slot        | Student         |
-| `GET`    | `/api/v1/lab/my-bookings`  | List active and upcoming workstation reservations          | Student         |
-| `DELETE` | `/api/v1/lab/bookings/:id` | Cancel an upcoming workstation booking                     | Student / Admin |
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/google-books/search` | Search external Google Books API with caching | Authenticated |
+| `GET` | `/api/v1/google-books/isbn/:isbn` | Auto-fetch book metadata and cover art by ISBN | College Admin |
+| `GET` | `/api/v1/eresources/external/gutenberg` | Harvest public domain e-books from Project Gutenberg | Authenticated |
+| `GET` | `/api/v1/eresources/external/openlibrary` | Harvest bibliographic records from Open Library | Authenticated |
 
-### Fines & Razorpay Payments (`/api/v1/fines`, `/api/v1/payments`)
+### 6. Circulation, Loans & Holds (`/api/v1/loans`, `/api/v1/reservations`)
 
-| Method | Endpoint                        | Description                                            | Access             |
-| :----- | :------------------------------ | :----------------------------------------------------- | :----------------- |
-| `GET`  | `/api/v1/fines/my-fines`        | Fetch outstanding fines and payment history            | Student            |
-| `POST` | `/api/v1/payments/create-order` | Generate Razorpay checkout order for outstanding fines | Student            |
-| `POST` | `/api/v1/payments/verify`       | Verify Razorpay HMAC-SHA256 signature and clear fine   | Student            |
-| `POST` | `/api/v1/payments/webhook`      | Idempotent Razorpay webhook processor                  | Public (Signature) |
-| `POST` | `/api/v1/fines/:id/waive`       | Waive an overdue fine manually                         | College Admin      |
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/loans/my-loans` | Fetch active and historical book loans for current user | Student |
+| `POST` | `/api/v1/loans/checkout` | Check out a book copy to a student via barcode scan | College Admin |
+| `POST` | `/api/v1/loans/return` | Process book return, calculate fines, and promote next hold | College Admin |
+| `POST` | `/api/v1/loans/:id/renew` | Request renewal of an active loan (up to max limit) | Student / Admin |
+| `POST` | `/api/v1/reservations` | Place a hold reservation on an unavailable title | Student |
+| `GET` | `/api/v1/reservations/queue` | Query current student position in hold queue | Student |
+| `DELETE` | `/api/v1/reservations/:id` | Cancel a pending hold reservation | Student / Admin |
+| `POST` | `/api/v1/availability-alerts` | Subscribe to out-of-stock book availability notifications | Student |
 
-### Gamification, Streaks & Badges (`/api/v1/streak`, `/api/v1/stickers`)
+### 7. Digital E-Resources & Persistent Annotations (`/api/v1/eresources`, `/api/v1/annotations`)
 
-| Method | Endpoint                  | Description                                                  | Access  |
-| :----- | :------------------------ | :----------------------------------------------------------- | :------ |
-| `GET`  | `/api/v1/streak`          | Get current student reading streak status and freeze balance | Student |
-| `POST` | `/api/v1/streak/check-in` | Submit daily reading check-in to advance streak              | Student |
-| `GET`  | `/api/v1/leaderboard`     | View campus reading streak leaderboard                       | Student |
-| `GET`  | `/api/v1/stickers`        | Fetch unlocked milestone badges and stickers                 | Student |
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/eresources` | List digital e-books with format, category, and tag filters | Authenticated |
+| `POST` | `/api/v1/eresources` | Upload new institutional EPUB/PDF e-resource | College Admin |
+| `GET` | `/api/v1/eresources/:id/stream` | Stream e-book content via HTTP 206 Partial Content | Authenticated |
+| `GET` | `/api/v1/annotations` | Retrieve student's highlights and notes for an e-resource | Authenticated |
+| `POST` | `/api/v1/annotations` | Save new highlight or sticky note to MongoDB | Authenticated |
+| `DELETE` | `/api/v1/annotations/:id` | Delete an annotation | Authenticated |
+| `PUT` | `/api/v1/reading-progress/:id` | Update exact CFI coordinates and reading percentage | Student |
+| `GET` | `/api/v1/reading-stats` | Fetch patron aggregate reading duration and page counts | Student |
 
-### College Admin Desks & Bulk Ingestion (`/api/v1/college-admin`, `/api/v1/college/:id`)
+### 8. Reading Lists, Custom Shelves & Bookmarks (`/api/v1/reading-lists`, `/api/v1/shelves`)
 
-| Method | Endpoint                          | Description                                                 | Access        |
-| :----- | :-------------------------------- | :---------------------------------------------------------- | :------------ |
-| `GET`  | `/api/v1/college-admin/stats`     | Fetch aggregated dashboard metrics and charts               | College Admin |
-| `POST` | `/api/v1/college/:id/bulk-upload` | Non-blocking CSV student roster upload (HTTP 202)           | College Admin |
-| `GET`  | `/api/v1/colleges/:id/features`   | Fetch active service catalog feature flags                  | Authenticated |
-| `PUT`  | `/api/v1/colleges/:id/features`   | Update institution feature flags with transitive resolution | College Admin |
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/reading-lists` | List patron's custom reading lists | Student |
+| `POST` | `/api/v1/reading-lists` | Create new custom reading list | Student |
+| `POST` | `/api/v1/reading-lists/:id/items` | Add book title to reading list | Student |
+| `GET` | `/api/v1/shelves` | Fetch student custom shelves with drag-and-drop ordering | Student |
+| `POST` | `/api/v1/shelves` | Create custom bookshelf category ("Thesis", "Favorites") | Student |
+| `GET` | `/api/v1/bookmarks` | Fetch user cloud-synchronized book bookmarks | Student |
+| `POST` | `/api/v1/bookmarks` | Toggle bookmark on physical or digital catalog title | Student |
+| `GET` | `/api/v1/saved-searches` | Retrieve saved catalog search queries | Student |
 
-### Super Admin Platform Center (`/api/v1/dashboards/admin-portal`)
+### 9. Facilities & Computer Lab Booking (`/api/v1/lab`)
 
-| Method | Endpoint                                     | Description                                            | Access      |
-| :----- | :------------------------------------------- | :----------------------------------------------------- | :---------- |
-| `GET`  | `/api/v1/dashboards/admin-portal/overview`   | Platform-wide telemetry (colleges, users, system load) | Super Admin |
-| `GET`  | `/api/v1/dashboards/admin-portal/colleges`   | Manage and provision college tenants                   | Super Admin |
-| `GET`  | `/api/v1/dashboards/admin-portal/audit-logs` | Query immutable administrative audit logs              | Super Admin |
-| `POST` | `/api/v1/dashboards/admin-portal/moderate`   | Take moderation action on reported content             | Super Admin |
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/lab/seats` | Fetch real-time computer lab workstation availability grid | Authenticated |
+| `POST` | `/api/v1/lab/bookings` | Reserve a workstation seat for a specific time slot | Student |
+| `GET` | `/api/v1/lab/my-bookings` | List active and upcoming workstation reservations | Student |
+| `DELETE` | `/api/v1/lab/bookings/:id` | Cancel an upcoming workstation booking | Student / Admin |
+| `POST` | `/api/v1/lab/seats/bulk` | Bulk generate workstation seats with hardware specs | College Admin |
+
+### 10. Fines & Razorpay Payments (`/api/v1/fines`, `/api/v1/payments`)
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/fines/my-fines` | Fetch outstanding fines and payment history | Student |
+| `POST` | `/api/v1/payments/create-order` | Generate Razorpay checkout order for outstanding fines | Student |
+| `POST` | `/api/v1/payments/verify` | Verify Razorpay HMAC-SHA256 signature and clear fine | Student |
+| `POST` | `/api/v1/payments/webhook` | Idempotent Razorpay webhook processor | Public (Signature) |
+| `POST` | `/api/v1/fines/:id/waive` | Waive an overdue fine manually with justification note | College Admin |
+
+### 11. Gamification, Streaks & Badges (`/api/v1/streak`, `/api/v1/stickers`)
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/streak` | Get current student reading streak status and freeze balance | Student |
+| `POST` | `/api/v1/streak/check-in` | Submit daily reading check-in to advance streak | Student |
+| `GET` | `/api/v1/leaderboard` | View campus reading streak leaderboard | Student |
+| `GET` | `/api/v1/stickers` | Fetch unlocked milestone badges and stickers | Student |
+
+### 12. Community Feed & Book Reviews (`/api/v1/feed`, `/api/v1/reviews`)
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/feed` | List campus community bulletin posts and discussions | Authenticated |
+| `POST` | `/api/v1/feed` | Create new discussion post or reading recommendation | Student |
+| `GET` | `/api/v1/reviews/book/:bookId` | Fetch verified student reviews and star ratings | Authenticated |
+| `POST` | `/api/v1/reviews` | Submit 1-5 star rating and written book critique | Student |
+
+### 13. Inter-Library Loan (ILL) & Consortium (`/api/v1/ill`, `/api/v1/share-requests`)
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/catalog/cross-college` | Search shared catalogs across participating consortium colleges | Authenticated |
+| `POST` | `/api/v1/ill/request` | Submit inter-library loan request to partner college | Student |
+| `GET` | `/api/v1/share-requests` | List incoming/outgoing consortium sharing requests | College Admin |
+| `PUT` | `/api/v1/share-requests/:id` | Approve, ship, or confirm return of shared book title | College Admin |
+
+### 14. Acquisitions Procurement & Serials (`/api/v1/acquisitions`)
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/acquisitions/orders` | List purchase orders and vendor requisitions | College Admin |
+| `POST` | `/api/v1/acquisitions/orders` | Create new purchase requisition with vendor quotes | College Admin |
+| `PUT` | `/api/v1/acquisitions/orders/:id` | Update receiving batch status and commit to catalog | College Admin |
+
+### 15. Patron Card & Hardware Scanner Gate (`/api/v1/patron-card`)
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/patron-card/me` | Generate digital patron card with barcode & QR identifiers | Student |
+| `POST` | `/api/v1/patron-card/verify` | Gate kiosk scanner verification (secured by `SCANNER_API_KEY`) | Hardware Scanner |
+
+### 16. Support, Complaints & Book Suggestions (`/api/v1/complaints`, `/api/v1/feedback`)
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/complaints` | File student complaint or facility issue report | Student |
+| `POST` | `/api/v1/book-suggestions` | Suggest new book acquisition to library committee | Student |
+| `POST` | `/api/v1/item-reports` | Report physical item damage or missing pages | Student |
+| `GET` | `/api/v1/announcements` | Retrieve active campus announcements and alerts | Authenticated |
+
+### 17. College Admin Desks & Bulk Ingestion (`/api/v1/college-admin`, `/api/v1/college/:id`)
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/college-admin/stats` | Fetch aggregated dashboard metrics and charts | College Admin |
+| `POST` | `/api/v1/college/:id/bulk-upload` | Non-blocking CSV student roster upload (HTTP 202) | College Admin |
+| `GET` | `/api/v1/colleges/:id/features` | Fetch active service catalog feature flags | Authenticated |
+| `PUT` | `/api/v1/colleges/:id/features` | Update institution feature flags with transitive resolution | College Admin |
+
+### 18. Super Admin Platform Center (`/api/v1/dashboards/admin-portal`)
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/dashboards/admin-portal/overview` | Platform-wide telemetry (colleges, users, system load) | Super Admin |
+| `GET` | `/api/v1/dashboards/admin-portal/colleges` | Manage and provision college tenants | Super Admin |
+| `GET` | `/api/v1/dashboards/admin-portal/audit-logs` | Query immutable administrative audit logs | Super Admin |
+| `POST` | `/api/v1/dashboards/admin-portal/moderate` | Take moderation action on reported content | Super Admin |
+| `GET` | `/api/v1/dashboards/admin-portal/system/health`| Live infrastructure cluster telemetry check | Super Admin |
+
+### 19. Health, Telemetry & OpenAPI Documentation (`/health`, `/version`, `/ping`)
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/health` | Unified health check (MongoDB, Redis, Memory, Uptime) | Public |
+| `GET` | `/version` | Runtime commit SHA, build version, and environment name | Public |
+| `GET` | `/ping` | Lightweight zero-overhead process keep-alive handler | Public |
+| `GET` | `/api/v1/docs/swagger.json` | OpenAPI 3.0 specification for API explorer | Public |
 
 ---
 
@@ -475,14 +712,15 @@ HOST=0.0.0.0
 # ==============================================================================
 # DATABASE & CACHING PERSISTENCE
 # ==============================================================================
-# MongoDB connection string (local or MongoDB Atlas cluster)
+# MongoDB connection string (local or MongoDB Atlas replica set)
 MONGO_URI=mongodb://127.0.0.1:27017/bookbuddy
+MONGO_MAX_POOL_SIZE=50
 
 # Redis connection URL (required for Socket.io adapter, sessions, and rate limiting)
 REDIS_URL=redis://127.0.0.1:6379
 
 # ==============================================================================
-# AUTHENTICATION & SECURITY SECRETS
+# AUTHENTICATION, TOKENS & HARDWARE SECURITY
 # ==============================================================================
 # Minimum 32 characters each
 JWT_SECRET=super_secure_jwt_access_secret_passphrase_min_32_chars
@@ -491,8 +729,19 @@ JWT_ACCESS_EXPIRY=15m
 JWT_REFRESH_EXPIRY=7d
 COOKIE_SECRET=super_secure_cookie_signing_secret_min_32_chars
 
-# Hardware Scanner Gate Secret
+# Hardware Scanner Gate Secret (for library turnstiles and circulation kiosks)
 SCANNER_API_KEY=bookbuddy_scanner_secret_2026
+
+# ==============================================================================
+# THIRD-PARTY OAUTH PROVIDERS (PASSPORT.JS)
+# ==============================================================================
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
+GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/v1/auth/google/callback
+
+GITHUB_CLIENT_ID=your_github_oauth_client_id
+GITHUB_CLIENT_SECRET=your_github_oauth_client_secret
+GITHUB_CALLBACK_URL=http://localhost:5000/api/v1/auth/github/callback
 
 # ==============================================================================
 # PAYMENT GATEWAY (RAZORPAY)
@@ -502,19 +751,39 @@ RAZORPAY_KEY_SECRET=your_razorpay_secret_key
 RAZORPAY_WEBHOOK_SECRET=your_razorpay_webhook_secret
 
 # ==============================================================================
-# CLOUD ASSETS (CLOUDINARY)
+# CLOUD ASSETS & STORAGE (CLOUDINARY & VERCEL BLOB)
 # ==============================================================================
 CLOUDINARY_CLOUD_NAME=your_cloudinary_name
 CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+BLOB_READ_WRITE_TOKEN=vercel_blob_token_if_deployed_on_vercel
 
 # ==============================================================================
-# SEARCH & EXTERNAL CATALOG INTEGRATIONS
+# MULTI-CHANNEL NOTIFICATIONS (EMAIL & SMS)
+# ==============================================================================
+# Nodemailer SMTP Configuration
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=library.notifications@university.edu
+SMTP_PASS=app_specific_smtp_password
+SMTP_FROM="BookBuddy Campus Library <noreply@bookbuddy.edu>"
+
+# Twilio SMS Gateway (for urgent loan due notices & hold fulfillment alerts)
+TWILIO_SID=AC_your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_FROM_NUMBER=+1234567890
+
+# ==============================================================================
+# EXTERNAL CATALOG HARVESTING & FAST SEARCH
 # ==============================================================================
 ALGOLIA_APP_ID=your_algolia_app_id
 ALGOLIA_ADMIN_KEY=your_algolia_admin_key
 ALGOLIA_INDEX_NAME=bookbuddy_books
 GOOGLE_BOOKS_API_KEY=your_google_books_api_key
+OPEN_LIBRARY_USER_AGENT="BookBuddy/1.0 (library-ils@university.edu)"
+GUTENDEX_BASE_URL=https://gutendex.com/books/
+GUTENDEX_CACHE_TTL_SECONDS=86400
+GUTENDEX_TIMEOUT_MS=5000
 
 # ==============================================================================
 # BUSINESS LOGIC & CIRCULATION POLICIES
@@ -531,9 +800,27 @@ LAB_START_HOUR=8
 LAB_END_HOUR=20
 
 # ==============================================================================
-# TELEMETRY & ERROR TRACKING
+# RATE LIMITING & SECURITY THRESHOLDS
+# ==============================================================================
+RATE_LIMIT_GLOBAL_MAX=100
+RATE_LIMIT_GLOBAL_WINDOW_MS=60000
+RATE_LIMIT_AUTH_MAX=5
+RATE_LIMIT_AUTH_IP_MAX=20
+RATE_LIMIT_AUTH_EMAIL_MAX=5
+RATE_LIMIT_AUTH_WINDOW_MS=900000
+RATE_LIMIT_PATRON_CARD_VERIFY_MAX=60
+RATE_LIMIT_PATRON_CARD_VERIFY_WINDOW_MS=60000
+RATE_LIMIT_EXPENSIVE_MAX=10
+RATE_LIMIT_EXPENSIVE_WINDOW_MS=60000
+
+# ==============================================================================
+# TELEMETRY, SIEM WEBHOOKS & ERROR TRACKING
 # ==============================================================================
 SENTRY_DSN=https://your_sentry_dsn@sentry.io/project
+ENABLE_MEMORY_LOGGING=false
+ERROR_WEBHOOK_URL=https://hooks.slack.com/services/xxx/yyy/zzz
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/xxx/yyy/zzz
+SIEM_WEBHOOK_URL=https://siem.university.edu/ingest
 ```
 
 ---

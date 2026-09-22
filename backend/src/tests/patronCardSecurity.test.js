@@ -62,6 +62,7 @@ describe('@security-appsec-engineer: Patron Card Gate Verification Security Suit
     });
 
     staffAdminUser = await User.create({
+      studentId: `ADM_${unique}`,
       name: 'Gate Staff Admin',
       email: `admin_${unique}@sgi.edu`,
       password: 'Password123!',
@@ -71,6 +72,7 @@ describe('@security-appsec-engineer: Patron Card Gate Verification Security Suit
     });
 
     superAdminUser = await User.create({
+      studentId: `SUP_${unique}`,
       name: 'Platform Super Admin',
       email: `super_${unique}@bookbuddy.com`,
       password: 'Password123!',

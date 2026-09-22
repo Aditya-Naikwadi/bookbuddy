@@ -651,7 +651,7 @@ const DigitalReaderModal = ({
 
   // Real-time socket sync for annotations
   useEffect(() => {
-    if (!isModalOpen || !targetId) return;
+    if (!isModalOpen || !targetId || !isAuthenticated) return;
 
     const handleUpsert = (ann) => {
       const annBookId = String(ann.bookId || ann.resourceId || "");
@@ -689,11 +689,22 @@ const DigitalReaderModal = ({
       socket.off("annotation:upserted", handleUpsert);
       socket.off("annotation:deleted", handleDelete);
     };
-  }, [isModalOpen, targetId]);
+  }, [isModalOpen, targetId, isAuthenticated]);
 
-  // Load annotations on mount / open
+  // Load annotations on mount / open (authenticated patrons only)
   useEffect(() => {
     if (!isModalOpen || !targetId) return;
+    if (!isAuthenticated) {
+      let isMounted = true;
+      Promise.resolve().then(() => {
+        if (isMounted) {
+          setAnnotations([]);
+        }
+      });
+      return () => {
+        isMounted = false;
+      };
+    }
     let isMounted = true;
 
     const loadData = async () => {
@@ -712,7 +723,7 @@ const DigitalReaderModal = ({
     return () => {
       isMounted = false;
     };
-  }, [isModalOpen, targetId]);
+  }, [isModalOpen, targetId, isAuthenticated]);
 
   const handleNext = useCallback(() => {
     if (currentPage < totalPages) {

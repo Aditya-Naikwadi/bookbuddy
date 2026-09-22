@@ -413,7 +413,7 @@ const processBulkUploadJob = async (jobId, fileSource) => {
               department,
               phone,
               tempPassword,
-              deliveryChannel: 'sms',
+              deliveryChannel: isTwilioConfigured() ? 'sms' : 'handout',
             });
           } else {
             deliverySummary.handout += 1;

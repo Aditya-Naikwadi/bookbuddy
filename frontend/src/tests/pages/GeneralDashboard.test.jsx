@@ -16,6 +16,10 @@ import GeneralSaved from "../../pages/dashboards/general/GeneralSaved";
 import GeneralEResources from "../../pages/dashboards/general/GeneralEResources";
 import * as bookDataHooks from "../../hooks/useBookData";
 import useAuthStore from "../../store/authStore";
+import {
+  createAnnotationApi,
+  getBookAnnotations,
+} from "../../api/annotationApi";
 
 const mockNavigate = vi.fn();
 
@@ -559,6 +563,155 @@ describe("General Dashboard Consolidated Suite", () => {
             }),
           }),
         );
+      });
+
+      it("public reader selecting text and clicking a highlight color shows login prompt without raw 401 or API call", async () => {
+        useAuthStore.setState({
+          isAuthenticated: false,
+          user: null,
+        });
+        createAnnotationApi.mockClear();
+        getBookAnnotations.mockClear();
+
+        const mockBook = {
+          id: "cs-book-2",
+          title: "Operating Systems",
+          format: "epub",
+          category: "Computer Science",
+        };
+
+        render(
+          <DigitalReaderModal
+            isOpen={true}
+            onClose={vi.fn()}
+            book={mockBook}
+            title="Operating Systems"
+            fileType="epub"
+          />,
+        );
+
+        await waitFor(() => {
+          expect(
+            screen.getByTestId("structured-book-reader"),
+          ).toBeInTheDocument();
+        });
+
+        // Unauthenticated reader must not trigger background getBookAnnotations
+        expect(getBookAnnotations).not.toHaveBeenCalled();
+
+        // Mock window.getSelection to simulate user highlighting a phrase
+        const originalGetSelection = window.getSelection;
+        window.getSelection = vi.fn().mockReturnValue({
+          isCollapsed: false,
+          rangeCount: 1,
+          toString: () => "kernel memory management",
+          getRangeAt: () => ({
+            getBoundingClientRect: () => ({
+              top: 150,
+              left: 200,
+              width: 120,
+              height: 24,
+            }),
+          }),
+        });
+
+        // Trigger mouseUp on reader text container
+        fireEvent.mouseUp(screen.getByTestId("structured-book-reader"));
+
+        // HighlightToolbar should appear with color options
+        await waitFor(() => {
+          expect(screen.getByTitle("Highlight with yellow")).toBeInTheDocument();
+        });
+
+        // Click color option to highlight
+        fireEvent.click(screen.getByTitle("Highlight with yellow"));
+
+        // Login prompt modal appears immediately
+        await waitFor(() => {
+          expect(screen.getByTestId("login-prompt-modal")).toBeInTheDocument();
+        });
+        expect(screen.getByText("Sign In to Save Highlights")).toBeInTheDocument();
+
+        // Zero API calls were made (preventing 401)
+        expect(createAnnotationApi).not.toHaveBeenCalled();
+
+        window.getSelection = originalGetSelection;
+      });
+
+      it("public reader attempting to attach and save a note shows login prompt without raw 401 or API call", async () => {
+        useAuthStore.setState({
+          isAuthenticated: false,
+          user: null,
+        });
+        createAnnotationApi.mockClear();
+
+        const mockBook = {
+          id: "cs-book-3",
+          title: "Computer Networks",
+          format: "epub",
+          category: "Computer Science",
+        };
+
+        render(
+          <DigitalReaderModal
+            isOpen={true}
+            onClose={vi.fn()}
+            book={mockBook}
+            title="Computer Networks"
+            fileType="epub"
+          />,
+        );
+
+        await waitFor(() => {
+          expect(
+            screen.getByTestId("structured-book-reader"),
+          ).toBeInTheDocument();
+        });
+
+        // Mock selection
+        const originalGetSelection = window.getSelection;
+        window.getSelection = vi.fn().mockReturnValue({
+          isCollapsed: false,
+          rangeCount: 1,
+          toString: () => "packet switching protocols",
+          getRangeAt: () => ({
+            getBoundingClientRect: () => ({
+              top: 200,
+              left: 250,
+              width: 100,
+              height: 20,
+            }),
+          }),
+        });
+
+        fireEvent.mouseUp(screen.getByTestId("structured-book-reader"));
+
+        await waitFor(() => {
+          expect(screen.getByTitle("Add Note")).toBeInTheDocument();
+        });
+
+        // Open note editor
+        fireEvent.click(screen.getByTitle("Add Note"));
+        expect(screen.getByText("Attach Note to Highlight")).toBeInTheDocument();
+
+        // Type note
+        const textarea = screen.getByPlaceholderText("Type your study note here...");
+        fireEvent.change(textarea, { target: { value: "Review RFC 791 for exam" } });
+
+        // Click Save Note
+        const saveNoteBtn = screen.getByText("Save Note");
+        fireEvent.click(saveNoteBtn);
+
+        // Login prompt modal appears
+        await waitFor(() => {
+          expect(screen.getByTestId("login-prompt-modal")).toBeInTheDocument();
+        });
+        expect(screen.getByText("Sign In to Save Highlights")).toBeInTheDocument();
+
+        // Zero API calls made
+        expect(createAnnotationApi).not.toHaveBeenCalled();
+
+        window.getSelection = originalGetSelection;
       });
     });
 
