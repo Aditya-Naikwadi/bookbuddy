@@ -1,18 +1,24 @@
 import apiClient from "./client";
+import {
+  getLabAvailabilityQuerySchema,
+  createBookingBodySchema,
+} from "@shared/schemas/facilities";
 
 export const facilitiesApi = {
   getAvailability: async (labName, date) => {
+    const validated = getLabAvailabilityQuerySchema.parse({ labName, date });
     const { data } = await apiClient.get("/lab/availability", {
-      params: { labName, date },
+      params: validated,
     });
     return data.data;
   },
   createBooking: async (seatId, startTime, endTime) => {
-    const { data } = await apiClient.post("/lab/bookings", {
+    const validated = createBookingBodySchema.parse({
       seatId,
       startTime,
       endTime,
     });
+    const { data } = await apiClient.post("/lab/bookings", validated);
     return data.data;
   },
   getMyBookings: async () => {

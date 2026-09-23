@@ -18,6 +18,7 @@ import { Button } from "../components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGoogleLogin } from "@react-oauth/google";
 import { registrationApi } from "../api/registrationApi";
+import { ROLES, normalizeRole } from "@bookbuddy/shared";
 
 const GoogleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -73,7 +74,7 @@ const Register = () => {
   const [selectedCollege, setSelectedCollege] = useState(null);
   const [colleges, setColleges] = useState([]);
   const [isLoadingColleges, setIsLoadingColleges] = useState(
-    role === "college-student",
+    normalizeRole(role) === ROLES.STUDENT,
   );
   const [collegeSearch, setCollegeSearch] = useState("");
   const [isCollegeDropdownOpen, setIsCollegeDropdownOpen] = useState(false);
@@ -83,7 +84,7 @@ const Register = () => {
 
   useEffect(() => {
     let isMounted = true;
-    if (role === "college-student" && colleges.length === 0) {
+    if (normalizeRole(role) === ROLES.STUDENT && colleges.length === 0) {
       const fetchActiveColleges = async () => {
         setIsLoadingColleges(true);
         try {
@@ -181,13 +182,14 @@ const Register = () => {
         );
       }
     } else if (e.key === "Enter") {
-      if (
-        isCollegeDropdownOpen &&
-        highlightedIndex >= 0 &&
-        filteredColleges[highlightedIndex]
-      ) {
+      if (isCollegeDropdownOpen) {
         e.preventDefault();
-        handleSelectCollege(filteredColleges[highlightedIndex]);
+        if (
+          highlightedIndex >= 0 &&
+          filteredColleges[highlightedIndex]
+        ) {
+          handleSelectCollege(filteredColleges[highlightedIndex]);
+        }
       }
     } else if (e.key === "Escape") {
       if (isCollegeDropdownOpen) {
@@ -523,16 +525,16 @@ const Register = () => {
               },
               {
                 id: "reg-role-student",
-                value: "college-student",
+                value: ROLES.STUDENT,
                 label: "College Student",
               },
               {
                 id: "reg-role-admin",
-                value: "college-admin",
+                value: ROLES.COLLEGE_ADMIN,
                 label: "College Admin",
               },
             ].map((option) => {
-              const isSelected = role === option.value;
+              const isSelected = normalizeRole(role) === option.value;
               return (
                 <label
                   key={option.value}
@@ -561,7 +563,7 @@ const Register = () => {
         </motion.div>
 
         <AnimatePresence>
-          {role === "college-student" && (
+          {normalizeRole(role) === ROLES.STUDENT && (
             <motion.div
               variants={itemVariants}
               initial={{ opacity: 0, height: 0, y: -6 }}
@@ -714,13 +716,13 @@ const Register = () => {
             id="reg-student-id"
             name="studentId"
             type="text"
-            required={role === "college-student"}
+            required={normalizeRole(role) === ROLES.STUDENT}
             disabled={isLoading}
             value={studentId}
             onChange={(e) => setStudentId(e.target.value)}
             autoCapitalize="characters"
             className="w-full p-2.5 text-sm bg-surface/50 border border-edge rounded-xl text-ink focus:outline-none focus:ring-2 focus:ring-ember/50 placeholder-muted/50 transition-all shadow-sm disabled:opacity-50"
-            placeholder={role === "college-student" ? "STU1001" : "ID1001"}
+            placeholder={normalizeRole(role) === ROLES.STUDENT ? "STU1001" : "ID1001"}
           />
         </motion.div>
 

@@ -4,7 +4,7 @@ const { submitFeedback, getFeedback } = require('../controllers/feedbackControll
 const { protect } = require('../middlewares/auth');
 const scopeToTenant = require('../middlewares/scopeToTenant');
 const validate = require('../middlewares/validate');
-const { createFeedbackSchema } = require('../validations/facilities.validation');
+const { createFeedbackSchema } = require('@bookbuddy/shared/schemas/facilities');
 
 router.use(protect);
 router.use(scopeToTenant);

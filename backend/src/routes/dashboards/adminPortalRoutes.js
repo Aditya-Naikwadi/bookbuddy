@@ -46,9 +46,10 @@ const {
   updateUserRoleSchema,
   resetPasswordSchema,
   updateSystemSettingsSchema,
-} = require('../../validations/admin.validation');
-const { rejectOnboardingSchema } = require('../../validations/registration.validation');
-const { paramIdSchema, paramRequestIdSchema } = require('../../validations/common.validation');
+} = require('@bookbuddy/shared/schemas/admin');
+const { rejectOnboardingSchema } = require('@bookbuddy/shared/schemas/auth');
+const { paramIdSchema, paramRequestIdSchema } = require('@bookbuddy/shared/schemas/common');
+const { moderateEResourceRouteSchema } = require('@bookbuddy/shared/schemas/moderation');
 
 const { userLimiter, expensiveRouteLimiter } = require('../../middlewares/rateLimiters');
 
@@ -87,7 +88,7 @@ router.route('/audit-logs').get(expensiveRouteLimiter, getAuditLogs);
 router.route('/moderation/pending').get(getGlobalPendingEResources);
 router
   .route('/moderation/:id')
-  .put(validate(paramIdSchema), auditLog('eresource.moderate'), moderateEResourceGlobal);
+  .put(validate(moderateEResourceRouteSchema), auditLog('eresource.moderate'), moderateEResourceGlobal);
 router
   .route('/moderation/:id/publish')
   .post(validate(paramIdSchema), auditLog('eresource.publish_global'), publishEResourceGlobal);

@@ -8,7 +8,7 @@ const {
 } = require('../controllers/loanController');
 const { protect } = require('../middlewares/auth');
 const validate = require('../middlewares/validate');
-const { paramIdSchema, paramBookIdSchema } = require('../validations/common.validation');
+const { paramIdSchema, paramBookIdSchema } = require('@bookbuddy/shared/schemas/common');
 
 router.use(protect);
 

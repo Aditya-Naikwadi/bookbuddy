@@ -233,10 +233,10 @@ collegeSchema.pre('save', async function () {
     this.slug = candidateSlug;
   }
 
-  if (['suspended', 'archived'].includes(this.status)) {
-    this.isActive = false;
-  } else if (this.status === 'active' && this.isModified('status')) {
+  if (this.status === 'active') {
     this.isActive = true;
+  } else if (['pending', 'pending_review', 'suspended', 'archived', 'rejected'].includes(this.status)) {
+    this.isActive = false;
   }
 
   if (this.createdVia && !this.creationPath) {
@@ -258,17 +258,12 @@ collegeSchema.pre(['updateOne', 'findOneAndUpdate', 'findByIdAndUpdate'], functi
     }
 
     const status = update.status || (update.$set && update.$set.status);
-    if (['suspended', 'archived'].includes(status)) {
+    if (status) {
+      const isNowActive = status === 'active';
       if (update.$set) {
-        update.$set.isActive = false;
+        update.$set.isActive = isNowActive;
       } else {
-        update.isActive = false;
-      }
-    } else if (status === 'active') {
-      if (update.$set) {
-        update.$set.isActive = true;
-      } else {
-        update.isActive = true;
+        update.isActive = isNowActive;
       }
     }
   }

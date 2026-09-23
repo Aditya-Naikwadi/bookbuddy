@@ -9,6 +9,7 @@ const {
   sendStudentVerificationEmail,
   sendAdminDomainVerificationEmail,
 } = require('../services/notificationService');
+const { normalizeEmail, normalizeStudentId, ROLES } = require('@bookbuddy/shared');
 
 // @desc    Get active colleges list for student signup dropdown
 // @route   GET /api/registration/colleges
@@ -35,7 +36,8 @@ const getActiveColleges = async (req, res, next) => {
 const registerStudent = async (req, res, next) => {
   try {
     const { name, email, password, collegeId, studentId, department, phone } = req.body;
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedStudentId = normalizeStudentId(studentId);
 
     // 1. Verify target college exists and is ACTIVE
     if (!collegeId) {
@@ -168,7 +170,7 @@ const registerStudent = async (req, res, next) => {
 const verifyStudentEmail = async (req, res, next) => {
   try {
     const { email, otp } = req.body;
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = normalizeEmail(email);
 
     const regRequest = await RegistrationRequest.findOne({
       type: 'student_registration',
@@ -263,12 +265,12 @@ const submitTenantOnboarding = async (req, res, next) => {
       return next(new AppError('College / Institution name is required.', 400));
     }
 
-    const effectiveAdminEmail = (adminEmail || '').toLowerCase().trim();
+    const effectiveAdminEmail = normalizeEmail(adminEmail);
     if (!effectiveAdminEmail) {
       return next(new AppError('College Admin Email is required.', 400));
     }
 
-    const effectiveCollegeEmail = (collegeEmail || effectiveAdminEmail).toLowerCase().trim();
+    const effectiveCollegeEmail = normalizeEmail(collegeEmail || effectiveAdminEmail);
     const emailDomain =
       effectiveAdminEmail.split('@')[1] || effectiveCollegeEmail.split('@')[1] || '';
 

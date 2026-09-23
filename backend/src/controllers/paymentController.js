@@ -13,16 +13,7 @@ const logger = require('../utils/logger');
  */
 const createOrder = asyncHandler(async (req, res) => {
   const userId = req.user.id || req.user._id;
-  const { fineIds, fineId, amount: clientAmount, currency = 'INR' } = req.body;
-
-  if (
-    !fineId &&
-    (!Array.isArray(fineIds) || fineIds.length === 0) &&
-    clientAmount !== undefined &&
-    Number(clientAmount) < 100
-  ) {
-    throw new AppError('Minimum payment amount is 100 paise (₹1).', 400);
-  }
+  const { fineIds, fineId, currency = 'INR' } = req.body;
 
   let targetFines;
 
@@ -34,19 +25,12 @@ const createOrder = asyncHandler(async (req, res) => {
     targetFines = await Fine.find({ userId, status: 'unpaid' });
   }
 
-  let finalAmountInPaise;
-
-  if (targetFines && targetFines.length > 0) {
-    const serverComputedRupees = targetFines.reduce((sum, f) => sum + (f.amount || 0), 0);
-    finalAmountInPaise = Math.round(serverComputedRupees * 100);
-  } else if (clientAmount !== undefined) {
-    if (Number(clientAmount) < 100) {
-      throw new AppError('Minimum payment amount is 100 paise (₹1).', 400);
-    }
-    throw new AppError('No unpaid fines found to process.', 400);
-  } else {
+  if (!targetFines || targetFines.length === 0) {
     throw new AppError('No unpaid fines found to process.', 400);
   }
+
+  const serverComputedRupees = targetFines.reduce((sum, f) => sum + (f.amount || 0), 0);
+  const finalAmountInPaise = Math.round(serverComputedRupees * 100);
 
   if (finalAmountInPaise < 100) {
     throw new AppError('Minimum payment amount is 100 paise (₹1).', 400);

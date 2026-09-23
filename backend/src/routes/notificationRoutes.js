@@ -10,7 +10,7 @@ const {
 } = require('../controllers/notificationController');
 const { protect } = require('../middlewares/auth');
 const validate = require('../middlewares/validate');
-const { paramIdSchema } = require('../validations/common.validation');
+const { paramIdSchema } = require('@bookbuddy/shared/schemas/common');
 
 router.use(protect);
 

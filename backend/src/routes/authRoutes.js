@@ -16,7 +16,7 @@ const { handleOAuthCallback, getMe } = require('../controllers/oauthController')
 const { getCsrfTokenController } = require('../middlewares/csrf');
 const { protect } = require('../middlewares/auth');
 const validate = require('../middlewares/validate');
-const { registerSchema, loginSchema, refreshSchema } = require('../validations/auth.validation');
+const { loginSchema, refreshSchema, registerRouteSchema } = require('@bookbuddy/shared/schemas/auth');
 const { authLimiter } = require('../middlewares/rateLimiters');
 const { loginRateLimiter } = require('../middlewares/loginRateLimiter');
 
@@ -33,7 +33,7 @@ router.post('/activate/confirm', authLimiter, activationController.activateAccou
 
 // @desc    Register a user
 // @access  Public
-router.post('/register', authLimiter, validate(registerSchema), registerUser);
+router.post('/register', authLimiter, validate(registerRouteSchema), registerUser);
 
 // @desc    Login user
 // @access  Public

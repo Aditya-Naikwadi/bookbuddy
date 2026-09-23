@@ -6,7 +6,7 @@
   "regions": ["bom1"],
   "functions": {
     "api/index.js": {
-      "includeFiles": "backend/src/**",
+      "includeFiles": "{backend/src/**,shared/**}",
       "maxDuration": 30
     }
   },

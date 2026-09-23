@@ -54,12 +54,12 @@ const {
   paramIdSchema,
   paramEResourceIdSchema,
   paramIdAndItemIdSchema,
-} = require('../../validations/common.validation');
+} = require('@bookbuddy/shared/schemas/common');
 const {
   placeHoldSchema,
   getQueueSchema,
   renewLoanSchema,
-} = require('../../validations/library.validation');
+} = require('@bookbuddy/shared/schemas/library');
 const {
   createEResourceSchema,
   createReadingListSchema,
@@ -69,15 +69,15 @@ const {
   createBookmarkSchema,
   createSavedSearchSchema,
   toggleAlertsSchema,
-} = require('../../validations/personalization.validation');
+} = require('@bookbuddy/shared/schemas/personalization');
 const {
-  getAvailabilitySchema,
-  createBookingSchema,
   createSuggestionSchema,
   createFeedbackSchema,
   createComplaintSchema,
   updateNotificationPreferencesSchema,
-} = require('../../validations/facilities.validation');
+  getLabAvailabilityRouteSchema,
+  createBookingRouteSchema,
+} = require('@bookbuddy/shared/schemas/facilities');
 const { userLimiter, expensiveRouteLimiter } = require('../../middlewares/rateLimiters');
 
 // Apply middleware gates to all routes
@@ -168,8 +168,8 @@ router.patch(
 );
 
 // Labs & Bookings
-router.get('/labs/availability', validate(getAvailabilitySchema), getLabsAvailability);
-router.post('/lab-bookings', validate(createBookingSchema), createLabBooking);
+router.get('/labs/availability', validate(getLabAvailabilityRouteSchema), getLabsAvailability);
+router.post('/lab-bookings', validate(createBookingRouteSchema), createLabBooking);
 router.post('/lab-bookings/:id/check-in', validate(paramIdSchema), checkInLabBooking);
 router.delete('/lab-bookings/:id', validate(paramIdSchema), cancelLabBooking);
 router.get('/lab-bookings', getStudentLabBookings);

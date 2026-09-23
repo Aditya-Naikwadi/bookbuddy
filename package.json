@@ -6,6 +6,11 @@
   "engines": {
     "node": "24.x"
   },
+  "workspaces": [
+    "shared",
+    "backend",
+    "frontend"
+  ],
   "allowScripts": {
     "@playwright/browser-chromium": true,
     "argon2": true,
@@ -27,10 +32,21 @@
     "lint:server": "cd backend && npm run lint",
     "lint:client": "cd frontend && npm run lint",
     "test:server": "cd backend && npm test",
+    "test:concurrency": "cd backend && npm run test:concurrency",
+    "check:audit": "node scripts/security/check-dependency-audit.js",
+    "scan:secrets": "node scripts/security/scan-secrets.js",
+    "check:indexes": "node scripts/testing/check-index-usage.js",
+    "check:tenant-isolation": "node scripts/testing/check-tenant-isolation.js",
+    "check:nplusone": "node scripts/testing/check-n-plus-one.js",
+    "check:transactions": "cd backend && npm run check:transactions",
+    "check:races": "cd backend && npm run check:races",
+    "check:contracts": "cd backend && npm run check:contracts",
+    "check:normalization": "cd backend && npm run check:normalization",
+    "ci:gates": "npm run check:audit && npm run scan:secrets && npm run check:tenant-isolation && npm run check:nplusone && npm run check:transactions && npm run check:races && npm run check:contracts && npm run check:normalization",
     "test:load": "k6 run tests/load/k6/k6-load-test.js",
     "loadtest:smoke": "node tests/load/smoke.js",
     "loadtest:flow": "artillery run tests/load/user-flow.yml",
-    "prepush": "sh scripts/pre-commit.sh && npm run lint:server && npm run lint:client && npm run test:server"
+    "prepush": "npm run scan:secrets && npm run lint:server && npm run lint:client && npm run test:server"
   },
   "lint-staged": {
     "backend/**/*.js": [

@@ -4,6 +4,13 @@ const StudentJoinRequest = require('../models/StudentJoinRequest');
 const AppError = require('../utils/AppError');
 const { getAuthCookieOptions } = require('../utils/cookieOptions');
 const sessionService = require('../services/sessionService');
+const {
+  normalizeEmail,
+  normalizeStudentId,
+  normalizeRole,
+  normalizeIdentity,
+  ROLES,
+} = require('@bookbuddy/shared');
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -32,18 +39,13 @@ const registerUser = async (req, res, next) => {
   try {
     let { studentId, name, email, password, role, collegeId } = req.body;
 
-    if (
-      role === 'super-admin' ||
-      role === 'college-admin' ||
-      role === 'college_admin' ||
-      role === 'super_admin'
-    ) {
+    const effectiveRole = normalizeRole(role || ROLES.STUDENT);
+
+    if ([ROLES.COLLEGE_ADMIN, ROLES.SUPER_ADMIN].includes(effectiveRole)) {
       return next(new AppError('Public registration of administrative roles is forbidden.', 403));
     }
 
-    const isCollegeStudent = role === 'college-student';
-
-    if (isCollegeStudent) {
+    if (effectiveRole === ROLES.STUDENT && (collegeId || normalizedStudentId)) {
       if (!collegeId) {
         return next(
           new AppError('College selection is required. Please select your institution.', 400)
@@ -53,19 +55,14 @@ const registerUser = async (req, res, next) => {
       if (!college || !college.isActive) {
         return next(new AppError('The specified college is inactive or does not exist.', 400));
       }
-    } else if (role === 'student' && collegeId) {
-      const college = await College.findById(collegeId);
-      if (!college || !college.isActive) {
-        return next(new AppError('The specified college is inactive or does not exist.', 400));
-      }
     } else {
       collegeId = null;
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
-    const normalizedStudentId = studentId ? studentId.toLowerCase().trim() : '';
-    const targetCollegeId =
-      isCollegeStudent || (role === 'student' && collegeId) ? collegeId : null;
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedStudentId = normalizeStudentId(studentId);
+    const targetCollegeId = effectiveRole === ROLES.STUDENT && collegeId ? collegeId : null;
+    const isInstitutionalStudent = Boolean(targetCollegeId && effectiveRole === ROLES.STUDENT);
 
     // Roster reconciliation: If college student, check for pre-uploaded roster record
     // matching BOTH studentId and email exactly (no fuzzy/name-only matching) with unactivated status
@@ -143,7 +140,7 @@ const registerUser = async (req, res, next) => {
 
     // Task 7: If no roster match is found for a College Student, create a StudentJoinRequest (pending)
     // instead of an active account. Zero tenant dashboard access until approved by college admin.
-    if (isCollegeStudent) {
+    if (isInstitutionalStudent) {
       const pendingRequest = await StudentJoinRequest.findOne({
         collegeId: targetCollegeId,
         $or: [{ email: normalizedEmail }, { studentId: normalizedStudentId }],
@@ -196,7 +193,6 @@ const registerUser = async (req, res, next) => {
       });
     }
 
-    const effectiveRole = role || 'student';
     const effectiveStudentId =
       normalizedStudentId || (effectiveRole === 'general' ? undefined : `stu_${Date.now()}`);
 
@@ -240,8 +236,7 @@ const loginUser = async (req, res, next) => {
   try {
     const { consumeFailedLogin, resetFailedLogins } = require('../middlewares/loginRateLimiter');
     const { email, studentId, password, totpCode, collegeSlug, collegeId: reqCollegeId } = req.body;
-    const credential = (email || studentId || '').trim();
-    const normalizedEmail = credential.toLowerCase();
+    const normalizedIdentifier = normalizeIdentity(email || studentId);
     const effectiveSlug = req.subdomainTenant
       ? req.subdomainTenant.slug
       : collegeSlug || req.headers['x-college-slug'];
@@ -259,7 +254,7 @@ const loginUser = async (req, res, next) => {
 
     // Build query matching only normalized fields against compound indexes {collegeId, email} / {collegeId, studentId}
     const query = {
-      $or: [{ email: normalizedEmail }, { studentId: normalizedEmail }],
+      $or: [{ email: normalizedIdentifier }, { studentId: normalizedIdentifier }],
     };
 
     // Hard Rule: If college context is present, ALWAYS scope by collegeId

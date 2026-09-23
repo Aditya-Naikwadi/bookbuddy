@@ -5,6 +5,7 @@ const AppError = require('../utils/AppError');
 const mongoose = require('mongoose');
 const { evaluateBadges } = require('../services/badgeService');
 const logger = require('../utils/logger');
+const { runInTransaction } = require('../utils/transactionHelper');
 
 // @desc    Get reviews for a book or resource with pagination & pinned user review
 // @route   GET /api/books/:id/reviews OR GET /api/v1/reviews/:resourceType/:resourceId
@@ -186,134 +187,115 @@ const createReview = asyncHandler(async (req, res) => {
   const reviewStatus =
     req.isProfane || req.body.status === 'flagged' ? 'flagged' : req.body.status || 'approved';
 
-  let session = null;
-  const isReplicaSet = Boolean(
-    mongoose.connection.replicaSet ||
-    (mongoose.connection.client &&
-      mongoose.connection.client.topology &&
-      typeof mongoose.connection.client.topology.hasReplicaSet === 'function' &&
-      mongoose.connection.client.topology.hasReplicaSet())
-  );
-
-  if (isReplicaSet) {
-    try {
-      const s = await mongoose.startSession();
-      s.startTransaction();
-      session = s;
-    } catch {
-      session = null;
-    }
-  }
-
   let review;
   try {
-    const reviewData = {
-      collegeId: req.user.collegeId,
-      userId: req.user.id || req.user._id,
-      bookId: targetBookId,
-      resourceType: targetResourceType,
-      resourceId: targetResourceId,
-      rating: Number(rating),
-      title,
-      comment: targetText,
-      text: targetText,
-      status: reviewStatus,
-    };
-
-    if (session) {
-      const docs = await Review.create([reviewData], { session });
-      review = docs[0];
-    } else {
-      review = await Review.create(reviewData);
-    }
-
-    // Forced failure hook for transaction rollback test verification
-    if (
-      req.headers['x-simulate-failure'] === 'mid-transaction' ||
-      req.query.simulateFailure === 'true'
-    ) {
-      throw new Error('Simulated mid-transaction failure');
-    }
-
-    // Update Book rating aggregates and ratingSummary incrementally
-    if (targetBookId && targetResourceType === 'book' && reviewStatus === 'approved') {
-      const book = session
-        ? await Book.findById(targetBookId).session(session)
-        : await Book.findById(targetBookId);
-
-      if (book) {
-        const ratingNum = Number(rating);
-        book.ratingSummary = book.ratingSummary || {
-          average: 0,
-          count: 0,
-          distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+    review = await runInTransaction(
+      async (session) => {
+        const reviewData = {
+          collegeId: req.user.collegeId,
+          userId: req.user.id || req.user._id,
+          bookId: targetBookId,
+          resourceType: targetResourceType,
+          resourceId: targetResourceId,
+          rating: Number(rating),
+          title,
+          comment: targetText,
+          text: targetText,
+          status: reviewStatus,
         };
-        const currentSummary = book.ratingSummary;
-        const currentCount = currentSummary.count || 0;
-        const currentAvg = currentSummary.average || 0;
-        const newCount = currentCount + 1;
-        const newAvg = Math.round(((currentAvg * currentCount + ratingNum) / newCount) * 10) / 10;
 
-        currentSummary.distribution = currentSummary.distribution || {
-          1: 0,
-          2: 0,
-          3: 0,
-          4: 0,
-          5: 0,
-        };
-        currentSummary.distribution[ratingNum] = (currentSummary.distribution[ratingNum] || 0) + 1;
-        currentSummary.count = newCount;
-        currentSummary.average = newAvg;
-
-        book.avgRating = newAvg;
-        book.ratingCount = newCount;
-        book.markModified('ratingSummary');
-
+        let createdReview;
         if (session) {
-          await book.save({ session });
+          const docs = await Review.create([reviewData], { session });
+          createdReview = docs[0];
         } else {
-          await book.save();
+          createdReview = await Review.create(reviewData);
+        }
+
+        // Forced failure hook for transaction rollback test verification
+        if (
+          req.headers['x-simulate-failure'] === 'mid-transaction' ||
+          req.query.simulateFailure === 'true'
+        ) {
+          if (!session && createdReview?._id) {
+            await Review.deleteOne({ _id: createdReview._id }).catch(() => {});
+          }
+          throw new Error('Simulated mid-transaction failure');
+        }
+
+        // Update Book rating aggregates and ratingSummary incrementally
+        if (targetBookId && targetResourceType === 'book' && reviewStatus === 'approved') {
+          const book = session
+            ? await Book.findById(targetBookId).session(session)
+            : await Book.findById(targetBookId);
+
+          if (book) {
+            const ratingNum = Number(rating);
+            book.ratingSummary = book.ratingSummary || {
+              average: 0,
+              count: 0,
+              distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+            };
+            const currentSummary = book.ratingSummary;
+            const currentCount = currentSummary.count || 0;
+            const currentAvg = currentSummary.average || 0;
+            const newCount = currentCount + 1;
+            const newAvg =
+              Math.round(((currentAvg * currentCount + ratingNum) / newCount) * 10) / 10;
+
+            currentSummary.distribution = currentSummary.distribution || {
+              1: 0,
+              2: 0,
+              3: 0,
+              4: 0,
+              5: 0,
+            };
+            currentSummary.distribution[ratingNum] =
+              (currentSummary.distribution[ratingNum] || 0) + 1;
+            currentSummary.count = newCount;
+            currentSummary.average = newAvg;
+
+            book.avgRating = newAvg;
+            book.ratingCount = newCount;
+            book.markModified('ratingSummary');
+
+            if (session) {
+              await book.save({ session });
+            } else {
+              await book.save();
+            }
+          }
+        }
+
+        return createdReview;
+      },
+      async (createdReview) => {
+        const userId = req.user && (req.user.id || req.user._id);
+        if (userId && createdReview) {
+          evaluateBadges(userId, 'review_submitted', { reviewId: createdReview._id }).catch((err) =>
+            logger.error(`Error evaluating badges after review creation: ${err.message}`)
+          );
         }
       }
-    }
-
-    if (session) {
-      await session.commitTransaction();
-      session.endSession();
-      session = null;
-    }
-
-    if (review) {
-      if (typeof review.$session === 'function') {
-        review.$session(null);
-      }
-      await review.populate('userId', 'name avatar role');
-    }
-
-    const userId = req.user && (req.user.id || req.user._id);
-    if (userId && review) {
-      evaluateBadges(userId, 'review_submitted', { reviewId: review._id }).catch((err) =>
-        logger.error(`Error evaluating badges after review creation: ${err.message}`)
-      );
-    }
-
-    res.status(201).json({
-      success: true,
-      data: review,
-    });
+    );
   } catch (err) {
-    if (session) {
-      await session.abortTransaction().catch(() => {});
-      session.endSession().catch(() => {});
-    } else if (review && review._id) {
-      await Review.deleteOne({ _id: review._id }).catch(() => {});
-    }
-
     if (err.code === 11000) {
       throw new AppError('You have already submitted a review for this item', 409);
     }
     throw err;
   }
+
+  if (review) {
+    if (typeof review.$session === 'function') {
+      review.$session(null);
+    }
+    await review.populate('userId', 'name avatar role');
+  }
+
+  res.status(201).json({
+    success: true,
+    data: review,
+  });
 });
 
 // @desc    Vote review as helpful

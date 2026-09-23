@@ -7,6 +7,7 @@ const AppError = require('../../utils/AppError');
 const PlatformMetricSnapshot = require('../../models/PlatformMetricSnapshot');
 const { redisClient } = require('../../middlewares/rateLimiters');
 const logger = require('../../utils/logger');
+const { normalizeEmail, ROLES } = require('@bookbuddy/shared');
 
 const escapeRegExp = (string) => {
   return string ? String(string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
@@ -342,9 +343,9 @@ const createCollege = async (req, res, next) => {
             {
               studentId: `ADMIN-${Date.now().toString().slice(-4)}`,
               name: adminName,
-              email: adminEmail.toLowerCase().trim(),
+              email: normalizeEmail(adminEmail),
               password: tempPass,
-              role: 'college-admin',
+              role: ROLES.COLLEGE_ADMIN,
               collegeId: createdCollege._id,
               isEmailVerified: true,
               membershipStatus: 'active',
@@ -973,36 +974,46 @@ const approveTenantOnboarding = async (req, res, next) => {
       await regRequest.save({ session });
 
       return { college: createdCollege, adminUser: createdAdmin };
-    });
+    },
+    async (result) => {
+      if (!result || !result.college) return;
+      const { college } = result;
 
-    await clearGlobalMetricsCache();
+      await clearGlobalMetricsCache();
 
-    try {
-      const io = req.app && typeof req.app.get === 'function' ? req.app.get('io') : null;
-      if (io)
-        io.emit('admin:onboarding_updated', { requestId: regRequest._id, status: 'approved' });
-    } catch {
-      // ignore
+      try {
+        const io = req.app && typeof req.app.get === 'function' ? req.app.get('io') : null;
+        if (io) {
+          io.emit('admin:onboarding_updated', { requestId: regRequest._id, status: 'approved' });
+        }
+      } catch {
+        // ignore
+      }
+
+      // Send Approval Email post-commit
+      try {
+        await sendTenantOnboardingApprovalEmail(adminEmail, adminName, legalName);
+      } catch (err) {
+        logger.error(`Post-commit approval email delivery failed: ${err.message}`);
+      }
+
+      // Audit Log
+      try {
+        await AuditLog.create({
+          actorId: getActorId(req),
+          actorRole: req.user.role,
+          action: 'registration_request.approve',
+          targetType: 'College',
+          targetId: college._id,
+          collegeId: college._id,
+          metadata: { legalName, domain, adminEmail },
+          ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+        });
+      } catch (auditErr) {
+        logger.error(`Post-commit tenant approval audit log failed: ${auditErr.message}`);
+      }
     }
-
-    // 4. Send Approval Email asynchronously in background job (Item 14)
-    setImmediate(() => {
-      sendTenantOnboardingApprovalEmail(adminEmail, adminName, legalName).catch((err) => {
-        logger.error(`Async approval email delivery failed: ${err.message}`);
-      });
-    });
-
-    // 5. Audit Log
-    await AuditLog.create({
-      actorId: getActorId(req),
-      actorRole: req.user.role,
-      action: 'registration_request.approve',
-      targetType: 'College',
-      targetId: college._id,
-      collegeId: college._id,
-      metadata: { legalName, domain, adminEmail },
-      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
-    });
+    );
 
     res.json({
       success: true,

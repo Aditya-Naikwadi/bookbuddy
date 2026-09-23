@@ -15,7 +15,7 @@ const {
 const { protect } = require('../middlewares/auth');
 const scopeToTenant = require('../middlewares/scopeToTenant');
 const validate = require('../middlewares/validate');
-const { updateProgressSchema } = require('../validations/personalization.validation');
+const { updateProgressSchema } = require('@bookbuddy/shared/schemas/personalization');
 
 router.use(protect);
 router.use(scopeToTenant);

@@ -32,34 +32,52 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Install Server Dependencies
-        run: |
-          cd backend
-          npm install --legacy-peer-deps
+      - name: Install Monorepo Root & Workspace Dependencies
+        run: npm install --legacy-peer-deps
 
-      - name: Run Server Linter
-        run: |
-          cd backend
-          npm run lint
+      - name: "Gate 1: Dependency Vulnerability Scanning (npm audit)"
+        run: npm run check:audit
 
-      - name: Validate Required Environment Variables
-        run: |
-          node -e "
-            const required = ['MONGO_URI', 'JWT_SECRET', 'JWT_REFRESH_SECRET', 'CLIENT_ORIGIN'];
-            const missing = required.filter(k => !process.env[k]);
-            if (missing.length > 0) {
-              console.error('Missing required CI env vars:', missing);
-              process.exit(1);
-            }
-            console.log('CI Environment variables validation passed.');
-          "
+      - name: "Gate 2: Secret-Leak Scanning (Gitleaks / Custom Scanner)"
+        run: node scripts/security/scan-secrets.js --git-diff
+
+      - name: "Gate 3: Multi-Tenant Data Isolation Audit"
+        run: npm run check:tenant-isolation
+
+      - name: "Gate 4: N+1 Query Detection Audit"
+        run: npm run check:nplusone
+
+      - name: "Gate 5: Transaction Boundary Static Verification"
+        run: npm run check:transactions
+
+      - name: "Gate 6: Atomic Conditional Update Check"
+        run: npm run check:races
+
+      - name: "Gate 7: API Contract Layer & Schema Drift Check"
+        run: npm run check:contracts
+
+      - name: "Gate 8: Identity & Role Normalization Layer Check"
+        run: npm run check:normalization
+
+      - name: "Gate 9: Database Index-Usage & COLLSCAN Verification"
         env:
+          NODE_ENV: test
+          MONGO_URI: mongodb://127.0.0.1:27017/bookbuddy_test
+        run: npm run check:indexes
+
+      - name: "Gate 10: Concurrency Race Condition Invariants Test Suite"
+        env:
+          NODE_ENV: test
           MONGO_URI: mongodb://127.0.0.1:27017/bookbuddy_test
           JWT_SECRET: testjwtsecretkey999
           JWT_REFRESH_SECRET: testjwtrefreshsecretkey999
+          JWT_ACCESS_EXPIRY: 15m
+          JWT_REFRESH_EXPIRY: 7d
           CLIENT_ORIGIN: http://localhost:5173
+          PORT: 5000
+        run: npm run test:concurrency
 
-      - name: Run Server Tests
+      - name: Run Server Linter & Full Test Suite
         env:
           NODE_ENV: test
           MONGO_URI: mongodb://127.0.0.1:27017/bookbuddy_test
@@ -71,6 +89,7 @@ jobs:
           PORT: 5000
         run: |
           cd backend
+          npm run lint
           npm test
 
       - name: Install Client Dependencies
@@ -190,7 +209,7 @@ jobs:
     steps:
       - name: Trigger Render Service Deployment
         env:
-          RENDER_SERVICE_ID: ${{ vars.RENDER_SERVICE_ID || 'srv-d9rltltbedkc73c1khkg' }}
+          RENDER_SERVICE_ID: srv-d9rltltbedkc73c1khkg
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
@@ -226,7 +245,7 @@ jobs:
 
       - name: Print & Verify Target Production URL
         env:
-          RESOLVED_APP_URL: ${{ vars.PRODUCTION_APP_URL || 'https://bookbuddy-kcwl.onrender.com' }}
+          RESOLVED_APP_URL: https://bookbuddy-kcwl.onrender.com
         run: |
           echo "====================================================="
           echo "🌐 RESOLVED PRODUCTION_APP_URL: ${RESOLVED_APP_URL}"
@@ -234,15 +253,15 @@ jobs:
 
       - name: Run Post-Deploy Live Verification
         env:
-          APP_URL: ${{ vars.PRODUCTION_APP_URL || 'https://bookbuddy-kcwl.onrender.com' }}
+          APP_URL: https://bookbuddy-kcwl.onrender.com
           EXPECTED_COMMIT_SHA: ${{ github.sha }}
           TIMEOUT_SECONDS: 600
           POLL_INTERVAL_SECONDS: 15
-          RENDER_SERVICE_ID: ${{ vars.RENDER_SERVICE_ID || 'srv-d9rltltbedkc73c1khkg' }}
+          RENDER_SERVICE_ID: srv-d9rltltbedkc73c1khkg
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          ALLOW_SHA_MISMATCH: ${{ (secrets.RENDER_API_KEY == '' && secrets.RENDER_DEPLOY_HOOK_URL == '') && 'true' || 'false' }}
+          ALLOW_SHA_MISMATCH: ${{ secrets.RENDER_API_KEY == '' && secrets.RENDER_DEPLOY_HOOK_URL == '' }}
         run: node scripts/deployment/verify-deployment.js
 
       - name: Upload Audit History Artifact

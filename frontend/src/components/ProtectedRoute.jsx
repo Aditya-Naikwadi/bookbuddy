@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { normalizeRole } from "@bookbuddy/shared";
 import useAuthStore from "../store/authStore";
 import { isUserAllowedForRoute } from "../config/roleRouteConfig";
 
@@ -19,11 +20,12 @@ const ProtectedRoute = ({ allowedRoles }) => {
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
-  // Verify explicit allowedRoles prop or role-route configuration
+  // Verify explicit allowedRoles prop or role-route configuration using canonical role normalization
   const isRolePermitted = allowedRoles
     ? user &&
-      (allowedRoles.includes(user.role) ||
-        (allowedRoles.includes("student") && user.role === "college-student"))
+      allowedRoles.some(
+        (role) => normalizeRole(role) === normalizeRole(user.role),
+      )
     : isUserAllowedForRoute(user, location.pathname);
 
   if (!isRolePermitted) {

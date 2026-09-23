@@ -1,4 +1,9 @@
 import apiClient from "./client";
+import { moderateEResourceBodySchema } from "@shared/schemas/moderation";
+import {
+  createCollegeBodySchema,
+  createAdminBodySchema,
+} from "@shared/schemas/admin";
 
 export const adminApi = {
   getOverview: async () => {
@@ -16,9 +21,10 @@ export const adminApi = {
     return data.data;
   },
   createCollege: async (collegeData) => {
+    const validated = createCollegeBodySchema.parse(collegeData);
     const { data } = await apiClient.post(
       "/dashboards/admin-portal/colleges",
-      collegeData,
+      validated,
     );
     return data;
   },
@@ -43,9 +49,10 @@ export const adminApi = {
     return data.data;
   },
   createAdmin: async (adminData) => {
+    const validated = createAdminBodySchema.parse(adminData);
     const { data } = await apiClient.post(
       "/dashboards/admin-portal/admins",
-      adminData,
+      validated,
     );
     return data;
   },
@@ -66,16 +73,18 @@ export const adminApi = {
     return data;
   },
   moderateResource: async (id, status, note) => {
+    const validated = moderateEResourceBodySchema.parse({ status, note });
     const { data } = await apiClient.put(
       `/dashboards/admin-portal/moderation/${id}`,
-      { status, note },
+      validated,
     );
     return data;
   },
   moderateEResource: async (id, payload) => {
+    const validated = moderateEResourceBodySchema.parse(payload);
     const { data } = await apiClient.put(
       `/dashboards/admin-portal/moderation/${id}`,
-      payload,
+      validated,
     );
     return data;
   },

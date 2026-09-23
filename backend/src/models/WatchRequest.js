@@ -24,6 +24,7 @@ const watchRequestSchema = new mongoose.Schema(
 
 // Compound unique index on { userId: 1, bookId: 1 }
 watchRequestSchema.index({ userId: 1, bookId: 1 }, { unique: true });
+watchRequestSchema.index({ collegeId: 1 });
 
 // Static method for safe creation - duplicate attempt catches code 11000 and is a no-op
 watchRequestSchema.statics.createWatch = async function (data) {

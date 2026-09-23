@@ -3,6 +3,7 @@ const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const notificationService = require('./notificationService');
 const { runInTransaction } = require('../utils/transactionHelper');
+const { atomicConditionalUpdate } = require('../utils/atomicUpdateHelper');
 
 const calculateFine = async (loan) => {
   // If not overdue, no fine
@@ -43,32 +44,37 @@ const calculateFine = async (loan) => {
 
 const payFine = async (fineId, userId, collegeId, useWaiver = false) => {
   return await runInTransaction(async (session) => {
-    const fine = await Fine.findOne({ _id: fineId, userId, collegeId }).session(session);
-    if (!fine) {
-      throw new AppError('Fine not found or unauthorized access.', 404);
-    }
-
-    if (fine.status !== 'unpaid') {
-      throw new AppError('Fine is already paid or waived.', 400);
-    }
-
-    const user = await User.findById(userId).session(session);
-
     if (useWaiver) {
-      if (user.fineWaiverCoupons > 0) {
-        user.fineWaiverCoupons -= 1;
-        await user.save({ session });
-        fine.status = 'waived';
-      } else {
+      // 1. Atomic decrement of fine waiver coupon
+      const userUpdate = await atomicConditionalUpdate(
+        User,
+        { _id: userId, fineWaiverCoupons: { $gt: 0 } },
+        null,
+        { $inc: { fineWaiverCoupons: -1 } },
+        { session }
+      );
+      if (!userUpdate.matched) {
         throw new AppError('No fine waiver coupons available.', 400);
       }
-    } else {
-      // Process mock payment integration, marking as paid
-      fine.status = 'paid';
     }
 
-    fine.paidAt = new Date();
-    await fine.save({ session });
+    // 2. Atomic state transition: fine must be strictly unpaid to be paid or waived
+    const targetStatus = useWaiver ? 'waived' : 'paid';
+    const { matched, doc: fine } = await atomicConditionalUpdate(
+      Fine,
+      { _id: fineId, userId, collegeId, status: 'unpaid' },
+      null,
+      { $set: { status: targetStatus, paidAt: new Date() } },
+      { session }
+    );
+
+    if (!matched || !fine) {
+      const existingFine = await Fine.findOne({ _id: fineId, userId, collegeId }).session(session);
+      if (!existingFine) {
+        throw new AppError('Fine not found or unauthorized access.', 404);
+      }
+      throw new AppError('Fine is already paid or waived.', 400);
+    }
 
     return fine;
   });

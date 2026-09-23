@@ -12,12 +12,12 @@ const {
 const { protect } = require('../middlewares/auth');
 const bindTenantContext = require('../middlewares/tenantScoping');
 const validate = require('../middlewares/validate');
-const { paramIdSchema, paramIdAndBookIdSchema } = require('../validations/common.validation');
+const { paramIdSchema, paramIdAndBookIdSchema } = require('@bookbuddy/shared/schemas/common');
 const {
   createReadingListSchema,
   updateReadingListSchema,
   addReadingListItemSchema,
-} = require('../validations/personalization.validation');
+} = require('@bookbuddy/shared/schemas/personalization');
 
 router.use(protect);
 router.use(bindTenantContext); // F0.1 Tenant Scoping Context

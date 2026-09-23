@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BookBuddy Dependency CVE Triage Registry",
+  "description": "Tracks accepted Moderate-severity vulnerabilities with architectural rationale, mitigating controls, and review expiration dates. High and Critical severities are strictly prohibited.",
+  "triagedAdvisories": [
+    {
+      "packageName": "artillery",
+      "advisoryId": "GHSA-8cw4-87c7-c6xx",
+      "severity": "moderate",
+      "environment": "development-only (load testing workspace)",
+      "rationale": "Artillery is a standalone load test CLI runner executed exclusively in synthetic staging/benchmarks, not bundled into production runtime or serverless endpoints.",
+      "acceptedBy": "@security-appsec-engineer",
+      "reviewDate": "2026-09-23",
+      "expiresAt": "2026-12-31"
+    },
+    {
+      "packageName": "autocannon",
+      "advisoryId": "GHSA-w5hq-g745-h8pq",
+      "severity": "moderate",
+      "environment": "development-only (benchmarks)",
+      "rationale": "Autocannon is a developer benchmark harness for HTTP throughput testing, isolated from user inputs and production traffic.",
+      "acceptedBy": "@security-appsec-engineer",
+      "reviewDate": "2026-09-23",
+      "expiresAt": "2026-12-31"
+    },
+    {
+      "packageName": "@vitest/mocker",
+      "advisoryId": "GHSA-82fw-gwwq-j7x9",
+      "severity": "moderate",
+      "environment": "development-only (frontend test runner)",
+      "rationale": "Vitest mocker vulnerability affects local test execution redirect mocking; not shipped in Vite production client bundle.",
+      "acceptedBy": "@security-appsec-engineer",
+      "reviewDate": "2026-09-23",
+      "expiresAt": "2026-12-31"
+    },
+    {
+      "packageName": "@sentry/node",
+      "advisoryId": "GHSA-opentelemetry-instrumentation",
+      "severity": "moderate",
+      "environment": "production/staging",
+      "rationale": "Transitive OpenTelemetry instrumentation advisory under upstream patch coordination; pinned to LTS instrumentation.",
+      "acceptedBy": "@security-appsec-engineer",
+      "reviewDate": "2026-09-23",
+      "expiresAt": "2026-12-31"
+    },
+    {
+      "packageName": "morgan",
+      "advisoryId": "GHSA-jxfw-x594-9x9m",
+      "severity": "moderate",
+      "environment": "backend",
+      "rationale": "Log forging via unescaped Unicode line separators in Morgan; BookBuddy wraps logs through Winston and sanitizes request headers and parameters prior to logging.",
+      "acceptedBy": "@security-appsec-engineer",
+      "reviewDate": "2026-09-23",
+      "expiresAt": "2026-12-31"
+    },
+    {
+      "packageName": "qs",
+      "advisoryId": "GHSA-x5fp-wj9c-mxmx",
+      "severity": "moderate",
+      "environment": "backend",
+      "rationale": "Express query parsing limit bypass; BookBuddy applies strict Zod contract schema validation (validate middleware) with exact shape requirements before query parameters reach controllers.",
+      "acceptedBy": "@security-appsec-engineer",
+      "reviewDate": "2026-09-23",
+      "expiresAt": "2026-12-31"
+    }
+  ]
+}

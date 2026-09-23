@@ -223,39 +223,47 @@ const runStreakExpirySweep = async (mockNow = null) => {
 
     // Check if they did NOT perform any qualifying actions yesterday or today
     if (lastActionStr !== todayStr && lastActionStr !== yesterdayStr) {
-      await runInTransaction(async (session) => {
-        const trStreak = await Streak.findById(streak._id).session(session);
-        if (!trStreak) return;
+      await runInTransaction(
+        async (session) => {
+          const trStreak = await Streak.findById(streak._id).session(session);
+          if (!trStreak) return null;
 
-        // Double check: does a log exist for yesterday already?
-        const existingYesterdayLog = await CheckInLog.findOne({
-          userId: trStreak.userId,
-          checkInDate: yesterdayStr,
-        }).session(session);
+          // Double check: does a log exist for yesterday already?
+          const existingYesterdayLog = await CheckInLog.findOne({
+            userId: trStreak.userId,
+            checkInDate: yesterdayStr,
+          }).session(session);
 
-        if (!existingYesterdayLog) {
-          if (trStreak.freezesAvailable > 0) {
-            trStreak.freezesAvailable -= 1;
-            await CheckInLog.create(
-              [
-                {
-                  collegeId: trStreak.collegeId,
-                  userId: trStreak.userId,
-                  checkInDate: yesterdayStr,
-                  timestamp: referenceTime,
-                  freezeConsumed: true,
-                },
-              ],
-              { session }
-            );
-          } else {
-            trStreak.currentStreak = 0;
+          if (!existingYesterdayLog) {
+            if (trStreak.freezesAvailable > 0) {
+              trStreak.freezesAvailable -= 1;
+              await CheckInLog.create(
+                [
+                  {
+                    collegeId: trStreak.collegeId,
+                    userId: trStreak.userId,
+                    checkInDate: yesterdayStr,
+                    timestamp: referenceTime,
+                    freezeConsumed: true,
+                  },
+                ],
+                { session }
+              );
+            } else {
+              trStreak.currentStreak = 0;
+            }
+            await trStreak.save({ session });
+            affected++;
+            return trStreak;
           }
-          await trStreak.save({ session });
-          emitStreakUpdate(trStreak.userId, trStreak);
-          affected++;
+          return null;
+        },
+        async (trStreak) => {
+          if (trStreak) {
+            emitStreakUpdate(trStreak.userId, trStreak);
+          }
         }
-      });
+      );
     }
   }
   return affected;

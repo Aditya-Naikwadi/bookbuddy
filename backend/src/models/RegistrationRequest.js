@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { normalizeStudentId, normalizeEmail } = require('@bookbuddy/shared');
 
 const registrationRequestSchema = new mongoose.Schema(
   {
@@ -17,10 +18,10 @@ const registrationRequestSchema = new mongoose.Schema(
     // Flow A: Student Registration details
     studentData: {
       name: { type: String, trim: true },
-      email: { type: String, trim: true, lowercase: true },
+      email: { type: String, trim: true, lowercase: true, set: normalizeEmail },
       passwordHash: { type: String },
       collegeId: { type: mongoose.Schema.Types.ObjectId, ref: 'College' },
-      studentId: { type: String, trim: true },
+      studentId: { type: String, trim: true, lowercase: true, set: normalizeStudentId },
       department: { type: String, trim: true },
       phone: { type: String, trim: true },
       verificationOTP: { type: String },

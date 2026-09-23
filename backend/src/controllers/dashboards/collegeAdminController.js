@@ -17,6 +17,8 @@ const notificationService = require('../../services/notificationService');
 const AppError = require('../../utils/AppError');
 
 const { runInTransaction } = require('../../utils/transactionHelper');
+const { atomicConditionalUpdate } = require('../../utils/atomicUpdateHelper');
+const { normalizeEmail, normalizeStudentId, ROLES } = require('@bookbuddy/shared');
 
 // @desc    Create new student
 // @route   POST /api/dashboards/college-admin/patrons
@@ -67,7 +69,7 @@ const getAllPatrons = async (req, res, next) => {
 
     if (req.query.studentId) {
       const sId = String(req.query.studentId).trim();
-      filter.studentId = sId.toLowerCase();
+      filter.studentId = normalizeStudentId(sId);
     }
 
     if (req.query.department) {
@@ -575,20 +577,24 @@ const getCollegeFines = async (req, res, next) => {
 const payCollegeFine = async (req, res, next) => {
   try {
     const fine = await runInTransaction(async (session) => {
-      const targetFine = await Fine.findOne({ _id: req.params.id, ...req.tenantFilter }).session(
-        session
+      const { matched, doc: targetFine } = await atomicConditionalUpdate(
+        Fine,
+        { _id: req.params.id, ...req.tenantFilter, status: { $ne: 'paid' } },
+        null,
+        { $set: { status: 'paid', paidAt: new Date() } },
+        { session }
       );
-      if (!targetFine) {
-        throw new AppError('Fine not found or unauthorized access.', 404);
-      }
 
-      if (targetFine.status === 'paid') {
+      if (!matched || !targetFine) {
+        const existing = await Fine.findOne({ _id: req.params.id, ...req.tenantFilter }).session(
+          session
+        );
+        if (!existing) {
+          throw new AppError('Fine not found or unauthorized access.', 404);
+        }
         throw new AppError('This fine has already been paid.', 400);
       }
 
-      targetFine.status = 'paid';
-      targetFine.paidAt = new Date();
-      await targetFine.save({ session });
       return targetFine;
     });
 
@@ -1262,8 +1268,8 @@ const approveStudentJoinRequest = async (req, res, next) => {
     let user = await User.findOne({
       collegeId: joinRequest.collegeId,
       $or: [
-        { email: joinRequest.email.toLowerCase() },
-        { studentId: joinRequest.studentId.toLowerCase() },
+        { email: normalizeEmail(joinRequest.email) },
+        { studentId: normalizeStudentId(joinRequest.studentId) },
       ],
     }).select('+password');
 
@@ -1291,14 +1297,14 @@ const approveStudentJoinRequest = async (req, res, next) => {
     } else {
       user = await User.create({
         collegeId: joinRequest.collegeId,
-        studentId: joinRequest.studentId.toLowerCase(),
+        studentId: normalizeStudentId(joinRequest.studentId),
         name: joinRequest.name,
-        email: joinRequest.email.toLowerCase(),
+        email: normalizeEmail(joinRequest.email),
         password: joinRequest.password,
         department: joinRequest.department || undefined,
         major: joinRequest.department || undefined,
         phone: joinRequest.phone || undefined,
-        role: 'student',
+        role: ROLES.STUDENT,
         status: 'active',
         isActive: true,
         membershipStatus: 'active',

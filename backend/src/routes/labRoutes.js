@@ -15,11 +15,11 @@ const {
 const { protect } = require('../middlewares/auth');
 const requireFeature = require('../middlewares/requireFeature');
 const validate = require('../middlewares/validate');
-const { paramIdSchema } = require('../validations/common.validation');
+const { paramIdSchema } = require('@bookbuddy/shared/schemas/common');
 const {
-  createBookingSchema,
-  getAvailabilitySchema,
-} = require('../validations/facilities.validation');
+  createBookingRouteSchema,
+  getLabAvailabilityRouteSchema,
+} = require('@bookbuddy/shared/schemas/facilities');
 
 const { expensiveRouteLimiter } = require('../middlewares/rateLimiters');
 
@@ -29,8 +29,8 @@ router.use(requireFeature('facilities_booking'));
 router.route('/seats').get(getSeats);
 router
   .route('/availability')
-  .get(expensiveRouteLimiter, validate(getAvailabilitySchema), getAvailability);
-router.route('/bookings').post(validate(createBookingSchema), createBooking);
+  .get(expensiveRouteLimiter, validate(getLabAvailabilityRouteSchema), getAvailability);
+router.route('/bookings').post(validate(createBookingRouteSchema), createBooking);
 router.route('/bookings/me').get(getMyBookings);
 router.route('/bookings/:id').delete(validate(paramIdSchema), cancelBooking);
 router.route('/bookings/:id/check-in').post(validate(paramIdSchema), checkInBooking);

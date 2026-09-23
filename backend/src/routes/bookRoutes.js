@@ -9,7 +9,7 @@ const {
 } = require('../controllers/reviewController');
 const { watchBook, unwatchBook, getWatchStatus } = require('../controllers/watchController');
 const validate = require('../middlewares/validate');
-const { paramIdSchema } = require('../validations/common.validation');
+const { paramIdSchema } = require('@bookbuddy/shared/schemas/common');
 const { protect } = require('../middlewares/auth');
 const scopeToTenant = require('../middlewares/scopeToTenant');
 const { userLimiter } = require('../middlewares/rateLimiters');

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { normalizeStudentId, normalizeEmail } = require('@bookbuddy/shared');
 
 const studentJoinRequestSchema = new mongoose.Schema(
   {
@@ -13,6 +14,7 @@ const studentJoinRequestSchema = new mongoose.Schema(
       required: true,
       trim: true,
       lowercase: true,
+      set: normalizeStudentId,
       index: true,
     },
     name: {
@@ -25,6 +27,7 @@ const studentJoinRequestSchema = new mongoose.Schema(
       required: true,
       trim: true,
       lowercase: true,
+      set: normalizeEmail,
       index: true,
     },
     password: {

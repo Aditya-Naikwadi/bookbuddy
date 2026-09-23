@@ -1,6 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const Announcement = require('../models/Announcement');
 const AppError = require('../utils/AppError');
+const { atomicConditionalUpdate } = require('../utils/atomicUpdateHelper');
 
 // @desc    Get announcements & events
 // @route   GET /api/v1/announcements
@@ -70,23 +71,25 @@ const toggleRSVP = asyncHandler(async (req, res) => {
     });
   }
 
-  // Atomic RSVP with capacity constraint check
-  const updated = await Announcement.findOneAndUpdate(
-    {
-      _id: req.params.id,
-      $or: [
-        { maxCapacity: { $lte: 0 } },
-        { maxCapacity: null },
-        { $expr: { $lt: [{ $size: '$rsvpUsers' }, '$maxCapacity'] } },
-      ],
-    },
+  // Atomic RSVP with capacity constraint check via atomicConditionalUpdate
+  const capacityCondition = {
+    $or: [
+      { $eq: ['$maxCapacity', null] },
+      { $lte: ['$maxCapacity', 0] },
+      { $lt: [{ $size: '$rsvpUsers' }, '$maxCapacity'] },
+    ],
+  };
+
+  const { matched, doc: updated } = await atomicConditionalUpdate(
+    Announcement,
+    { _id: req.params.id, isEvent: true },
+    capacityCondition,
     {
       $addToSet: { rsvpUsers: { userId, rsvpAt: new Date() } },
-    },
-    { returnDocument: 'after' }
+    }
   );
 
-  if (!updated) {
+  if (!matched || !updated) {
     throw new AppError('Event has reached maximum capacity', 400);
   }
 

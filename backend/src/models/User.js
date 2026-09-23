@@ -1,5 +1,12 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const {
+  normalizeEmail,
+  normalizeStudentId,
+  normalizeRole,
+  ROLES,
+  CANONICAL_ROLES,
+} = require('@bookbuddy/shared');
 
 const userSchema = new mongoose.Schema(
   {
@@ -10,6 +17,7 @@ const userSchema = new mongoose.Schema(
       },
       trim: true,
       lowercase: true,
+      set: normalizeStudentId,
     },
     name: {
       type: String,
@@ -19,6 +27,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       lowercase: true,
       trim: true,
+      set: normalizeEmail,
     },
     program: {
       type: String,
@@ -111,16 +120,9 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: [
-        'student',
-        'college-student',
-        'college-admin',
-        'college_admin',
-        'super-admin',
-        'super_admin',
-        'general',
-      ],
-      default: 'student',
+      enum: CANONICAL_ROLES,
+      default: ROLES.STUDENT,
+      set: normalizeRole,
     },
     membershipStatus: {
       type: String,
@@ -218,6 +220,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    fineWaiverCoupons: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   {
     timestamps: true,
@@ -289,12 +296,20 @@ userSchema.index({ name: 'text', email: 'text', studentId: 'text' });
 // Normalize fields, hash password and generate cardSecret before saving
 userSchema.pre('save', async function () {
   if (this.studentId) {
-    this.studentId = this.studentId.trim().toLowerCase();
+    this.studentId = normalizeStudentId(this.studentId);
   }
   if (this.email) {
-    this.email = this.email.trim().toLowerCase();
+    this.email = normalizeEmail(this.email) || undefined;
   } else {
     this.email = undefined;
+  }
+  if (this.role) {
+    this.role = normalizeRole(this.role);
+  }
+  if (['inactive', 'disabled'].includes(this.status)) {
+    this.isActive = false;
+  } else if (this.status === 'active' && this.isModified('status')) {
+    this.isActive = true;
   }
   if (this.department && !this.major) {
     this.major = this.department;
@@ -320,6 +335,36 @@ userSchema.pre('save', async function () {
 
   const argon2 = require('argon2');
   this.password = await argon2.hash(this.password, { type: argon2.argon2id });
+});
+
+// Normalization enforcement on update queries across all update paths
+userSchema.pre(['updateOne', 'findOneAndUpdate', 'updateMany', 'findByIdAndUpdate'], function () {
+  const update = this.getUpdate();
+  if (!update) return;
+
+  const normalizeUpdateTarget = (target) => {
+    if (!target) return;
+    if (target.email !== undefined) {
+      target.email = normalizeEmail(target.email) || undefined;
+    }
+    if (target.studentId !== undefined) {
+      target.studentId = normalizeStudentId(target.studentId);
+    }
+    if (target.role !== undefined) {
+      target.role = normalizeRole(target.role);
+    }
+    if (target.status !== undefined) {
+      if (['inactive', 'disabled'].includes(target.status)) {
+        target.isActive = false;
+      } else if (target.status === 'active') {
+        target.isActive = true;
+      }
+    }
+  };
+
+  normalizeUpdateTarget(update);
+  if (update.$set) normalizeUpdateTarget(update.$set);
+  if (update.$setOnInsert) normalizeUpdateTarget(update.$setOnInsert);
 });
 
 // Compare password supporting Argon2id and transparent bcrypt upgrade

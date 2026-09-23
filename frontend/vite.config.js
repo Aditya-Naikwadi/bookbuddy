@@ -11,6 +11,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@shared": path.resolve(__dirname, "../shared/src"),
+      "@bookbuddy/shared": path.resolve(__dirname, "../shared/src"),
     },
   },
   test: {
@@ -20,6 +22,9 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    fs: {
+      allow: [".."],
+    },
     headers: {
       "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
     },

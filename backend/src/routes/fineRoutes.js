@@ -9,7 +9,7 @@ const {
 const { protect } = require('../middlewares/auth');
 const idempotency = require('../middlewares/idempotency');
 const validate = require('../middlewares/validate');
-const { paramIdSchema } = require('../validations/common.validation');
+const { paramIdSchema } = require('@bookbuddy/shared/schemas/common');
 
 router.use(protect);
 

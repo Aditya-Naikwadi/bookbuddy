@@ -7,8 +7,8 @@ const {
 } = require('../controllers/bookSuggestionController');
 const { protect } = require('../middlewares/auth');
 const validate = require('../middlewares/validate');
-const { paramIdSchema } = require('../validations/common.validation');
-const { createSuggestionSchema } = require('../validations/facilities.validation');
+const { paramIdSchema } = require('@bookbuddy/shared/schemas/common');
+const { createSuggestionSchema } = require('@bookbuddy/shared/schemas/facilities');
 
 router.use(protect);
 

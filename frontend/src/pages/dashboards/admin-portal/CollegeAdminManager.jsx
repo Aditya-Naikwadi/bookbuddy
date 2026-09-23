@@ -4,6 +4,7 @@ import adminApi from "../../../api/adminApi";
 import OpsHeader from "../../../components/ops/OpsHeader";
 import OpsSeverityBadge from "../../../components/ops/OpsSeverityBadge";
 import OpsDataTable from "../../../components/ops/OpsDataTable";
+import { normalizeEmail } from "@bookbuddy/shared";
 
 export default function CollegeAdminManager() {
   const [colleges, setColleges] = useState([]);
@@ -103,7 +104,7 @@ export default function CollegeAdminManager() {
           .trim(),
         code: (formData.slug || "TENANT").toUpperCase(),
         adminName: formData.adminName,
-        adminEmail: formData.adminEmail.toLowerCase().trim(),
+        adminEmail: normalizeEmail(formData.adminEmail),
         password: generatedPassword,
         selectedServices,
       };

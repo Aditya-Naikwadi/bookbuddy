@@ -8,6 +8,7 @@ const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 const logger = require('../utils/logger');
 const { isTwilioConfigured, sendCredentialSMS } = require('../services/smsService');
+const { normalizeEmail, normalizeStudentId, ROLES } = require('@bookbuddy/shared');
 
 /**
  * Formula Injection Defense:
@@ -66,11 +67,11 @@ const normalizeRow = (rawRow) => {
     const cleanVal = typeof val === 'string' ? val.trim() : val;
 
     if (['studentid', 'rollnumber', 'id', 'studentno', 'regno'].includes(cleanKey)) {
-      row.studentId = cleanVal ? String(cleanVal) : '';
+      row.studentId = cleanVal ? normalizeStudentId(cleanVal) : '';
     } else if (['name', 'studentname', 'fullname'].includes(cleanKey)) {
       row.name = cleanVal ? String(cleanVal) : '';
     } else if (['email', 'emailaddress', 'studentemail'].includes(cleanKey)) {
-      row.email = cleanVal ? String(cleanVal).toLowerCase() : '';
+      row.email = cleanVal ? normalizeEmail(cleanVal) : '';
     } else if (
       ['program', 'degree', 'course', 'branch', 'major', 'department'].includes(cleanKey)
     ) {
@@ -178,7 +179,7 @@ exports.validateRosterUpload = asyncHandler(async (req, res, next) => {
       return;
     }
 
-    if (seenStudentIds.has(studentId.toLowerCase())) {
+    if (seenStudentIds.has(studentId)) {
       errors.push({
         rowNumber: rowNum,
         studentId,
@@ -188,7 +189,7 @@ exports.validateRosterUpload = asyncHandler(async (req, res, next) => {
       return;
     }
 
-    if (email && seenEmails.has(email.toLowerCase())) {
+    if (email && seenEmails.has(email)) {
       errors.push({
         rowNumber: rowNum,
         studentId,
@@ -198,9 +199,9 @@ exports.validateRosterUpload = asyncHandler(async (req, res, next) => {
       return;
     }
 
-    seenStudentIds.add(studentId.toLowerCase());
+    seenStudentIds.add(studentId);
     if (email) {
-      seenEmails.add(email.toLowerCase());
+      seenEmails.add(email);
     }
 
     validRows.push({
@@ -221,13 +222,15 @@ exports.validateRosterUpload = asyncHandler(async (req, res, next) => {
     'studentId email name status'
   ).lean();
 
-  const existingStudentIdMap = new Map(existingStudents.map((s) => [s.studentId.toLowerCase(), s]));
+  const existingStudentIdMap = new Map(
+    existingStudents.map((s) => [normalizeStudentId(s.studentId), s])
+  );
 
   let toCreateCount = 0;
   let toUpdateCount = 0;
 
   validRows.forEach((row) => {
-    if (existingStudentIdMap.has(row.studentId.toLowerCase())) {
+    if (existingStudentIdMap.has(row.studentId)) {
       toUpdateCount += 1;
       row.action = 'update';
     } else {
@@ -329,14 +332,14 @@ async function processRosterBatchAsync(
 
     for (let c = 0; c < validRows.length; c += CHUNK_SIZE) {
       const chunk = validRows.slice(c, c + CHUNK_SIZE);
-      const chunkStudentIds = chunk.map((r) => r.studentId.trim().toLowerCase());
+      const chunkStudentIds = chunk.map((r) => normalizeStudentId(r.studentId));
 
       // Single query lookup for all existing students in this chunk
       const existingInChunk = await User.find({
         collegeId: adminCollegeId,
         studentId: { $in: chunkStudentIds },
       });
-      const existingMap = new Map(existingInChunk.map((u) => [u.studentId.toLowerCase(), u]));
+      const existingMap = new Map(existingInChunk.map((u) => [normalizeStudentId(u.studentId), u]));
 
       const newUsersToCreate = [];
       const notificationTasks = [];
@@ -346,11 +349,10 @@ async function processRosterBatchAsync(
         const row = chunk[i];
         const overallIndex = c + i;
         const { rowNumber, studentId, name, email, program, year, phone } = row;
-        const normalizedStudentId = studentId.trim();
-        const lowerId = normalizedStudentId.toLowerCase();
-        processedStudentIds.add(lowerId);
+        const normalizedStudentId = normalizeStudentId(studentId);
+        processedStudentIds.add(normalizedStudentId);
 
-        const existing = existingMap.get(lowerId);
+        const existing = existingMap.get(normalizedStudentId);
 
         if (existing) {
           // Update metadata only — preserve existing password and credentials!
@@ -435,8 +437,8 @@ async function processRosterBatchAsync(
         await Promise.all(
           newUsersToCreate.map(async (u) => {
             u.cardSecret = crypto.randomBytes(32).toString('hex');
-            u.studentId = u.studentId.trim().toLowerCase();
-            if (u.email) u.email = u.email.trim().toLowerCase();
+            u.studentId = normalizeStudentId(u.studentId);
+            if (u.email) u.email = normalizeEmail(u.email);
             u.password = await argon2.hash(u.password, argonOptions);
           })
         );
@@ -621,7 +623,7 @@ async function processRosterBatchAsync(
     if (bulkDeactivateAbsent) {
       const absentFilter = {
         collegeId: adminCollegeId,
-        role: { $in: ['student', 'college-student'] },
+        role: ROLES.STUDENT,
         status: { $in: ['active', 'invited'] },
         studentId: { $nin: Array.from(processedStudentIds) },
       };

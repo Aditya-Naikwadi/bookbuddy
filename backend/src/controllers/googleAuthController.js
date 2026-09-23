@@ -6,6 +6,7 @@ const RefreshToken = require('../models/RefreshToken');
 const AppError = require('../utils/AppError');
 const { generateTokenPair } = require('../utils/token');
 const config = require('../config');
+const { normalizeEmail, ROLES } = require('@bookbuddy/shared');
 const setRefreshTokenCookie = (res, token) => {
   res.cookie('refreshToken', token, {
     httpOnly: true,
@@ -78,7 +79,7 @@ const googleAuthHandler = async (req, res, next) => {
       return next(new AppError('Email not provided in Google ID Token.', 400));
     }
 
-    const normalizedEmail = email.toLowerCase();
+    const normalizedEmail = normalizeEmail(email);
     let user = await User.findOne({
       $or: [{ googleId }, { email: normalizedEmail }],
     });
@@ -114,7 +115,7 @@ const googleAuthHandler = async (req, res, next) => {
         email: normalizedEmail,
         avatar: picture || '',
         collegeId: defaultCollege._id,
-        role: 'student',
+        role: ROLES.STUDENT,
         isEmailVerified: true,
         membershipStatus: 'active',
         status: 'active',

@@ -1,4 +1,8 @@
 import apiClient from "./client";
+import {
+  studentRegisterBodySchema,
+  verifyEmailBodySchema,
+} from "@shared/schemas/auth";
 
 export const registrationApi = {
   // Public active colleges list for Flow A
@@ -9,15 +13,17 @@ export const registrationApi = {
 
   // Flow A: Student registration
   registerStudent: async (studentData) => {
-    const { data } = await apiClient.post("/registration/student", studentData);
+    const validated = studentRegisterBodySchema.parse(studentData);
+    const { data } = await apiClient.post("/registration/student", validated);
     return data;
   },
 
   // Flow A: Verify OTP
   verifyStudentEmail: async (verificationData) => {
+    const validated = verifyEmailBodySchema.parse(verificationData);
     const { data } = await apiClient.post(
       "/registration/verify-email",
-      verificationData,
+      validated,
     );
     return data;
   },

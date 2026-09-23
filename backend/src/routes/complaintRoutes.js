@@ -4,7 +4,7 @@ const { submitComplaint, getMyComplaints } = require('../controllers/complaintCo
 const { protect } = require('../middlewares/auth');
 const scopeToTenant = require('../middlewares/scopeToTenant');
 const validate = require('../middlewares/validate');
-const { createComplaintSchema } = require('../validations/facilities.validation');
+const { createComplaintSchema } = require('@bookbuddy/shared/schemas/facilities');
 
 router.use(protect);
 router.use(scopeToTenant);

@@ -33,7 +33,12 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "ci:check": "npm run lint && npm run format:check && npm test",
+    "check:transactions": "node ../scripts/testing/check-transaction-boundaries.js",
+    "check:races": "node ../scripts/testing/check-race-conditions.js",
+    "check:contracts": "node ../scripts/testing/check-contract-layer.js",
+    "check:normalization": "node ../scripts/testing/check-normalization-layer.js",
+    "test:concurrency": "jest src/tests/concurrencyRaceConditions.test.js --runInBand --detectOpenHandles --forceExit",
+    "ci:check": "npm run lint && npm run format:check && npm run check:transactions && npm run check:races && npm run check:contracts && npm run check:normalization && npm test",
     "test": "jest src/tests --runInBand --detectOpenHandles --forceExit",
     "audit": "npm audit"
   },
@@ -42,6 +47,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@bookbuddy/shared": "file:../shared",
     "@sentry/node": "^10.68.0",
     "@socket.io/redis-adapter": "^8.3.0",
     "adm-zip": "^0.6.1",

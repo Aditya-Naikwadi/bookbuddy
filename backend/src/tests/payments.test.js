@@ -94,15 +94,14 @@ describe('payments Consolidated Suite', () => {
 
           expect(response.status).toBe(400);
           expect(response.body.success).toBe(false);
-          expect(response.body.message).toMatch(/100 paise/i);
+          expect(response.body.message).toMatch(/(?:100 paise|unrecognized key.*amount|forbidden)/i);
         });
 
-        it('should successfully create an order for valid amount', async () => {
+        it('should successfully create an order with server-calculated amount for fine', async () => {
           const response = await request(app)
             .post('/api/v1/payments/create-order')
             .set('Authorization', `Bearer ${userToken}`)
             .send({
-              amount: 5000, // ₹50 in paise
               currency: 'INR',
               fineId: sampleFine._id.toString(),
             });
@@ -120,8 +119,8 @@ describe('payments Consolidated Suite', () => {
             .post('/api/v1/create-order')
             .set('Authorization', `Bearer ${userToken}`)
             .send({
-              amount: 1000,
               currency: 'INR',
+              fineId: sampleFine._id.toString(),
             });
 
           expect(response.status).toBe(200);
@@ -142,7 +141,7 @@ describe('payments Consolidated Suite', () => {
 
           expect(response.status).toBe(400);
           expect(response.body.success).toBe(false);
-          expect(response.body.message).toMatch(/Missing required payment verification/i);
+          expect(response.body.message).toMatch(/(?:Missing required payment verification|razorpay_payment_id|Invalid input)/i);
         });
 
         it('should return 400 and NOT mark fine as paid if signature is invalid', async () => {
@@ -362,7 +361,7 @@ describe('payments Consolidated Suite', () => {
       });
 
       describe('F7.3 — POST /api/v1/payments/create-order (Server-Computed Amount)', () => {
-        it('Acceptance Criteria: manipulated client request specifying lower amount is IGNORED entirely', async () => {
+        it('Acceptance Criteria: manipulated client request specifying lower amount is REJECTED by contract layer', async () => {
           const manipulatedAmount = 1.0; // Client attempts to pay ₹1 instead of ₹125 (50 + 75)
 
           const res = await request(app)
@@ -370,6 +369,19 @@ describe('payments Consolidated Suite', () => {
             .set('Authorization', `Bearer ${tokenStudent}`)
             .send({
               amount: manipulatedAmount, // Attack Payload
+              fineIds: [fine1._id.toString(), fine2._id.toString()],
+            });
+
+          expect(res.statusCode).toBe(400);
+          expect(res.body.success).toBe(false);
+          expect(res.body.message).toMatch(/(?:unrecognized key.*amount|client-supplied payment amounts)/i);
+        });
+
+        it('Acceptance Criteria: server-computed amount from fines succeeds without client amount', async () => {
+          const res = await request(app)
+            .post('/api/v1/payments/create-order')
+            .set('Authorization', `Bearer ${tokenStudent}`)
+            .send({
               fineIds: [fine1._id.toString(), fine2._id.toString()],
             });
 
@@ -383,7 +395,6 @@ describe('payments Consolidated Suite', () => {
           // Verify Payment document in DB stored server-computed amount of 125
           const paymentDoc = await Payment.findById(res.body.data.paymentId);
           expect(paymentDoc.amount).toBe(125.0);
-          expect(paymentDoc.amount).not.toBe(manipulatedAmount);
         });
       });
 

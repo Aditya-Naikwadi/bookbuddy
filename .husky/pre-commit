@@ -1,4 +1,3 @@
-echo "🔍 Running pre-commit secret scan & lint-staged formatting..."
-sh scripts/pre-commit.sh || exit 1
+echo "🔒 Running pre-commit secret scan & lint-staged..."
+node scripts/security/scan-secrets.js --staged || exit 1
 npx lint-staged || exit 1
-

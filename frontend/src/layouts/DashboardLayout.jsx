@@ -18,6 +18,7 @@ import NotificationCenter from "../components/student/NotificationCenter";
 import ThemeToggle from "../components/common/ThemeToggle";
 import useAuthStore from "../store/authStore";
 import { useFeatureFlags } from "../hooks/useFeatureFlags";
+import { ROLES, normalizeRole } from "@bookbuddy/shared";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   STUDENT_NAV_ITEMS,
@@ -51,17 +52,11 @@ export default function DashboardLayout() {
 
   const { isFeatureEnabled } = useFeatureFlags();
 
-  const isAdminPortal =
-    user?.role === "super-admin" || user?.role === "super_admin";
-  const isCollegeAdmin = [
-    "college-admin",
-    "college_admin",
-    "admin",
-    "librarian",
-  ].includes(user?.role);
-  const isGeneralDashboard = user?.role === "general";
-  const isStudent =
-    user?.role === "student" || user?.role === "college-student";
+  const normalizedUserRole = normalizeRole(user?.role);
+  const isAdminPortal = normalizedUserRole === ROLES.SUPER_ADMIN;
+  const isCollegeAdmin = normalizedUserRole === ROLES.COLLEGE_ADMIN;
+  const isGeneralDashboard = normalizedUserRole === ROLES.GENERAL;
+  const isStudent = normalizedUserRole === ROLES.STUDENT;
 
   const visibleStudentItems = STUDENT_NAV_ITEMS.filter(
     (item) => !item.feature || isFeatureEnabled(item.feature),

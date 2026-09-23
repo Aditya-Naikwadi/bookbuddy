@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { CheckCircle2, XCircle, Eye, Building2 } from "lucide-react";
 import eresourcesApi from "../../../api/eresourcesApi";
 import adminApi from "../../../api/adminApi";
+import { moderateEResourceBodySchema } from "@shared/schemas/moderation";
 import OpsHeader from "../../../components/ops/OpsHeader";
 import OpsSeverityBadge from "../../../components/ops/OpsSeverityBadge";
 const DigitalReaderModal = lazy(
@@ -77,11 +78,12 @@ export default function GlobalContentModeration() {
     setIsSubmitting(true);
     setMessage({ type: "", text: "" });
     try {
+      const payload = moderateEResourceBodySchema.parse({
+        status: "approved",
+        note: "Content verified and approved for platform-wide library access.",
+      });
       if (adminApi.moderateEResource) {
-        await adminApi.moderateEResource(resourceId, {
-          status: "approved",
-          note: "Content verified and approved for platform-wide library access.",
-        });
+        await adminApi.moderateEResource(resourceId, payload);
       } else {
         await eresourcesApi.updateResource(resourceId, {
           moderationStatus: "approved",
@@ -127,11 +129,12 @@ export default function GlobalContentModeration() {
     setIsSubmitting(true);
     setMessage({ type: "", text: "" });
     try {
+      const payload = moderateEResourceBodySchema.parse({
+        status: "rejected",
+        note: rejectionReason.trim(),
+      });
       if (adminApi.moderateEResource) {
-        await adminApi.moderateEResource(resourceId, {
-          status: "rejected",
-          note: rejectionReason.trim(),
-        });
+        await adminApi.moderateEResource(resourceId, payload);
       } else {
         await eresourcesApi.updateResource(resourceId, {
           moderationStatus: "rejected",

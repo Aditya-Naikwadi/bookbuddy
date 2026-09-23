@@ -13,6 +13,7 @@ import { clearQueryCache } from "../providers/QueryProvider";
 import { disconnectSocket } from "../lib/socketClient";
 import { toast } from "./toastStore";
 import { getSubdomainTenantSlug } from "../utils/tenantSubdomain";
+import { ROLES, normalizeRole } from "@bookbuddy/shared";
 
 const isTokenExpiredOrNearExpiry = (token, thresholdSeconds = 60) => {
   if (!token || typeof token !== "string") return true;
@@ -218,16 +219,17 @@ const useAuthStore = create((set) => {
       set({ isLoading: true, error: null });
       try {
         await fetchCsrfToken();
+        const canonicalRole = normalizeRole(role);
         const payload = {
           name,
           email,
           password,
-          role,
+          role: canonicalRole,
         };
         if (idNumber && idNumber.trim()) {
           payload.studentId = idNumber.trim();
         }
-        if (collegeId && role === "college-student") {
+        if (collegeId && canonicalRole === ROLES.STUDENT) {
           payload.collegeId = collegeId;
         }
         const { data } = await apiClient.post("/auth/register", payload);

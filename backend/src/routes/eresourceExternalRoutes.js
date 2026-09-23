@@ -9,8 +9,8 @@ const {
 } = require('../controllers/eresourceExternalController');
 const { protect } = require('../middlewares/auth');
 const validate = require('../middlewares/validate');
-const { paramIdSchema, paramGutenbergIdSchema } = require('../validations/common.validation');
-const { updateProgressSchema } = require('../validations/personalization.validation');
+const { paramIdSchema, paramGutenbergIdSchema } = require('@bookbuddy/shared/schemas/common');
+const { updateProgressSchema } = require('@bookbuddy/shared/schemas/personalization');
 
 router.use(protect);
 

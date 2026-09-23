@@ -9,20 +9,7 @@ const {
 const { protect } = require('../middlewares/auth');
 const scopeToTenant = require('../middlewares/scopeToTenant');
 const validate = require('../middlewares/validate');
-const { z } = require('zod');
-
-// Schema for input parameter validation
-const paramIdSchema = z.object({
-  params: z.object({
-    id: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format'),
-  }),
-});
-
-const paramLoanIdSchema = z.object({
-  params: z.object({
-    loanId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format'),
-  }),
-});
+const { paramIdSchema, paramLoanIdSchema } = require('@bookbuddy/shared/schemas/common');
 
 // Protect all routes
 router.use(protect);

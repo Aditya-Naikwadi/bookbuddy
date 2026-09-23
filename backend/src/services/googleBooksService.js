@@ -138,13 +138,15 @@ const seedBooksToDatabase = async (collegeId, topics = ['computer science']) => 
   for (const topic of topics) {
     try {
       const { books } = await searchBooks({ search: topic, limit: 10 });
-      for (const bookData of books) {
-        const existing = await Book.findOne({
-          collegeId,
-          isbn: bookData.isbn,
-        });
+      const isbns = books.map((b) => b.isbn).filter(Boolean);
+      const existingBooks = await Book.find({
+        collegeId,
+        isbn: { $in: isbns },
+      }).select('isbn');
+      const existingIsbnSet = new Set(existingBooks.map((b) => b.isbn));
 
-        if (!existing && bookData.isbn) {
+      for (const bookData of books) {
+        if (bookData.isbn && !existingIsbnSet.has(bookData.isbn)) {
           await Book.create({
             ...bookData,
             collegeId,

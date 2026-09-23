@@ -1,4 +1,6 @@
 import apiClient from "./client";
+import { moderateEResourceBodySchema } from "@shared/schemas/moderation";
+import { rejectStudentJoinRequestBodySchema } from "@shared/schemas/joinRequests";
 
 export const getCirculationQueue = async () => {
   const { data } = await apiClient.get(
@@ -65,9 +67,10 @@ export const getPendingEResources = async () => {
 };
 
 export const moderateEResource = async (id, payload) => {
+  const validated = moderateEResourceBodySchema.parse(payload);
   const { data } = await apiClient.put(
     `/dashboards/college-admin/eresources/${id}/moderate`,
-    payload,
+    validated,
   );
   return data;
 };
@@ -166,9 +169,10 @@ export const approveStudentJoinRequest = async (id) => {
 };
 
 export const rejectStudentJoinRequest = async (id, payload) => {
+  const validated = rejectStudentJoinRequestBodySchema.parse(payload);
   const { data } = await apiClient.post(
     `/college-admin/student-join-requests/${id}/reject`,
-    payload,
+    validated,
   );
   return data;
 };

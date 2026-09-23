@@ -12,6 +12,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { registrationApi } from "../../api/registrationApi";
+import { normalizeEmail, normalizeStudentId } from "@bookbuddy/shared";
 
 export default function CollegeStudentRegister() {
   const { collegeSlug } = useParams();
@@ -96,18 +97,19 @@ export default function CollegeStudentRegister() {
         `${studentForm.firstName} ${studentForm.lastName}`.trim();
       const res = await registrationApi.registerStudent({
         name: fullName,
-        email: studentForm.email,
+        email: normalizeEmail(studentForm.email),
         password: studentForm.password,
         confirmPassword: studentForm.confirmPassword,
         collegeId: collegeData._id,
-        studentId:
-          studentForm.rollNumber || `STU-${Date.now().toString().slice(-4)}`,
+        studentId: normalizeStudentId(
+          studentForm.rollNumber || `STU-${Date.now().toString().slice(-4)}`
+        ),
         department: studentForm.department,
         phone: studentForm.phone,
         termsAccepted: true,
       });
 
-      setRegisteredEmail(studentForm.email.toLowerCase().trim());
+      setRegisteredEmail(normalizeEmail(studentForm.email));
       if (res?.data?.devOtp) {
         setDevOtpHint(res.data.devOtp);
       }

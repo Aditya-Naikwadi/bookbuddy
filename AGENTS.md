@@ -17,6 +17,8 @@ This document is the **single source of truth** for all AI coding assistants (Ge
    - **Multi-Tenant Data Isolation**: Always preserve `collegeId` scoping on database operations and backend query parameters.
    - **Environment Variables**: Always import validated environment variables from `backend/src/config/env.js` (backed by Zod schema validation).
    - **Realtime & Background Tasks**: Do not break Socket.io realtime flows (streaks, notifications) or node-cron scheduled tasks (fines, hold expiration).
+   - **Transaction Boundaries & Side-Effect Isolation**: Always wrap transactional database writes using `runInTransaction(transactionFn, afterCommitFn)` from `backend/src/utils/transactionHelper.js`. Direct calls to `mongoose.startSession()` or `session.withTransaction()` are prohibited. Place all non-database side effects (emails, SMS, socket emits, badges, streak updates) inside `afterCommitFn` so they never fire on abort or retry.
+   - **Atomic Conditional Updates & Race-Condition Prevention**: Never use a "read-branch-save" (check-then-act) pattern for shared, limited, or state-machine resources (RSVP capacity, fine payments, waiver coupons, stock counters, renewal limits, streak repairs). Always use `atomicConditionalUpdate(Model, matchQuery, conditionExpr, updateOp, options)` from `backend/src/utils/atomicUpdateHelper.js`. Precondition checks must be evaluated atomically inside MongoDB via query predicates or `$expr`.
    - **Component Refactoring Workflow**: Follow the strict `Audit -> Propose -> Confirm -> Execute` cycle before extracting component logic.
 
 3. **Verification Standards**:

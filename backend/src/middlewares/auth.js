@@ -139,9 +139,12 @@ const protect = async (req, res, next) => {
   }
 };
 
+const { normalizeRole } = require('@bookbuddy/shared');
+
 const requireRole = (...allowedRoles) => {
+  const normalizedAllowed = allowedRoles.map((r) => normalizeRole(r));
   return (req, res, next) => {
-    if (!req.user || !allowedRoles.includes(req.user.role)) {
+    if (!req.user || !normalizedAllowed.includes(normalizeRole(req.user.role))) {
       return next(new AppError('You do not have permission to perform this action.', 403));
     }
     next();

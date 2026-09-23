@@ -3,6 +3,7 @@
  * Parses CSV text, normalizes headers, sanitizes against formula injection,
  * detects in-file duplicates, and validates per-row structure without blocking UI thread.
  */
+import { normalizeStudentId, normalizeEmail } from "@bookbuddy/shared";
 
 // Formula injection protection
 const sanitizeCell = (val) => {
@@ -201,7 +202,8 @@ self.onmessage = function (e) {
       }
 
       // Duplicate check within file
-      if (seenStudentIds.has(rawStudentId.toLowerCase())) {
+      const normalizedSid = normalizeStudentId(rawStudentId);
+      if (seenStudentIds.has(normalizedSid)) {
         errors.push({
           rowNumber,
           studentId: rawStudentId,
@@ -212,7 +214,8 @@ self.onmessage = function (e) {
         return;
       }
 
-      if (rawEmail && seenEmails.has(rawEmail)) {
+      const normalizedMail = rawEmail ? normalizeEmail(rawEmail) : null;
+      if (normalizedMail && seenEmails.has(normalizedMail)) {
         errors.push({
           rowNumber,
           studentId: rawStudentId,
@@ -223,9 +226,9 @@ self.onmessage = function (e) {
         return;
       }
 
-      seenStudentIds.add(rawStudentId.toLowerCase());
-      if (rawEmail) {
-        seenEmails.add(rawEmail);
+      seenStudentIds.add(normalizedSid);
+      if (normalizedMail) {
+        seenEmails.add(normalizedMail);
       } else {
         missingEmailCount++;
       }

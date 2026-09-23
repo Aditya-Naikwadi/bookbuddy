@@ -46,10 +46,10 @@ const {
 } = require('../controllers/registrationController');
 
 const {
-  studentRegisterSchema,
-  verifyEmailSchema,
   tenantOnboardingSchema,
-} = require('../validations/registration.validation');
+  studentRegisterRouteSchema,
+  verifyEmailRouteSchema,
+} = require('@bookbuddy/shared/schemas/auth');
 
 const validate = require('../middlewares/validate');
 const { authLimiter } = require('../middlewares/rateLimiters');
@@ -58,9 +58,9 @@ const { authLimiter } = require('../middlewares/rateLimiters');
 router.get('/colleges', getActiveColleges);
 
 // Flow A: Student Self-Registration & OTP Verification
-router.post('/student', authLimiter, validate(studentRegisterSchema), registerStudent);
+router.post('/student', authLimiter, validate(studentRegisterRouteSchema), registerStudent);
 
-router.post('/verify-email', authLimiter, validate(verifyEmailSchema), verifyStudentEmail);
+router.post('/verify-email', authLimiter, validate(verifyEmailRouteSchema), verifyStudentEmail);
 
 // Flow B: Tenant Onboarding Submission
 router.post(

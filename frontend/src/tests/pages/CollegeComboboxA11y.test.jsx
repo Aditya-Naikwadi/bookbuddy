@@ -185,6 +185,13 @@ describe("@testing-accessibility-auditor: WCAG 2.1.1 Full Keyboard-Only Navigati
         mockActiveColleges,
       );
 
+      vi.spyOn(apiClient, "get").mockImplementation((url) => {
+        if (url.includes("csrf")) {
+          return Promise.resolve({ data: { csrfToken: "csrf-token" } });
+        }
+        return Promise.resolve({ data: {} });
+      });
+
       const postSpy = vi.spyOn(apiClient, "post").mockImplementation((url) => {
         if (url.includes("csrf")) {
           return Promise.resolve({ data: { csrfToken: "csrf-token" } });
@@ -198,7 +205,7 @@ describe("@testing-accessibility-auditor: WCAG 2.1.1 Full Keyboard-Only Navigati
                 _id: "u-1",
                 name: "Alex Smith",
                 email: "alex@stanford.edu",
-                role: "college-student",
+                role: "student",
                 studentId: "STU-999",
                 collegeId: "college-2",
               },
@@ -284,7 +291,7 @@ describe("@testing-accessibility-auditor: WCAG 2.1.1 Full Keyboard-Only Navigati
           expect.objectContaining({
             name: "Alex Smith",
             email: "alex@stanford.edu",
-            role: "college-student",
+            role: "student",
             studentId: "STU-999",
             collegeId: "college-2",
           }),

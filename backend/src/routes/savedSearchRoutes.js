@@ -3,7 +3,7 @@ const router = express.Router();
 const { getMySavedSearches, createSavedSearch } = require('../controllers/savedSearchController');
 const { protect } = require('../middlewares/auth');
 const validate = require('../middlewares/validate');
-const { createSavedSearchSchema } = require('../validations/personalization.validation');
+const { createSavedSearchSchema } = require('@bookbuddy/shared/schemas/personalization');
 
 router.use(protect);
 

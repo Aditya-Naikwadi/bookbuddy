@@ -37,7 +37,7 @@ const { protect, requireRole } = require('../../middlewares/auth');
 const scopeToTenant = require('../../middlewares/scopeToTenant');
 const validate = require('../../middlewares/validate');
 const auditLog = require('../../middlewares/auditLog');
-const { paramIdSchema } = require('../../validations/common.validation');
+const { paramIdSchema } = require('@bookbuddy/shared/schemas/common');
 const {
   checkoutSchema,
   returnSchema,
@@ -46,14 +46,18 @@ const {
   updateBookSchema,
   uploadResourceSchema,
   createStudentSchema,
-} = require('../../validations/library.validation');
-const { moderateSchema } = require('../../validations/personalization.validation');
+} = require('@bookbuddy/shared/schemas/library');
+const { moderateEResourceRouteSchema } = require('@bookbuddy/shared/schemas/moderation');
+const {
+  approveStudentJoinRequestRouteSchema,
+  rejectStudentJoinRequestRouteSchema,
+} = require('@bookbuddy/shared/schemas/joinRequests');
 const {
   createSeatSchema,
   updateSeatSchema,
   updateSuggestionSchema,
   resolveComplaintSchema,
-} = require('../../validations/facilities.validation');
+} = require('@bookbuddy/shared/schemas/facilities');
 
 const { userLimiter, expensiveRouteLimiter } = require('../../middlewares/rateLimiters');
 
@@ -66,10 +70,10 @@ router.use(userLimiter);
 router.route('/student-join-requests').get(getStudentJoinRequests);
 router
   .route('/student-join-requests/:id/approve')
-  .post(validate(paramIdSchema), approveStudentJoinRequest);
+  .post(validate(approveStudentJoinRequestRouteSchema), approveStudentJoinRequest);
 router
   .route('/student-join-requests/:id/reject')
-  .post(validate(paramIdSchema), rejectStudentJoinRequest);
+  .post(validate(rejectStudentJoinRequestRouteSchema), rejectStudentJoinRequest);
 
 // Patron Management
 router.route('/patrons').get(getAllPatrons).post(validate(createStudentSchema), createStudent);
@@ -93,7 +97,7 @@ router.route('/resources').post(validate(uploadResourceSchema), uploadCollegeRes
 router.route('/eresources/pending').get(getPendingEResources);
 router
   .route('/eresources/:id/moderate')
-  .put(validate(paramIdSchema), validate(moderateSchema), moderateEResource);
+  .put(validate(moderateEResourceRouteSchema), moderateEResource);
 
 // Fines & Ticketing
 router.route('/fines').get(getCollegeFines);

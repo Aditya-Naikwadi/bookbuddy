@@ -2,6 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middlewares/auth');
 const requireIdempotency = require('../middlewares/idempotency');
+const validate = require('../middlewares/validate');
+const {
+  createPaymentOrderRouteSchema,
+  verifyPaymentRouteSchema,
+} = require('@bookbuddy/shared/schemas/payments');
 const {
   createOrder,
   verifyPayment,
@@ -14,8 +19,8 @@ const {
 router.post('/webhook', handlePaymentWebhook);
 
 // Razorpay Order Creation & Payment Verification
-router.post('/create-order', protect, createOrder);
-router.post('/verify-payment', protect, verifyPayment);
+router.post('/create-order', protect, validate(createPaymentOrderRouteSchema), createOrder);
+router.post('/verify-payment', protect, validate(verifyPaymentRouteSchema), verifyPayment);
 router.get('/:orderId/status', protect, getOrderStatus);
 
 // Checkout session creation endpoints (enforce idempotency)

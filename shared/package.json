@@ -1,0 +1,16 @@
+{
+  "name": "@bookbuddy/shared",
+  "version": "1.0.0",
+  "description": "Shared Zod schemas and API contracts for BookBuddy",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./schemas/*": "./src/schemas/*.js",
+    "./constants/*": "./src/constants/*.js",
+    "./utils/*": "./src/utils/*.js"
+  },
+  "peerDependencies": {
+    "zod": "^3.23.0 || ^4.0.0"
+  }
+}

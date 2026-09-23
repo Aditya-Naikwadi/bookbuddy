@@ -14,6 +14,7 @@ import { SplashScreen } from "./components/ui/SplashScreen";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ImpersonationBanner from "./components/ImpersonationBanner";
 import ToastContainer from "./components/common/ToastContainer";
+import { ROLES, CANONICAL_ROLES } from "@bookbuddy/shared";
 
 // Lazy loaded public pages
 const Landing = lazy(() => import("./pages/public/Landing"));
@@ -285,7 +286,7 @@ function App() {
                     <Route
                       element={
                         <ProtectedRoute
-                          allowedRoles={["super-admin", "super_admin"]}
+                          allowedRoles={[ROLES.SUPER_ADMIN]}
                         />
                       }
                     >
@@ -336,10 +337,8 @@ function App() {
                       element={
                         <ProtectedRoute
                           allowedRoles={[
-                            "college-admin",
-                            "college_admin",
-                            "admin",
-                            "librarian",
+                            ROLES.COLLEGE_ADMIN,
+                            ROLES.SUPER_ADMIN,
                           ]}
                         />
                       }
@@ -406,17 +405,7 @@ function App() {
                     <Route
                       element={
                         <ProtectedRoute
-                          allowedRoles={[
-                            "general",
-                            "student",
-                            "college-student",
-                            "college-admin",
-                            "college_admin",
-                            "admin",
-                            "librarian",
-                            "super-admin",
-                            "super_admin",
-                          ]}
+                          allowedRoles={CANONICAL_ROLES}
                         />
                       }
                     >
@@ -442,7 +431,7 @@ function App() {
                     <Route
                       element={
                         <ProtectedRoute
-                          allowedRoles={["student", "college-student"]}
+                          allowedRoles={[ROLES.STUDENT]}
                         />
                       }
                     >
@@ -685,13 +674,7 @@ function App() {
                   <Route
                     element={
                       <ProtectedRoute
-                        allowedRoles={[
-                          "student",
-                          "college-student",
-                          "general",
-                          "college-admin",
-                          "super-admin",
-                        ]}
+                        allowedRoles={CANONICAL_ROLES}
                       />
                     }
                   >
@@ -702,7 +685,7 @@ function App() {
                   <Route
                     element={
                       <ProtectedRoute
-                        allowedRoles={["student", "college-student", "general"]}
+                        allowedRoles={[ROLES.STUDENT, ROLES.GENERAL]}
                       />
                     }
                   >

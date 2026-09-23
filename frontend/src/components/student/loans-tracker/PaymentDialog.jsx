@@ -109,9 +109,8 @@ export const PaymentDialog = ({
     try {
       const amountInPaise = Math.max(100, Math.round(totalAmount * 100));
 
-      // STEP 1: Call backend create-order endpoint to generate Razorpay Order ID
+      // STEP 1: Call backend create-order endpoint to generate Razorpay Order ID (server computes amount)
       const orderData = await createRazorpayOrder({
-        amount: amountInPaise,
         currency: "INR",
         fineId: fineItem?._id,
       });
