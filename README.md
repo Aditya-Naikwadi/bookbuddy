@@ -56,6 +56,18 @@ BookBuddy is a production-grade, multi-tenant Integrated Library System (ILS) an
   - [3. College Admin Operations Hub (13 Desk Modules)](#3-college-admin-operations-hub-13-desk-modules)
   - [4. Super Admin Platform Command Center (10 Management Consoles)](#4-super-admin-platform-command-center-10-management-consoles)
 - [✨ Complete Portal Feature Matrix](#-complete-portal-feature-matrix)
+- [🗺️ Master Feature Inventory \& Engineering Roadmap](#️-master-feature-inventory--engineering-roadmap)
+  - [1. Core Library System Modules](#1-core-library-system-modules-foundational-spec)
+  - [2. General Dashboard (Public)](#2-general-dashboard-public--non-tenant-users)
+  - [3. Super Admin Dashboard](#3-super-admin-dashboard-platform-governance)
+  - [4. College Admin Dashboard (12 ILS Desks)](#4-college-admin-dashboard-12-ils-desks)
+  - [5. Student Dashboard (Tenant-Scoped)](#5-student-dashboard-tenant-scoped)
+  - [6. Library Seat \& Lab Booking System](#6-library-seat--lab-booking-system-new-subsystem)
+  - [7. College Self-Service Onboarding \& Tenant URL](#7-college-self-service-onboarding--tenant-url)
+  - [8. Registration \& Role Routing System](#8-registration--role-routing-system)
+  - [9. Cross-Cutting Platform Systems](#9-cross-cutting-platform-systems)
+  - [10. Suggested Features \& Innovation Roadmap](#10-suggested-features--future-innovation-roadmap)
+  - [11. Engineering Workload Distribution](#11-engineering-workload-distribution--implementation-strategy)
 - [📖 In-Browser Digital Reader \& Persistent Annotations](#-in-browser-digital-reader--persistent-annotations)
 - [⚡ Asynchronous Pipelines \& Performance Optimizations](#-asynchronous-pipelines--performance-optimizations)
 - [⏱️ Automated Background Cron \& Worker Architecture](#️-automated-background-cron--worker-architecture)
@@ -335,6 +347,205 @@ Platform-wide command center for managing tenants, platform health, security com
 | **Multi-Branch Physical Shelf Inventory Auditing**                 |         ❌          |        ❌         |          ✅           |           ✅           |
 | **MFA-Gated User Impersonation with Warning Banner**               |         ❌          |        ❌         |          ❌           |           ✅           |
 | **Cluster Telemetry, Storage Forecast & Audit Logs**               |         ❌          |        ❌         |          ❌           |           ✅           |
+
+
+---
+
+## 🗺️ Master Feature Inventory & Engineering Roadmap
+
+**Legend:** 🟢 Existing/Built · 🔵 Built / Modernized Architecture · 🟡 Suggested — Build Now · 🟠 Suggested — Build With Modification · 🔴 Suggested — Defer
+
+---
+
+### 1. Core Library System Modules (Foundational Spec)
+
+| Feature | One-Liner | Status |
+|---|---|:---:|
+| **OPAC** | Public search portal — search by title/author/subject, reserve, check availability, view history/fines | 🟢 |
+| **Cataloging** | Backend inventory entry — metadata, barcode/RFID, external DB auto-fetch, physical + digital assets | 🟢 |
+| **Circulation** | Checkout/return via barcode, due-date tracking, fine calculation, renewals | 🟢 |
+| **Patron & Member Management** | Borrower records, membership types, limits, holds, overdue notifications | 🟢 |
+| **Acquisitions & Serials** | Purchase orders, budgets, vendor relationships, subscription tracking | 🟢 |
+| **Reporting & Analytics** | Popular books, inactive patrons, lost/damaged stock, fine reports | 🟢 |
+| **Centralized Database** | Real-time cross-system availability sync | 🟢 |
+| **Data Import/Export** | CSV/Excel/MARC21 migration tooling | 🟢 |
+| **Role-Based Access** | Distinct permissions per role tier | 🟢 |
+| **Multi-Branch Support** | Single system managing multiple physical locations | 🟢 |
+
+---
+
+### 2. General Dashboard (Public / Non-Tenant Users)
+
+| Feature | One-Liner | Status |
+|---|---|:---:|
+| **Registration & Login** | Public account creation with refresh-token persistent sessions | 🟢 |
+| **OPAC/Catalog Search** | Public book/e-resource search | 🟢 |
+| **E-Resource & Catalog Carousels** | Horizontal-scroll browse on landing page | 🟢 |
+| **Unauthenticated Book-Click Redirect** | Clicking a book while logged out routes to login, preserving intent | 🟢 |
+| **Digital Reader** | EPUB/PDF reader with notes and highlights | 🟢 |
+| **Public Reader Auth Guard** | Prompts login instead of raw 401 when a guest tries to annotate | 🔵 |
+| **Toast/Notification System** | Feedback on every user action (save, error, success) | 🟢 |
+
+---
+
+### 3. Super Admin Dashboard (Platform Governance)
+
+| Feature | One-Liner | Status |
+|---|---|:---:|
+| **Platform Command Center** | Executive KPI hub — colleges, users, circulation, pending actions | 🟢 |
+| **System Telemetry** | Cluster health, feature-adoption matrix across tenants | 🟢 |
+| **Tenant & Admin Management** | Atomic college + admin creation, status/tier control | 🟢 |
+| **Onboarding Review Queue** | Approve/reject new college applications | 🟢 |
+| **Global Content Moderation** | Approve/reject/publish e-resources platform-wide | 🟢 |
+| **Global Data Oversight** | Cross-tenant loans/fines/catalog with charts | 🟢 |
+| **Support Escalation Queue** | Cross-college complaint/ticket resolution | 🟢 |
+| **User Directory, RBAC & Impersonation** | Global user search, role changes, MFA-gated impersonation | 🟢 |
+| **Security Audit Trail** | Immutable action log with filters and CSV export | 🟢 |
+| **System Settings & DR** | Global config, backup/restore, maintenance mode enforcement | 🟢 |
+
+---
+
+### 4. College Admin Dashboard (12 ILS Desks)
+
+| Feature | One-Liner | Status |
+|---|---|:---:|
+| **Home Dashboard** | Real-time metric cards, quick actions | 🟢 |
+| **Patron Desk** | Search/inspect/create students, borrowing history | 🟢 |
+| **Student Bulk Upload** | CSV roster ingestion with Web Worker parsing | 🟢 |
+| **Circulation Desk** | Staff checkout/return, hold queue monitoring | 🟢 |
+| **Cataloging Desk** | Add/edit books, ISBN lookup, barcode assignment | 🟢 |
+| **Inventory Overview** | Stock alerts, category/subject breakdowns | 🟢 |
+| **Acquisitions Desk** | Purchase lifecycle, budget tracking | 🟢 |
+| **Digital Assets Desk** | Manage/approve student-submitted e-resources | 🟢 |
+| **Facilities Desk** | Lab seat/workstation setup, maintenance toggling | 🟢 |
+| **Finances Desk** | Fines, payment recording, fee waivers | 🟢 |
+| **Helpdesk Desk** | Resolve student tickets, track resolution time | 🟢 |
+| **Feature Manager** | Toggle which modules a college's students can see | 🟢 |
+| **Analytics Overview** | Circulation trends, top books, custom report export | 🟢 |
+| **Left Sidebar Navigation** | Persistent, clickable nav across all 12 desks | 🔵 |
+
+---
+
+### 5. Student Dashboard (Tenant-Scoped)
+
+| Feature | One-Liner | Status |
+|---|---|:---:|
+| **Subdomain Tenant Resolution** | `<slug>.bookbuddy.com` auto-scopes every request to one college | 🔵 |
+| **Forced Password Change** | Mandatory reset on first login after roster provisioning | 🔵 |
+| **Feature-Gated Navigation** | Nav/routes hidden unless the college enabled that module | 🔵 |
+| **Loans/Holds/Fines Tracker** | Unified view of active checkouts, renewals, payments | 🔵 |
+| **Facility Booking (Student View)** | Book PCs/seats within tenant-specific rules | 🔵 |
+| **E-Resources & Reader (Reused)** | Same reader/notes engine as General Dashboard, tenant-scoped | 🔵 |
+| **Engagement (Streaks/Leaderboard/Reviews)** | Gamified reading habits, per-college leaderboard | 🟢 |
+
+---
+
+### 6. Library Seat & Lab Booking System (New Subsystem)
+
+| Feature | One-Liner | Status |
+|---|---|:---:|
+| **Workstation Booking** | Short-lead (1hr-ahead) PC reservation, 12h/week cap | 🔵 |
+| **Seat Booking** | Day-ahead study-seat reservation, 30h/week cap | 🔵 |
+| **Live Workstation Board** | Real-time "what's free right now" PC view | 🔵 |
+| **Seat Day Planner** | Calendar-style day-ahead seat booking UI | 🔵 |
+| **Booking Queue System** | See queue position when a slot is full; reuses hold-reservation pattern | 🔵 |
+| **Unified Cancel/No-Show Policy** | Free cancel ≥1hr ahead; otherwise hours deducted from cap | 🔵 |
+| **Admin Resource Setup Wizard** | Define seat/PC groups, quantities, schedules per branch | 🔵 |
+| **Multi-Branch Cap Aggregation** | Weekly fairness cap totals across branches, not per-branch | 🔵 |
+
+---
+
+### 7. College Self-Service Onboarding & Tenant URL
+
+| Feature | One-Liner | Status |
+|---|---|:---:|
+| **Bulk Roster Upload with Delivery Tracking** | CSV upload showing per-row credential-delivery status | 🔵 |
+| **SMS Credential Delivery (Twilio)** | Text-based login credentials for phone-only students | 🔵 |
+| **Printed Handout Fallback** | PDF credential slip when no email/SMS is possible | 🔵 |
+| **Individual College Subdomain** | Each college gets its own branded login URL | 🔵 |
+
+---
+
+### 8. Registration & Role Routing System
+
+| Feature | One-Liner | Status |
+|---|---|:---:|
+| **3-Way Registration Routing** | General Patron / College Student / College Admin as distinct paths | 🔵 |
+| **Roster Auto-Match Engine** | Auto-activates a student if their ID+email match a pre-uploaded roster row | 🔵 |
+| **Student Join Request Queue** | Manual admin approval when no roster match exists | 🔵 |
+| **Central Login College Picker** | Searchable college selector redirecting to the right subdomain | 🔵 |
+
+---
+
+### 9. Cross-Cutting Platform Systems
+
+| Feature | One-Liner | Status |
+|---|---|:---:|
+| **JWT Auth + Refresh Token** | Short-lived access token, long-lived httpOnly refresh cookie, silent renewal | 🟢 |
+| **Multi-Tenant Isolation** | `collegeId` scoping enforced at every query layer | 🟢 |
+| **Socket.io Real-Time** | Per-college room broadcasts for live updates | 🟢 |
+| **Redis Caching** | Metrics/leaderboard/session caching with invalidation | 🟢 |
+| **Razorpay Payments** | Fine payment processing with webhook + idempotency protection | 🟢 |
+| **Gamification (Streaks/Badges)** | Daily check-ins, unlockable achievement badges | 🟢 |
+| **Reviews & Ratings** | Book review system with denormalized rating summaries | 🟢 |
+| **Watch/Notify Requests** | Alerts when a reserved/out-of-stock title becomes available | 🟢 |
+| **Inter-Library Sharing (ILL)** | Cross-college resource lending with approval workflow | 🟢 |
+| **Community Feed** | Campus announcements/discussion posts | 🟢 |
+
+---
+
+### 10. Suggested Features & Future Innovation Roadmap
+
+#### 🟡 Build Now (Zero/Low Blockers)
+
+| Feature | One-Liner | Architectural Notes |
+|---|---|---|
+| **Vernacular Language Support** | UI in Hindi, Marathi, etc. via existing i18next scaffolding | Frontend translation bundles, tenant default language fallback |
+| **Accessibility Mode** | Screen reader support, dyslexia font toggle, Web Speech text-to-speech | High-contrast CSS tokens, WCAG 2.1 AAA aria landmarks |
+| **Offline-First Sync** | Extends existing IndexedDB/PWA downloads into queued offline-action sync | Background sync worker with optimistic local state replay |
+| **Reading-Debt Nudges & Skill Badges** | Constructive fine reminders + completion-based certificates | Built directly on existing loan and badge schemas |
+
+#### 🟠 Build With Modification (Requires Architecture Adjustment First)
+
+| Feature | One-Liner | Architectural Prerequisite |
+|---|---|---|
+| **Predictive Stock-Out Alerts** | Borrowing-velocity forecasting | Must run strictly as a nightly cron worker, never live in request cycles |
+| **Analytics Dashboard Expansion** | Advanced time-series reporting across checkouts and catalog trends | Requires dedicated time-series collection rather than snapshot-only model |
+| **Anomaly Detection on Audit Logs** | Rule-based flagging of unusual admin activity | Segregated output collection to protect audit trail performance |
+| **Syllabus Scanner** | Automated syllabus parsing and textbook matching | OCR must run client-side (Web Worker) or via cloud API — never on the web server |
+| **QR Shelf Navigation** | QR shelf deep-links and bay locator | Scoped to printable QR deep-links; full indoor wayfinding requires new schema |
+
+#### 🔴 Deferred
+
+| Feature | One-Liner | Reason for Deferral |
+|---|---|---|
+| **"Ask This Book" RAG Assistant** | AI-driven semantic question-answering over textbook content | Requires dedicated vector store (MongoDB Atlas M0 lacks vector search); design infra first |
+
+#### 📋 Future Roadmap & Candidate Innovations
+
+| Feature | One-Liner |
+|---|---|
+| **Course Reserves + LTI (Canvas/Moodle)** | Professors link required readings directly from the LMS into BookBuddy |
+| **Syllabus-to-Acquisitions Pipeline** | Auto-extract required titles from a syllabus and flag understocked ones |
+| **Duplicate-Donation Detector** | Flags when a physically donated book is already in the collection |
+| **Interlibrary Smart Routing** | Auto-suggests nearest consortium college with the title in stock |
+| **Study Group Formation** | Matches students reading the same book into a shared annotation thread |
+| **Voice-Note Annotations** | Record a short voice memo instead of typing a reader note |
+| **Federated Search** | Unified ranking across internal catalog + Google Books + Open Library + Gutenberg |
+| **Public Analytics Dashboard** | Grafana-style visual telemetry of aggregate reading patterns |
+| **Hash-Chained Audit Log** | Tamper-evident cryptographic log chaining |
+| **Energy/Space-Usage Dashboard** | Combined lab occupancy + shelf usage view with IoT sensor integration |
+
+---
+
+### 11. Engineering Workload Distribution & Implementation Strategy
+
+- **Frontend-heavy, no backend dependency** (parallelizable immediately): Vernacular i18n, Accessibility Mode, Left Sidebar Nav enhancements.
+- **Full-stack, schema-dependent** (shared time-series decision): Predictive Stock-Out Alerts + Analytics Dashboard Expansion — implemented together sharing the time-series model.
+- **Isolated backend/cron work**: Anomaly Detection on Audit Logs.
+- **Client-side-constrained by design**: Syllabus Scanner, QR Shelf Navigation — keeping heavy CPU/OCR processing off the 1GB RAM server VM.
+- **Infra-first, not code-first**: "Ask This Book" RAG assistant — requires vector-store infrastructure selection prior to UI work.
+- **Unscoped, requires formal planning specification**: Course Reserves/LTI, Syllabus-to-Acquisitions, Interlibrary Smart Routing, Study Groups.
 
 ---
 
