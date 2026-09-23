@@ -24,21 +24,21 @@ BookBuddy is a production-grade, multi-tenant Integrated Library System (ILS) an
 
 ## 🚀 Live Deployments & Key Reference Links
 
-| Resource                                  | URL / Destination                                                                                          | Description                                                                        |
-| :---------------------------------------- | :--------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
-| 🌐 **Production Web Client**              | [https://book-buddy-eight-rosy.vercel.app](https://book-buddy-eight-rosy.vercel.app)                       | Production Single-Page Application hosted on Vercel Global Edge CDN                |
-| ⚙️ **Production REST API Server**         | [https://bookbuddy-kcwl.onrender.com](https://bookbuddy-kcwl.onrender.com)                                 | Production Express 5 backend service hosted on Render                              |
-| 🏥 **Backend Health Telemetry**           | [`https://bookbuddy-kcwl.onrender.com/health`](https://bookbuddy-kcwl.onrender.com/health)                 | Live cluster connectivity check (MongoDB, Redis, Memory, Uptime)                   |
-| 📌 **Live Version & Git Metadata**        | [`https://bookbuddy-kcwl.onrender.com/version`](https://bookbuddy-kcwl.onrender.com/version)               | Live deployment commit SHA, environment name, and release tags                     |
-| 📘 **Deep Architectural Reference**       | [`ARCHITECTURE.md`](ARCHITECTURE.md)                                                                       | 1,000+ line technical breakdown of database, security, and desk systems            |
-| 📁 **Monorepo Directory Layout**          | [`STRUCTURE.md`](STRUCTURE.md)                                                                             | Comprehensive directory map and separation-of-concerns guidelines                  |
-| 📜 **API Contract Architecture**          | [`docs/API_CONTRACT_ARCHITECTURE.md`](docs/API_CONTRACT_ARCHITECTURE.md)                                   | Centralized Zod request/response validation contracts and zero-drift schemas        |
-| 🆔 **Identity & Role Normalization**      | [`docs/CANONICAL_IDENTITY_AND_ROLE_NORMALIZATION.md`](docs/CANONICAL_IDENTITY_AND_ROLE_NORMALIZATION.md)   | Canonical casing, role invariants, and schema-level validation pipelines           |
-| 🛡️ **Scheduled & CI Quality Audits**      | [`docs/SCHEDULED_AUDITS.md`](docs/SCHEDULED_AUDITS.md)                                                     | Automated CI quality gates, static AST verification, and scheduled audit workflows |
-| 📄 **Engineering Case Study**             | [`docs/CASE_STUDY.md`](docs/CASE_STUDY.md)                                                                 | In-depth engineering retrospective, problem statement, and architectural decisions |
-| 🎯 **Resume & Technical Accomplishments** | [`docs/RESUME_POINTS.md`](docs/RESUME_POINTS.md)                                                           | High-impact technical metrics, throughput stats, and architectural milestones      |
-| 🤝 **Contribution & Verification Guide**  | [`CONTRIBUTING.md`](CONTRIBUTING.md)                                                                       | Local contribution standards, Git commit conventions, and pre-push verification    |
-| 🤖 **AI Agent Guidelines**                | [`AGENTS.md`](AGENTS.md)                                                                                   | Single source of truth for AI pairing assistants and system constraints            |
+| Resource                                  | URL / Destination                                                                                        | Description                                                                        |
+| :---------------------------------------- | :------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| 🌐 **Production Web Client**              | [https://book-buddy-eight-rosy.vercel.app](https://book-buddy-eight-rosy.vercel.app)                     | Production Single-Page Application hosted on Vercel Global Edge CDN                |
+| ⚙️ **Production REST API Server**         | [https://bookbuddy-kcwl.onrender.com](https://bookbuddy-kcwl.onrender.com)                               | Production Express 5 backend service hosted on Render                              |
+| 🏥 **Backend Health Telemetry**           | [`https://bookbuddy-kcwl.onrender.com/health`](https://bookbuddy-kcwl.onrender.com/health)               | Live cluster connectivity check (MongoDB, Redis, Memory, Uptime)                   |
+| 📌 **Live Version & Git Metadata**        | [`https://bookbuddy-kcwl.onrender.com/version`](https://bookbuddy-kcwl.onrender.com/version)             | Live deployment commit SHA, environment name, and release tags                     |
+| 📘 **Deep Architectural Reference**       | [`ARCHITECTURE.md`](ARCHITECTURE.md)                                                                     | 1,000+ line technical breakdown of database, security, and desk systems            |
+| 📁 **Monorepo Directory Layout**          | [`STRUCTURE.md`](STRUCTURE.md)                                                                           | Comprehensive directory map and separation-of-concerns guidelines                  |
+| 📜 **API Contract Architecture**          | [`docs/API_CONTRACT_ARCHITECTURE.md`](docs/API_CONTRACT_ARCHITECTURE.md)                                 | Centralized Zod request/response validation contracts and zero-drift schemas       |
+| 🆔 **Identity & Role Normalization**      | [`docs/CANONICAL_IDENTITY_AND_ROLE_NORMALIZATION.md`](docs/CANONICAL_IDENTITY_AND_ROLE_NORMALIZATION.md) | Canonical casing, role invariants, and schema-level validation pipelines           |
+| 🛡️ **Scheduled & CI Quality Audits**      | [`docs/SCHEDULED_AUDITS.md`](docs/SCHEDULED_AUDITS.md)                                                   | Automated CI quality gates, static AST verification, and scheduled audit workflows |
+| 📄 **Engineering Case Study**             | [`docs/CASE_STUDY.md`](docs/CASE_STUDY.md)                                                               | In-depth engineering retrospective, problem statement, and architectural decisions |
+| 🎯 **Resume & Technical Accomplishments** | [`docs/RESUME_POINTS.md`](docs/RESUME_POINTS.md)                                                         | High-impact technical metrics, throughput stats, and architectural milestones      |
+| 🤝 **Contribution & Verification Guide**  | [`CONTRIBUTING.md`](CONTRIBUTING.md)                                                                     | Local contribution standards, Git commit conventions, and pre-push verification    |
+| 🤖 **AI Agent Guidelines**                | [`AGENTS.md`](AGENTS.md)                                                                                 | Single source of truth for AI pairing assistants and system constraints            |
 
 ---
 
@@ -245,21 +245,21 @@ _Location:_ `frontend/src/pages/dashboards/college-admin/` | _Route:_ `/college-
 
 A comprehensive ERP back-office providing complete operational control over campus library holdings, student rosters, facilities, and financial collections across 13 dedicated desk modules:
 
-| Desk Module | Route | Operational Functionality |
-| :--- | :--- | :--- |
-| **Circulation Desk** | `/college-admin/circulation` | High-speed barcode/RFID book checkout with atomic copy decrements (`copiesAvailable - 1`), return processing with automatic overdue calculation, renewal overrides, lost item marking, and ready-for-pickup hold notice dispatch. |
-| **Patrons Desk** | `/college-admin/patrons` | Student roster directory with search by name, email, or Student ID; active loan auditing, unpaid fine reviews, profile verification, borrowing suspension toggles, and physical card printing. |
-| **Cataloging Desk** | `/college-admin/cataloging` | Add and update physical catalog records with automated ISBN metadata auto-fetch from Google Books and Open Library, physical shelf address assignment (`Shelf A-12-04`), copy barcode generation, and media categorization. |
-| **Inventory Overview** | `/college-admin/inventory` | Real-time shelf auditing, missing/damaged item tracking (`ItemReport`), condition assessment (Good, Fair, Damaged), low-stock alerts, and book withdrawal workflows. |
-| **Finances Desk** | `/college-admin/finances` | Overdue penalty audit trails, counter cash fine collection receipts, manual fine waivers with required justification notes logged to `AuditLog`, and Razorpay transaction reconciliations. |
-| **Facilities Desk** | `/college-admin/facilities` | Computer lab workstation designer, bulk workstation seat generation, hardware specification tagging (RAM, GPU, OS, dual monitors), maintenance mode toggles (`operational` vs `under_maintenance`), and live hourly seat occupancy monitoring. |
-| **Digital Assets Desk** | `/college-admin/digital-assets` | Institutional EPUB/PDF e-resource uploads, digital access permission settings, download count analytics, and review/moderation queue for student-submitted study notes and thesis guides (`EResourceSubmission`). |
-| **Acquisitions Desk** | `/college-admin/acquisitions` | Procurement pipeline management: create purchase orders (`AcquisitionOrder`), compare supplier vendor quotes, track ISBN receiving batches, monitor departmental budgets, and log serial subscription renewals (gated by `canManageAcquisitions`). |
-| **Feature Manager Settings** | `/college-admin/features` | Granular toggle for institution-specific service catalog modules (Gamification, Inter-Library Loan, Community Feed, Facilities Booking, Razorpay Payments); borrowing policy customization (loan period, renewal limits, fine rate/day); automatically purges tenant Redis cache. |
-| **Bulk Student Upload** | `/college-admin/bulk-upload` | Non-blocking asynchronous CSV student roster ingestion (HTTP 202 Accepted) processing 5,000+ records in 500-item chunks with live Socket.io progress updates, downloadable validation error CSVs, and printable single-use account activation handouts. |
-| **Share Requests (ILL Desk)** | `/college-admin/share-requests` | Manage consortium Inter-Library Loan requests received from partner colleges: review requested titles, approve outbound courier shipments, track transit tracking numbers, and confirm loan return check-ins. |
-| **Helpdesk Desk** | `/college-admin/helpdesk` | Centralized patron support desk: resolve student library complaints (`Complaint`), review patron book acquisition suggestions (`BookSuggestion`), add internal staff notes, and send status notifications. |
-| **Analytics Overview** | `/college-admin/analytics` | Interactive visual ILS reporting: circulation velocity graphs, top borrowed books leaderboard, departmental borrowing distributions, peak lab usage hours, and on-demand CSV data export (`/reports/:type`). |
+| Desk Module                   | Route                           | Operational Functionality                                                                                                                                                                                                                                                         |
+| :---------------------------- | :------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Circulation Desk**          | `/college-admin/circulation`    | High-speed barcode/RFID book checkout with atomic copy decrements (`copiesAvailable - 1`), return processing with automatic overdue calculation, renewal overrides, lost item marking, and ready-for-pickup hold notice dispatch.                                                 |
+| **Patrons Desk**              | `/college-admin/patrons`        | Student roster directory with search by name, email, or Student ID; active loan auditing, unpaid fine reviews, profile verification, borrowing suspension toggles, and physical card printing.                                                                                    |
+| **Cataloging Desk**           | `/college-admin/cataloging`     | Add and update physical catalog records with automated ISBN metadata auto-fetch from Google Books and Open Library, physical shelf address assignment (`Shelf A-12-04`), copy barcode generation, and media categorization.                                                       |
+| **Inventory Overview**        | `/college-admin/inventory`      | Real-time shelf auditing, missing/damaged item tracking (`ItemReport`), condition assessment (Good, Fair, Damaged), low-stock alerts, and book withdrawal workflows.                                                                                                              |
+| **Finances Desk**             | `/college-admin/finances`       | Overdue penalty audit trails, counter cash fine collection receipts, manual fine waivers with required justification notes logged to `AuditLog`, and Razorpay transaction reconciliations.                                                                                        |
+| **Facilities Desk**           | `/college-admin/facilities`     | Computer lab workstation designer, bulk workstation seat generation, hardware specification tagging (RAM, GPU, OS, dual monitors), maintenance mode toggles (`operational` vs `under_maintenance`), and live hourly seat occupancy monitoring.                                    |
+| **Digital Assets Desk**       | `/college-admin/digital-assets` | Institutional EPUB/PDF e-resource uploads, digital access permission settings, download count analytics, and review/moderation queue for student-submitted study notes and thesis guides (`EResourceSubmission`).                                                                 |
+| **Acquisitions Desk**         | `/college-admin/acquisitions`   | Procurement pipeline management: create purchase orders (`AcquisitionOrder`), compare supplier vendor quotes, track ISBN receiving batches, monitor departmental budgets, and log serial subscription renewals (gated by `canManageAcquisitions`).                                |
+| **Feature Manager Settings**  | `/college-admin/features`       | Granular toggle for institution-specific service catalog modules (Gamification, Inter-Library Loan, Community Feed, Facilities Booking, Razorpay Payments); borrowing policy customization (loan period, renewal limits, fine rate/day); automatically purges tenant Redis cache. |
+| **Bulk Student Upload**       | `/college-admin/bulk-upload`    | Non-blocking asynchronous CSV student roster ingestion (HTTP 202 Accepted) processing 5,000+ records in 500-item chunks with live Socket.io progress updates, downloadable validation error CSVs, and printable single-use account activation handouts.                           |
+| **Share Requests (ILL Desk)** | `/college-admin/share-requests` | Manage consortium Inter-Library Loan requests received from partner colleges: review requested titles, approve outbound courier shipments, track transit tracking numbers, and confirm loan return check-ins.                                                                     |
+| **Helpdesk Desk**             | `/college-admin/helpdesk`       | Centralized patron support desk: resolve student library complaints (`Complaint`), review patron book acquisition suggestions (`BookSuggestion`), add internal staff notes, and send status notifications.                                                                        |
+| **Analytics Overview**        | `/college-admin/analytics`      | Interactive visual ILS reporting: circulation velocity graphs, top borrowed books leaderboard, departmental borrowing distributions, peak lab usage hours, and on-demand CSV data export (`/reports/:type`).                                                                      |
 
 ### 4. Super Admin Platform Command Center (10 Management Consoles)
 
@@ -301,40 +301,40 @@ Platform-wide command center for managing tenants, platform health, security com
 
 ## ✨ Complete Portal Feature Matrix
 
-| Functional Module | Public / Visitor 🌐 | Student Portal 🎓 | College Admin 🏛️ | Super Admin 🛡️ |
-| :--- | :---: | :---: | :---: | :---: |
-| **Public OPAC Catalog Search** | ✅ | ✅ | ✅ | ✅ |
-| **External Catalog Fallback (OpenLib / Google Books / Gutenberg)** | ✅ | ✅ | ✅ | ✅ |
-| **Institutional Subdomain & Deep Link Routing** | ✅ | ✅ | ✅ | ✅ |
-| **Dual Self-Registration (College Application & Student Signup)** | ✅ | ❌ | ❌ | ✅ (Approve) |
-| **Guest Local Bookmarks (localStorage)** | ✅ | ❌ | ❌ | ❌ |
-| **In-Browser EPUB & PDF Reader** | ✅ (Previews) | ✅ (Full Access) | ✅ | ✅ |
-| **Persistent Text Highlights & Notes (Annotations)** | ❌ | ✅ | ✅ | ✅ |
-| **Reading Progress & CFI Coordinate Sync** | ❌ | ✅ | ❌ | ❌ |
-| **Physical Book Hold Reservations & Queue Position** | ❌ | ✅ | ✅ (Issue/Manage) | ✅ |
-| **Availability Watch Alerts (Out-of-Stock Notifications)** | ❌ | ✅ | ❌ | ❌ |
-| **Automated Due Alerts & Online Renewals** | ❌ | ✅ | ✅ (Manual Override) | ✅ |
-| **Computer Lab Seat Grid Reservation & Waitlist** | ❌ | ✅ | ✅ (Grid Config) | ✅ |
-| **Facility 10-Min No-Show Auto-Release & Queue Sweep** | ❌ | ✅ | ✅ (Automated) | ✅ |
-| **Daily Reading Streaks, Freezes & Milestone Badges** | ❌ | ✅ | ❌ | ❌ |
-| **Star Ratings & Peer Book Reviews** | ❌ | ✅ | ✅ (Staff Moderation) | ✅ (Global Moderation) |
-| **Campus Bulletin Board / Community Feed** | ❌ | ✅ | ✅ (Staff Moderation) | ✅ (Global Moderation) |
-| **Inter-Library Loan (ILL) Consortium Sharing** | ❌ | ✅ | ✅ (Fulfill & Ship) | ✅ (Network Oversight) |
-| **Digital Fine Settlement via Razorpay** | ❌ | ✅ | ✅ (Waiver / Cash) | ✅ |
-| **Digital Patron Card with QR & Code128 Barcode** | ❌ | ✅ | ✅ (Scan / Verify) | ✅ |
-| **Hardware Kiosk Scanner Gate API (`SCANNER_API_KEY`)** | ❌ | ❌ | ✅ | ✅ |
-| **Offline E-Book Storage (IndexedDB + PWA)** | ❌ | ✅ | ❌ | ❌ |
-| **Custom Reading Lists & Drag-and-Drop Shelves** | ❌ | ✅ | ❌ | ❌ |
-| **Book Suggestions & Item Damage Reporting** | ❌ | ✅ | ✅ (Review/Action) | ✅ |
-| **Interactive Onboarding Walkthrough Tour** | ❌ | ✅ | ❌ | ❌ |
-| **Student Profile & Multi-Channel Notifications (SMS/Email)** | ❌ | ✅ | ❌ | ❌ |
-| **Async Bulk CSV Patron Ingestion (5,000+ Records)** | ❌ | ❌ | ✅ | ✅ |
-| **Printable Single-Use Student Credential Handouts** | ❌ | ❌ | ✅ | ✅ |
-| **Acquisitions Procurement Pipeline & Purchase Orders** | ❌ | ❌ | ✅ (Budget/Quotes) | ✅ |
-| **Transitive Feature Flag Management (Redis Cached)** | ❌ | ❌ | ✅ (Tenant Scoped) | ✅ (Platform Global) |
-| **Multi-Branch Physical Shelf Inventory Auditing** | ❌ | ❌ | ✅ | ✅ |
-| **MFA-Gated User Impersonation with Warning Banner** | ❌ | ❌ | ❌ | ✅ |
-| **Cluster Telemetry, Storage Forecast & Audit Logs** | ❌ | ❌ | ❌ | ✅ |
+| Functional Module                                                  | Public / Visitor 🌐 | Student Portal 🎓 |   College Admin 🏛️    |     Super Admin 🛡️     |
+| :----------------------------------------------------------------- | :-----------------: | :---------------: | :-------------------: | :--------------------: |
+| **Public OPAC Catalog Search**                                     |         ✅          |        ✅         |          ✅           |           ✅           |
+| **External Catalog Fallback (OpenLib / Google Books / Gutenberg)** |         ✅          |        ✅         |          ✅           |           ✅           |
+| **Institutional Subdomain & Deep Link Routing**                    |         ✅          |        ✅         |          ✅           |           ✅           |
+| **Dual Self-Registration (College Application & Student Signup)**  |         ✅          |        ❌         |          ❌           |      ✅ (Approve)      |
+| **Guest Local Bookmarks (localStorage)**                           |         ✅          |        ❌         |          ❌           |           ❌           |
+| **In-Browser EPUB & PDF Reader**                                   |    ✅ (Previews)    | ✅ (Full Access)  |          ✅           |           ✅           |
+| **Persistent Text Highlights & Notes (Annotations)**               |         ❌          |        ✅         |          ✅           |           ✅           |
+| **Reading Progress & CFI Coordinate Sync**                         |         ❌          |        ✅         |          ❌           |           ❌           |
+| **Physical Book Hold Reservations & Queue Position**               |         ❌          |        ✅         |   ✅ (Issue/Manage)   |           ✅           |
+| **Availability Watch Alerts (Out-of-Stock Notifications)**         |         ❌          |        ✅         |          ❌           |           ❌           |
+| **Automated Due Alerts & Online Renewals**                         |         ❌          |        ✅         | ✅ (Manual Override)  |           ✅           |
+| **Computer Lab Seat Grid Reservation & Waitlist**                  |         ❌          |        ✅         |   ✅ (Grid Config)    |           ✅           |
+| **Facility 10-Min No-Show Auto-Release & Queue Sweep**             |         ❌          |        ✅         |    ✅ (Automated)     |           ✅           |
+| **Daily Reading Streaks, Freezes & Milestone Badges**              |         ❌          |        ✅         |          ❌           |           ❌           |
+| **Star Ratings & Peer Book Reviews**                               |         ❌          |        ✅         | ✅ (Staff Moderation) | ✅ (Global Moderation) |
+| **Campus Bulletin Board / Community Feed**                         |         ❌          |        ✅         | ✅ (Staff Moderation) | ✅ (Global Moderation) |
+| **Inter-Library Loan (ILL) Consortium Sharing**                    |         ❌          |        ✅         |  ✅ (Fulfill & Ship)  | ✅ (Network Oversight) |
+| **Digital Fine Settlement via Razorpay**                           |         ❌          |        ✅         |  ✅ (Waiver / Cash)   |           ✅           |
+| **Digital Patron Card with QR & Code128 Barcode**                  |         ❌          |        ✅         |  ✅ (Scan / Verify)   |           ✅           |
+| **Hardware Kiosk Scanner Gate API (`SCANNER_API_KEY`)**            |         ❌          |        ❌         |          ✅           |           ✅           |
+| **Offline E-Book Storage (IndexedDB + PWA)**                       |         ❌          |        ✅         |          ❌           |           ❌           |
+| **Custom Reading Lists & Drag-and-Drop Shelves**                   |         ❌          |        ✅         |          ❌           |           ❌           |
+| **Book Suggestions & Item Damage Reporting**                       |         ❌          |        ✅         |  ✅ (Review/Action)   |           ✅           |
+| **Interactive Onboarding Walkthrough Tour**                        |         ❌          |        ✅         |          ❌           |           ❌           |
+| **Student Profile & Multi-Channel Notifications (SMS/Email)**      |         ❌          |        ✅         |          ❌           |           ❌           |
+| **Async Bulk CSV Patron Ingestion (5,000+ Records)**               |         ❌          |        ❌         |          ✅           |           ✅           |
+| **Printable Single-Use Student Credential Handouts**               |         ❌          |        ❌         |          ✅           |           ✅           |
+| **Acquisitions Procurement Pipeline & Purchase Orders**            |         ❌          |        ❌         |  ✅ (Budget/Quotes)   |           ✅           |
+| **Transitive Feature Flag Management (Redis Cached)**              |         ❌          |        ❌         |  ✅ (Tenant Scoped)   |  ✅ (Platform Global)  |
+| **Multi-Branch Physical Shelf Inventory Auditing**                 |         ❌          |        ❌         |          ✅           |           ✅           |
+| **MFA-Gated User Impersonation with Warning Banner**               |         ❌          |        ❌         |          ❌           |           ✅           |
+| **Cluster Telemetry, Storage Forecast & Audit Logs**               |         ❌          |        ❌         |          ❌           |           ✅           |
 
 ---
 
@@ -417,20 +417,20 @@ graph LR
 
 BookBuddy runs a hardened background task scheduler in [`backend/src/services/cronService.js`](backend/src/services/cronService.js) using `node-cron`. The engine features **atomic execution locking** (preventing overlapping runs via an in-memory `runningJobs` set), **failure isolation** (Sentry exception capture without crashing the service), and **persistent run auditing** via `CronRunLog`.
 
-| Job Name | Cron Schedule | Frequency | Primary Responsibility & Logic Flow | Key Models |
-| :--- | :--- | :--- | :--- | :--- |
-| **Overdue Fine Accrual** | `0 0 * * *` | Daily at 00:00 UTC | Scans all `active` and `overdue` loans past their `dueDate`. Updates loan status to `overdue`, calculates timezone-aware overdue days, and upserts fine records in `Fine` collection up to `FINE_MAX_AMOUNT`. | `Loan`, `Fine` |
-| **Hold Queue Expiry Sweep** | `*/15 * * * *` | Every 15 minutes | Sweeps hold reservations in `ready_for_pickup` status where the pickup window (`HOLD_PICKUP_WINDOW_HOURS`, default: 48h) has lapsed. Cancels expired hold and auto-promotes next student in queue. | `Reservation`, `Loan` |
-| **Due Date Reminders** | `0 8 * * *` | Daily at 08:00 UTC | Identifies loans maturing within `DUE_REMINDER_DAYS_BEFORE` (default: 2 days). Sends automated reminder notices via multi-channel notification service (In-App, Email, SMS). | `Loan`, `User`, `Notification` |
-| **Streak Expiry Sweep** | `5 0 * * *` | Daily at 00:05 UTC | Evaluates active patron reading streaks. If student missed daily check-in, automatically consumes a streak freeze buffer token (`freezesAvailable`). If no freezes remain, resets streak to 0. | `Streak`, `CheckInLog` |
-| **Streak Cutoff Reminders** | `0 21 * * *` | Daily at 21:00 UTC | Identifies students with active reading streaks who have not checked in today (`STREAK_REMINDER_HOURS_BEFORE`, default: 3h before cutoff). Dispatches urgent check-in nudge alerts. | `Streak`, `Notification` |
-| **Metrics Aggregation** | `0 1 * * *` | Daily at 01:00 UTC | Precalculates multi-tenant circulation velocity, active patron ratios, outstanding fine totals, and lab occupancy statistics, persisting snapshots to `DashboardStatsSnapshot`. | `DashboardStatsSnapshot` |
-| **Weekly Leaderboard Snapshot** | `0 0 * * 0` | Weekly Sun at 00:00 UTC | Compiles the top 10 campus readers by gamification points for the preceding week and saves immutable record in `LeaderboardSnapshot` for historical trophies. | `User`, `LeaderboardSnapshot` |
-| **Nightly Recommendations** | `0 2 * * *` | Daily at 02:00 UTC | Recomputes machine-assisted book recommendations college-by-college to bound RAM usage, factoring in patron course major, borrowing history, and campus popularity trends. | `UserRecommendation`, `Book` |
-| **Daily Payment Reconciliation** | `0 3 * * *` | Daily at 03:00 UTC | Cross-checks local `Payment` records against the Razorpay REST API for orders within the last 48 hours. Flags status mismatches and missing transactions in audit logs. | `Payment`, `AuditLog` |
-| **Stale Registration Cleanup** | `0 4 * * *` | Daily at 04:00 UTC | Automatically prunes unverified self-service student registration requests (`RegistrationRequest`) older than 7 days to keep database indexes lean. | `RegistrationRequest` |
-| **Workstation No-Show Auto-Release** | `*/2 * * * *` | Every 2 minutes | Evaluates computer lab bookings. If a student does not check in within the 10-minute grace window, marks booking as `no_show`, increments patron strike count, and immediately frees seat. | `LabBooking`, `LabSeat` |
-| **Facility Queue Promotion Expiry** | `* * * * *` | Every 1 minute | Sweeps lab waitlist queue promotions. If an auto-promoted student does not confirm their seat reservation within 10 minutes, expires claim and promotes the next student in line. | `FacilityBookingQueue` |
+| Job Name                             | Cron Schedule  | Frequency               | Primary Responsibility & Logic Flow                                                                                                                                                                           | Key Models                     |
+| :----------------------------------- | :------------- | :---------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------- |
+| **Overdue Fine Accrual**             | `0 0 * * *`    | Daily at 00:00 UTC      | Scans all `active` and `overdue` loans past their `dueDate`. Updates loan status to `overdue`, calculates timezone-aware overdue days, and upserts fine records in `Fine` collection up to `FINE_MAX_AMOUNT`. | `Loan`, `Fine`                 |
+| **Hold Queue Expiry Sweep**          | `*/15 * * * *` | Every 15 minutes        | Sweeps hold reservations in `ready_for_pickup` status where the pickup window (`HOLD_PICKUP_WINDOW_HOURS`, default: 48h) has lapsed. Cancels expired hold and auto-promotes next student in queue.            | `Reservation`, `Loan`          |
+| **Due Date Reminders**               | `0 8 * * *`    | Daily at 08:00 UTC      | Identifies loans maturing within `DUE_REMINDER_DAYS_BEFORE` (default: 2 days). Sends automated reminder notices via multi-channel notification service (In-App, Email, SMS).                                  | `Loan`, `User`, `Notification` |
+| **Streak Expiry Sweep**              | `5 0 * * *`    | Daily at 00:05 UTC      | Evaluates active patron reading streaks. If student missed daily check-in, automatically consumes a streak freeze buffer token (`freezesAvailable`). If no freezes remain, resets streak to 0.                | `Streak`, `CheckInLog`         |
+| **Streak Cutoff Reminders**          | `0 21 * * *`   | Daily at 21:00 UTC      | Identifies students with active reading streaks who have not checked in today (`STREAK_REMINDER_HOURS_BEFORE`, default: 3h before cutoff). Dispatches urgent check-in nudge alerts.                           | `Streak`, `Notification`       |
+| **Metrics Aggregation**              | `0 1 * * *`    | Daily at 01:00 UTC      | Precalculates multi-tenant circulation velocity, active patron ratios, outstanding fine totals, and lab occupancy statistics, persisting snapshots to `DashboardStatsSnapshot`.                               | `DashboardStatsSnapshot`       |
+| **Weekly Leaderboard Snapshot**      | `0 0 * * 0`    | Weekly Sun at 00:00 UTC | Compiles the top 10 campus readers by gamification points for the preceding week and saves immutable record in `LeaderboardSnapshot` for historical trophies.                                                 | `User`, `LeaderboardSnapshot`  |
+| **Nightly Recommendations**          | `0 2 * * *`    | Daily at 02:00 UTC      | Recomputes machine-assisted book recommendations college-by-college to bound RAM usage, factoring in patron course major, borrowing history, and campus popularity trends.                                    | `UserRecommendation`, `Book`   |
+| **Daily Payment Reconciliation**     | `0 3 * * *`    | Daily at 03:00 UTC      | Cross-checks local `Payment` records against the Razorpay REST API for orders within the last 48 hours. Flags status mismatches and missing transactions in audit logs.                                       | `Payment`, `AuditLog`          |
+| **Stale Registration Cleanup**       | `0 4 * * *`    | Daily at 04:00 UTC      | Automatically prunes unverified self-service student registration requests (`RegistrationRequest`) older than 7 days to keep database indexes lean.                                                           | `RegistrationRequest`          |
+| **Workstation No-Show Auto-Release** | `*/2 * * * *`  | Every 2 minutes         | Evaluates computer lab bookings. If a student does not check in within the 10-minute grace window, marks booking as `no_show`, increments patron strike count, and immediately frees seat.                    | `LabBooking`, `LabSeat`        |
+| **Facility Queue Promotion Expiry**  | `* * * * *`    | Every 1 minute          | Sweeps lab waitlist queue promotions. If an auto-promoted student does not confirm their seat reservation within 10 minutes, expires claim and promotes the next student in line.                             | `FacilityBookingQueue`         |
 
 ---
 
@@ -513,190 +513,190 @@ All endpoints are versioned under `/api/v1`. Unversioned legacy endpoints emit a
 
 ### 1. Authentication, Sessions & Personas (`/api/v1/auth`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/auth/login` | Authenticate credentials; returns access token + sets refresh cookie | Public |
-| `POST` | `/api/v1/auth/register` | Student self-registration with college domain validation | Public |
-| `POST` | `/api/v1/auth/refresh` | Silent refresh token rotation; issues new access token | Public (Cookie) |
-| `POST` | `/api/v1/auth/logout` | Revoke active refresh session and clear cookies | Authenticated |
-| `GET` | `/api/v1/auth/me` | Fetch currently authenticated user profile and permissions | Authenticated |
-| `POST` | `/api/v1/auth/impersonate` | Assume another user persona for debugging (super-admin only) | Super Admin |
-| `POST` | `/api/v1/auth/change-password` | Mandatory initial password change or profile password update | Authenticated |
+| Method | Endpoint                       | Description                                                          | Access          |
+| :----- | :----------------------------- | :------------------------------------------------------------------- | :-------------- |
+| `POST` | `/api/v1/auth/login`           | Authenticate credentials; returns access token + sets refresh cookie | Public          |
+| `POST` | `/api/v1/auth/register`        | Student self-registration with college domain validation             | Public          |
+| `POST` | `/api/v1/auth/refresh`         | Silent refresh token rotation; issues new access token               | Public (Cookie) |
+| `POST` | `/api/v1/auth/logout`          | Revoke active refresh session and clear cookies                      | Authenticated   |
+| `GET`  | `/api/v1/auth/me`              | Fetch currently authenticated user profile and permissions           | Authenticated   |
+| `POST` | `/api/v1/auth/impersonate`     | Assume another user persona for debugging (super-admin only)         | Super Admin     |
+| `POST` | `/api/v1/auth/change-password` | Mandatory initial password change or profile password update         | Authenticated   |
 
 ### 2. Registration, Activation & Public Onboarding (`/api/v1/registration`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/registration/college` | Submit self-service institutional onboarding application | Public |
-| `POST` | `/api/v1/registration/student` | Register student under a verified college tenant | Public |
-| `GET` | `/api/v1/registration/verify-token` | Validate single-use student activation token | Public |
-| `POST` | `/api/v1/registration/activate` | Complete account activation and set initial password | Public |
+| Method | Endpoint                            | Description                                              | Access |
+| :----- | :---------------------------------- | :------------------------------------------------------- | :----- |
+| `POST` | `/api/v1/registration/college`      | Submit self-service institutional onboarding application | Public |
+| `POST` | `/api/v1/registration/student`      | Register student under a verified college tenant         | Public |
+| `GET`  | `/api/v1/registration/verify-token` | Validate single-use student activation token             | Public |
+| `POST` | `/api/v1/registration/activate`     | Complete account activation and set initial password     | Public |
 
 ### 3. Public Discovery & General Home Aggregator (`/api/v1/dashboards/general`, `/api/v1/aggregator`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/dashboards/general/home-data` | Single-round-trip public discovery metrics, arrivals, and hours | Public |
-| `GET` | `/api/v1/dashboards/general/:id/dashboard` | Tenant-scoped public discovery dashboard data | Public |
-| `GET` | `/api/v1/aggregator/stats` | Aggregated catalog and workstation telemetry | Public |
+| Method | Endpoint                                   | Description                                                     | Access |
+| :----- | :----------------------------------------- | :-------------------------------------------------------------- | :----- |
+| `GET`  | `/api/v1/dashboards/general/home-data`     | Single-round-trip public discovery metrics, arrivals, and hours | Public |
+| `GET`  | `/api/v1/dashboards/general/:id/dashboard` | Tenant-scoped public discovery dashboard data                   | Public |
+| `GET`  | `/api/v1/aggregator/stats`                 | Aggregated catalog and workstation telemetry                    | Public |
 
 ### 4. Physical Books & Internal Catalog (`/api/v1/books`, `/api/v1/catalog`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/books` | Search institution physical inventory with pagination & filters | Authenticated |
-| `GET` | `/api/v1/books/:id` | Get detailed metadata, copies, and hold queue status | Authenticated |
-| `POST` | `/api/v1/books` | Add new physical book title and initialize barcode copies | College Admin |
-| `PUT` | `/api/v1/books/:id` | Update book metadata or shelf location | College Admin |
-| `DELETE` | `/api/v1/books/:id` | Remove a book title from the catalog | College Admin |
-| `GET` | `/api/v1/catalog/search` | Fast full-text OPAC catalog search with category facets | Authenticated |
+| Method   | Endpoint                 | Description                                                     | Access        |
+| :------- | :----------------------- | :-------------------------------------------------------------- | :------------ |
+| `GET`    | `/api/v1/books`          | Search institution physical inventory with pagination & filters | Authenticated |
+| `GET`    | `/api/v1/books/:id`      | Get detailed metadata, copies, and hold queue status            | Authenticated |
+| `POST`   | `/api/v1/books`          | Add new physical book title and initialize barcode copies       | College Admin |
+| `PUT`    | `/api/v1/books/:id`      | Update book metadata or shelf location                          | College Admin |
+| `DELETE` | `/api/v1/books/:id`      | Remove a book title from the catalog                            | College Admin |
+| `GET`    | `/api/v1/catalog/search` | Fast full-text OPAC catalog search with category facets         | Authenticated |
 
 ### 5. External Catalog Harvesting (`/api/v1/google-books`, `/api/v1/eresources/external`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/google-books/search` | Search external Google Books API with caching | Authenticated |
-| `GET` | `/api/v1/google-books/isbn/:isbn` | Auto-fetch book metadata and cover art by ISBN | College Admin |
-| `GET` | `/api/v1/eresources/external/gutenberg` | Harvest public domain e-books from Project Gutenberg | Authenticated |
-| `GET` | `/api/v1/eresources/external/openlibrary` | Harvest bibliographic records from Open Library | Authenticated |
+| Method | Endpoint                                  | Description                                          | Access        |
+| :----- | :---------------------------------------- | :--------------------------------------------------- | :------------ |
+| `GET`  | `/api/v1/google-books/search`             | Search external Google Books API with caching        | Authenticated |
+| `GET`  | `/api/v1/google-books/isbn/:isbn`         | Auto-fetch book metadata and cover art by ISBN       | College Admin |
+| `GET`  | `/api/v1/eresources/external/gutenberg`   | Harvest public domain e-books from Project Gutenberg | Authenticated |
+| `GET`  | `/api/v1/eresources/external/openlibrary` | Harvest bibliographic records from Open Library      | Authenticated |
 
 ### 6. Circulation, Loans & Holds (`/api/v1/loans`, `/api/v1/reservations`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/loans/my-loans` | Fetch active and historical book loans for current user | Student |
-| `POST` | `/api/v1/loans/checkout` | Check out a book copy to a student via barcode scan | College Admin |
-| `POST` | `/api/v1/loans/return` | Process book return, calculate fines, and promote next hold | College Admin |
-| `POST` | `/api/v1/loans/:id/renew` | Request renewal of an active loan (up to max limit) | Student / Admin |
-| `POST` | `/api/v1/reservations` | Place a hold reservation on an unavailable title | Student |
-| `GET` | `/api/v1/reservations/queue` | Query current student position in hold queue | Student |
-| `DELETE` | `/api/v1/reservations/:id` | Cancel a pending hold reservation | Student / Admin |
-| `POST` | `/api/v1/availability-alerts` | Subscribe to out-of-stock book availability notifications | Student |
+| Method   | Endpoint                      | Description                                                 | Access          |
+| :------- | :---------------------------- | :---------------------------------------------------------- | :-------------- |
+| `GET`    | `/api/v1/loans/my-loans`      | Fetch active and historical book loans for current user     | Student         |
+| `POST`   | `/api/v1/loans/checkout`      | Check out a book copy to a student via barcode scan         | College Admin   |
+| `POST`   | `/api/v1/loans/return`        | Process book return, calculate fines, and promote next hold | College Admin   |
+| `POST`   | `/api/v1/loans/:id/renew`     | Request renewal of an active loan (up to max limit)         | Student / Admin |
+| `POST`   | `/api/v1/reservations`        | Place a hold reservation on an unavailable title            | Student         |
+| `GET`    | `/api/v1/reservations/queue`  | Query current student position in hold queue                | Student         |
+| `DELETE` | `/api/v1/reservations/:id`    | Cancel a pending hold reservation                           | Student / Admin |
+| `POST`   | `/api/v1/availability-alerts` | Subscribe to out-of-stock book availability notifications   | Student         |
 
 ### 7. Digital E-Resources & Persistent Annotations (`/api/v1/eresources`, `/api/v1/annotations`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/eresources` | List digital e-books with format, category, and tag filters | Authenticated |
-| `POST` | `/api/v1/eresources` | Upload new institutional EPUB/PDF e-resource | College Admin |
-| `GET` | `/api/v1/eresources/:id/stream` | Stream e-book content via HTTP 206 Partial Content | Authenticated |
-| `GET` | `/api/v1/annotations` | Retrieve student's highlights and notes for an e-resource | Authenticated |
-| `POST` | `/api/v1/annotations` | Save new highlight or sticky note to MongoDB | Authenticated |
-| `DELETE` | `/api/v1/annotations/:id` | Delete an annotation | Authenticated |
-| `PUT` | `/api/v1/reading-progress/:id` | Update exact CFI coordinates and reading percentage | Student |
-| `GET` | `/api/v1/reading-stats` | Fetch patron aggregate reading duration and page counts | Student |
+| Method   | Endpoint                        | Description                                                 | Access        |
+| :------- | :------------------------------ | :---------------------------------------------------------- | :------------ |
+| `GET`    | `/api/v1/eresources`            | List digital e-books with format, category, and tag filters | Authenticated |
+| `POST`   | `/api/v1/eresources`            | Upload new institutional EPUB/PDF e-resource                | College Admin |
+| `GET`    | `/api/v1/eresources/:id/stream` | Stream e-book content via HTTP 206 Partial Content          | Authenticated |
+| `GET`    | `/api/v1/annotations`           | Retrieve student's highlights and notes for an e-resource   | Authenticated |
+| `POST`   | `/api/v1/annotations`           | Save new highlight or sticky note to MongoDB                | Authenticated |
+| `DELETE` | `/api/v1/annotations/:id`       | Delete an annotation                                        | Authenticated |
+| `PUT`    | `/api/v1/reading-progress/:id`  | Update exact CFI coordinates and reading percentage         | Student       |
+| `GET`    | `/api/v1/reading-stats`         | Fetch patron aggregate reading duration and page counts     | Student       |
 
 ### 8. Reading Lists, Custom Shelves & Bookmarks (`/api/v1/reading-lists`, `/api/v1/shelves`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/reading-lists` | List patron's custom reading lists | Student |
-| `POST` | `/api/v1/reading-lists` | Create new custom reading list | Student |
-| `POST` | `/api/v1/reading-lists/:id/items` | Add book title to reading list | Student |
-| `GET` | `/api/v1/shelves` | Fetch student custom shelves with drag-and-drop ordering | Student |
-| `POST` | `/api/v1/shelves` | Create custom bookshelf category ("Thesis", "Favorites") | Student |
-| `GET` | `/api/v1/bookmarks` | Fetch user cloud-synchronized book bookmarks | Student |
-| `POST` | `/api/v1/bookmarks` | Toggle bookmark on physical or digital catalog title | Student |
-| `GET` | `/api/v1/saved-searches` | Retrieve saved catalog search queries | Student |
+| Method | Endpoint                          | Description                                              | Access  |
+| :----- | :-------------------------------- | :------------------------------------------------------- | :------ |
+| `GET`  | `/api/v1/reading-lists`           | List patron's custom reading lists                       | Student |
+| `POST` | `/api/v1/reading-lists`           | Create new custom reading list                           | Student |
+| `POST` | `/api/v1/reading-lists/:id/items` | Add book title to reading list                           | Student |
+| `GET`  | `/api/v1/shelves`                 | Fetch student custom shelves with drag-and-drop ordering | Student |
+| `POST` | `/api/v1/shelves`                 | Create custom bookshelf category ("Thesis", "Favorites") | Student |
+| `GET`  | `/api/v1/bookmarks`               | Fetch user cloud-synchronized book bookmarks             | Student |
+| `POST` | `/api/v1/bookmarks`               | Toggle bookmark on physical or digital catalog title     | Student |
+| `GET`  | `/api/v1/saved-searches`          | Retrieve saved catalog search queries                    | Student |
 
 ### 9. Facilities & Computer Lab Booking (`/api/v1/lab`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/lab/seats` | Fetch real-time computer lab workstation availability grid | Authenticated |
-| `POST` | `/api/v1/lab/bookings` | Reserve a workstation seat for a specific time slot | Student |
-| `GET` | `/api/v1/lab/my-bookings` | List active and upcoming workstation reservations | Student |
-| `DELETE` | `/api/v1/lab/bookings/:id` | Cancel an upcoming workstation booking | Student / Admin |
-| `POST` | `/api/v1/lab/seats/bulk` | Bulk generate workstation seats with hardware specs | College Admin |
+| Method   | Endpoint                   | Description                                                | Access          |
+| :------- | :------------------------- | :--------------------------------------------------------- | :-------------- |
+| `GET`    | `/api/v1/lab/seats`        | Fetch real-time computer lab workstation availability grid | Authenticated   |
+| `POST`   | `/api/v1/lab/bookings`     | Reserve a workstation seat for a specific time slot        | Student         |
+| `GET`    | `/api/v1/lab/my-bookings`  | List active and upcoming workstation reservations          | Student         |
+| `DELETE` | `/api/v1/lab/bookings/:id` | Cancel an upcoming workstation booking                     | Student / Admin |
+| `POST`   | `/api/v1/lab/seats/bulk`   | Bulk generate workstation seats with hardware specs        | College Admin   |
 
 ### 10. Fines & Razorpay Payments (`/api/v1/fines`, `/api/v1/payments`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/fines/my-fines` | Fetch outstanding fines and payment history | Student |
-| `POST` | `/api/v1/payments/create-order` | Generate Razorpay checkout order for outstanding fines | Student |
-| `POST` | `/api/v1/payments/verify` | Verify Razorpay HMAC-SHA256 signature and clear fine | Student |
-| `POST` | `/api/v1/payments/webhook` | Idempotent Razorpay webhook processor | Public (Signature) |
-| `POST` | `/api/v1/fines/:id/waive` | Waive an overdue fine manually with justification note | College Admin |
+| Method | Endpoint                        | Description                                            | Access             |
+| :----- | :------------------------------ | :----------------------------------------------------- | :----------------- |
+| `GET`  | `/api/v1/fines/my-fines`        | Fetch outstanding fines and payment history            | Student            |
+| `POST` | `/api/v1/payments/create-order` | Generate Razorpay checkout order for outstanding fines | Student            |
+| `POST` | `/api/v1/payments/verify`       | Verify Razorpay HMAC-SHA256 signature and clear fine   | Student            |
+| `POST` | `/api/v1/payments/webhook`      | Idempotent Razorpay webhook processor                  | Public (Signature) |
+| `POST` | `/api/v1/fines/:id/waive`       | Waive an overdue fine manually with justification note | College Admin      |
 
 ### 11. Gamification, Streaks & Badges (`/api/v1/streak`, `/api/v1/stickers`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/streak` | Get current student reading streak status and freeze balance | Student |
-| `POST` | `/api/v1/streak/check-in` | Submit daily reading check-in to advance streak | Student |
-| `GET` | `/api/v1/leaderboard` | View campus reading streak leaderboard | Student |
-| `GET` | `/api/v1/stickers` | Fetch unlocked milestone badges and stickers | Student |
+| Method | Endpoint                  | Description                                                  | Access  |
+| :----- | :------------------------ | :----------------------------------------------------------- | :------ |
+| `GET`  | `/api/v1/streak`          | Get current student reading streak status and freeze balance | Student |
+| `POST` | `/api/v1/streak/check-in` | Submit daily reading check-in to advance streak              | Student |
+| `GET`  | `/api/v1/leaderboard`     | View campus reading streak leaderboard                       | Student |
+| `GET`  | `/api/v1/stickers`        | Fetch unlocked milestone badges and stickers                 | Student |
 
 ### 12. Community Feed & Book Reviews (`/api/v1/feed`, `/api/v1/reviews`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/feed` | List campus community bulletin posts and discussions | Authenticated |
-| `POST` | `/api/v1/feed` | Create new discussion post or reading recommendation | Student |
-| `GET` | `/api/v1/reviews/book/:bookId` | Fetch verified student reviews and star ratings | Authenticated |
-| `POST` | `/api/v1/reviews` | Submit 1-5 star rating and written book critique | Student |
+| Method | Endpoint                       | Description                                          | Access        |
+| :----- | :----------------------------- | :--------------------------------------------------- | :------------ |
+| `GET`  | `/api/v1/feed`                 | List campus community bulletin posts and discussions | Authenticated |
+| `POST` | `/api/v1/feed`                 | Create new discussion post or reading recommendation | Student       |
+| `GET`  | `/api/v1/reviews/book/:bookId` | Fetch verified student reviews and star ratings      | Authenticated |
+| `POST` | `/api/v1/reviews`              | Submit 1-5 star rating and written book critique     | Student       |
 
 ### 13. Inter-Library Loan (ILL) & Consortium (`/api/v1/ill`, `/api/v1/share-requests`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/catalog/cross-college` | Search shared catalogs across participating consortium colleges | Authenticated |
-| `POST` | `/api/v1/ill/request` | Submit inter-library loan request to partner college | Student |
-| `GET` | `/api/v1/share-requests` | List incoming/outgoing consortium sharing requests | College Admin |
-| `PUT` | `/api/v1/share-requests/:id` | Approve, ship, or confirm return of shared book title | College Admin |
+| Method | Endpoint                        | Description                                                     | Access        |
+| :----- | :------------------------------ | :-------------------------------------------------------------- | :------------ |
+| `GET`  | `/api/v1/catalog/cross-college` | Search shared catalogs across participating consortium colleges | Authenticated |
+| `POST` | `/api/v1/ill/request`           | Submit inter-library loan request to partner college            | Student       |
+| `GET`  | `/api/v1/share-requests`        | List incoming/outgoing consortium sharing requests              | College Admin |
+| `PUT`  | `/api/v1/share-requests/:id`    | Approve, ship, or confirm return of shared book title           | College Admin |
 
 ### 14. Acquisitions Procurement & Serials (`/api/v1/acquisitions`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/acquisitions/orders` | List purchase orders and vendor requisitions | College Admin |
-| `POST` | `/api/v1/acquisitions/orders` | Create new purchase requisition with vendor quotes | College Admin |
-| `PUT` | `/api/v1/acquisitions/orders/:id` | Update receiving batch status and commit to catalog | College Admin |
+| Method | Endpoint                          | Description                                         | Access        |
+| :----- | :-------------------------------- | :-------------------------------------------------- | :------------ |
+| `GET`  | `/api/v1/acquisitions/orders`     | List purchase orders and vendor requisitions        | College Admin |
+| `POST` | `/api/v1/acquisitions/orders`     | Create new purchase requisition with vendor quotes  | College Admin |
+| `PUT`  | `/api/v1/acquisitions/orders/:id` | Update receiving batch status and commit to catalog | College Admin |
 
 ### 15. Patron Card & Hardware Scanner Gate (`/api/v1/patron-card`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/patron-card/me` | Generate digital patron card with barcode & QR identifiers | Student |
+| Method | Endpoint                     | Description                                                    | Access           |
+| :----- | :--------------------------- | :------------------------------------------------------------- | :--------------- |
+| `GET`  | `/api/v1/patron-card/me`     | Generate digital patron card with barcode & QR identifiers     | Student          |
 | `POST` | `/api/v1/patron-card/verify` | Gate kiosk scanner verification (secured by `SCANNER_API_KEY`) | Hardware Scanner |
 
 ### 16. Support, Complaints & Book Suggestions (`/api/v1/complaints`, `/api/v1/feedback`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/complaints` | File student complaint or facility issue report | Student |
-| `POST` | `/api/v1/book-suggestions` | Suggest new book acquisition to library committee | Student |
-| `POST` | `/api/v1/item-reports` | Report physical item damage or missing pages | Student |
-| `GET` | `/api/v1/announcements` | Retrieve active campus announcements and alerts | Authenticated |
+| Method | Endpoint                   | Description                                       | Access        |
+| :----- | :------------------------- | :------------------------------------------------ | :------------ |
+| `POST` | `/api/v1/complaints`       | File student complaint or facility issue report   | Student       |
+| `POST` | `/api/v1/book-suggestions` | Suggest new book acquisition to library committee | Student       |
+| `POST` | `/api/v1/item-reports`     | Report physical item damage or missing pages      | Student       |
+| `GET`  | `/api/v1/announcements`    | Retrieve active campus announcements and alerts   | Authenticated |
 
 ### 17. College Admin Desks & Bulk Ingestion (`/api/v1/college-admin`, `/api/v1/college/:id`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/college-admin/stats` | Fetch aggregated dashboard metrics and charts | College Admin |
-| `POST` | `/api/v1/college/:id/bulk-upload` | Non-blocking CSV student roster upload (HTTP 202) | College Admin |
-| `GET` | `/api/v1/colleges/:id/features` | Fetch active service catalog feature flags | Authenticated |
-| `PUT` | `/api/v1/colleges/:id/features` | Update institution feature flags with transitive resolution | College Admin |
+| Method | Endpoint                          | Description                                                 | Access        |
+| :----- | :-------------------------------- | :---------------------------------------------------------- | :------------ |
+| `GET`  | `/api/v1/college-admin/stats`     | Fetch aggregated dashboard metrics and charts               | College Admin |
+| `POST` | `/api/v1/college/:id/bulk-upload` | Non-blocking CSV student roster upload (HTTP 202)           | College Admin |
+| `GET`  | `/api/v1/colleges/:id/features`   | Fetch active service catalog feature flags                  | Authenticated |
+| `PUT`  | `/api/v1/colleges/:id/features`   | Update institution feature flags with transitive resolution | College Admin |
 
 ### 18. Super Admin Platform Center (`/api/v1/dashboards/admin-portal`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/dashboards/admin-portal/overview` | Platform-wide telemetry (colleges, users, system load) | Super Admin |
-| `GET` | `/api/v1/dashboards/admin-portal/colleges` | Manage and provision college tenants | Super Admin |
-| `GET` | `/api/v1/dashboards/admin-portal/audit-logs` | Query immutable administrative audit logs | Super Admin |
-| `POST` | `/api/v1/dashboards/admin-portal/moderate` | Take moderation action on reported content | Super Admin |
-| `GET` | `/api/v1/dashboards/admin-portal/system/health`| Live infrastructure cluster telemetry check | Super Admin |
+| Method | Endpoint                                        | Description                                            | Access      |
+| :----- | :---------------------------------------------- | :----------------------------------------------------- | :---------- |
+| `GET`  | `/api/v1/dashboards/admin-portal/overview`      | Platform-wide telemetry (colleges, users, system load) | Super Admin |
+| `GET`  | `/api/v1/dashboards/admin-portal/colleges`      | Manage and provision college tenants                   | Super Admin |
+| `GET`  | `/api/v1/dashboards/admin-portal/audit-logs`    | Query immutable administrative audit logs              | Super Admin |
+| `POST` | `/api/v1/dashboards/admin-portal/moderate`      | Take moderation action on reported content             | Super Admin |
+| `GET`  | `/api/v1/dashboards/admin-portal/system/health` | Live infrastructure cluster telemetry check            | Super Admin |
 
 ### 19. Health, Telemetry & OpenAPI Documentation (`/health`, `/version`, `/ping`)
 
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/health` | Unified health check (MongoDB, Redis, Memory, Uptime) | Public |
-| `GET` | `/version` | Runtime commit SHA, build version, and environment name | Public |
-| `GET` | `/ping` | Lightweight zero-overhead process keep-alive handler | Public |
-| `GET` | `/api/v1/docs/swagger.json` | OpenAPI 3.0 specification for API explorer | Public |
+| Method | Endpoint                    | Description                                             | Access |
+| :----- | :-------------------------- | :------------------------------------------------------ | :----- |
+| `GET`  | `/health`                   | Unified health check (MongoDB, Redis, Memory, Uptime)   | Public |
+| `GET`  | `/version`                  | Runtime commit SHA, build version, and environment name | Public |
+| `GET`  | `/ping`                     | Lightweight zero-overhead process keep-alive handler    | Public |
+| `GET`  | `/api/v1/docs/swagger.json` | OpenAPI 3.0 specification for API explorer              | Public |
 
 ---
 
@@ -948,18 +948,18 @@ BookBuddy enforces a zero-trust, 10-tier static and dynamic automated quality ga
 npm run ci:gates
 ```
 
-| Gate | Name | Script / Command | Invariant Enforced |
-| :--- | :--- | :--- | :--- |
-| **Gate 1** | **Dependency Vulnerability Scanning** | `npm run check:audit` | Runs automated `npm audit` checking production dependencies against the GitHub Advisory Database for high/critical CVEs. |
-| **Gate 2** | **Secret-Leak Scanning** | `npm run scan:secrets` | AST and regex scanner inspecting tracked files and staged git diffs for high-entropy tokens, private keys, JWT secrets, and API credentials. |
-| **Gate 3** | **Multi-Tenant Data Isolation Audit** | `npm run check:tenant-isolation` | Static AST audit of all 73 Mongoose models and 53 Express controllers ensuring strict `collegeId` scoping on database operations and queries. |
-| **Gate 4** | **N+1 Query Detection Audit** | `npm run check:nplusone` | Scans all backend controllers and service methods to ensure database queries (`find`, `findById`, `findOne`) are never invoked sequentially inside loops (`forEach`, `for...of`, `map`), enforcing vectorized `$in` and bulk queries. |
-| **Gate 5** | **Transaction Boundary Verification** | `npm run check:transactions` | Asserts that all multi-document transactional writes use `runInTransaction(transactionFn, afterCommitFn)` from `transactionHelper.js`, preventing side-effect leaks (Socket.io emits, SMS, emails) on transaction aborts/retries. |
-| **Gate 6** | **Atomic Conditional Update Check** | `npm run check:races` | Enforces race-condition prevention across shared and contended state machines (workstation seats, loan counters, fine payments, waiver coupons) via `atomicConditionalUpdate` from `atomicUpdateHelper.js`. |
-| **Gate 7** | **API Contract Layer & Schema Drift** | `npm run check:contracts` | Verifies that all 121+ API route endpoints strictly import canonical Zod contracts from `@bookbuddy/shared`, prohibiting inline schemas and schema drift. |
-| **Gate 8** | **Identity & Role Normalization Check** | `npm run check:normalization` | Static AST audit ensuring all user identities and email addresses use lowercase normalization, and all route permissions reference canonical `ROLES` constants rather than ad-hoc arrays. |
-| **Gate 9** | **Database Index-Usage Verification** | `npm run check:indexes` | Validates MongoDB explain plans and collection index maps, catching unbounded `COLLSCAN` queries and ensuring compound index coverage on high-frequency queries. |
-| **Gate 10** | **Concurrency Race Invariants Suite** | `npm run test:concurrency` | Stress-tests concurrent seat bookings, wallet deductions, stock decrements, and fine settlements under parallel execution to verify race invariants. |
+| Gate        | Name                                    | Script / Command                 | Invariant Enforced                                                                                                                                                                                                                    |
+| :---------- | :-------------------------------------- | :------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Gate 1**  | **Dependency Vulnerability Scanning**   | `npm run check:audit`            | Runs automated `npm audit` checking production dependencies against the GitHub Advisory Database for high/critical CVEs.                                                                                                              |
+| **Gate 2**  | **Secret-Leak Scanning**                | `npm run scan:secrets`           | AST and regex scanner inspecting tracked files and staged git diffs for high-entropy tokens, private keys, JWT secrets, and API credentials.                                                                                          |
+| **Gate 3**  | **Multi-Tenant Data Isolation Audit**   | `npm run check:tenant-isolation` | Static AST audit of all 73 Mongoose models and 53 Express controllers ensuring strict `collegeId` scoping on database operations and queries.                                                                                         |
+| **Gate 4**  | **N+1 Query Detection Audit**           | `npm run check:nplusone`         | Scans all backend controllers and service methods to ensure database queries (`find`, `findById`, `findOne`) are never invoked sequentially inside loops (`forEach`, `for...of`, `map`), enforcing vectorized `$in` and bulk queries. |
+| **Gate 5**  | **Transaction Boundary Verification**   | `npm run check:transactions`     | Asserts that all multi-document transactional writes use `runInTransaction(transactionFn, afterCommitFn)` from `transactionHelper.js`, preventing side-effect leaks (Socket.io emits, SMS, emails) on transaction aborts/retries.     |
+| **Gate 6**  | **Atomic Conditional Update Check**     | `npm run check:races`            | Enforces race-condition prevention across shared and contended state machines (workstation seats, loan counters, fine payments, waiver coupons) via `atomicConditionalUpdate` from `atomicUpdateHelper.js`.                           |
+| **Gate 7**  | **API Contract Layer & Schema Drift**   | `npm run check:contracts`        | Verifies that all 121+ API route endpoints strictly import canonical Zod contracts from `@bookbuddy/shared`, prohibiting inline schemas and schema drift.                                                                             |
+| **Gate 8**  | **Identity & Role Normalization Check** | `npm run check:normalization`    | Static AST audit ensuring all user identities and email addresses use lowercase normalization, and all route permissions reference canonical `ROLES` constants rather than ad-hoc arrays.                                             |
+| **Gate 9**  | **Database Index-Usage Verification**   | `npm run check:indexes`          | Validates MongoDB explain plans and collection index maps, catching unbounded `COLLSCAN` queries and ensuring compound index coverage on high-frequency queries.                                                                      |
+| **Gate 10** | **Concurrency Race Invariants Suite**   | `npm run test:concurrency`       | Stress-tests concurrent seat bookings, wallet deductions, stock decrements, and fine settlements under parallel execution to verify race invariants.                                                                                  |
 
 ---
 
@@ -1073,10 +1073,3 @@ BookBuddy implements comprehensive defense-in-depth security standards:
 8. **MFA-Gated Impersonation**: Platform administrators can only assume user personas with an active audit trail and a persistent UI warning banner.
 
 ---
-
-## 📄 License & Credits
-
-BookBuddy is released under the **ISC License**.
-
-Created and maintained with ❤️ by **[Aditya Naikwadi](https://github.com/Aditya-Naikwadi)**.  
-For technical inquiries, collaboration, or institutional deployments, reach out via [GitHub](https://github.com/Aditya-Naikwadi).
