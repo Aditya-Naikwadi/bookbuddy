@@ -24,17 +24,21 @@ BookBuddy is a production-grade, multi-tenant Integrated Library System (ILS) an
 
 ## 🚀 Live Deployments & Key Reference Links
 
-| Resource                                  | URL / Destination                                                                            | Description                                                                        |
-| :---------------------------------------- | :------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
-| 🌐 **Production Web Client**              | [https://book-buddy-eight-rosy.vercel.app](https://book-buddy-eight-rosy.vercel.app)         | Production Single-Page Application hosted on Vercel Global Edge CDN                |
-| ⚙️ **Production REST API Server**         | [https://bookbuddy-kcwl.onrender.com](https://bookbuddy-kcwl.onrender.com)                   | Production Express 5 backend service hosted on Render                              |
-| 🏥 **Backend Health Telemetry**           | [`https://bookbuddy-kcwl.onrender.com/health`](https://bookbuddy-kcwl.onrender.com/health)   | Live cluster connectivity check (MongoDB, Redis, Memory, Uptime)                   |
-| 📌 **Live Version & Git Metadata**        | [`https://bookbuddy-kcwl.onrender.com/version`](https://bookbuddy-kcwl.onrender.com/version) | Live deployment commit SHA, environment name, and release tags                     |
-| 📘 **Deep Architectural Reference**       | [`ARCHITECTURE.md`](ARCHITECTURE.md)                                                         | 1,000+ line technical breakdown of database, security, and desk systems            |
-| 📁 **Monorepo Directory Layout**          | [`STRUCTURE.md`](STRUCTURE.md)                                                               | Comprehensive directory map and separation-of-concerns guidelines                  |
-| 📄 **Engineering Case Study**             | [`docs/CASE_STUDY.md`](docs/CASE_STUDY.md)                                                   | In-depth engineering retrospective, problem statement, and architectural decisions |
-| 🎯 **Resume & Technical Accomplishments** | [`docs/RESUME_POINTS.md`](docs/RESUME_POINTS.md)                                             | High-impact technical metrics, throughput stats, and architectural milestones      |
-| 🤖 **AI Agent Guidelines**                | [`AGENTS.md`](AGENTS.md)                                                                     | Single source of truth for AI pairing assistants and system constraints            |
+| Resource                                  | URL / Destination                                                                                          | Description                                                                        |
+| :---------------------------------------- | :--------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| 🌐 **Production Web Client**              | [https://book-buddy-eight-rosy.vercel.app](https://book-buddy-eight-rosy.vercel.app)                       | Production Single-Page Application hosted on Vercel Global Edge CDN                |
+| ⚙️ **Production REST API Server**         | [https://bookbuddy-kcwl.onrender.com](https://bookbuddy-kcwl.onrender.com)                                 | Production Express 5 backend service hosted on Render                              |
+| 🏥 **Backend Health Telemetry**           | [`https://bookbuddy-kcwl.onrender.com/health`](https://bookbuddy-kcwl.onrender.com/health)                 | Live cluster connectivity check (MongoDB, Redis, Memory, Uptime)                   |
+| 📌 **Live Version & Git Metadata**        | [`https://bookbuddy-kcwl.onrender.com/version`](https://bookbuddy-kcwl.onrender.com/version)               | Live deployment commit SHA, environment name, and release tags                     |
+| 📘 **Deep Architectural Reference**       | [`ARCHITECTURE.md`](ARCHITECTURE.md)                                                                       | 1,000+ line technical breakdown of database, security, and desk systems            |
+| 📁 **Monorepo Directory Layout**          | [`STRUCTURE.md`](STRUCTURE.md)                                                                             | Comprehensive directory map and separation-of-concerns guidelines                  |
+| 📜 **API Contract Architecture**          | [`docs/API_CONTRACT_ARCHITECTURE.md`](docs/API_CONTRACT_ARCHITECTURE.md)                                   | Centralized Zod request/response validation contracts and zero-drift schemas        |
+| 🆔 **Identity & Role Normalization**      | [`docs/CANONICAL_IDENTITY_AND_ROLE_NORMALIZATION.md`](docs/CANONICAL_IDENTITY_AND_ROLE_NORMALIZATION.md)   | Canonical casing, role invariants, and schema-level validation pipelines           |
+| 🛡️ **Scheduled & CI Quality Audits**      | [`docs/SCHEDULED_AUDITS.md`](docs/SCHEDULED_AUDITS.md)                                                     | Automated CI quality gates, static AST verification, and scheduled audit workflows |
+| 📄 **Engineering Case Study**             | [`docs/CASE_STUDY.md`](docs/CASE_STUDY.md)                                                                 | In-depth engineering retrospective, problem statement, and architectural decisions |
+| 🎯 **Resume & Technical Accomplishments** | [`docs/RESUME_POINTS.md`](docs/RESUME_POINTS.md)                                                           | High-impact technical metrics, throughput stats, and architectural milestones      |
+| 🤝 **Contribution & Verification Guide**  | [`CONTRIBUTING.md`](CONTRIBUTING.md)                                                                       | Local contribution standards, Git commit conventions, and pre-push verification    |
+| 🤖 **AI Agent Guidelines**                | [`AGENTS.md`](AGENTS.md)                                                                                   | Single source of truth for AI pairing assistants and system constraints            |
 
 ---
 
@@ -61,6 +65,8 @@ BookBuddy is a production-grade, multi-tenant Integrated Library System (ILS) an
 - [⚙️ Environment Configuration Guide](#️-environment-configuration-guide)
 - [💻 Local Development, Migration \& Seeding Runbook](#-local-development-migration--seeding-runbook)
 - [🧪 Testing \& Quality Assurance Suite](#-testing--quality-assurance-suite)
+- [🛡️ Automated CI Quality Gates (10 Invariant Gates)](#️-automated-ci-quality-gates-10-invariant-gates)
+- [📦 Shared Workspace \& Canonical Contract Layer (`@bookbuddy/shared`)](#-shared-workspace--canonical-contract-layer-bookbuddyshared)
 - [📂 Monorepo Repository Structure](#-monorepo-repository-structure)
 - [🔒 Security Posture \& Compliance](#-security-posture--compliance)
 - [📄 License \& Credits](#-license--credits)
@@ -933,6 +939,50 @@ npm run loadtest:flow
 
 ---
 
+## 🛡️ Automated CI Quality Gates (10 Invariant Gates)
+
+BookBuddy enforces a zero-trust, 10-tier static and dynamic automated quality gate pipeline that runs on every pull request and push to `main`:
+
+```bash
+# Execute all static AST and architectural verification gates locally
+npm run ci:gates
+```
+
+| Gate | Name | Script / Command | Invariant Enforced |
+| :--- | :--- | :--- | :--- |
+| **Gate 1** | **Dependency Vulnerability Scanning** | `npm run check:audit` | Runs automated `npm audit` checking production dependencies against the GitHub Advisory Database for high/critical CVEs. |
+| **Gate 2** | **Secret-Leak Scanning** | `npm run scan:secrets` | AST and regex scanner inspecting tracked files and staged git diffs for high-entropy tokens, private keys, JWT secrets, and API credentials. |
+| **Gate 3** | **Multi-Tenant Data Isolation Audit** | `npm run check:tenant-isolation` | Static AST audit of all 73 Mongoose models and 53 Express controllers ensuring strict `collegeId` scoping on database operations and queries. |
+| **Gate 4** | **N+1 Query Detection Audit** | `npm run check:nplusone` | Scans all backend controllers and service methods to ensure database queries (`find`, `findById`, `findOne`) are never invoked sequentially inside loops (`forEach`, `for...of`, `map`), enforcing vectorized `$in` and bulk queries. |
+| **Gate 5** | **Transaction Boundary Verification** | `npm run check:transactions` | Asserts that all multi-document transactional writes use `runInTransaction(transactionFn, afterCommitFn)` from `transactionHelper.js`, preventing side-effect leaks (Socket.io emits, SMS, emails) on transaction aborts/retries. |
+| **Gate 6** | **Atomic Conditional Update Check** | `npm run check:races` | Enforces race-condition prevention across shared and contended state machines (workstation seats, loan counters, fine payments, waiver coupons) via `atomicConditionalUpdate` from `atomicUpdateHelper.js`. |
+| **Gate 7** | **API Contract Layer & Schema Drift** | `npm run check:contracts` | Verifies that all 121+ API route endpoints strictly import canonical Zod contracts from `@bookbuddy/shared`, prohibiting inline schemas and schema drift. |
+| **Gate 8** | **Identity & Role Normalization Check** | `npm run check:normalization` | Static AST audit ensuring all user identities and email addresses use lowercase normalization, and all route permissions reference canonical `ROLES` constants rather than ad-hoc arrays. |
+| **Gate 9** | **Database Index-Usage Verification** | `npm run check:indexes` | Validates MongoDB explain plans and collection index maps, catching unbounded `COLLSCAN` queries and ensuring compound index coverage on high-frequency queries. |
+| **Gate 10** | **Concurrency Race Invariants Suite** | `npm run test:concurrency` | Stress-tests concurrent seat bookings, wallet deductions, stock decrements, and fine settlements under parallel execution to verify race invariants. |
+
+---
+
+## 📦 Shared Workspace & Canonical Contract Layer (`@bookbuddy/shared`)
+
+BookBuddy utilizes an integrated npm workspace (`shared/`) that establishes a single source of truth across the frontend, backend, and external tools:
+
+```
+shared/
+├── src/
+│   ├── contracts/        # Canonical Zod request/response schemas for all API domains
+│   ├── constants/        # Centralized roles (ROLES), status enums, and system constants
+│   ├── utils/            # Normalization utilities (email/username lowercase, sanitization)
+│   └── index.js          # Unified entrypoint exported as @bookbuddy/shared
+└── package.json
+```
+
+- **Runtime Validation**: Express middleware (`validate.js`) consumes `@bookbuddy/shared` schemas to automatically validate `req.body`, `req.query`, and `req.params`.
+- **Zero-Drift Client API**: Frontend API client modules mirror the exact DTO contracts, eliminating client/server contract mismatch errors.
+- **Strict Role Normalization**: Prevents privilege escalation and auth bypass by enforcing normalized uppercase role tokens (`STUDENT`, `COLLEGE_ADMIN`, `SUPER_ADMIN`).
+
+---
+
 ## 📂 Monorepo Repository Structure
 
 ```
@@ -940,18 +990,30 @@ BookBuddy/
 ├── AGENTS.md                     # AI pair programming guidelines & architecture rules
 ├── ARCHITECTURE.md               # 1,000+ line technical architecture & systems reference
 ├── STRUCTURE.md                  # Monorepo directory map and separation-of-concerns rules
+├── CONTRIBUTING.md               # Contribution guidelines & pre-commit validation runbook
 ├── README.md                     # Primary repository documentation
 ├── package.json                  # Root monorepo configuration & cross-workspace scripts
 ├── render.yaml                   # Render Cloud Blueprint infrastructure specification
 ├── vercel.json                   # Vercel Edge proxy & header routing rules
 ├── api/                          # Vercel serverless function entrypoint (index.js)
+├── config/                       # Shared environment & system configuration schemas
 ├── database/                     # Schema migrations (migrate-mongo)
 ├── deployment/                   # Process management manifests (ecosystem.config.js, nginx.conf)
-├── docs/                         # Engineering case studies, architecture notes & resume metrics
-│   ├── CASE_STUDY.md             # In-depth architectural retrospective
-│   ├── RESUME_POINTS.md          # Technical impact metrics & bullet points
-│   └── architecture/             # Deep dives into backend, frontend, and database design
-├── scripts/                      # Deployment verification & health check scripts
+├── docs/                         # Engineering case studies, architecture notes & contract docs
+│   ├── API_CONTRACT_ARCHITECTURE.md                   # Centralized Zod contracts & OpenAPI architecture
+│   ├── CANONICAL_IDENTITY_AND_ROLE_NORMALIZATION.md   # Identity & role normalization specifications
+│   ├── SCHEDULED_AUDITS.md                            # Scheduled CI quality gates & audit workflows
+│   ├── CASE_STUDY.md                                  # In-depth architectural retrospective
+│   ├── RESUME_POINTS.md                               # Technical impact metrics & bullet points
+│   └── architecture/                                  # Deep dives into backend, frontend, and database design
+├── scripts/                      # Deployment verification, security scanning & CI quality gates
+│   ├── security/                 # Secret-leak scanning & dependency audit scripts
+│   ├── testing/                  # Static AST quality gates (isolation, races, contracts, indexes)
+│   └── deployment/               # Post-deploy health verification & Render telemetry monitors
+├── shared/                       # Shared workspace package (@bookbuddy/shared)
+│   ├── contracts/                # Canonical Zod validation schemas across all 50+ endpoints
+│   ├── constants/                # Canonical user roles, permissions, status enums
+│   └── index.js                  # Package entrypoint
 ├── tests/                        # Dedicated load and end-to-end testing workspace
 │   └── load/                     # k6 and Artillery load testing scripts
 ├── backend/                      # Node.js 24 + Express 5 Backend Service
@@ -961,14 +1023,14 @@ BookBuddy/
 │   │   ├── config/               # Database, Redis, Zod env validation, Passport OAuth
 │   │   ├── controllers/          # API route controllers grouped by domain
 │   │   │   └── dashboards/       # General, Student, College Admin, and Super Admin controllers
-│   │   ├── middlewares/          # Auth, Tenant Scoping, CSRF, Rate Limiting, RBAC
+│   │   ├── middlewares/          # Auth, Tenant Scoping, CSRF, Rate Limiting, RBAC, Validation
 │   │   ├── models/               # Mongoose 9 schemas (User, Book, Loan, Reservation, etc.)
 │   │   ├── routes/               # Express 5 route definitions (50+ endpoint modules)
 │   │   ├── scripts/              # Database seeders and migration scripts
 │   │   ├── services/             # Core business logic & background cron services
 │   │   ├── sockets/              # Socket.io event handlers & room dispatchers
 │   │   ├── tests/                # Jest integration test suites (79 suites, 428 tests)
-│   │   └── utils/                # Logger, cache manager, token utilities
+│   │   └── utils/                # Logger, cache manager, atomicUpdateHelper, transactionHelper
 │   └── package.json
 └── frontend/                     # React 19 + Vite 8 Client Single-Page Application
     ├── public/                   # Static assets, PWA manifest, version.json
