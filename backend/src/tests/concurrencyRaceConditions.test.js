@@ -128,7 +128,12 @@ describe('Concurrency Race Condition Invariants Test Suite', () => {
       return announcementController
         .toggleRSVP(req, res)
         .then(() => ({ success: true, user: user._id, data: resJson }))
-        .catch((err) => ({ success: false, user: user._id, error: err.message, statusCode: err.statusCode || 400 }));
+        .catch((err) => ({
+          success: false,
+          user: user._id,
+          error: err.message,
+          statusCode: err.statusCode || 400,
+        }));
     });
 
     const results = await Promise.all(rsvpPromises);

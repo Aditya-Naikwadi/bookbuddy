@@ -94,7 +94,9 @@ describe('payments Consolidated Suite', () => {
 
           expect(response.status).toBe(400);
           expect(response.body.success).toBe(false);
-          expect(response.body.message).toMatch(/(?:100 paise|unrecognized key.*amount|forbidden)/i);
+          expect(response.body.message).toMatch(
+            /(?:100 paise|unrecognized key.*amount|forbidden)/i
+          );
         });
 
         it('should successfully create an order with server-calculated amount for fine', async () => {
@@ -141,7 +143,9 @@ describe('payments Consolidated Suite', () => {
 
           expect(response.status).toBe(400);
           expect(response.body.success).toBe(false);
-          expect(response.body.message).toMatch(/(?:Missing required payment verification|razorpay_payment_id|Invalid input)/i);
+          expect(response.body.message).toMatch(
+            /(?:Missing required payment verification|razorpay_payment_id|Invalid input)/i
+          );
         });
 
         it('should return 400 and NOT mark fine as paid if signature is invalid', async () => {
@@ -374,7 +378,9 @@ describe('payments Consolidated Suite', () => {
 
           expect(res.statusCode).toBe(400);
           expect(res.body.success).toBe(false);
-          expect(res.body.message).toMatch(/(?:unrecognized key.*amount|client-supplied payment amounts)/i);
+          expect(res.body.message).toMatch(
+            /(?:unrecognized key.*amount|client-supplied payment amounts)/i
+          );
         });
 
         it('Acceptance Criteria: server-computed amount from fines succeeds without client amount', async () => {

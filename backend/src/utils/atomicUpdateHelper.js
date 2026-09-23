@@ -36,8 +36,6 @@
  * ```
  */
 
-const mongoose = require('mongoose');
-
 /**
  * Result structure returned by atomicConditionalUpdate.
  *

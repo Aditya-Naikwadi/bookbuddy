@@ -88,7 +88,11 @@ router.route('/audit-logs').get(expensiveRouteLimiter, getAuditLogs);
 router.route('/moderation/pending').get(getGlobalPendingEResources);
 router
   .route('/moderation/:id')
-  .put(validate(moderateEResourceRouteSchema), auditLog('eresource.moderate'), moderateEResourceGlobal);
+  .put(
+    validate(moderateEResourceRouteSchema),
+    auditLog('eresource.moderate'),
+    moderateEResourceGlobal
+  );
 router
   .route('/moderation/:id/publish')
   .post(validate(paramIdSchema), auditLog('eresource.publish_global'), publishEResourceGlobal);

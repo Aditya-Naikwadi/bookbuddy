@@ -121,7 +121,10 @@ describe('Schema-Level Identity & Role Normalization Write Paths Test Suite', ()
       expect(inserted[1].role).toBe(ROLES.STUDENT);
 
       // Fetch from DB to ensure persistence is normalized
-      const fetched = await User.find({ collegeId, studentId: { $in: ['stu-bulk-001', 'stu-bulk-002'] } }).lean();
+      const fetched = await User.find({
+        collegeId,
+        studentId: { $in: ['stu-bulk-001', 'stu-bulk-002'] },
+      }).lean();
       expect(fetched).toHaveLength(2);
       for (const u of fetched) {
         expect(u.email).toBe(u.email.toLowerCase().trim());

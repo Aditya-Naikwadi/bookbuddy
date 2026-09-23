@@ -235,7 +235,9 @@ collegeSchema.pre('save', async function () {
 
   if (this.status === 'active') {
     this.isActive = true;
-  } else if (['pending', 'pending_review', 'suspended', 'archived', 'rejected'].includes(this.status)) {
+  } else if (
+    ['pending', 'pending_review', 'suspended', 'archived', 'rejected'].includes(this.status)
+  ) {
     this.isActive = false;
   }
 

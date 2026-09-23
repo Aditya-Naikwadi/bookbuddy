@@ -907,112 +907,113 @@ const approveTenantOnboarding = async (req, res, next) => {
         : defaultServices;
 
     // Execute atomic creation of College + College Admin User inside MongoDB transaction
-    const { college, adminUser } = await runInTransaction(async (session) => {
-      // 1. Create College tenant
-      const collegeCode = (desiredSlug || 'TENANT').toUpperCase();
-      const addressString = typeof address === 'object' ? JSON.stringify(address) : address || '';
+    const { college, adminUser } = await runInTransaction(
+      async (session) => {
+        // 1. Create College tenant
+        const collegeCode = (desiredSlug || 'TENANT').toUpperCase();
+        const addressString = typeof address === 'object' ? JSON.stringify(address) : address || '';
 
-      const newCollegeDocs = await College.create(
-        [
-          {
-            name: legalName,
-            shortName: shortName || legalName,
-            code: collegeCode,
-            slug: desiredSlug,
-            institutionType: institutionType || 'college',
-            domain,
-            status: 'active',
-            isActive: true,
-            contactEmail: contactEmail || adminEmail,
-            contactPhone,
-            address: addressString,
-            selectedServices: activeServices,
-            enabledFeatures: activeServices,
-          },
-        ],
-        { session }
-      );
+        const newCollegeDocs = await College.create(
+          [
+            {
+              name: legalName,
+              shortName: shortName || legalName,
+              code: collegeCode,
+              slug: desiredSlug,
+              institutionType: institutionType || 'college',
+              domain,
+              status: 'active',
+              isActive: true,
+              contactEmail: contactEmail || adminEmail,
+              contactPhone,
+              address: addressString,
+              selectedServices: activeServices,
+              enabledFeatures: activeServices,
+            },
+          ],
+          { session }
+        );
 
-      const createdCollege = newCollegeDocs[0];
+        const createdCollege = newCollegeDocs[0];
 
-      // 2. Create initial College Admin User
-      const newAdminDocs = await User.create(
-        [
-          {
-            studentId: 'ADMIN-001',
-            name: adminName,
-            email: adminEmail,
-            password: passwordHash,
-            role: 'college-admin',
-            collegeId: createdCollege._id,
-            isEmailVerified: true,
-            membershipStatus: 'active',
-          },
-        ],
-        { session }
-      );
+        // 2. Create initial College Admin User
+        const newAdminDocs = await User.create(
+          [
+            {
+              studentId: 'ADMIN-001',
+              name: adminName,
+              email: adminEmail,
+              password: passwordHash,
+              role: 'college-admin',
+              collegeId: createdCollege._id,
+              isEmailVerified: true,
+              membershipStatus: 'active',
+            },
+          ],
+          { session }
+        );
 
-      const createdAdmin = newAdminDocs[0];
+        const createdAdmin = newAdminDocs[0];
 
-      // 3. Initialize CollegeFeatureConfig with selected registration services
-      const CollegeFeatureConfig = require('../../models/CollegeFeatureConfig');
-      await CollegeFeatureConfig.create(
-        [
-          {
-            collegeId: createdCollege._id,
-            enabledFeatures: activeServices,
-            pendingRequests: [],
-          },
-        ],
-        { session }
-      );
+        // 3. Initialize CollegeFeatureConfig with selected registration services
+        const CollegeFeatureConfig = require('../../models/CollegeFeatureConfig');
+        await CollegeFeatureConfig.create(
+          [
+            {
+              collegeId: createdCollege._id,
+              enabledFeatures: activeServices,
+              pendingRequests: [],
+            },
+          ],
+          { session }
+        );
 
-      // 4. Mark RegistrationRequest as approved
-      regRequest.status = 'approved';
-      regRequest.reviewedAt = new Date();
-      regRequest.reviewedBy = req.user.id;
-      await regRequest.save({ session });
+        // 4. Mark RegistrationRequest as approved
+        regRequest.status = 'approved';
+        regRequest.reviewedAt = new Date();
+        regRequest.reviewedBy = req.user.id;
+        await regRequest.save({ session });
 
-      return { college: createdCollege, adminUser: createdAdmin };
-    },
-    async (result) => {
-      if (!result || !result.college) return;
-      const { college } = result;
+        return { college: createdCollege, adminUser: createdAdmin };
+      },
+      async (result) => {
+        if (!result || !result.college) return;
+        const { college } = result;
 
-      await clearGlobalMetricsCache();
+        await clearGlobalMetricsCache();
 
-      try {
-        const io = req.app && typeof req.app.get === 'function' ? req.app.get('io') : null;
-        if (io) {
-          io.emit('admin:onboarding_updated', { requestId: regRequest._id, status: 'approved' });
+        try {
+          const io = req.app && typeof req.app.get === 'function' ? req.app.get('io') : null;
+          if (io) {
+            io.emit('admin:onboarding_updated', { requestId: regRequest._id, status: 'approved' });
+          }
+        } catch {
+          // ignore
         }
-      } catch {
-        // ignore
-      }
 
-      // Send Approval Email post-commit
-      try {
-        await sendTenantOnboardingApprovalEmail(adminEmail, adminName, legalName);
-      } catch (err) {
-        logger.error(`Post-commit approval email delivery failed: ${err.message}`);
-      }
+        // Send Approval Email post-commit
+        try {
+          await sendTenantOnboardingApprovalEmail(adminEmail, adminName, legalName);
+        } catch (err) {
+          logger.error(`Post-commit approval email delivery failed: ${err.message}`);
+        }
 
-      // Audit Log
-      try {
-        await AuditLog.create({
-          actorId: getActorId(req),
-          actorRole: req.user.role,
-          action: 'registration_request.approve',
-          targetType: 'College',
-          targetId: college._id,
-          collegeId: college._id,
-          metadata: { legalName, domain, adminEmail },
-          ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
-        });
-      } catch (auditErr) {
-        logger.error(`Post-commit tenant approval audit log failed: ${auditErr.message}`);
+        // Audit Log
+        try {
+          await AuditLog.create({
+            actorId: getActorId(req),
+            actorRole: req.user.role,
+            action: 'registration_request.approve',
+            targetType: 'College',
+            targetId: college._id,
+            collegeId: college._id,
+            metadata: { legalName, domain, adminEmail },
+            ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+          });
+        } catch (auditErr) {
+          logger.error(`Post-commit tenant approval audit log failed: ${auditErr.message}`);
+        }
       }
-    }
     );
 
     res.json({

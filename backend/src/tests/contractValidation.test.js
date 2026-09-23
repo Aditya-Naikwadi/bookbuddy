@@ -219,7 +219,9 @@ describe('API Contract Validation Test Suite (Shared Zod Schemas)', () => {
       const result = createPaymentOrderBodySchema.safeParse(maliciousPayload);
       expect(result.success).toBe(false);
       const issues = result.error.issues || result.error.errors;
-      expect(issues[0].message).toMatch(/(?:unrecognized key.*amount|client-supplied payment amounts)/i);
+      expect(issues[0].message).toMatch(
+        /(?:unrecognized key.*amount|client-supplied payment amounts)/i
+      );
     });
 
     it('APPSEC TRUST BOUNDARY: strictly rejects any client-supplied receipt parameter', () => {

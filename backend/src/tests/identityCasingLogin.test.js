@@ -52,12 +52,10 @@ describe('Identity Casing and Normalization Login Regression Test Suite', () => 
 
   describe('1. Email Casing & Trimming Invariance', () => {
     it('authenticates successfully with canonical lowercase email', async () => {
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: 'alex.johnson@casingtest.edu',
-          password: rawPassword,
-        });
+      const res = await request(app).post('/api/auth/login').send({
+        email: 'alex.johnson@casingtest.edu',
+        password: rawPassword,
+      });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -67,12 +65,10 @@ describe('Identity Casing and Normalization Login Regression Test Suite', () => 
     });
 
     it('authenticates successfully with mixed-case email (Alex.Johnson@CasingTest.EDU)', async () => {
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: 'Alex.Johnson@CasingTest.EDU',
-          password: rawPassword,
-        });
+      const res = await request(app).post('/api/auth/login').send({
+        email: 'Alex.Johnson@CasingTest.EDU',
+        password: rawPassword,
+      });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -82,12 +78,10 @@ describe('Identity Casing and Normalization Login Regression Test Suite', () => 
     });
 
     it('authenticates successfully with UPPERCASE email and surrounding whitespace', async () => {
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: '   ALEX.JOHNSON@CASINGTEST.EDU   ',
-          password: rawPassword,
-        });
+      const res = await request(app).post('/api/auth/login').send({
+        email: '   ALEX.JOHNSON@CASINGTEST.EDU   ',
+        password: rawPassword,
+      });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -98,13 +92,11 @@ describe('Identity Casing and Normalization Login Regression Test Suite', () => 
 
   describe('2. StudentId Casing & Trimming Invariance', () => {
     it('authenticates successfully with canonical lowercase studentId', async () => {
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({
-          studentId: 'stu-alex-999',
-          collegeId: college._id.toString(),
-          password: rawPassword,
-        });
+      const res = await request(app).post('/api/auth/login').send({
+        studentId: 'stu-alex-999',
+        collegeId: college._id.toString(),
+        password: rawPassword,
+      });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -114,13 +106,11 @@ describe('Identity Casing and Normalization Login Regression Test Suite', () => 
     });
 
     it('authenticates successfully with UPPERCASE studentId (STU-ALEX-999)', async () => {
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({
-          studentId: 'STU-ALEX-999',
-          collegeId: college._id.toString(),
-          password: rawPassword,
-        });
+      const res = await request(app).post('/api/auth/login').send({
+        studentId: 'STU-ALEX-999',
+        collegeId: college._id.toString(),
+        password: rawPassword,
+      });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -129,13 +119,11 @@ describe('Identity Casing and Normalization Login Regression Test Suite', () => 
     });
 
     it('authenticates successfully with mixed-case studentId and whitespace (  Stu-Alex-999  )', async () => {
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({
-          studentId: '  Stu-Alex-999  ',
-          collegeId: college._id.toString(),
-          password: rawPassword,
-        });
+      const res = await request(app).post('/api/auth/login').send({
+        studentId: '  Stu-Alex-999  ',
+        collegeId: college._id.toString(),
+        password: rawPassword,
+      });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -145,16 +133,14 @@ describe('Identity Casing and Normalization Login Regression Test Suite', () => 
 
   describe('3. Registration Write-Time Normalization Roundtrip', () => {
     it('registers user with mixed-case email/studentId and verifies stored record is canonical', async () => {
-      const regRes = await request(app)
-        .post('/api/auth/register')
-        .send({
-          name: 'Sarah Connor',
-          email: '  Sarah.Connor@CasingTest.EDU  ',
-          studentId: '  CS-SARAH-007  ',
-          password: 'Password123!',
-          collegeId: college._id.toString(),
-          role: 'college-student', // Client sends legacy drifted role
-        });
+      const regRes = await request(app).post('/api/auth/register').send({
+        name: 'Sarah Connor',
+        email: '  Sarah.Connor@CasingTest.EDU  ',
+        studentId: '  CS-SARAH-007  ',
+        password: 'Password123!',
+        collegeId: college._id.toString(),
+        role: 'college-student', // Client sends legacy drifted role
+      });
 
       expect([200, 201, 202]).toContain(regRes.status);
       expect(regRes.body.success).toBe(true);
@@ -174,12 +160,10 @@ describe('Identity Casing and Normalization Login Regression Test Suite', () => 
 
   describe('4. Password Validation', () => {
     it('rejects incorrect password cleanly regardless of casing', async () => {
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: 'ALEX.JOHNSON@CASINGTEST.EDU',
-          password: 'WrongPassword!',
-        });
+      const res = await request(app).post('/api/auth/login').send({
+        email: 'ALEX.JOHNSON@CASINGTEST.EDU',
+        password: 'WrongPassword!',
+      });
 
       expect([400, 401]).toContain(res.status);
       expect(res.body.success).toBe(false);

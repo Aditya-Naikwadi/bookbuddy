@@ -22,8 +22,7 @@ const capacityTestSchema = new mongoose.Schema({
 });
 
 const CapacityTestDoc =
-  mongoose.models.CapacityTestDoc ||
-  mongoose.model('CapacityTestDoc', capacityTestSchema);
+  mongoose.models.CapacityTestDoc || mongoose.model('CapacityTestDoc', capacityTestSchema);
 
 describe('atomicConditionalUpdate Unit Tests', () => {
   beforeAll(async () => {

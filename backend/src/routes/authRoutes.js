@@ -16,7 +16,11 @@ const { handleOAuthCallback, getMe } = require('../controllers/oauthController')
 const { getCsrfTokenController } = require('../middlewares/csrf');
 const { protect } = require('../middlewares/auth');
 const validate = require('../middlewares/validate');
-const { loginSchema, refreshSchema, registerRouteSchema } = require('@bookbuddy/shared/schemas/auth');
+const {
+  loginSchema,
+  refreshSchema,
+  registerRouteSchema,
+} = require('@bookbuddy/shared/schemas/auth');
 const { authLimiter } = require('../middlewares/rateLimiters');
 const { loginRateLimiter } = require('../middlewares/loginRateLimiter');
 

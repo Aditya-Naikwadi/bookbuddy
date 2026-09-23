@@ -9,7 +9,7 @@ const {
   sendStudentVerificationEmail,
   sendAdminDomainVerificationEmail,
 } = require('../services/notificationService');
-const { normalizeEmail, normalizeStudentId, ROLES } = require('@bookbuddy/shared');
+const { normalizeEmail, normalizeStudentId } = require('@bookbuddy/shared');
 
 // @desc    Get active colleges list for student signup dropdown
 // @route   GET /api/registration/colleges
@@ -75,7 +75,7 @@ const registerStudent = async (req, res, next) => {
     // 4. Check studentId uniqueness scoped to (collegeId, studentId)
     const existingUserByStudentId = await User.findOne({
       collegeId: college._id,
-      studentId: studentId.trim(),
+      studentId: normalizedStudentId,
     });
     if (existingUserByStudentId) {
       return next(
