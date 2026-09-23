@@ -79,6 +79,8 @@
     "vitest": "^4.1.10"
   },
   "overrides": {
-    "@xmldom/xmldom": "^0.9.7"
+    "epubjs": {
+      "@xmldom/xmldom": "^0.9.7"
+    }
   }
 }
