@@ -41,8 +41,9 @@ const getOverview = async (req, res, next) => {
     let cachedData = null;
     const isRedisReady =
       redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect');
+    const isRefresh = req.query.refresh === 'true' || req.headers['x-refresh'] === 'true';
 
-    if (isRedisReady) {
+    if (isRedisReady && !isRefresh) {
       try {
         const cached = await redisClient.get('metrics:global:latest');
         if (cached) {
@@ -574,7 +575,8 @@ const getCollegeDetails = async (req, res, next) => {
 // @access  Private/SuperAdmin
 const updateCollege = async (req, res, next) => {
   try {
-    const { name, code, contactEmail, contactPhone, address } = req.body;
+    const { name, code, contactEmail, contactPhone, address, selectedServices, enabledFeatures } =
+      req.body;
     const college = await College.findById(req.params.id);
     if (!college) {
       return next(new AppError('College not found.', 404));
@@ -586,7 +588,22 @@ const updateCollege = async (req, res, next) => {
     if (contactPhone !== undefined) college.contactPhone = contactPhone;
     if (address !== undefined) college.address = address;
 
+    const feats = enabledFeatures || selectedServices;
+    if (Array.isArray(feats)) {
+      college.selectedServices = feats;
+      college.enabledFeatures = feats;
+
+      // Synchronize with CollegeFeatureConfig
+      const CollegeFeatureConfig = require('../../models/CollegeFeatureConfig');
+      await CollegeFeatureConfig.findOneAndUpdate(
+        { collegeId: college._id },
+        { $set: { enabledFeatures: feats } },
+        { upsert: true, new: true }
+      );
+    }
+
     await college.save();
+    await clearGlobalMetricsCache();
 
     res.json({
       success: true,

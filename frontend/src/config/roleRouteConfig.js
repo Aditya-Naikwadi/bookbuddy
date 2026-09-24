@@ -14,6 +14,7 @@ export const ROLE_ROUTE_MAP = {
   "/admin-portal": SUPER_ADMIN_ROLES,
   "/admin-portal/overview": SUPER_ADMIN_ROLES,
   "/admin-portal/college-admins": SUPER_ADMIN_ROLES,
+  "/admin-portal/features": SUPER_ADMIN_ROLES,
   "/admin-portal/registration-queue": SUPER_ADMIN_ROLES,
   "/admin-portal/moderation": SUPER_ADMIN_ROLES,
   "/admin-portal/audit-logs": SUPER_ADMIN_ROLES,

@@ -3,12 +3,27 @@
   "version": "1.0.0",
   "description": "Shared Zod schemas and API contracts for BookBuddy",
   "main": "./src/index.js",
-  "module": "./src/index.js",
+  "module": "./esm/index.js",
   "exports": {
-    ".": "./src/index.js",
-    "./schemas/*": "./src/schemas/*.js",
-    "./constants/*": "./src/constants/*.js",
-    "./utils/*": "./src/utils/*.js"
+    ".": {
+      "import": "./esm/index.js",
+      "require": "./src/index.js"
+    },
+    "./schemas/*": {
+      "import": "./esm/schemas/*.js",
+      "require": "./src/schemas/*.js"
+    },
+    "./constants/*": {
+      "import": "./esm/constants/*.js",
+      "require": "./src/constants/*.js"
+    },
+    "./utils/*": {
+      "import": "./esm/utils/*.js",
+      "require": "./src/utils/*.js"
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build-esm.js"
   },
   "peerDependencies": {
     "zod": "^3.23.0 || ^4.0.0"

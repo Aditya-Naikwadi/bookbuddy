@@ -13,6 +13,7 @@ import {
   ArrowRight,
   AlertTriangle,
   CheckCircle2,
+  Sliders,
 } from "lucide-react";
 import OpsHeader from "../../../components/ops/OpsHeader";
 import OpsSeverityBadge from "../../../components/ops/OpsSeverityBadge";
@@ -79,6 +80,18 @@ export default function AdminDashboardHome() {
         badgeText: `${totalColleges} Provisioned`,
         description:
           "Provision new college tenants, configure custom institution subdomains, and assign college librarians & administrators.",
+      },
+      {
+        id: "features",
+        title: "Feature Manager & Modules",
+        subtitle: "Global & Tenant Feature Sync",
+        path: "/admin-portal/features",
+        icon: <Sliders className="w-5 h-5 text-indigo-600" />,
+        countLabel: "Cross-Tenant Control",
+        badgeStatus: "healthy",
+        badgeText: "Synchronized",
+        description:
+          "Configure modular features, toggle system-wide flags, or sync provisioned services for all institutional tenants.",
       },
       {
         id: "registration-queue",

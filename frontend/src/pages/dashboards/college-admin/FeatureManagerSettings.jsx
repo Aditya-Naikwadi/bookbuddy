@@ -10,10 +10,12 @@ import {
   CheckCircle2,
   Share2,
   Copy,
+  Building2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import useAuthStore from "../../../store/authStore";
 import featureApi from "../../../api/featureApi";
+import adminApi from "../../../api/adminApi";
 import {
   FEATURE_REGISTRY as CATALOG_REGISTRY,
   FEATURE_CATEGORIES,
@@ -24,10 +26,26 @@ import { FEATURE_REGISTRY as DASHBOARD_PAGE_REGISTRY } from "../../../config/das
 export default function FeatureManagerSettings() {
   const { user } = useAuthStore();
   const [copiedKey, setCopiedKey] = useState(null);
+  const isSuperAdmin =
+    user?.role === "super-admin" || user?.role === "superadmin";
+
+  const [selectedCollegeId, setSelectedCollegeId] = useState("all");
+
+  const { data: colleges = [] } = useQuery({
+    queryKey: ["adminCollegesList"],
+    queryFn: () => adminApi.listColleges(),
+    enabled: isSuperAdmin,
+  });
+
+  const targetCollegeId = isSuperAdmin
+    ? selectedCollegeId === "all"
+      ? null
+      : selectedCollegeId
+    : user?.collegeId;
 
   const { data: configData } = useQuery({
-    queryKey: ["myCollegeConfig", user?.collegeId],
-    queryFn: () => featureApi.getCollegeFeatures(),
+    queryKey: ["myCollegeConfig", targetCollegeId || "all"],
+    queryFn: () => featureApi.getCollegeFeatures(targetCollegeId || "all"),
     enabled: !!user,
   });
 
@@ -41,12 +59,19 @@ export default function FeatureManagerSettings() {
       "reading-lists",
     ];
 
-  const collegeProfile = {
-    name:
-      configData?.college?.name ||
+  const targetCollegeName = isSuperAdmin
+    ? selectedCollegeId === "all"
+      ? "All Institutional Tenants"
+      : colleges.find((c) => c._id === selectedCollegeId)?.name ||
+        configData?.college?.name ||
+        "Selected Institution"
+    : configData?.college?.name ||
       user?.collegeProfile?.name ||
       user?.collegeName ||
-      "Institution Admin",
+      "Institution Admin";
+
+  const collegeProfile = {
+    name: targetCollegeName,
     enabledFeatures: rawFeatures,
   };
 
@@ -108,8 +133,21 @@ export default function FeatureManagerSettings() {
 
   const handleSave = async () => {
     try {
-      await featureApi.updateCollegeFeatures(Array.from(enabledFeatures));
-      setSaveSuccessMsg("Feature configuration saved!");
+      const isSyncAll = isSuperAdmin && selectedCollegeId === "all";
+      await featureApi.updateCollegeFeatures(
+        Array.from(enabledFeatures),
+        targetCollegeId,
+        isSyncAll,
+      );
+      if (isSyncAll) {
+        setSaveSuccessMsg(
+          "Feature configuration successfully synced across all institutions!",
+        );
+      } else {
+        setSaveSuccessMsg(
+          `Feature configuration saved for ${targetCollegeName}!`,
+        );
+      }
       setTimeout(() => setSaveSuccessMsg(""), 4000);
     } catch {
       setSaveSuccessMsg("Failed to save changes.");
@@ -144,7 +182,7 @@ export default function FeatureManagerSettings() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <Link
-              to="/college-admin"
+              to={isSuperAdmin ? "/admin-portal" : "/college-admin"}
               className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -157,14 +195,40 @@ export default function FeatureManagerSettings() {
                 Library Configuration
               </h1>
               <p className="text-xs text-slate-400">
-                Self-serve feature flags & module activation for{" "}
-                {collegeProfile.name}
+                {isSuperAdmin
+                  ? "Platform-wide functional module governance & institution synchronization"
+                  : `Self-serve feature flags & module activation for ${collegeProfile.name}`}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {isSuperAdmin && (
+            <div className="flex items-center gap-2 bg-slate-800/90 border border-slate-700/80 px-3 py-1.5 rounded-xl">
+              <Building2 className="w-4 h-4 text-indigo-400" />
+              <label
+                htmlFor="feature-target-tenant"
+                className="text-[11px] font-bold text-slate-300 uppercase tracking-wide"
+              >
+                Target:
+              </label>
+              <select
+                id="feature-target-tenant"
+                value={selectedCollegeId}
+                onChange={(e) => setSelectedCollegeId(e.target.value)}
+                className="bg-slate-900 border border-slate-700 text-white rounded-lg px-2.5 py-1 text-xs font-semibold focus:outline-none focus:border-indigo-500"
+              >
+                <option value="all">⚡ All Institutions (Global Sync)</option>
+                {colleges.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name} ({c.code || c.slug})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {saveSuccessMsg && (
             <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
               <CheckCircle2 className="w-4 h-4" /> {saveSuccessMsg}
@@ -175,7 +239,11 @@ export default function FeatureManagerSettings() {
             className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2 cursor-pointer"
           >
             <Check className="w-4 h-4" />
-            <span>Save Configuration</span>
+            <span>
+              {isSuperAdmin && selectedCollegeId === "all"
+                ? "Sync Across All Tenants"
+                : "Save Configuration"}
+            </span>
           </button>
         </div>
       </div>

@@ -278,6 +278,13 @@ export const SUPER_ADMIN_NAV_ITEMS = [
     feature: null,
   },
   {
+    key: "features",
+    label: "Feature Manager",
+    icon: Sliders,
+    route: "/admin-portal/features",
+    feature: null,
+  },
+  {
     key: "registration-queue",
     label: "Onboarding Queue",
     icon: FileCheck,

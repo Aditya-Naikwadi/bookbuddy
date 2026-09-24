@@ -11,8 +11,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@shared": path.resolve(__dirname, "../shared/src"),
-      "@bookbuddy/shared": path.resolve(__dirname, "../shared/src"),
+      "@shared": path.resolve(__dirname, "../shared/esm"),
+      "@bookbuddy/shared": path.resolve(__dirname, "../shared/esm"),
     },
   },
   test: {
@@ -83,7 +83,10 @@ export default defineConfig({
     cssCodeSplit: true,
     cssMinify: true,
     chunkSizeWarningLimit: 1000,
-    rollupOptions: {
+    rolldownOptions: {
+      checks: {
+        bundlerTimings: false,
+      },
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {

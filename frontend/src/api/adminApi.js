@@ -6,8 +6,10 @@ import {
 } from "@shared/schemas/admin";
 
 export const adminApi = {
-  getOverview: async () => {
-    const { data } = await apiClient.get("/dashboards/admin-portal/overview");
+  getOverview: async (refresh = false) => {
+    const { data } = await apiClient.get("/dashboards/admin-portal/overview", {
+      params: refresh ? { refresh: "true" } : {},
+    });
     return data.data;
   },
   listColleges: async () => {

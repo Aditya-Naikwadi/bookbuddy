@@ -111,9 +111,14 @@ export const featureApi = {
   },
 
   // GET /api/colleges/my-config
-  getCollegeFeatures: async () => {
+  getCollegeFeatures: async (collegeId = null) => {
     try {
-      const { data } = await apiClient.get("/colleges/my-config");
+      const config = {};
+      if (collegeId && collegeId !== "current" && collegeId !== "all") {
+        config.params = { collegeId };
+        config.headers = { "x-target-tenant-id": collegeId };
+      }
+      const { data } = await apiClient.get("/colleges/my-config", config);
       return data.data || data;
     } catch (err) {
       console.warn("Backend /colleges/my-config unavailable:", err);
@@ -132,11 +137,28 @@ export const featureApi = {
   },
 
   // POST /api/colleges/features/enable
-  updateCollegeFeatures: async (enabledFeatures) => {
+  updateCollegeFeatures: async (
+    enabledFeatures,
+    collegeId = null,
+    syncAll = false,
+  ) => {
     try {
-      const { data } = await apiClient.post("/colleges/features/enable", {
-        enabledFeatures,
-      });
+      const payload = { enabledFeatures };
+      if (collegeId && collegeId !== "all") {
+        payload.collegeId = collegeId;
+      }
+      if (syncAll || collegeId === "all") {
+        payload.syncAll = true;
+      }
+      const config = {};
+      if (collegeId && collegeId !== "current" && collegeId !== "all") {
+        config.headers = { "x-target-tenant-id": collegeId };
+      }
+      const { data } = await apiClient.post(
+        "/colleges/features/enable",
+        payload,
+        config,
+      );
       return data.data || data;
     } catch (err) {
       console.warn("Backend update feature config call failed:", err);

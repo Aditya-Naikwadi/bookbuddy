@@ -7,9 +7,14 @@ const AppError = require('../utils/AppError');
  */
 const bindTenantContext = async (req, res, next) => {
   try {
-    // 1. If SuperAdmin, allow optional target tenant override via header or default
+    // 1. If SuperAdmin, allow optional target tenant override via header, body, query or default
     if (req.user && (req.user.role === 'super-admin' || req.user.role === 'superadmin')) {
-      req.tenantId = req.headers['x-target-tenant-id'] || req.user.collegeId || null;
+      req.tenantId =
+        req.headers['x-target-tenant-id'] ||
+        req.body?.collegeId ||
+        req.query?.collegeId ||
+        req.user.collegeId ||
+        null;
       return next();
     }
 

@@ -285,9 +285,7 @@ function App() {
                     {/* Admin Portal (Super Admin) Routes */}
                     <Route
                       element={
-                        <ProtectedRoute
-                          allowedRoles={[ROLES.SUPER_ADMIN]}
-                        />
+                        <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]} />
                       }
                     >
                       <Route
@@ -301,6 +299,10 @@ function App() {
                       <Route
                         path="admin-portal/college-admins"
                         element={<CollegeAdminManager />}
+                      />
+                      <Route
+                        path="admin-portal/features"
+                        element={<FeatureManagerSettings />}
                       />
                       <Route
                         path="admin-portal/registration-queue"
@@ -404,9 +406,7 @@ function App() {
                     {/* General Dashboard Routes */}
                     <Route
                       element={
-                        <ProtectedRoute
-                          allowedRoles={CANONICAL_ROLES}
-                        />
+                        <ProtectedRoute allowedRoles={CANONICAL_ROLES} />
                       }
                     >
                       <Route
@@ -430,9 +430,7 @@ function App() {
                     {/* Canonical Tenant-Scoped Student Dashboard Module */}
                     <Route
                       element={
-                        <ProtectedRoute
-                          allowedRoles={[ROLES.STUDENT]}
-                        />
+                        <ProtectedRoute allowedRoles={[ROLES.STUDENT]} />
                       }
                     >
                       <Route
@@ -672,11 +670,7 @@ function App() {
 
                   {/* Standalone Downloads & Reader Routes */}
                   <Route
-                    element={
-                      <ProtectedRoute
-                        allowedRoles={CANONICAL_ROLES}
-                      />
-                    }
+                    element={<ProtectedRoute allowedRoles={CANONICAL_ROLES} />}
                   >
                     <Route path="/downloads" element={<Downloads />} />
                   </Route>

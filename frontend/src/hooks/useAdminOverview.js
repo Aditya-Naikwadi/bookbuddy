@@ -12,12 +12,21 @@ export const useAdminOverview = () => {
     refetchOnWindowFocus: true,
   });
 
+  const refetch = async () => {
+    return query.refetch({ queryKey: ["admin-overview"] });
+  };
+
   return {
     overview: query.data || null,
-    isLoading: query.isLoading,
+    isLoading: query.isLoading || query.isFetching,
+    isFetching: query.isFetching,
     isError: query.isError,
     error: query.error,
-    refetch: query.refetch,
+    refetch: () =>
+      adminApi.getOverview(true).then((data) => {
+        query.refetch();
+        return data;
+      }),
   };
 };
 

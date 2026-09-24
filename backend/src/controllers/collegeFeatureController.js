@@ -26,13 +26,19 @@ const DEFAULT_STUDENT_FEATURES = [
  * @access  Private (CollegeAdmin)
  */
 const getMyCollegeConfig = asyncHandler(async (req, res, next) => {
-  const collegeId = req.tenantId || req.user?.collegeId;
+  const isSuperAdmin =
+    req.user && (req.user.role === 'super-admin' || req.user.role === 'superadmin');
 
-  if (!collegeId) {
+  const collegeId =
+    req.tenantId ||
+    (isSuperAdmin ? req.query?.collegeId || req.headers['x-target-tenant-id'] : null) ||
+    req.user?.collegeId;
+
+  if (!collegeId || collegeId === 'all') {
     return res.json({
       success: true,
       data: {
-        college: { name: 'System Admin' },
+        college: { name: 'System Admin (Global Mode)', slug: 'all' },
         enabledFeatures: DEFAULT_STUDENT_FEATURES,
         pendingRequests: [],
       },
@@ -79,11 +85,63 @@ const getMyCollegeConfig = asyncHandler(async (req, res, next) => {
 /**
  * @desc    Enable feature (self-serve) or request approval for gated features
  * @route   POST /api/colleges/features/enable
- * @access  Private (CollegeAdmin)
+ * @access  Private (CollegeAdmin / SuperAdmin)
  */
 const enableOrRequestFeature = asyncHandler(async (req, res, next) => {
-  const collegeId = req.tenantId || req.user.collegeId;
-  const { featureId, enabledFeatures: bulkFeatures, reason } = req.body;
+  const isSuperAdmin =
+    req.user && (req.user.role === 'super-admin' || req.user.role === 'superadmin');
+  const { featureId, enabledFeatures: bulkFeatures, reason, syncAll } = req.body;
+
+  let collegeId =
+    req.tenantId ||
+    (isSuperAdmin
+      ? req.body?.collegeId || req.query?.collegeId || req.headers['x-target-tenant-id']
+      : null) ||
+    req.user?.collegeId;
+
+  // Handle global super-admin sync across all colleges
+  if (
+    isSuperAdmin &&
+    (syncAll || collegeId === 'all' || (!collegeId && Array.isArray(bulkFeatures)))
+  ) {
+    if (Array.isArray(bulkFeatures)) {
+      await College.updateMany(
+        {},
+        {
+          $set: {
+            enabledFeatures: bulkFeatures,
+            selectedServices: bulkFeatures,
+          },
+        }
+      );
+
+      const allColleges = await College.find({}).select('_id').lean();
+      if (allColleges.length > 0) {
+        const bulkOps = allColleges.map((c) => ({
+          updateOne: {
+            filter: { collegeId: c._id },
+            update: { $set: { enabledFeatures: bulkFeatures } },
+            upsert: true,
+          },
+        }));
+        await CollegeFeatureConfig.bulkWrite(bulkOps);
+      }
+
+      return res.json({
+        success: true,
+        status: 'updated',
+        message: `Feature configuration synced across all ${allColleges.length} institutional tenants.`,
+        data: {
+          enabledFeatures: bulkFeatures,
+          syncedCount: allColleges.length,
+        },
+      });
+    }
+  }
+
+  if (!collegeId) {
+    return next(new AppError('Target college context is required for feature updates.', 400));
+  }
 
   let config = await CollegeFeatureConfig.findOne({ collegeId });
   if (!config) {
