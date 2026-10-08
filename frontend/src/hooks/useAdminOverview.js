@@ -12,10 +12,6 @@ export const useAdminOverview = () => {
     refetchOnWindowFocus: true,
   });
 
-  const refetch = async () => {
-    return query.refetch({ queryKey: ["admin-overview"] });
-  };
-
   return {
     overview: query.data || null,
     isLoading: query.isLoading || query.isFetching,

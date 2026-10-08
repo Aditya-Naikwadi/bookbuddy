@@ -113,6 +113,11 @@ readingListSchema.pre('validate', function (next) {
     this.title = 'Untitled Reading List';
   }
 
+  const { sanitizeHtmlString } = require('../utils/sanitize');
+  if (this.name) this.name = sanitizeHtmlString(this.name);
+  if (this.title) this.title = sanitizeHtmlString(this.title);
+  if (this.description) this.description = sanitizeHtmlString(this.description);
+
   if (typeof next === 'function') {
     next();
   }

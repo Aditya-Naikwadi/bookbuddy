@@ -106,6 +106,10 @@ bookSchema.plugin(tenantScopingPlugin);
 
 // Keep isILLShared/isShareableAcrossColleges and publishedYear/publishYear in sync on save
 bookSchema.pre('save', function () {
+  const { sanitizeHtmlString } = require('../utils/sanitize');
+  if (this.title) this.title = sanitizeHtmlString(this.title);
+  if (this.author) this.author = sanitizeHtmlString(this.author);
+
   if (this.publishedYear && !this.publishYear) {
     this.publishYear = this.publishedYear;
   } else if (this.publishYear && !this.publishedYear) {

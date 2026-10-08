@@ -45,4 +45,13 @@ const bookSuggestionSchema = new mongoose.Schema(
   }
 );
 
+const { sanitizeHtmlString } = require('../utils/sanitize');
+
+bookSuggestionSchema.pre('save', function () {
+  if (this.title) this.title = sanitizeHtmlString(this.title);
+  if (this.author) this.author = sanitizeHtmlString(this.author);
+  if (this.reason) this.reason = sanitizeHtmlString(this.reason);
+  if (this.adminNote) this.adminNote = sanitizeHtmlString(this.adminNote);
+});
+
 module.exports = mongoose.model('BookSuggestion', bookSuggestionSchema);

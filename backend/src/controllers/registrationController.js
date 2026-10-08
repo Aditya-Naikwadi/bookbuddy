@@ -10,6 +10,7 @@ const {
   sendAdminDomainVerificationEmail,
 } = require('../services/notificationService');
 const { normalizeEmail, normalizeStudentId } = require('@bookbuddy/shared');
+const { escapeRegExp } = require('../utils/sanitize');
 
 // @desc    Get active colleges list for student signup dropdown
 // @route   GET /api/registration/colleges
@@ -294,11 +295,12 @@ const submitTenantOnboarding = async (req, res, next) => {
     }
 
     // 2. Uniqueness checks for College domain, slug, and name
+    const escapedLegalName = escapeRegExp(effectiveLegalName);
     const existingCollege = await College.findOne({
       $or: [
         { domain: normalizedDomain },
         { slug: normalizedSlug },
-        { name: new RegExp(`^${effectiveLegalName}$`, 'i') },
+        { name: new RegExp(`^${escapedLegalName}$`, 'i') },
       ],
     });
     if (existingCollege) {
@@ -317,7 +319,7 @@ const submitTenantOnboarding = async (req, res, next) => {
       $or: [
         { 'tenantData.domain': normalizedDomain },
         { 'tenantData.desiredSlug': normalizedSlug },
-        { 'tenantData.legalName': new RegExp(`^${effectiveLegalName}$`, 'i') },
+        { 'tenantData.legalName': new RegExp(`^${escapedLegalName}$`, 'i') },
       ],
     });
     if (existingRequest) {

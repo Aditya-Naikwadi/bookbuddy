@@ -6,12 +6,20 @@ const EResource = require('../models/EResource');
 const ReadingPosition = require('../models/ReadingPosition');
 const AppError = require('../utils/AppError');
 const tenantScope = require('../utils/tenantScope');
+const { generateSafeFilename, validateZipBomb } = require('../middlewares/fileUploadValidation');
 
 /**
- * Validates uploaded EPUB files for validity and malicious script tags
+ * Validates uploaded EPUB files for validity, zip bombs, and malicious script tags
  */
 const validateEPUBStructure = (filePath) => {
   try {
+    // 0. Zip bomb & zip slip protection
+    validateZipBomb(filePath, {
+      maxEntries: 1000,
+      maxTotalBytes: 200 * 1024 * 1024,
+      maxRatio: 100,
+    });
+
     const zip = new AdmZip(filePath);
     const zipEntries = zip.getEntries();
 
@@ -74,7 +82,7 @@ const uploadEbook = async (req, res, next) => {
       fs.mkdirSync(finalDir, { recursive: true });
     }
 
-    const finalPath = path.join(finalDir, `${Date.now()}-${req.file.originalname}`);
+    const finalPath = path.join(finalDir, generateSafeFilename(req.file.originalname, 'ebook'));
 
     // Perform EPUB structural and script validation
     const check = validateEPUBStructure(tempPath);
@@ -216,7 +224,11 @@ const streamEbookContent = async (req, res, next) => {
       }
 
       // Set backend-determined headers
-      res.setHeader('Content-Type', 'application/epub+zip');
+      const isPdf =
+        resource.type === 'pdf' ||
+        resource.fileType === 'pdf' ||
+        absolutePath.toLowerCase().endsWith('.pdf');
+      res.setHeader('Content-Type', isPdf ? 'application/pdf' : 'application/epub+zip');
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
 

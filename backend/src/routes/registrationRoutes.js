@@ -3,6 +3,12 @@ const router = express.Router();
 const path = require('path');
 const multer = require('multer');
 
+const {
+  createSafeFileFilter,
+  generateSafeFilename,
+  validateMagicBytes,
+} = require('../middlewares/fileUploadValidation');
+
 // Configure Multer for verification document uploads (Flow B)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -14,25 +20,22 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `proof-${uniqueSuffix}${ext}`);
+    try {
+      const safeFilename = generateSafeFilename(file.originalname, 'proof');
+      cb(null, safeFilename);
+    } catch (err) {
+      cb(err);
+    }
   },
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowedMimeTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
-  if (allowedMimeTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Invalid document type. Only PDF, JPG, and PNG files are allowed.'), false);
-  }
-};
-
 const uploadProof = multer({
   storage,
-  fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: createSafeFileFilter({
+    allowedExts: ['.pdf', '.jpg', '.jpeg', '.png'],
+    allowedMimes: ['application/pdf', 'image/jpeg', 'image/png'],
+  }),
+  limits: { fileSize: 10 * 1024 * 1024, files: 1 }, // 10MB limit, 1 file
 });
 
 const {
@@ -67,6 +70,7 @@ router.post(
   '/tenant-onboarding',
   authLimiter,
   uploadProof.single('proofDocument'),
+  validateMagicBytes(['application/pdf', 'image/jpeg', 'image/png']),
   validate(tenantOnboardingSchema),
   submitTenantOnboarding
 );

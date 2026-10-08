@@ -66,6 +66,29 @@ const reviewSchema = new mongoose.Schema(
   }
 );
 
+const { sanitizeHtmlString } = require('../utils/sanitize');
+
+// Write-time sanitization hooks
+reviewSchema.pre('save', function () {
+  if (this.title) this.title = sanitizeHtmlString(this.title);
+  if (this.comment) this.comment = sanitizeHtmlString(this.comment);
+  if (this.text) this.text = sanitizeHtmlString(this.text);
+});
+
+reviewSchema.pre('findOneAndUpdate', function () {
+  const update = this.getUpdate();
+  if (update) {
+    if (update.title) update.title = sanitizeHtmlString(update.title);
+    if (update.comment) update.comment = sanitizeHtmlString(update.comment);
+    if (update.text) update.text = sanitizeHtmlString(update.text);
+    if (update.$set) {
+      if (update.$set.title) update.$set.title = sanitizeHtmlString(update.$set.title);
+      if (update.$set.comment) update.$set.comment = sanitizeHtmlString(update.$set.comment);
+      if (update.$set.text) update.$set.text = sanitizeHtmlString(update.$set.text);
+    }
+  }
+});
+
 // Indexes
 reviewSchema.index({ userId: 1, bookId: 1 }, { unique: true, sparse: true });
 reviewSchema.index({ bookId: 1, status: 1, createdAt: -1 });

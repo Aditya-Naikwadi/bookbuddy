@@ -845,6 +845,7 @@ exports.downloadBatchHandouts = asyncHandler(async (req, res, next) => {
   const csvBuffer = xlsx.utils.sheet_to_csv(worksheet);
 
   res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Content-Disposition', `attachment; filename=credential_handouts_${batchId}.csv`);
   res.status(200).send(csvBuffer);
 });
@@ -872,6 +873,7 @@ exports.exportRoster = asyncHandler(async (req, res) => {
   const csvBuffer = xlsx.utils.sheet_to_csv(worksheet);
 
   res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Content-Disposition', `attachment; filename=roster_export_${Date.now()}.csv`);
   res.status(200).send(csvBuffer);
 });

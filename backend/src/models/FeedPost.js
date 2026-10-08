@@ -62,4 +62,23 @@ const feedPostSchema = new mongoose.Schema(
   }
 );
 
+const { sanitizeHtmlString } = require('../utils/sanitize');
+
+feedPostSchema.pre('save', function () {
+  if (this.title) this.title = sanitizeHtmlString(this.title);
+  if (this.body) this.body = sanitizeHtmlString(this.body);
+});
+
+feedPostSchema.pre('findOneAndUpdate', function () {
+  const update = this.getUpdate();
+  if (update) {
+    if (update.title) update.title = sanitizeHtmlString(update.title);
+    if (update.body) update.body = sanitizeHtmlString(update.body);
+    if (update.$set) {
+      if (update.$set.title) update.$set.title = sanitizeHtmlString(update.$set.title);
+      if (update.$set.body) update.$set.body = sanitizeHtmlString(update.$set.body);
+    }
+  }
+});
+
 module.exports = mongoose.model('FeedPost', feedPostSchema);

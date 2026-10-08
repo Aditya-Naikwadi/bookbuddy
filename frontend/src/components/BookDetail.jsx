@@ -9,6 +9,7 @@ import ReviewList from "./ReviewList";
 export const BookDetail = ({ book, currentUserId }) => {
   const queryClient = useQueryClient();
   const [holdMessage, setHoldMessage] = useState(null);
+  const [isHolding, setIsHolding] = useState(false);
 
   const bookId = book?._id;
 
@@ -37,12 +38,23 @@ export const BookDetail = ({ book, currentUserId }) => {
     },
   });
 
-  // Direct One-Tap Hold placement handler
+  // Direct One-Tap Hold placement handler with in-flight guard
   const handlePlaceHold = async () => {
+    if (isHolding) return;
+    setIsHolding(true);
     try {
-      const res = await apiClient.post("/dashboards/student/reservations", {
-        bookId,
-      });
+      const idempotencyKey = `hold_${bookId}_${currentUserId || "user"}_${Date.now()}`;
+      const res = await apiClient.post(
+        "/dashboards/student/reservations",
+        {
+          bookId,
+        },
+        {
+          headers: {
+            "Idempotency-Key": idempotencyKey,
+          },
+        },
+      );
       setHoldMessage({
         type: "success",
         text: res.data.message || "Hold placed successfully!",
@@ -54,6 +66,8 @@ export const BookDetail = ({ book, currentUserId }) => {
           err.response?.data?.message ||
           "Failed to place hold. Please try again.",
       });
+    } finally {
+      setIsHolding(false);
     }
   };
 
@@ -117,9 +131,10 @@ export const BookDetail = ({ book, currentUserId }) => {
               <Button
                 variant="primary"
                 onClick={handlePlaceHold}
+                disabled={isHolding}
                 className="px-6 h-10 text-sm font-semibold"
               >
-                Borrow Book
+                {isHolding ? "Processing..." : "Borrow Book"}
               </Button>
             ) : (
               <>
@@ -127,9 +142,10 @@ export const BookDetail = ({ book, currentUserId }) => {
                 <Button
                   variant="primary"
                   onClick={handlePlaceHold}
+                  disabled={isHolding}
                   className="px-5 h-10 text-sm font-semibold"
                 >
-                  Join Queue
+                  {isHolding ? "Joining..." : "Join Queue"}
                 </Button>
 
                 {/* "Notify me when available" / "Watching" Button */}

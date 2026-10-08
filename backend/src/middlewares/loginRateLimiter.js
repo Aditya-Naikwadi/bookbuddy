@@ -36,7 +36,13 @@ const getClientKey = (req) => {
     req.ip ||
     req.socket?.remoteAddress ||
     'unknown';
-  const email = (req.body?.email || req.body?.studentId || '').toLowerCase().trim();
+  const rawIdent =
+    typeof req.body?.email === 'string'
+      ? req.body.email
+      : typeof req.body?.studentId === 'string'
+        ? req.body.studentId
+        : '';
+  const email = rawIdent.toLowerCase().trim();
   return `${ip}_${email}`;
 };
 
@@ -86,7 +92,13 @@ const resetFailedLogins = async (req) => {
   }
   try {
     const { limiters } = require('./rateLimiters');
-    const email = (req.body?.email || req.body?.studentId || '').toLowerCase().trim();
+    const rawIdent =
+      typeof req.body?.email === 'string'
+        ? req.body.email
+        : typeof req.body?.studentId === 'string'
+          ? req.body.studentId
+          : '';
+    const email = rawIdent.toLowerCase().trim();
     if (email && limiters?.authEmail?.delete) {
       await limiters.authEmail.delete(email);
     }

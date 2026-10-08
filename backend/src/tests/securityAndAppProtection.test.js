@@ -312,7 +312,8 @@ describe('security And App Protection Consolidated Suite', () => {
     const config = require('../config');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_ratelimit_test';
+    process.env.MONGO_URI =
+      process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_ratelimit_test';
     process.env.JWT_SECRET = 'testjwtsecretkey999';
     process.env.JWT_REFRESH_SECRET = 'testjwtrefreshsecretkey999';
     process.env.JWT_ACCESS_EXPIRY = '15m';
@@ -561,7 +562,7 @@ describe('security And App Protection Consolidated Suite', () => {
     const mongoose = require('mongoose');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_test';
+    process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_test';
 
     jest.setTimeout(30000);
 

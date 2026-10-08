@@ -33,13 +33,50 @@ const requireIdempotency = async (req, res, next) => {
   }
 
   if (cachedData) {
+    if (cachedData.inFlight) {
+      return next(
+        new AppError(
+          'A request with this Idempotency-Key is currently in progress. Please wait.',
+          409
+        )
+      );
+    }
     res.setHeader('X-Cache-Lookup', 'HIT-Idempotency');
     return res.status(cachedData.statusCode).json(cachedData.body);
   }
 
-  // 2. Intercept res.json to capture response for caching
+  // 2. Mark in-flight to prevent concurrent double-submits
+  const inFlightPayload = { inFlight: true, timestamp: Date.now() };
+  if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {
+    await redisClient.set(cacheKey, JSON.stringify(inFlightPayload), 'EX', 60).catch(() => {});
+  } else {
+    memoryCache.set(cacheKey, inFlightPayload, 60);
+  }
+
+  // Clear in-flight lock if request closes unexpectedly before finishing
+  res.on('close', () => {
+    if (!res.headersSent) {
+      if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {
+        redisClient.del(cacheKey).catch(() => {});
+      } else {
+        memoryCache.del(cacheKey);
+      }
+    }
+  });
+
+  // 3. Intercept res.json to capture response for caching
   const originalJson = res.json.bind(res);
   res.json = function (body) {
+    // Release in-flight lock without caching on transient 5xx server failures
+    if (res.statusCode >= 500) {
+      if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {
+        redisClient.del(cacheKey).catch(() => {});
+      } else {
+        memoryCache.del(cacheKey);
+      }
+      return originalJson(body);
+    }
+
     const responsePayload = {
       statusCode: res.statusCode,
       body,

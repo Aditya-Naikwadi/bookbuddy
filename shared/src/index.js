@@ -9,6 +9,7 @@ const library = require('./schemas/library');
 const personalization = require('./schemas/personalization');
 const roles = require('./constants/roles');
 const normalization = require('./utils/normalization');
+const url = require('./utils/url');
 
 module.exports = {
   ...common,
@@ -22,4 +23,5 @@ module.exports = {
   ...personalization,
   ...roles,
   ...normalization,
+  ...url,
 };

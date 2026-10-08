@@ -15,6 +15,7 @@ import {
 import registrationApi from "../../../api/registrationApi";
 import OpsHeader from "../../../components/ops/OpsHeader";
 import NoPendingRequests from "../../../components/ops/illustrations/NoPendingRequests";
+import { sanitizeUrl } from "@bookbuddy/shared";
 
 export default function OnboardingReviewQueue() {
   const [requests, setRequests] = useState([]);
@@ -434,9 +435,9 @@ export default function OnboardingReviewQueue() {
 
                       {tenant.verificationDocumentUrl && (
                         <a
-                          href={tenant.verificationDocumentUrl}
+                          href={sanitizeUrl(tenant.verificationDocumentUrl)}
                           target="_blank"
-                          rel="noreferrer"
+                          rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold text-xs hover:underline mt-2"
                         >
                           <Eye className="w-3.5 h-3.5" />

@@ -6,36 +6,24 @@ const UploadAuditLog = require('../models/UploadAuditLog');
 const AppError = require('../utils/AppError');
 const { processBulkUploadJob } = require('../services/bulkUploadWorker');
 
+const { createSafeFileFilter, validateMagicBytes } = require('../middlewares/fileUploadValidation');
+
 // Multer memory storage setup (Serverless & container safe, prevents EROFS)
 const storage = multer.memoryStorage();
 
-const fileFilter = (req, file, cb) => {
-  const ext = path.extname(file.originalname).toLowerCase();
-  const allowedMimeTypes = [
-    'text/csv',
-    'application/vnd.ms-excel',
-    'application/csv',
-    'text/plain',
-    'application/octet-stream',
-  ];
-
-  if (ext === '.csv' || allowedMimeTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(
-      new AppError(
-        'Invalid file format. Only CSV files (.csv) are supported for bulk student upload.',
-        400
-      ),
-      false
-    );
-  }
-};
-
 const uploadMiddleware = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-  fileFilter,
+  limits: { fileSize: 10 * 1024 * 1024, files: 1 }, // 10MB limit, 1 file
+  fileFilter: createSafeFileFilter({
+    allowedExts: ['.csv'],
+    allowedMimes: [
+      'text/csv',
+      'application/vnd.ms-excel',
+      'application/csv',
+      'text/plain',
+      'application/octet-stream',
+    ],
+  }),
 }).single('file');
 
 // @desc    Upload student spreadsheet and enqueue async ingestion job
@@ -48,7 +36,6 @@ const submitBulkUpload = async (req, res, next) => {
     }
 
     // Validate magic bytes and scan for malware
-    const { validateMagicBytes } = require('../middlewares/fileUploadValidation');
     return validateMagicBytes(['text/csv', 'text/plain'])(req, res, async (vErr) => {
       if (vErr) return next(vErr);
 
@@ -191,6 +178,7 @@ const downloadUploadErrorReport = async (req, res, next) => {
     }
 
     res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Disposition', `attachment; filename=error_report_${jobId}.csv`);
     res.sendFile(fullPath);
   } catch (error) {
@@ -231,6 +219,7 @@ const downloadPrintedHandouts = async (req, res, next) => {
     }
 
     res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Disposition', `attachment; filename=credential_handouts_${jobId}.csv`);
     return res.status(200).send(csv);
   } catch (error) {
@@ -352,6 +341,7 @@ const downloadAuditLogHandouts = async (req, res, next) => {
     }
 
     res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader(
       'Content-Disposition',
       `attachment; filename=credential_handouts_v${version}.csv`

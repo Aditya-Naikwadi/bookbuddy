@@ -144,7 +144,7 @@ export const useBookSearch = (collegeIdParam, filters = {}) => {
       collegeId,
       { searchQuery, category, format, available, sortBy, page, limit, scope },
     ],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const { data } = await apiClient.get(
         `/college/${collegeId}/books/search`,
         {
@@ -158,6 +158,7 @@ export const useBookSearch = (collegeIdParam, filters = {}) => {
             limit,
             scope,
           },
+          signal,
         },
       );
       return {
@@ -229,9 +230,10 @@ export const useAggregatedBooks = (filters = {}) => {
 
   return useQuery({
     queryKey: ["aggregatedBooks", { searchTerm, source, page, limit }],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const { data } = await apiClient.get("/aggregator", {
         params: { q: searchTerm, source, page, limit },
+        signal,
       });
       return {
         books: data?.data || [],

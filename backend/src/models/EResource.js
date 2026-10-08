@@ -177,6 +177,14 @@ const eResourceSchema = new mongoose.Schema(
 
 // Pre-save & validation synchronization hook between legacy and new field names
 eResourceSchema.pre(['save', 'validate'], function (next) {
+  const { isSafeUrl } = require('@bookbuddy/shared');
+  if (this.fileUrl && !isSafeUrl(this.fileUrl)) {
+    const err = new Error('Invalid or unsafe file URL scheme');
+    err.name = 'ValidationError';
+    if (typeof next === 'function') return next(err);
+    throw err;
+  }
+
   if (this.uploadedBy && !this.submittedBy) {
     this.submittedBy = this.uploadedBy;
   } else if (this.submittedBy && !this.uploadedBy) {

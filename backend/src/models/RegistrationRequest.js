@@ -161,6 +161,19 @@ registrationRequestSchema
 registrationRequestSchema.set('toJSON', { virtuals: true });
 registrationRequestSchema.set('toObject', { virtuals: true });
 
+const { isSafeUrl } = require('@bookbuddy/shared');
+
+registrationRequestSchema.pre('validate', function () {
+  if (this.tenantData?.verificationDocumentUrl) {
+    if (!isSafeUrl(this.tenantData.verificationDocumentUrl)) {
+      this.invalidate(
+        'tenantData.verificationDocumentUrl',
+        'Invalid or unsafe verification document URL'
+      );
+    }
+  }
+});
+
 // Compound index for quick lookup of existing emails or domains
 registrationRequestSchema.index({ 'studentData.email': 1 });
 registrationRequestSchema.index({ 'tenantData.adminEmail': 1 });

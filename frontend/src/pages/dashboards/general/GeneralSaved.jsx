@@ -362,8 +362,9 @@ const GeneralSaved = () => {
                     onClick={() => {
                       if (item.gutenbergId) {
                         window.open(
-                          `https://www.gutenberg.org/ebooks/${item.gutenbergId}`,
+                          `https://www.gutenberg.org/ebooks/${encodeURIComponent(item.gutenbergId)}`,
                           "_blank",
+                          "noopener,noreferrer",
                         );
                       } else {
                         toast.info(

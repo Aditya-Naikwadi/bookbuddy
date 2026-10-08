@@ -1,5 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
 const HelpArticle = require('../models/HelpArticle');
+const { escapeRegExp } = require('../utils/sanitize');
 
 // @desc    Get help articles / FAQs
 // @route   GET /api/v1/help/articles
@@ -11,10 +12,11 @@ const getHelpArticles = asyncHandler(async (req, res) => {
 
   if (category) query.category = category;
   if (search) {
+    const escaped = escapeRegExp(String(search).trim());
     query.$or = [
-      { title: { $regex: search, $options: 'i' } },
-      { content: { $regex: search, $options: 'i' } },
-      { tags: { $in: [search.toLowerCase()] } },
+      { title: { $regex: escaped, $options: 'i' } },
+      { content: { $regex: escaped, $options: 'i' } },
+      { tags: { $in: [String(search).trim().toLowerCase()] } },
     ];
   }
 

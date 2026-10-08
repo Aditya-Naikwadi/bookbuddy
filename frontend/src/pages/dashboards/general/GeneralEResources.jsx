@@ -288,7 +288,10 @@ const GeneralEResources = () => {
       {isAggregatedLoading && (
         <div className="bg-indigo-950/60 border border-indigo-800/60 p-2.5 px-4 rounded-xl text-xs font-semibold text-indigo-300 flex items-center gap-2 animate-pulse">
           <div className="w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
-          <span>Fetching public domain e-resources from external archives (Gutenberg & OpenLibrary)...</span>
+          <span>
+            Fetching public domain e-resources from external archives (Gutenberg
+            & OpenLibrary)...
+          </span>
         </div>
       )}
 
@@ -402,7 +405,7 @@ const GeneralEResources = () => {
                       item.downloadUrl ||
                       item.pdfUrl ||
                       (item.gutenbergId
-                        ? `https://www.gutenberg.org/files/${item.gutenbergId}/${item.gutenbergId}-h/${item.gutenbergId}-h.htm`
+                        ? `https://www.gutenberg.org/files/${encodeURIComponent(item.gutenbergId)}/${encodeURIComponent(item.gutenbergId)}-h/${encodeURIComponent(item.gutenbergId)}-h.htm`
                         : null);
                     if (url) {
                       setActiveDigitalResource({
@@ -412,8 +415,9 @@ const GeneralEResources = () => {
                       });
                     } else if (item.gutenbergId) {
                       window.open(
-                        `https://www.gutenberg.org/ebooks/${item.gutenbergId}`,
+                        `https://www.gutenberg.org/ebooks/${encodeURIComponent(item.gutenbergId)}`,
                         "_blank",
+                        "noopener,noreferrer",
                       );
                     } else {
                       setActiveDigitalResource({

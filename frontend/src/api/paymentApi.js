@@ -10,13 +10,25 @@ import {
  * @param {Object} payload - { fineId, fineIds, currency }
  */
 export const createRazorpayOrder = async (payload = {}) => {
-  const { fineId, fineIds, currency = "INR" } = payload;
+  const {
+    fineId,
+    fineIds,
+    currency = "INR",
+    idempotencyKey: customIdempotencyKey,
+  } = payload;
   const validated = createPaymentOrderBodySchema.parse({
     fineId: fineId || undefined,
     fineIds: fineIds || undefined,
     currency,
   });
-  const { data } = await apiClient.post("/payments/create-order", validated);
+  const idempotencyKey =
+    customIdempotencyKey ||
+    `rzp_order_${fineId || (fineIds ? fineIds.join("_") : "all")}_${Date.now()}`;
+  const { data } = await apiClient.post("/payments/create-order", validated, {
+    headers: {
+      "Idempotency-Key": idempotencyKey,
+    },
+  });
   return data;
 };
 

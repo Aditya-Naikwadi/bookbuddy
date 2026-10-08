@@ -9,3 +9,4 @@ export * from './schemas/library.js';
 export * from './schemas/personalization.js';
 export * from './constants/roles.js';
 export * from './utils/normalization.js';
+export * from './utils/url.js';

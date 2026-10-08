@@ -298,6 +298,10 @@ userSchema.pre('save', async function () {
   if (this.studentId) {
     this.studentId = normalizeStudentId(this.studentId);
   }
+  const { sanitizeHtmlString } = require('../utils/sanitize');
+  if (this.name) {
+    this.name = sanitizeHtmlString(this.name);
+  }
   if (this.email) {
     this.email = normalizeEmail(this.email) || undefined;
   } else {

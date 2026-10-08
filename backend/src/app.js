@@ -49,7 +49,6 @@ app.use(
         scriptSrc: [
           "'self'",
           "'unsafe-inline'",
-          "'unsafe-eval'",
           'blob:',
           'https://accounts.google.com',
           'https://apis.google.com',
@@ -68,6 +67,8 @@ app.use(
         ],
         connectSrc: ["'self'", 'ws:', 'wss:', 'http:', 'https:'],
         workerSrc: ["'self'", 'blob:'],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
         frameAncestors: ["'none'"],
       },
     },

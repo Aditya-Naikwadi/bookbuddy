@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Share2,
   Search,
@@ -20,14 +20,22 @@ export const CrossCollegeCatalog = () => {
   const [myRequests, setMyRequests] = useState([]);
   const [selectedResource, setSelectedResource] = useState(null);
   const [requesting, setRequesting] = useState(false);
+  const searchAbortRef = useRef(null);
 
   const fetchCrossCollegeCatalog = async (query = "", showLoading = false) => {
+    // Abort any active search to prevent stale out-of-order response overwrite
+    if (searchAbortRef.current) {
+      searchAbortRef.current.abort();
+    }
+    searchAbortRef.current = new AbortController();
+
     try {
       if (showLoading) setLoading(true);
       const token = localStorage.getItem("token");
       const res = await fetch(
         `/api/v1/catalog/cross-college?q=${encodeURIComponent(query)}`,
         {
+          signal: searchAbortRef.current.signal,
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -39,7 +47,9 @@ export const CrossCollegeCatalog = () => {
         setCatalogItems(data.data || { books: [], eresources: [] });
       }
     } catch (err) {
-      console.error("Error fetching cross-college catalog:", err);
+      if (err.name !== "AbortError") {
+        console.error("Error fetching cross-college catalog:", err);
+      }
     } finally {
       setLoading(false);
     }
@@ -66,6 +76,12 @@ export const CrossCollegeCatalog = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Asynchronous cross-college catalog fetch updates state after API response
     fetchCrossCollegeCatalog();
     fetchMyRequests();
+
+    return () => {
+      if (searchAbortRef.current) {
+        searchAbortRef.current.abort();
+      }
+    };
   }, []);
 
   const handleSearchSubmit = (e) => {
@@ -74,16 +90,18 @@ export const CrossCollegeCatalog = () => {
   };
 
   const handleConfirmRequest = async () => {
-    if (!selectedResource) return;
+    if (!selectedResource || requesting) return;
 
     try {
       setRequesting(true);
       const token = localStorage.getItem("token");
+      const idempotencyKey = `share_${selectedResource._id}_${Date.now()}`;
       const res = await fetch("/api/v1/share-requests", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          "Idempotency-Key": idempotencyKey,
         },
         body: JSON.stringify({
           resourceId: selectedResource._id,

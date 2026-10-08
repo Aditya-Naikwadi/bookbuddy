@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Bell,
   Filter,
@@ -15,8 +15,8 @@ import { Button } from "../../../components/ui/Button";
 import useAuthStore from "../../../store/authStore";
 import { BookDetail } from "../../../components/BookDetail";
 
-// Fetch catalog with complete search & filter parameters
-const fetchCatalog = async ({ queryKey }) => {
+// Fetch catalog with complete search & filter parameters and cancellation signal
+const fetchCatalog = async ({ queryKey, signal }) => {
   const { query, category, format, availability, sortBy, page } = queryKey[1];
   const { data } = await apiClient.get("/dashboards/student/catalog", {
     params: {
@@ -28,6 +28,7 @@ const fetchCatalog = async ({ queryKey }) => {
       page,
       limit: 10,
     },
+    signal,
   });
   return data; // returns success: true, data: [...], pagination: { total, page, pages }
 };
@@ -64,6 +65,7 @@ const Catalog = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [queueMessage, setQueueMessage] = useState(null);
   const [selectedBook, setSelectedBook] = useState(null);
+  const [holdingBookId, setHoldingBookId] = useState(null);
 
   // Debounce search query by 300ms
   useEffect(() => {
@@ -94,27 +96,43 @@ const Catalog = () => {
     ? "Loading catalog..."
     : `Found ${pagination.total} books${term}.`;
 
-  // Place a reservation hold on a checked-out book
-  const handlePlaceHold = async (bookId) => {
-    try {
-      const res = await apiClient.post("/dashboards/student/reservations", {
-        bookId,
-      });
-      setQueueMessage({
-        type: "success",
-        text: res.data.message || "Hold placed successfully!",
-      });
-      refetch();
-    } catch (err) {
-      setQueueMessage({
-        type: "error",
-        text:
-          err.response?.data?.message ||
-          "Failed to place hold. Please try again.",
-      });
-    }
-    setTimeout(() => setQueueMessage(null), 5000);
-  };
+  // Place a reservation hold on a checked-out book with in-flight guard
+  const handlePlaceHold = useCallback(
+    async (bookId) => {
+      if (holdingBookId) return;
+      setHoldingBookId(bookId);
+      try {
+        const idempotencyKey = `hold_${bookId}_${user?._id || "user"}_${Date.now()}`;
+        const res = await apiClient.post(
+          "/dashboards/student/reservations",
+          {
+            bookId,
+          },
+          {
+            headers: {
+              "Idempotency-Key": idempotencyKey,
+            },
+          },
+        );
+        setQueueMessage({
+          type: "success",
+          text: res.data.message || "Hold placed successfully!",
+        });
+        refetch();
+      } catch (err) {
+        setQueueMessage({
+          type: "error",
+          text:
+            err.response?.data?.message ||
+            "Failed to place hold. Please try again.",
+        });
+      } finally {
+        setHoldingBookId(null);
+      }
+      setTimeout(() => setQueueMessage(null), 5000);
+    },
+    [holdingBookId, user, refetch],
+  );
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 md:px-6">
@@ -502,12 +520,15 @@ const Catalog = () => {
                       <Button
                         variant="primary"
                         className="mt-auto w-full text-xs h-9 font-semibold"
+                        disabled={holdingBookId === book._id}
                         onClick={(e) => {
                           e.stopPropagation();
                           handlePlaceHold(book._id);
                         }}
                       >
-                        Join Queue
+                        {holdingBookId === book._id
+                          ? "Reserving..."
+                          : "Join Queue"}
                       </Button>
                     )}
                   </div>

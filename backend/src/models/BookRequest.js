@@ -53,6 +53,15 @@ const bookRequestSchema = new mongoose.Schema(
   }
 );
 
+const { sanitizeHtmlString } = require('../utils/sanitize');
+
+bookRequestSchema.pre('save', function () {
+  if (this.title) this.title = sanitizeHtmlString(this.title);
+  if (this.author) this.author = sanitizeHtmlString(this.author);
+  if (this.reason) this.reason = sanitizeHtmlString(this.reason);
+  if (this.adminNotes) this.adminNotes = sanitizeHtmlString(this.adminNotes);
+});
+
 bookRequestSchema.index({ collegeId: 1, userId: 1, status: 1 });
 bookRequestSchema.index({ collegeId: 1, title: 1, author: 1 });
 

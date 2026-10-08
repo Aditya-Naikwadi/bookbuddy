@@ -217,8 +217,14 @@ const authLimiter = async (req, res, next) => {
     return next();
   }
 
+  const rawIdentifier =
+    typeof req.body?.email === 'string'
+      ? req.body.email
+      : typeof req.body?.studentId === 'string'
+        ? req.body.studentId
+        : '';
+  const identifier = rawIdentifier.trim().toLowerCase();
   const ip = getClientIp(req);
-  const identifier = (req.body?.email || req.body?.studentId || '').trim().toLowerCase();
 
   try {
     // 1. IP-only check for authentication routes

@@ -141,6 +141,10 @@ annotationSchema.pre('validate', function (next) {
     throw err;
   }
 
+  const { sanitizeHtmlString } = require('../utils/sanitize');
+  if (this.label) this.label = sanitizeHtmlString(this.label);
+  if (this.noteText) this.noteText = sanitizeHtmlString(this.noteText);
+
   if (typeof next === 'function') {
     next();
   }

@@ -22,6 +22,7 @@ import collegeAdminApi from "../../../api/collegeAdminApi";
 import apiClient from "../../../api/client";
 import { toast } from "../../../store/toastStore";
 import { rejectStudentJoinRequestBodySchema } from "@shared/schemas/joinRequests";
+import { useDebounce } from "../../../hooks/useDebounce";
 
 const EMPTY_ARRAY = [];
 
@@ -60,6 +61,7 @@ export default function PatronsDesk() {
 
   // Student Join Requests states
   const [joinRequestsSearch, setJoinRequestsSearch] = useState("");
+  const debouncedJoinRequestsSearch = useDebounce(joinRequestsSearch, 350);
   const [joinRequestsStatus, setJoinRequestsStatus] = useState("pending");
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [selectedRejectRequest, setSelectedRejectRequest] = useState(null);
@@ -83,18 +85,22 @@ export default function PatronsDesk() {
     enabled: !!selectedPatronId,
   });
 
-  // Queries: Student Join Requests
+  // Queries: Student Join Requests (debounced search)
   const {
     data: joinRequestsData,
     isLoading: isJoinRequestsLoading,
     isFetching: isJoinRequestsFetching,
     refetch: refetchJoinRequests,
   } = useQuery({
-    queryKey: ["studentJoinRequests", joinRequestsStatus, joinRequestsSearch],
+    queryKey: [
+      "studentJoinRequests",
+      joinRequestsStatus,
+      debouncedJoinRequestsSearch,
+    ],
     queryFn: () =>
       collegeAdminApi.getStudentJoinRequests({
         status: joinRequestsStatus === "all" ? undefined : joinRequestsStatus,
-        search: joinRequestsSearch.trim() || undefined,
+        search: debouncedJoinRequestsSearch.trim() || undefined,
       }),
   });
 
@@ -176,7 +182,8 @@ export default function PatronsDesk() {
     onError: (err) => {
       toast.error(
         "Rejection Failed",
-        err?.response?.data?.message || "Could not reject student join request.",
+        err?.response?.data?.message ||
+          "Could not reject student join request.",
       );
     },
   });

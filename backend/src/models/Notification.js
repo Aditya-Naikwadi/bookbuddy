@@ -60,4 +60,10 @@ const notificationSchema = new mongoose.Schema(
   }
 );
 
+const { sanitizeHtmlString } = require('../utils/sanitize');
+
+notificationSchema.pre('save', function () {
+  if (this.message) this.message = sanitizeHtmlString(this.message);
+});
+
 module.exports = mongoose.model('Notification', notificationSchema);

@@ -3,9 +3,11 @@
 ## Transaction Boundaries & Side-Effect Isolation (`runInTransaction`)
 
 ### Background & Problem Statement
+
 In MongoDB multi-document transactions, database mutations are atomic, isolated, and reversible (aborted on errors or retried on transient write conflicts). However, external network requests, email/SMS dispatches, Socket.IO real-time emissions, and Redis cache evictions are non-transactional — they **cannot be rolled back** if the database transaction aborts or encounters a collision.
 
 Prior to the introduction of `runInTransaction(transactionFn, afterCommitFn)`, several critical bugs existed where side effects leaked out of uncommitted transaction scopes:
+
 1. **Loan Checkout (`loanService.checkoutBook`)**: Streak actions, gamification badge checks, and catalog availability socket emissions fired even if concurrent loan checkout aborted due to queue locks or fine limits.
 2. **Book Return (`loanService.returnBook`)**: Borrower return confirmation emails and inventory watcher notifications dispatched before the loan return committed to the database.
 3. **Lab & Workstation Booking (`labBookingService.createBooking`)**: Qualifying streak actions fired even if booking aborted due to double-booked seat collisions.
@@ -44,7 +46,7 @@ const result = await runInTransaction(
 // ❌ NEVER DO THIS:
 await runInTransaction(async (session) => {
   await Loan.create([{ ... }], { session });
-  
+
   // ANTI-PATTERN: Leaks side effect before commit!
   // If transaction aborts or driver retries on write conflict,
   // this email and socket emit executes prematurely or multiple times!
@@ -73,10 +75,13 @@ await runInTransaction(async (session) => {
 ### CI Enforcement & Static Analysis
 
 A dedicated AST-based static analysis check prevents recurrence across the entire codebase:
+
 ```bash
 npm run check:transactions
 ```
+
 This check runs as part of `npm run ci:check` and scans all files under `backend/src/`. It automatically fails CI if:
+
 - `startTransaction()` or `withTransaction()` is invoked outside `transactionHelper.js`.
 - Any email, SMS, Socket.IO emit, streak recording, or notification call is placed inside a `transactionFn` callback.
 
@@ -85,12 +90,15 @@ This check runs as part of `npm run ci:check` and scans all files under `backend
 ## Atomic Conditional Updates & Race-Condition Prevention (`atomicConditionalUpdate`)
 
 ### Background & Problem Statement
+
 A classic vulnerability pattern in web applications is the **check-then-act** race condition:
+
 1. Application reads a document or counter from MongoDB into Node.js memory (`const doc = await Model.findById(...)`).
 2. Application checks a condition in JavaScript memory (`if (doc.rsvpUsers.length < doc.maxCapacity)` or `if (doc.status === 'unpaid')`).
 3. Application mutates the document in memory and saves it back (`await doc.save()`).
 
 Between Step 1 and Step 3, concurrent requests can execute identical reads, see the exact same condition as true, and commit simultaneous writes. This results in:
+
 - **RSVP Capacity Overshoots**: 10 users RSVP simultaneously for 3 seats, and all 10 succeed, exceeding `maxCapacity`.
 - **Fine Double-Payments & Financial Inconsistencies**: Concurrent payment requests mark the same fine paid twice or spend a student's single waiver coupon multiple times.
 - **Inventory & Copy Count Drift**: Concurrent book returns increment `copiesAvailable` beyond `copiesTotal`.
@@ -154,15 +162,15 @@ await announcement.save(); // OVER-CAPACITY CORRUPTION!
 
 ### Comparison of Retrofitted Patterns
 
-| Contended Resource | Unsafe (Check-Then-Act) Pattern | Safe Indivisible Pattern (`atomicConditionalUpdate`) |
-| :--- | :--- | :--- |
-| **Event RSVPs** (`announcementController.js`) | `if (rsvpUsers.length < maxCapacity)` then `.save()` | Match query with `$expr: { $lt: [{ $size: '$rsvpUsers' }, '$maxCapacity'] }` and `$addToSet` |
-| **Fine Payments** (`fineService.js`) | `if (fine.status === 'unpaid')` then `fine.status = 'paid'` | Match query `{ _id, status: 'unpaid' }` with `$set: { status: 'paid', paidAt }` |
-| **Waiver Coupons** (`fineService.js`) | `if (user.fineWaiverCoupons > 0)` then `user.fineWaiverCoupons--` | Match query `{ _id: userId, fineWaiverCoupons: { $gt: 0 } }` with `$inc: { fineWaiverCoupons: -1 }` |
-| **Book Return Inventory** (`loanService.js`) | Read `book.copiesAvailable`, branch, save | Match query with `$expr: { $lt: ['$copiesAvailable', '$copiesTotal'] }` with `$inc: { copiesAvailable: 1 }` |
-| **Loan Renewals** (`loanService.js`) | `if (loan.renewalCount < maxRenewals)` then save | Match query with `$expr: { $lt: ['$renewalCount', '$maxRenewals'] }` with `$inc: { renewalCount: 1 }` |
-| **Streak Repair Freezes** (`streakService.js`) | `if (user.freezesAvailable > 0)` then save | Match query `{ _id: userId, freezesAvailable: { $gt: 0 } }` with `$inc: { freezesAvailable: -1 }` |
-| **Lab/Facility Booking Availability** | Query free slots in DB, branch, insert | Compound partial unique index (`{ resourceId, date, slotStart, status: 'confirmed' }`) + `runInTransaction` |
+| Contended Resource                             | Unsafe (Check-Then-Act) Pattern                                   | Safe Indivisible Pattern (`atomicConditionalUpdate`)                                                        |
+| :--------------------------------------------- | :---------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------- |
+| **Event RSVPs** (`announcementController.js`)  | `if (rsvpUsers.length < maxCapacity)` then `.save()`              | Match query with `$expr: { $lt: [{ $size: '$rsvpUsers' }, '$maxCapacity'] }` and `$addToSet`                |
+| **Fine Payments** (`fineService.js`)           | `if (fine.status === 'unpaid')` then `fine.status = 'paid'`       | Match query `{ _id, status: 'unpaid' }` with `$set: { status: 'paid', paidAt }`                             |
+| **Waiver Coupons** (`fineService.js`)          | `if (user.fineWaiverCoupons > 0)` then `user.fineWaiverCoupons--` | Match query `{ _id: userId, fineWaiverCoupons: { $gt: 0 } }` with `$inc: { fineWaiverCoupons: -1 }`         |
+| **Book Return Inventory** (`loanService.js`)   | Read `book.copiesAvailable`, branch, save                         | Match query with `$expr: { $lt: ['$copiesAvailable', '$copiesTotal'] }` with `$inc: { copiesAvailable: 1 }` |
+| **Loan Renewals** (`loanService.js`)           | `if (loan.renewalCount < maxRenewals)` then save                  | Match query with `$expr: { $lt: ['$renewalCount', '$maxRenewals'] }` with `$inc: { renewalCount: 1 }`       |
+| **Streak Repair Freezes** (`streakService.js`) | `if (user.freezesAvailable > 0)` then save                        | Match query `{ _id: userId, freezesAvailable: { $gt: 0 } }` with `$inc: { freezesAvailable: -1 }`           |
+| **Lab/Facility Booking Availability**          | Query free slots in DB, branch, insert                            | Compound partial unique index (`{ resourceId, date, slotStart, status: 'confirmed' }`) + `runInTransaction` |
 
 ---
 

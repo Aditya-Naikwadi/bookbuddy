@@ -3,6 +3,7 @@ const Book = require('../models/Book');
 const ILLRequest = require('../models/ILLRequest');
 const AuditLog = require('../models/AuditLog');
 const AppError = require('../utils/AppError');
+const { escapeRegExp } = require('../utils/sanitize');
 
 // @desc    Search partner college shared catalog items (Strictly audited permeable boundary)
 // @route   GET /api/v1/ill/catalog
@@ -21,9 +22,10 @@ const searchILLCatalog = asyncHandler(async (req, res) => {
   };
 
   if (query) {
+    const escaped = escapeRegExp(String(query).trim());
     const searchOr = [
-      { title: { $regex: query, $options: 'i' } },
-      { author: { $regex: query, $options: 'i' } },
+      { title: { $regex: escaped, $options: 'i' } },
+      { author: { $regex: escaped, $options: 'i' } },
     ];
     filter.$and = [{ $or: searchOr }];
   }

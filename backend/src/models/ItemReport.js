@@ -50,4 +50,11 @@ const itemReportSchema = new mongoose.Schema(
 
 itemReportSchema.index({ collegeId: 1, status: 1 });
 
+const { sanitizeHtmlString } = require('../utils/sanitize');
+
+itemReportSchema.pre('save', function () {
+  if (this.description) this.description = sanitizeHtmlString(this.description);
+  if (this.resolutionNotes) this.resolutionNotes = sanitizeHtmlString(this.resolutionNotes);
+});
+
 module.exports = mongoose.model('ItemReport', itemReportSchema);

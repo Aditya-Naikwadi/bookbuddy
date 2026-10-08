@@ -122,12 +122,21 @@ export const useLoansTracker = () => {
     },
   });
 
-  // Pay Fine mutation
+  // Pay Fine mutation with Idempotency-Key
   const payFineMutation = useMutation({
     mutationFn: async ({ fineId, useWaiver = false }) => {
-      const { data } = await apiClient.post(`/fines/${fineId}/pay`, {
-        useWaiver,
-      });
+      const idempotencyKey = `fine_pay_${fineId}_${Date.now()}`;
+      const { data } = await apiClient.post(
+        `/fines/${fineId}/pay`,
+        {
+          useWaiver,
+        },
+        {
+          headers: {
+            "Idempotency-Key": idempotencyKey,
+          },
+        },
+      );
       return data.data;
     },
     onSuccess: () => {

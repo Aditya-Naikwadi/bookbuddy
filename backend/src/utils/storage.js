@@ -1,4 +1,3 @@
-const path = require('path');
 const crypto = require('crypto');
 
 /**
@@ -6,8 +5,10 @@ const crypto = require('crypto');
  * Direct-to-storage presigned upload URL handler bypasses Vercel's 4.5MB serverless payload limit.
  */
 const generatePresignedUploadUrl = async ({ fileName, fileType, folder = 'uploads' }) => {
-  const sanitizedExt = path.extname(fileName) || '.bin';
-  const fileKey = `${folder}/${Date.now()}_${crypto.randomBytes(8).toString('hex')}${sanitizedExt}`;
+  const { sanitizeUploadFilename } = require('../middlewares/fileUploadValidation');
+  const { ext } = sanitizeUploadFilename(fileName);
+  const sanitizedFolder = String(folder || 'uploads').replace(/[^a-zA-Z0-9_-]/g, '');
+  const fileKey = `${sanitizedFolder}/${Date.now()}_${crypto.randomBytes(8).toString('hex')}${ext}`;
 
   // Evaluate Vercel Blob or S3/GCS credentials if provided
   const blobToken = process.env.BLOB_READ_WRITE_TOKEN;

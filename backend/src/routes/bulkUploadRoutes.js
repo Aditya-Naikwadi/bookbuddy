@@ -11,10 +11,18 @@ const {
   downloadAuditLogHandouts,
 } = require('../controllers/bulkUploadController');
 
+const { expensiveRouteLimiter } = require('../middlewares/rateLimiters');
+
 const allowedRoles = ['college-admin', 'super-admin', 'super_admin'];
 
 // Bulk upload endpoints
-router.post('/students/bulk-upload', protect, requireRole(...allowedRoles), submitBulkUpload);
+router.post(
+  '/students/bulk-upload',
+  protect,
+  requireRole(...allowedRoles),
+  expensiveRouteLimiter,
+  submitBulkUpload
+);
 
 router.get('/students/upload/:jobId', protect, requireRole(...allowedRoles), getBulkUploadStatus);
 

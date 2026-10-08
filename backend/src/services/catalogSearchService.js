@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Book = require('../models/Book');
 const BookDTO = require('../dtos/BookDTO');
+const { escapeRegExp } = require('../utils/sanitize');
 
 /**
  * Shared search function for catalog books supporting both authenticated/college-scoped
@@ -53,7 +54,8 @@ const searchCatalogBooks = async ({
   // Text search on title, author, isbn, category
   const searchTerm = (q || '').trim();
   if (searchTerm) {
-    const searchRegex = { $regex: searchTerm, $options: 'i' };
+    const escaped = escapeRegExp(searchTerm);
+    const searchRegex = { $regex: escaped, $options: 'i' };
     filter.$or = [
       { title: searchRegex },
       { author: searchRegex },

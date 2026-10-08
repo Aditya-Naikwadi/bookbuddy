@@ -53,6 +53,31 @@ const complaintSchema = new mongoose.Schema(
 
 complaintSchema.index({ collegeId: 1, status: 1, createdAt: -1 });
 
+const { sanitizeHtmlString } = require('../utils/sanitize');
+
+complaintSchema.pre('save', function () {
+  if (this.subject) this.subject = sanitizeHtmlString(this.subject);
+  if (this.description) this.description = sanitizeHtmlString(this.description);
+  if (this.resolutionMessage) this.resolutionMessage = sanitizeHtmlString(this.resolutionMessage);
+});
+
+complaintSchema.pre('findOneAndUpdate', function () {
+  const update = this.getUpdate();
+  if (update) {
+    if (update.subject) update.subject = sanitizeHtmlString(update.subject);
+    if (update.description) update.description = sanitizeHtmlString(update.description);
+    if (update.resolutionMessage)
+      update.resolutionMessage = sanitizeHtmlString(update.resolutionMessage);
+    if (update.$set) {
+      if (update.$set.subject) update.$set.subject = sanitizeHtmlString(update.$set.subject);
+      if (update.$set.description)
+        update.$set.description = sanitizeHtmlString(update.$set.description);
+      if (update.$set.resolutionMessage)
+        update.$set.resolutionMessage = sanitizeHtmlString(update.$set.resolutionMessage);
+    }
+  }
+});
+
 const { tenantScopingPlugin } = require('../middlewares/scopeToCollege');
 complaintSchema.plugin(tenantScopingPlugin);
 

@@ -4,13 +4,14 @@ const { generatePresignedUploadUrl } = require('../utils/storage');
 const { generateCloudinarySignature } = require('../utils/cloudinary');
 const AppError = require('../utils/AppError');
 const { protect } = require('../middlewares/auth');
+const { expensiveRouteLimiter } = require('../middlewares/rateLimiters');
 
 /**
  * @desc    Generate a presigned direct upload URL (bypasses 4.5MB serverless payload limit)
  * @route   POST /api/v1/uploads/presigned-url
  * @access  Private
  */
-router.post('/presigned-url', protect, async (req, res, next) => {
+router.post('/presigned-url', protect, expensiveRouteLimiter, async (req, res, next) => {
   try {
     const { fileName, fileType, folder } = req.body;
 
@@ -38,7 +39,7 @@ router.post('/presigned-url', protect, async (req, res, next) => {
  * @route   POST /api/v1/uploads/cloudinary-signature
  * @access  Private
  */
-router.post('/cloudinary-signature', protect, async (req, res, next) => {
+router.post('/cloudinary-signature', protect, expensiveRouteLimiter, async (req, res, next) => {
   try {
     const { folder, tags } = req.body;
 

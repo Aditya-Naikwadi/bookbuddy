@@ -5,6 +5,7 @@ const asyncHandler = require('express-async-handler');
 const { scopeToCollege } = require('../middlewares/scopeToCollege');
 const cursorPagination = require('../utils/cursorPagination');
 const { getCache, setCache } = require('../utils/redisCache');
+const { escapeRegExp } = require('../utils/sanitize');
 const crypto = require('crypto');
 
 // @desc    Get all books with search, filter & cursor/keyset pagination
@@ -51,7 +52,8 @@ const getBooks = asyncHandler(async (req, res) => {
   }
 
   if (lang) {
-    queryFilter.language = { $regex: new RegExp(`^${lang}$`, 'i') };
+    const escapedLang = escapeRegExp(String(lang).trim());
+    queryFilter.language = { $regex: new RegExp(`^${escapedLang}$`, 'i') };
   }
 
   const scopedQuery = scopeToCollege(queryFilter, req.user?.collegeId);

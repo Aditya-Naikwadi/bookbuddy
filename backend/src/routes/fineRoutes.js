@@ -21,6 +21,7 @@ router.post('/:id/pay', validate(paramIdSchema), idempotency, payFine);
 router.post(
   '/:id/create-checkout-session',
   validate(paramIdSchema),
+  idempotency,
   require('../controllers/paymentController').createCheckoutSession
 );
 

@@ -74,13 +74,14 @@ const getAllPatrons = async (req, res, next) => {
 
     if (req.query.department) {
       const dept = String(req.query.department).trim();
+      const escapedDept = dept.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
       filter.$and = filter.$and || [];
       filter.$and.push({
         $or: [
           { department: dept },
           { major: dept },
-          { department: { $regex: `^${dept}$`, $options: 'i' } },
-          { major: { $regex: `^${dept}$`, $options: 'i' } },
+          { department: { $regex: `^${escapedDept}$`, $options: 'i' } },
+          { major: { $regex: `^${escapedDept}$`, $options: 'i' } },
         ],
       });
     }

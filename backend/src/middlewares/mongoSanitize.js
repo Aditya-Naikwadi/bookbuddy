@@ -2,6 +2,8 @@
  * Custom NoSQL injection protection middleware compatible with Express 5.
  * Recursively strips keys starting with '$' or containing '.' from request body, query, and params.
  */
+const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
 const sanitizeObject = (obj) => {
   if (obj && typeof obj === 'object') {
     if (Array.isArray(obj)) {
@@ -13,7 +15,12 @@ const sanitizeObject = (obj) => {
     } else {
       const keys = Object.keys(obj);
       for (const key of keys) {
-        if (key.startsWith('$') || key.includes('.')) {
+        if (
+          key.startsWith('$') ||
+          key.includes('.') ||
+          key.includes('\u0000') ||
+          DANGEROUS_KEYS.has(key)
+        ) {
           delete obj[key];
         } else {
           sanitizeObject(obj[key]);

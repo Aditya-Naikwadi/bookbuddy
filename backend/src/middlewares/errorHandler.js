@@ -20,7 +20,8 @@ const errorHandler = (err, req, res, _next) => {
     err.isOperational = true;
   } else if (err.code === 11000) {
     statusCode = 409;
-    const field = Object.keys(err.keyValue || {})[0] || 'record';
+    const rawField = Object.keys(err.keyValue || {})[0] || 'record';
+    const field = String(rawField).replace(/[^a-zA-Z0-9_]/g, '') || 'record';
     message = `A record with this ${field} already exists.`;
     err.isOperational = true;
   } else if (
@@ -30,7 +31,23 @@ const errorHandler = (err, req, res, _next) => {
     (err.message && err.message.includes('buffering timed out'))
   ) {
     statusCode = 503;
-    message = 'Database service unavailable. Please check MongoDB Atlas IP whitelist (0.0.0.0/0).';
+    message =
+      config.nodeEnv === 'production'
+        ? 'Database service temporarily unavailable. Please try again later.'
+        : 'Database service unavailable. Please check MongoDB connection.';
+    err.isOperational = true;
+  } else if (err.name === 'MongoServerError' || err.name === 'BSONError') {
+    statusCode = 400;
+    message = 'Invalid database query or request parameters.';
+    err.isOperational = true;
+  } else if (err.name === 'MulterError') {
+    statusCode = 400;
+    message =
+      err.code === 'LIMIT_FILE_SIZE'
+        ? 'File size exceeds allowed limit.'
+        : err.code === 'LIMIT_FILE_COUNT'
+          ? 'Too many files uploaded.'
+          : `File upload error: ${err.message}`;
     err.isOperational = true;
   }
 

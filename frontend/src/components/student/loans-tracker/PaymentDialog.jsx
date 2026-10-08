@@ -43,6 +43,7 @@ export const PaymentDialog = ({
   const [step, setStep] = useState("confirm"); // 'confirm' | 'paying' | 'verifying_webhook' | 'success' | 'failed'
   const [paymentRef, setPaymentRef] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [isInitiatingPayment, setIsInitiatingPayment] = useState(false);
 
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
   if (isOpen !== prevIsOpen) {
@@ -50,6 +51,7 @@ export const PaymentDialog = ({
     if (isOpen) {
       setStep("confirm");
       setErrorMessage("");
+      setIsInitiatingPayment(false);
     }
   }
 
@@ -92,8 +94,10 @@ export const PaymentDialog = ({
     };
   }, [isOpen, step, onClose, triggerRef]);
 
-  // Launch Razorpay PCI-compliant checkout popup
+  // Launch Razorpay PCI-compliant checkout popup with in-flight guard
   const handleRazorpayPayment = async () => {
+    if (isInitiatingPayment || step === "paying") return;
+    setIsInitiatingPayment(true);
     setStep("paying");
     setErrorMessage("");
 
@@ -103,16 +107,19 @@ export const PaymentDialog = ({
         "Failed to load Razorpay payment SDK. Please check your internet connection.",
       );
       setStep("failed");
+      setIsInitiatingPayment(false);
       return;
     }
 
     try {
       const amountInPaise = Math.max(100, Math.round(totalAmount * 100));
+      const idempotencyKey = `order_${fineItem?._id || "bulk"}_${Date.now()}`;
 
       // STEP 1: Call backend create-order endpoint to generate Razorpay Order ID (server computes amount)
       const orderData = await createRazorpayOrder({
         currency: "INR",
         fineId: fineItem?._id,
+        idempotencyKey,
       });
 
       const keyToUse =
@@ -195,6 +202,8 @@ export const PaymentDialog = ({
           "Payment processing error.",
       );
       setStep("failed");
+    } finally {
+      setIsInitiatingPayment(false);
     }
   };
 
@@ -292,11 +301,14 @@ export const PaymentDialog = ({
                 </Button>
                 <Button
                   variant="primary"
-                  className="flex-1 text-xs flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                  disabled={isInitiatingPayment || step === "paying"}
+                  className="flex-1 text-xs flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold disabled:opacity-50"
                   onClick={handleRazorpayPayment}
                 >
                   <CreditCard size={14} />
-                  Pay ₹{totalAmount.toFixed(2)} Now
+                  {isInitiatingPayment
+                    ? "Initiating..."
+                    : `Pay ₹${totalAmount.toFixed(2)} Now`}
                 </Button>
               </div>
             </div>

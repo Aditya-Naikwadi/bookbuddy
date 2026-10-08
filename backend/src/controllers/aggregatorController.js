@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { syncTopic } = require('../services/bookAggregator');
 const UnifiedBook = require('../models/UnifiedBook');
+const { escapeRegExp } = require('../utils/sanitize');
 
 const jobStore = new Map();
 
@@ -16,10 +17,11 @@ const getAggregatedBooks = async (req, res, next) => {
     const filter = {};
 
     if (searchTerm) {
+      const escaped = escapeRegExp(String(searchTerm).trim());
       filter.$or = [
-        { title: { $regex: searchTerm, $options: 'i' } },
-        { authors: { $regex: searchTerm, $options: 'i' } },
-        { description: { $regex: searchTerm, $options: 'i' } },
+        { title: { $regex: escaped, $options: 'i' } },
+        { authors: { $regex: escaped, $options: 'i' } },
+        { description: { $regex: escaped, $options: 'i' } },
       ];
     }
 

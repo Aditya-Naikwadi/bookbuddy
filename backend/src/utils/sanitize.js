@@ -29,8 +29,12 @@ const escapeRegExp = (str) => {
   return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
 
+const { isSafeUrl, sanitizeUrl } = require('@bookbuddy/shared');
+
 module.exports = {
   sanitizeHtmlString,
   sanitizeObjectStrings,
   escapeRegExp,
+  isSafeUrl,
+  sanitizeUrl,
 };

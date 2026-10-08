@@ -14,6 +14,7 @@ import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../../api/client";
 import { searchEbooks, openEbook } from "../../../api/eresourcesApi";
+import { useDebounce } from "../../../hooks/useDebounce";
 
 const fetchInternalResources = async () => {
   const { data } = await apiClient.get("/dashboards/student/eresources");
@@ -34,6 +35,7 @@ const fetchMySubmissions = async () => {
 export const EResources = () => {
   const [activeTab, setActiveTab] = useState("internal"); // 'internal' | 'ebooks' | 'my-submissions'
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 350);
   const [topic, setTopic] = useState("");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
@@ -69,15 +71,15 @@ export const EResources = () => {
     enabled: activeTab === "my-submissions",
   });
 
-  // Gutenberg infinite query
+  // Gutenberg infinite query (debounced search)
   const {
     data: ebookData,
     isLoading: loadingEbooks,
     refetch: refetchEbooks,
   } = useInfiniteQuery({
-    queryKey: ["e-resources", "gutenberg", searchQuery, topic],
+    queryKey: ["e-resources", "gutenberg", debouncedSearchQuery, topic],
     queryFn: ({ pageParam = 1 }) =>
-      searchEbooks({ search: searchQuery, topic, page: pageParam }),
+      searchEbooks({ search: debouncedSearchQuery, topic, page: pageParam }),
     getNextPageParam: (lastPage) => lastPage.nextPage,
     enabled: activeTab === "ebooks",
   });

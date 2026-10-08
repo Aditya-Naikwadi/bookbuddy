@@ -3,6 +3,7 @@ const EResource = require('../models/EResource');
 const AppError = require('../utils/AppError');
 const { recordQualifyingAction } = require('../services/streakService');
 const { scopeToCollege } = require('../middlewares/scopeToCollege');
+const { escapeRegExp } = require('../utils/sanitize');
 
 // @desc    Get internal e-resources with cursor pagination & Redis count caching
 // @route   GET /api/eresources
@@ -13,7 +14,7 @@ const listInternalResources = asyncHandler(async (req, res) => {
 
   let filter = { source: 'internal', moderationStatus: { $in: ['approved', 'published'] } };
   if (search) {
-    filter.title = { $regex: search, $options: 'i' };
+    filter.title = { $regex: escapeRegExp(String(search).trim()), $options: 'i' };
   }
 
   const scopedQuery = scopeToCollege(filter, req.user?.collegeId);

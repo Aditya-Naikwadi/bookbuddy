@@ -48,4 +48,11 @@ const helpArticleSchema = new mongoose.Schema(
 helpArticleSchema.index({ category: 1, isPublished: 1 });
 helpArticleSchema.index({ title: 'text', content: 'text' });
 
+const { sanitizeHtmlString } = require('../utils/sanitize');
+
+helpArticleSchema.pre('save', function () {
+  if (this.title) this.title = sanitizeHtmlString(this.title);
+  if (this.content) this.content = sanitizeHtmlString(this.content);
+});
+
 module.exports = mongoose.model('HelpArticle', helpArticleSchema);

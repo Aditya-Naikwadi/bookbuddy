@@ -1,6 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const Book = require('../models/Book');
 const EResource = require('../models/EResource');
+const { escapeRegExp } = require('../utils/sanitize');
 
 // @desc    Get cross-college shareable catalog resources (query-level flag filtered)
 // @route   GET /api/v1/catalog/cross-college OR GET /api/catalog/cross-college
@@ -15,7 +16,7 @@ const getCrossCollegeCatalog = asyncHandler(async (req, res) => {
   };
 
   if (q && q.trim()) {
-    const searchRegex = { $regex: q.trim(), $options: 'i' };
+    const searchRegex = { $regex: escapeRegExp(q.trim()), $options: 'i' };
     query.$or = [
       { title: searchRegex },
       { author: searchRegex },

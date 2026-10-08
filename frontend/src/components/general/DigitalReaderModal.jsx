@@ -32,6 +32,7 @@ import apiClient from "../../api/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { useReducedMotion } from "../../hooks/useReducedMotion";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import { isSafeUrl, sanitizeUrl } from "@bookbuddy/shared";
 
 import HighlightToolbar from "./HighlightToolbar";
 import AnnotationSidebar from "./AnnotationSidebar";
@@ -59,10 +60,19 @@ const COLOR_HEX_MAP = {
 };
 
 const extractUrl = (fileUrl, resource, book) => {
-  if (typeof fileUrl === "string" && fileUrl.trim()) return fileUrl.trim();
-  if (fileUrl?.url) return fileUrl.url;
-  if (fileUrl?.fileUrl) return fileUrl.fileUrl;
-  if (fileUrl?.pdfUrl) return fileUrl.pdfUrl;
+  const getClean = (val) => {
+    if (typeof val === "string" && val.trim() && isSafeUrl(val)) {
+      return val.trim();
+    }
+    return null;
+  };
+
+  const direct =
+    getClean(fileUrl) ||
+    getClean(fileUrl?.url) ||
+    getClean(fileUrl?.fileUrl) ||
+    getClean(fileUrl?.pdfUrl);
+  if (direct) return direct;
 
   const target = resource || book || {};
   const possible = [
@@ -82,7 +92,8 @@ const extractUrl = (fileUrl, resource, book) => {
   ];
 
   for (const url of possible) {
-    if (typeof url === "string" && url.trim()) return url.trim();
+    const clean = getClean(url);
+    if (clean) return clean;
   }
   return null;
 };
@@ -1123,7 +1134,7 @@ const DigitalReaderModal = ({
                     </p>
                     <div className="flex items-center justify-center gap-3 pt-2">
                       <a
-                        href={resolvedUrl}
+                        href={sanitizeUrl(resolvedUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors"

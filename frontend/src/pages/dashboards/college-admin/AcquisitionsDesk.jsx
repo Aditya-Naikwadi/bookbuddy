@@ -19,13 +19,17 @@ import {
   deleteAcquisitionOrder,
 } from "../../../api/acquisitionApi";
 import socket from "../../../lib/socketClient";
+import { useDebounce } from "../../../hooks/useDebounce";
 
 export default function AcquisitionsDesk() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("orders"); // 'orders' | 'new-order' | 'vendors'
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const debouncedSearchQuery = useDebounce(searchQuery, 350);
+  const selectedOrderState = useState(null);
+  const selectedOrder = selectedOrderState[0];
+  const setSelectedOrder = selectedOrderState[1];
 
   // Form state for creating new order
   const [vendorName, setVendorName] = useState("");
@@ -38,13 +42,13 @@ export default function AcquisitionsDesk() {
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
 
-  // Queries
+  // Queries (debounced search query)
   const { data: ordersData, isLoading: isOrdersLoading } = useQuery({
-    queryKey: ["acquisitions", statusFilter, searchQuery],
+    queryKey: ["acquisitions", statusFilter, debouncedSearchQuery],
     queryFn: () =>
       getAcquisitionOrders({
         status: statusFilter !== "all" ? statusFilter : undefined,
-        search: searchQuery || undefined,
+        search: debouncedSearchQuery || undefined,
       }),
   });
 
