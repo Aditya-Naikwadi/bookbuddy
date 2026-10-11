@@ -278,7 +278,7 @@ describe('system Resilience And Infrastructure Consolidated Suite', () => {
 
       afterAll(async () => {
         if (mongoose.connection && mongoose.connection.readyState === 1 && mongoose.connection.db) {
-          await new Promise((r) => setTimeout(r, 600));
+          await new Promise((r) => setTimeout(r, 2500));
           await User.deleteMany({ collegeId });
           await College.deleteMany({ _id: collegeId });
           await Book.deleteMany({ collegeId });
@@ -475,12 +475,27 @@ describe('system Resilience And Infrastructure Consolidated Suite', () => {
           });
         });
 
-        it('should ignore client-supplied manipulated amount and strictly compute ₹85 (8500 paise) server-side', async () => {
+        it('should reject client-supplied manipulated amount via strict contract validation', async () => {
           const res = await request(app)
             .post('/api/v1/payments/create-order')
             .set('Authorization', `Bearer ${studentToken}`)
             .send({
-              amount: 100, // Client attempts to pay ₹1 instead of ₹85
+              amount: 100, // Attack payload
+              fineIds: [testFine._id.toString()],
+            });
+
+          expect(res.status).toBe(400);
+          expect(res.body.success).toBe(false);
+          expect(res.body.message).toMatch(
+            /(?:unrecognized key.*amount|client-supplied payment amounts)/i
+          );
+        });
+
+        it('should strictly compute ₹85 (8500 paise) server-side from fines', async () => {
+          const res = await request(app)
+            .post('/api/v1/payments/create-order')
+            .set('Authorization', `Bearer ${studentToken}`)
+            .send({
               fineIds: [testFine._id.toString()],
             });
 
@@ -491,19 +506,6 @@ describe('system Resilience And Infrastructure Consolidated Suite', () => {
 
           const paymentDoc = await Payment.findById(res.body.data.paymentId);
           expect(paymentDoc.amount).toBe(85);
-        });
-
-        it('should reject order creation if client passes amount < 100 paise', async () => {
-          const res = await request(app)
-            .post('/api/v1/payments/create-order')
-            .set('Authorization', `Bearer ${studentToken}`)
-            .send({
-              amount: 50,
-            });
-
-          expect(res.status).toBe(400);
-          expect(res.body.success).toBe(false);
-          expect(res.body.message).toMatch(/100 paise/i);
         });
       });
 
