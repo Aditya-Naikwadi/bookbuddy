@@ -27,6 +27,7 @@ build/
 .next/
 out/
 client/dist/
+*.map
 
 # Coverage directory used by tools like istanbul
 coverage/

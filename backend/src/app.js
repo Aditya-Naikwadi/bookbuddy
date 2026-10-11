@@ -18,8 +18,38 @@ const compression = require('compression');
 const app = express();
 const crypto = require('crypto');
 
+// Remove technology-disclosing framework headers
+app.disable('x-powered-by');
+
 // Enable Trust Proxy for Render / Vercel reverse proxies (required for HTTPS secure cookies & client IP detection)
 app.set('trust proxy', 1);
+
+// Block source maps (.map), dotfiles/hidden paths, and sensitive backup/temp files
+app.use((req, res, next) => {
+  let normalizedPath;
+  try {
+    normalizedPath = decodeURIComponent(req.path || '').toLowerCase();
+  } catch (_e) {
+    return res.status(400).json({ success: false, message: 'Invalid request path' });
+  }
+
+  // Block source maps (.map files)
+  if (normalizedPath.endsWith('.map') || normalizedPath.includes('.map/')) {
+    return res.status(404).json({ success: false, message: 'Resource not found' });
+  }
+
+  // Block dotfiles & hidden directories, except RFC 8615 .well-known
+  if (/(?:^|\/)\.(?!well-known(?:$|\/))/.test(normalizedPath)) {
+    return res.status(404).json({ success: false, message: 'Resource not found' });
+  }
+
+  // Block backup and temporary editor files (.bak, .backup, .old, .orig, .save, .swp, .tmp, ~)
+  if (/\.(?:bak|backup|old|orig|save|swp|tmp)$|~$/.test(normalizedPath)) {
+    return res.status(404).json({ success: false, message: 'Resource not found' });
+  }
+
+  next();
+});
 
 // Enable HTTP Response Compression
 app.use(compression());
@@ -363,39 +393,42 @@ const { validateCsrf } = require('./middlewares/csrf');
 app.use(globalLimiter);
 app.use(validateCsrf);
 
-// Debug tenant check route for validation
 const { protect, requireRole } = require('./middlewares/auth');
 const scopeToTenant = require('./middlewares/scopeToTenant');
-app.get(
-  '/api/_debug/tenant-check',
-  protect,
-  requireRole('college-admin', 'college_admin', 'student'),
-  scopeToTenant,
-  (req, res) => {
-    res.json({
-      success: true,
-      user: req.user,
-      tenantFilter: req.tenantFilter,
-    });
-  }
-);
 
-// Debug test route for rate limiter verification
-app.all(
-  '/api/_debug/test-limiter',
-  (req, res, next) => {
-    // Dynamically apply limiter to avoid side effects during normal app use
-    const { authLimiter } = require('./middlewares/rateLimiters');
-    authLimiter(req, res, next);
-  },
-  (req, res) => {
-    res.json({
-      success: true,
-      body: req.body,
-      query: req.query,
-    });
-  }
-);
+// Debug validation & rate limiter test routes (strictly disabled in production)
+if (config.nodeEnv !== 'production') {
+  app.get(
+    '/api/_debug/tenant-check',
+    protect,
+    requireRole('college-admin', 'college_admin', 'student'),
+    scopeToTenant,
+    (req, res) => {
+      res.json({
+        success: true,
+        user: req.user,
+        tenantFilter: req.tenantFilter,
+      });
+    }
+  );
+
+  // Debug test route for rate limiter verification
+  app.all(
+    '/api/_debug/test-limiter',
+    (req, res, next) => {
+      // Dynamically apply limiter to avoid side effects during normal app use
+      const { authLimiter } = require('./middlewares/rateLimiters');
+      authLimiter(req, res, next);
+    },
+    (req, res) => {
+      res.json({
+        success: true,
+        body: req.body,
+        query: req.query,
+      });
+    }
+  );
+}
 const deprecationWarning = require('./middlewares/deprecationWarning');
 
 // Canonical API Version 1 Routes
