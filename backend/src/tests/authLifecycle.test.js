@@ -890,10 +890,11 @@ describe('auth Lifecycle Consolidated Suite', () => {
       });
 
       afterAll(async () => {
-        await User.deleteMany({});
-        await College.deleteMany({});
-        await StudentUploadBatch.deleteMany({});
-        // await // mongoose.connection.close();
+        if (mongoose.connection.readyState === 1) {
+          await User.deleteMany({});
+          await College.deleteMany({});
+          await StudentUploadBatch.deleteMany({});
+        }
       });
 
       const emailStudentId = 'MIT-P3-101';
@@ -1153,9 +1154,10 @@ describe('auth Lifecycle Consolidated Suite', () => {
       });
 
       afterAll(async () => {
-        await User.deleteMany({ email: 'session@test.edu' });
-        await College.deleteMany({ _id: collegeId });
-        // await // mongoose.connection.close();
+        if (mongoose.connection.readyState === 1) {
+          await User.deleteMany({ email: 'session@test.edu' });
+          await College.deleteMany({ _id: collegeId });
+        }
       });
 
       it('1. Login sets 30-day httpOnly refresh cookie and returns access token', async () => {
