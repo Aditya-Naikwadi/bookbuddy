@@ -17,6 +17,29 @@ const initSentry = () => {
       dsn,
       environment: env.NODE_ENV || 'development',
       tracesSampleRate: env.NODE_ENV === 'production' ? 0.2 : 1.0,
+      beforeSend(event) {
+        if (event.request) {
+          if (event.request.headers) {
+            delete event.request.headers['authorization'];
+            delete event.request.headers['cookie'];
+            delete event.request.headers['x-csrf-token'];
+          }
+          if (event.request.data) {
+            event.request.data = logger.sanitizeValue(event.request.data);
+          }
+          if (event.request.query_string) {
+            event.request.query_string = logger.sanitizeUrl(event.request.query_string);
+          }
+        }
+        if (event.user) {
+          delete event.user.email;
+          delete event.user.ip_address;
+        }
+        if (event.extra) {
+          event.extra = logger.sanitizeValue(event.extra);
+        }
+        return event;
+      },
     });
     logger.info('Sentry Error Tracking SDK initialized successfully.');
   } catch (err) {
@@ -30,7 +53,8 @@ const initSentry = () => {
 const captureException = (err, context = {}) => {
   if (env.SENTRY_DSN) {
     try {
-      Sentry.captureException(err, { extra: context });
+      const cleanContext = logger.sanitizeValue(context);
+      Sentry.captureException(err, { extra: cleanContext });
     } catch {
       // Ignore Sentry dispatch errors
     }

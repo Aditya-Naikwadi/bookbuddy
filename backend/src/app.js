@@ -196,9 +196,16 @@ app.use(mongoSanitize);
 const subdomainTenantResolver = require('./middlewares/subdomainTenantResolver');
 app.use(subdomainTenantResolver);
 
-// Request Logger
+// Request Logger with URL query parameter redaction
+morgan.token('sanitized-url', (req) => logger.sanitizeUrl(req.originalUrl || req.url || ''));
+
+const morganFormat =
+  config.nodeEnv === 'production'
+    ? ':remote-addr - :remote-user [:date[clf]] ":method :sanitized-url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'
+    : ':method :sanitized-url :status :response-time ms - :res[content-length]';
+
 app.use(
-  morgan(config.nodeEnv === 'production' ? 'combined' : 'dev', {
+  morgan(morganFormat, {
     stream: { write: (message) => logger.info(message.trim()) },
   })
 );
