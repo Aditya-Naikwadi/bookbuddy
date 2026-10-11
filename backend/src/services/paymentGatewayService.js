@@ -93,9 +93,25 @@ const fetchOrderFromGateway = async (gatewayOrderId) => {
   }
 };
 
+/**
+ * Fetches payment details directly from the gateway API to avoid trusting unverified payloads.
+ * @param {string} gatewayPaymentId
+ * @returns {Promise<Object|null>}
+ */
+const fetchPaymentFromGateway = async (gatewayPaymentId) => {
+  const razorpay = getRazorpayInstance();
+  try {
+    const payment = await razorpay.payments.fetch(gatewayPaymentId);
+    return payment;
+  } catch (_err) {
+    return null;
+  }
+};
+
 module.exports = {
   getRazorpayInstance,
   createOrder,
   verifyWebhookSignature,
   fetchOrderFromGateway,
+  fetchPaymentFromGateway,
 };

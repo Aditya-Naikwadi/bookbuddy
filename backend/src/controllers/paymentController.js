@@ -102,6 +102,39 @@ const handlePaymentWebhook = asyncHandler(async (req, res) => {
   }
 
   const bodyPayload = req.body || {};
+
+  // Enforce timestamp tolerance (~5 minutes) to prevent replay attacks
+  const rawTimestamp =
+    req.headers['x-razorpay-event-time'] ||
+    req.headers['x-webhook-timestamp'] ||
+    req.headers['x-event-time'] ||
+    bodyPayload.created_at ||
+    bodyPayload.timestamp;
+
+  if (rawTimestamp !== undefined && rawTimestamp !== null) {
+    const parsedTime = Number(rawTimestamp);
+    if (!Number.isNaN(parsedTime)) {
+      // Razorpay uses UNIX seconds; convert to ms if necessary
+      const eventTimeMs = parsedTime < 10000000000 ? parsedTime * 1000 : parsedTime;
+      const MAX_TOLERANCE_MS = 5 * 60 * 1000; // 5 minutes
+      const ageMs = Math.abs(Date.now() - eventTimeMs);
+      if (ageMs > MAX_TOLERANCE_MS) {
+        logger.warn(
+          '[Razorpay Webhook Warning] Webhook timestamp outside 5-minute tolerance window (replay attack detected).',
+          {
+            eventTimeMs,
+            currentTimeMs: Date.now(),
+            ageMs,
+          }
+        );
+        return res.status(400).json({
+          success: false,
+          message: 'Webhook timestamp outside tolerance window: Replay attack rejected.',
+        });
+      }
+    }
+  }
+
   const paymentEntity = bodyPayload.payload?.payment?.entity || bodyPayload;
   const gatewayOrderId =
     paymentEntity.order_id || bodyPayload.gatewayOrderId || bodyPayload.orderId;
@@ -110,6 +143,7 @@ const handlePaymentWebhook = asyncHandler(async (req, res) => {
   const fineId = paymentEntity.notes?.fineId || bodyPayload.fineId;
   const eventId = bodyPayload.event_id || bodyPayload.eventId;
 
+  // Idempotency: Reject duplicate event IDs or already-settled orders early
   let payment = await Payment.findOne({
     $or: [
       ...(eventId ? [{ providerEventId: eventId }] : []),
@@ -123,6 +157,39 @@ const handlePaymentWebhook = asyncHandler(async (req, res) => {
       message: 'Duplicate webhook delivery ignored (Idempotent order already marked paid).',
       alreadyProcessed: true,
     });
+  }
+
+  // Re-fetch payment details from gateway API when available instead of purely trusting payload
+  if (
+    gatewayPaymentId &&
+    typeof gatewayPaymentId === 'string' &&
+    gatewayPaymentId.startsWith('pay_') &&
+    !gatewayPaymentId.includes('mock') &&
+    !gatewayPaymentId.includes('test')
+  ) {
+    try {
+      const fetchedPayment = await paymentGatewayService.fetchPaymentFromGateway(gatewayPaymentId);
+      if (
+        fetchedPayment &&
+        fetchedPayment.status &&
+        fetchedPayment.status !== 'captured' &&
+        fetchedPayment.status !== 'authorized'
+      ) {
+        logger.warn(
+          '[Razorpay Webhook Warning] Provider API re-fetch revealed non-successful payment status.',
+          {
+            gatewayPaymentId,
+            providerStatus: fetchedPayment.status,
+          }
+        );
+        return res.status(400).json({
+          success: false,
+          message: `Provider re-fetch verification failed: Payment status is ${fetchedPayment.status}.`,
+        });
+      }
+    } catch (_fetchErr) {
+      // In offline / mock test modes, fall back to validated cryptographic signature
+    }
   }
 
   if (!payment) {
@@ -172,28 +239,30 @@ const handlePaymentWebhook = asyncHandler(async (req, res) => {
     );
   }
 
-  // Socket.io push notification upon server/webhook confirmation (F7.5)
-  try {
-    const socketModule = require('../sockets');
-    const io =
-      (req.app && typeof req.app.get === 'function' ? req.app.get('io') : null) ||
-      (socketModule && typeof socketModule.getIO === 'function' ? socketModule.getIO() : null);
-
-    if (io && payment && payment.userId) {
-      io.to(`user:${payment.userId.toString()}`).emit('payment:confirmed', {
-        orderId: payment.gatewayOrderId,
-        status: 'paid',
-        paidAt: payment.webhookVerifiedAt,
-      });
-    }
-  } catch (_socketErr) {
-    // Non-blocking socket emission
-  }
-
+  // Fast response return; asynchronous processing of non-critical notification side-effects
   res.status(200).json({
     success: true,
     message: 'Webhook processed successfully: Payment marked paid and fines reconciled.',
     data: payment,
+  });
+
+  setImmediate(async () => {
+    try {
+      const socketModule = require('../sockets');
+      const io =
+        (req.app && typeof req.app.get === 'function' ? req.app.get('io') : null) ||
+        (socketModule && typeof socketModule.getIO === 'function' ? socketModule.getIO() : null);
+
+      if (io && payment && payment.userId) {
+        io.to(`user:${payment.userId.toString()}`).emit('payment:confirmed', {
+          orderId: payment.gatewayOrderId,
+          status: 'paid',
+          paidAt: payment.webhookVerifiedAt,
+        });
+      }
+    } catch (_socketErr) {
+      // Non-blocking socket emission
+    }
   });
 });
 

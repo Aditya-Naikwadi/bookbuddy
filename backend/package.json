@@ -14,6 +14,9 @@
     "unrs-resolver": true
   },
   "jest": {
+    "setupFiles": [
+      "./src/tests/setupEnv.js"
+    ],
     "setupFilesAfterEnv": [
       "./src/tests/setup.js"
     ]
