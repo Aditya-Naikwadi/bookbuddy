@@ -5,6 +5,7 @@ const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 const paymentGatewayService = require('../services/paymentGatewayService');
 const logger = require('../utils/logger');
+const { atomicConditionalUpdate } = require('../utils/atomicUpdateHelper');
 
 /**
  * @desc    Create a Razorpay order with SERVER-COMPUTED amount (F7.3)
@@ -348,11 +349,16 @@ const verifyPayment = asyncHandler(async (req, res) => {
     throw new AppError('Payment record not found.', 404);
   }
 
-  if (payment && payment.status !== 'paid') {
+  if (payment) {
+    await atomicConditionalUpdate(Payment, { _id: payment._id, status: { $ne: 'paid' } }, null, {
+      $set: {
+        status: 'paid',
+        gatewayPaymentId: razorpay_payment_id,
+        webhookVerifiedAt: new Date(),
+      },
+    });
     payment.status = 'paid';
     payment.gatewayPaymentId = razorpay_payment_id;
-    payment.webhookVerifiedAt = new Date();
-    await payment.save();
   }
 
   let targetFineIds = [];

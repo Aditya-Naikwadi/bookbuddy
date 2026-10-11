@@ -215,7 +215,14 @@ const useAuthStore = create((set) => {
       }
     },
 
-    register: async (name, email, password, idNumber, role, collegeId = null) => {
+    register: async (
+      name,
+      email,
+      password,
+      idNumber,
+      role,
+      collegeId = null,
+    ) => {
       set({ isLoading: true, error: null });
       try {
         await fetchCsrfToken();

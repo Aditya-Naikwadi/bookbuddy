@@ -1,4 +1,6 @@
 dist
 coverage
 public/version.json
+public/pdf.worker.min.mjs
+package-lock.json
 node_modules

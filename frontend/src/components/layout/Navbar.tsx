@@ -79,12 +79,8 @@ const NavbarComponent = () => {
         (id === "library" || id === "catalog"
           ? document.getElementById("catalog-search")
           : null) ||
-        (id === "e-books"
-          ? document.getElementById("e-resources")
-          : null) ||
-        (id === "streak"
-          ? document.getElementById("streaks")
-          : null);
+        (id === "e-books" ? document.getElementById("e-resources") : null) ||
+        (id === "streak" ? document.getElementById("streaks") : null);
 
       if (element) {
         element.scrollIntoView({ behavior: "smooth" });
@@ -149,7 +145,6 @@ const NavbarComponent = () => {
 
         {/* Mobile & Tablet Controls (Visible on < 1024px) */}
         <div className="flex lg:hidden items-center gap-2 sm:gap-3">
-
           {/* CSS-Animated Hamburger Toggle Button */}
           <button
             className="hamburger-button"

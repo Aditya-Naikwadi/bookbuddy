@@ -2,6 +2,7 @@
 const Reservation = require('../models/Reservation');
 const Book = require('../models/Book');
 const AppError = require('../utils/AppError');
+const { atomicConditionalUpdate } = require('../utils/atomicUpdateHelper');
 
 const placeHold = async (userId, bookId, collegeId) => {
   const book = await Book.findOne({ _id: bookId, collegeId });
@@ -114,15 +115,31 @@ const joinQueue = async (userId, bookId, collegeId) => {
 };
 
 const leaveQueue = async (reservationId, userId) => {
-  const reservation = await Reservation.findOne({ _id: reservationId, userId });
-  if (!reservation) {
-    throw new AppError('Reservation not found.', 404);
-  }
-  if (reservation.status !== 'queued' && reservation.status !== 'ready_for_pickup') {
+  const {
+    matched,
+    doc: reservation,
+    reason,
+  } = await atomicConditionalUpdate(
+    Reservation,
+    {
+      _id: reservationId,
+      userId,
+      status: { $in: ['queued', 'ready_for_pickup'] },
+    },
+    null,
+    {
+      $set: { status: 'cancelled' },
+    },
+    { checkExistenceOnFailure: true }
+  );
+
+  if (!matched) {
+    if (reason === 'NOT_FOUND') {
+      throw new AppError('Reservation not found.', 404);
+    }
     throw new AppError('Only active reservations can be cancelled.', 400);
   }
-  reservation.status = 'cancelled';
-  await reservation.save();
+
   return reservation;
 };
 

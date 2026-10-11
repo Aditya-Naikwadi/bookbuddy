@@ -26,11 +26,19 @@ export const getBookAnnotations = async (bookId, type) => {
 export const createAnnotationApi = async (bookId, data) => {
   try {
     const res = await apiClient.post(`/books/${bookId}/annotations`, data);
-    const label = data.type === "note" ? "Note Saved" : data.type === "bookmark" ? "Bookmark Saved" : "Highlight Saved";
+    const label =
+      data.type === "note"
+        ? "Note Saved"
+        : data.type === "bookmark"
+          ? "Bookmark Saved"
+          : "Highlight Saved";
     toast.success(label, "Your reading annotation has been saved.");
     return res.data;
   } catch (err) {
-    toast.error("Failed to Save", err.response?.data?.message || "Could not save annotation.");
+    toast.error(
+      "Failed to Save",
+      err.response?.data?.message || "Could not save annotation.",
+    );
     throw err;
   }
 };
@@ -44,7 +52,10 @@ export const updateAnnotationApi = async (annotationId, data) => {
     toast.success("Updated", "Annotation updated successfully.");
     return res.data;
   } catch (err) {
-    toast.error("Update Failed", err.response?.data?.message || "Could not update annotation.");
+    toast.error(
+      "Update Failed",
+      err.response?.data?.message || "Could not update annotation.",
+    );
     throw err;
   }
 };
@@ -58,7 +69,10 @@ export const deleteAnnotationApi = async (annotationId) => {
     toast.info("Deleted", "Annotation removed.");
     return res.data;
   } catch (err) {
-    toast.error("Delete Failed", err.response?.data?.message || "Could not delete annotation.");
+    toast.error(
+      "Delete Failed",
+      err.response?.data?.message || "Could not delete annotation.",
+    );
     throw err;
   }
 };

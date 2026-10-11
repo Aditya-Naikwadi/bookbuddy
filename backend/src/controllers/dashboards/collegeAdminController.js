@@ -1315,11 +1315,26 @@ const approveStudentJoinRequest = async (req, res, next) => {
       });
     }
 
-    joinRequest.status = 'approved';
-    joinRequest.rejectionReason = null;
-    joinRequest.reviewedBy = req.user._id || req.user.id;
-    joinRequest.reviewedAt = new Date();
-    await joinRequest.save();
+    const { matched: updateMatched } = await atomicConditionalUpdate(
+      StudentJoinRequest,
+      {
+        _id: joinRequest._id,
+        status: { $ne: 'approved' },
+      },
+      null,
+      {
+        $set: {
+          status: 'approved',
+          rejectionReason: null,
+          reviewedBy: req.user._id || req.user.id,
+          reviewedAt: new Date(),
+        },
+      }
+    );
+
+    if (!updateMatched) {
+      return next(new AppError('Student join request has already been approved.', 400));
+    }
 
     // Log approval to AuditLog
     await AuditLog.create({
@@ -1404,11 +1419,28 @@ const rejectStudentJoinRequest = async (req, res, next) => {
       req.body?.rejectionReason ||
       'Application rejected by college administrator.';
 
-    joinRequest.status = 'rejected';
-    joinRequest.rejectionReason = reason;
-    joinRequest.reviewedBy = req.user._id || req.user.id;
-    joinRequest.reviewedAt = new Date();
-    await joinRequest.save();
+    const { matched: rejectMatched } = await atomicConditionalUpdate(
+      StudentJoinRequest,
+      {
+        _id: joinRequest._id,
+        status: { $nin: ['approved', 'rejected'] },
+      },
+      null,
+      {
+        $set: {
+          status: 'rejected',
+          rejectionReason: reason,
+          reviewedBy: req.user._id || req.user.id,
+          reviewedAt: new Date(),
+        },
+      }
+    );
+
+    if (!rejectMatched) {
+      return next(
+        new AppError('Student join request cannot be rejected or has already been reviewed.', 400)
+      );
+    }
 
     // Log rejection to AuditLog
     await AuditLog.create({

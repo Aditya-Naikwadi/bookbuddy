@@ -6,7 +6,9 @@ WORKDIR /usr/src/app
 # Install build dependencies for native C++ binaries (argon2, bcrypt)
 RUN apk add --no-cache python3 make g++
 
-COPY package*.json ./
+# Copy shared workspace dependency so file:../shared is properly resolved
+COPY shared /usr/src/shared
+COPY backend/package*.json ./
 
 # Install production dependencies
 RUN npm ci --only=production --legacy-peer-deps || npm install --omit=dev --legacy-peer-deps
@@ -19,11 +21,14 @@ WORKDIR /usr/src/app
 # Create non-root app user and group if node user needs distinct permissions
 RUN chown -R node:node /usr/src/app
 
+# Copy shared workspace package into production container
+COPY --chown=node:node shared /usr/src/shared
+
 # Copy production node_modules from build stage
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 
-# Copy application source code
-COPY --chown=node:node . .
+# Copy backend application source code
+COPY --chown=node:node backend/ .
 
 # Switch to non-root user
 USER node

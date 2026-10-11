@@ -102,7 +102,7 @@ export default function CollegeStudentRegister() {
         confirmPassword: studentForm.confirmPassword,
         collegeId: collegeData._id,
         studentId: normalizeStudentId(
-          studentForm.rollNumber || `STU-${Date.now().toString().slice(-4)}`
+          studentForm.rollNumber || `STU-${Date.now().toString().slice(-4)}`,
         ),
         department: studentForm.department,
         phone: studentForm.phone,

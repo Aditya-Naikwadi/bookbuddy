@@ -112,10 +112,24 @@ describe("Student & College-Student Route Access and Navigation Suite", () => {
     render(
       <MemoryRouter initialEntries={["/student/loans"]}>
         <Routes>
-          <Route element={<ProtectedRoute allowedRoles={["student", "college-student"]} />}>
-            <Route path="/student/loans" element={<div data-testid="student-loans-page">Loans Page Content</div>} />
+          <Route
+            element={
+              <ProtectedRoute allowedRoles={["student", "college-student"]} />
+            }
+          >
+            <Route
+              path="/student/loans"
+              element={
+                <div data-testid="student-loans-page">Loans Page Content</div>
+              }
+            />
           </Route>
-          <Route path="/unauthorized" element={<div data-testid="unauthorized-page">403 Unauthorized</div>} />
+          <Route
+            path="/unauthorized"
+            element={
+              <div data-testid="unauthorized-page">403 Unauthorized</div>
+            }
+          />
         </Routes>
       </MemoryRouter>,
     );
@@ -141,9 +155,21 @@ describe("Student & College-Student Route Access and Navigation Suite", () => {
       <MemoryRouter initialEntries={["/student/catalog"]}>
         <Routes>
           <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
-            <Route path="/student/catalog" element={<div data-testid="student-catalog-page">Catalog Page Content</div>} />
+            <Route
+              path="/student/catalog"
+              element={
+                <div data-testid="student-catalog-page">
+                  Catalog Page Content
+                </div>
+              }
+            />
           </Route>
-          <Route path="/unauthorized" element={<div data-testid="unauthorized-page">403 Unauthorized</div>} />
+          <Route
+            path="/unauthorized"
+            element={
+              <div data-testid="unauthorized-page">403 Unauthorized</div>
+            }
+          />
         </Routes>
       </MemoryRouter>,
     );
@@ -168,10 +194,24 @@ describe("Student & College-Student Route Access and Navigation Suite", () => {
     render(
       <MemoryRouter initialEntries={["/student/fines"]}>
         <Routes>
-          <Route element={<ProtectedRoute allowedRoles={["student", "college-student"]} />}>
-            <Route path="/student/fines" element={<div data-testid="student-fines-page">Fines Page Content</div>} />
+          <Route
+            element={
+              <ProtectedRoute allowedRoles={["student", "college-student"]} />
+            }
+          >
+            <Route
+              path="/student/fines"
+              element={
+                <div data-testid="student-fines-page">Fines Page Content</div>
+              }
+            />
           </Route>
-          <Route path="/unauthorized" element={<div data-testid="unauthorized-page">403 Unauthorized</div>} />
+          <Route
+            path="/unauthorized"
+            element={
+              <div data-testid="unauthorized-page">403 Unauthorized</div>
+            }
+          />
         </Routes>
       </MemoryRouter>,
     );

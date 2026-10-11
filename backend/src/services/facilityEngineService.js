@@ -10,6 +10,7 @@ const Notification = require('../models/Notification');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
 const { runInTransaction } = require('../utils/transactionHelper');
+const { atomicConditionalUpdate } = require('../utils/atomicUpdateHelper');
 const { escapeRegExp } = require('../utils/sanitize');
 const { acquireSoftLock, releaseSoftLock } = require('../utils/softLock');
 
@@ -1195,18 +1196,30 @@ const joinBookingQueue = async ({
 };
 
 const leaveBookingQueue = async ({ queueId, studentId }) => {
-  const ticket = await FacilityBookingQueue.findOne({ _id: queueId, studentId });
-  if (!ticket) {
-    throw new AppError('Queue ticket not found.', 404);
-  }
+  const {
+    matched,
+    doc: ticket,
+    reason,
+  } = await atomicConditionalUpdate(
+    FacilityBookingQueue,
+    { _id: queueId, studentId, status: 'queued' },
+    null,
+    { $set: { status: 'cancelled' } },
+    { checkExistenceOnFailure: true }
+  );
 
-  if (ticket.status !== 'queued') {
-    throw new AppError(`Cannot leave queue ticket with status: ${ticket.status}.`, 400);
+  if (!matched) {
+    if (reason === 'NOT_FOUND') {
+      throw new AppError('Queue ticket not found.', 404);
+    }
+    const existing = await FacilityBookingQueue.findOne({ _id: queueId, studentId });
+    throw new AppError(
+      `Cannot leave queue ticket with status: ${existing ? existing.status : 'unknown'}.`,
+      400
+    );
   }
 
   const oldPosition = ticket.queuePosition;
-  ticket.status = 'cancelled';
-  await ticket.save();
 
   // Re-index subsequent tickets
   await FacilityBookingQueue.updateMany(
@@ -1402,9 +1415,19 @@ const claimPromotedQueueSpot = async ({ queueId, studentId, referenceNow = new D
     referenceNow,
   });
 
+  const { matched: confirmMatched } = await atomicConditionalUpdate(
+    FacilityBookingQueue,
+    { _id: queueId, studentId, status: 'ready_to_confirm' },
+    null,
+    { $set: { status: 'confirmed', resourceId: targetResourceId } }
+  );
+
+  if (!confirmMatched) {
+    throw new AppError('Ticket has already been confirmed or modified concurrently.', 400);
+  }
+
   ticket.status = 'confirmed';
   ticket.resourceId = targetResourceId;
-  await ticket.save();
 
   emitToUser(studentId, 'facility:queue_claimed', {
     queueId: ticket._id,

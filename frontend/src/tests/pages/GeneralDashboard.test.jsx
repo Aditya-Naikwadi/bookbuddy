@@ -620,7 +620,9 @@ describe("General Dashboard Consolidated Suite", () => {
 
         // HighlightToolbar should appear with color options
         await waitFor(() => {
-          expect(screen.getByTitle("Highlight with yellow")).toBeInTheDocument();
+          expect(
+            screen.getByTitle("Highlight with yellow"),
+          ).toBeInTheDocument();
         });
 
         // Click color option to highlight
@@ -630,7 +632,9 @@ describe("General Dashboard Consolidated Suite", () => {
         await waitFor(() => {
           expect(screen.getByTestId("login-prompt-modal")).toBeInTheDocument();
         });
-        expect(screen.getByText("Sign In to Save Highlights")).toBeInTheDocument();
+        expect(
+          screen.getByText("Sign In to Save Highlights"),
+        ).toBeInTheDocument();
 
         // Zero API calls were made (preventing 401)
         expect(createAnnotationApi).not.toHaveBeenCalled();
@@ -692,11 +696,17 @@ describe("General Dashboard Consolidated Suite", () => {
 
         // Open note editor
         fireEvent.click(screen.getByTitle("Add Note"));
-        expect(screen.getByText("Attach Note to Highlight")).toBeInTheDocument();
+        expect(
+          screen.getByText("Attach Note to Highlight"),
+        ).toBeInTheDocument();
 
         // Type note
-        const textarea = screen.getByPlaceholderText("Type your study note here...");
-        fireEvent.change(textarea, { target: { value: "Review RFC 791 for exam" } });
+        const textarea = screen.getByPlaceholderText(
+          "Type your study note here...",
+        );
+        fireEvent.change(textarea, {
+          target: { value: "Review RFC 791 for exam" },
+        });
 
         // Click Save Note
         const saveNoteBtn = screen.getByText("Save Note");
@@ -706,7 +716,9 @@ describe("General Dashboard Consolidated Suite", () => {
         await waitFor(() => {
           expect(screen.getByTestId("login-prompt-modal")).toBeInTheDocument();
         });
-        expect(screen.getByText("Sign In to Save Highlights")).toBeInTheDocument();
+        expect(
+          screen.getByText("Sign In to Save Highlights"),
+        ).toBeInTheDocument();
 
         // Zero API calls made
         expect(createAnnotationApi).not.toHaveBeenCalled();
@@ -956,7 +968,9 @@ describe("General Dashboard Consolidated Suite", () => {
 
       await waitFor(() => {
         expect(screen.getByText(/Frankenstein/i)).toBeInTheDocument();
-        expect(screen.getAllByText(/Preview In-App/i).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/Preview In-App/i).length).toBeGreaterThan(
+          0,
+        );
       });
     });
   });

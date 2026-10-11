@@ -24,7 +24,10 @@ export const useLocalBookmarks = () => {
   const addBookmark = (item) => {
     setBookmarks((prev) => {
       if (prev.some((b) => b.id === item.id || b._id === item._id)) return prev;
-      toast.success("Bookmark Saved", `Saved "${item.title || "Item"}" to your collection.`);
+      toast.success(
+        "Bookmark Saved",
+        `Saved "${item.title || "Item"}" to your collection.`,
+      );
       return [...prev, { ...item, savedAt: new Date().toISOString() }];
     });
   };

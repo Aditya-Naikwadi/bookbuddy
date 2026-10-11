@@ -116,7 +116,7 @@ const GeneralDashboardHome = () => {
       }
       if (e.key === "Tab" && modalRef.current) {
         const focusables = modalRef.current.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
         );
         if (focusables.length === 0) return;
         const first = focusables[0];
@@ -138,7 +138,7 @@ const GeneralDashboardHome = () => {
     const timer = setTimeout(() => {
       if (modalRef.current) {
         const firstFocusable = modalRef.current.querySelector(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
         );
         if (firstFocusable) firstFocusable.focus();
       }
@@ -578,7 +578,7 @@ const GeneralDashboardHome = () => {
                 </button>
 
                 {[ROLES.COLLEGE_ADMIN, ROLES.SUPER_ADMIN].includes(
-                  normalizeRole(user?.role)
+                  normalizeRole(user?.role),
                 ) ? (
                   <button
                     onClick={() => navigate("/college-admin/bulk-upload")}

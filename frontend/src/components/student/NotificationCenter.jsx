@@ -43,8 +43,8 @@ const NotificationCenter = () => {
     };
   }, []);
 
-  const [isSocketConnected, setIsSocketConnected] = useState(
-    () => (socket ? socket.connected : true),
+  const [isSocketConnected, setIsSocketConnected] = useState(() =>
+    socket ? socket.connected : true,
   );
 
   // Listen to Socket.io events & connection state

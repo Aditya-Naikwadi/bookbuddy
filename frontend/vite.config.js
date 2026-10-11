@@ -36,7 +36,11 @@ export default defineConfig({
         ws: true,
         configure: (proxy) => {
           proxy.on("error", (err, _req, res) => {
-            if (res && typeof res.writeHead === "function" && !res.headersSent) {
+            if (
+              res &&
+              typeof res.writeHead === "function" &&
+              !res.headersSent
+            ) {
               res.writeHead(502, { "Content-Type": "application/json" });
               res.end(
                 JSON.stringify({
@@ -45,7 +49,11 @@ export default defineConfig({
                   message: err.message,
                 }),
               );
-            } else if (res && typeof res.destroy === "function" && !res.destroyed) {
+            } else if (
+              res &&
+              typeof res.destroy === "function" &&
+              !res.destroyed
+            ) {
               res.destroy();
             }
           });
@@ -61,7 +69,11 @@ export default defineConfig({
             socket.on("error", () => {});
           });
           proxy.on("error", (err, _req, res) => {
-            if (res && typeof res.writeHead === "function" && !res.headersSent) {
+            if (
+              res &&
+              typeof res.writeHead === "function" &&
+              !res.headersSent
+            ) {
               res.writeHead(502, { "Content-Type": "application/json" });
               res.end(
                 JSON.stringify({
@@ -70,7 +82,11 @@ export default defineConfig({
                   message: err.message,
                 }),
               );
-            } else if (res && typeof res.destroy === "function" && !res.destroyed) {
+            } else if (
+              res &&
+              typeof res.destroy === "function" &&
+              !res.destroyed
+            ) {
               res.destroy();
             }
           });

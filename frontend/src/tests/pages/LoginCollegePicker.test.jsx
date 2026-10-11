@@ -81,13 +81,17 @@ describe("Central Login - Searchable College Picker & Redirection", () => {
     render(
       <MemoryRouter>
         <Login />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     // Assert institution finder header
-    expect(screen.getByText(/Student or Faculty Member\?/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Find your institution to sign in to your campus library/i)
+      screen.getByText(/Student or Faculty Member\?/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Find your institution to sign in to your campus library/i,
+      ),
     ).toBeInTheDocument();
 
     const searchInput = screen.getByRole("combobox", {
@@ -103,12 +107,14 @@ describe("Central Login - Searchable College Picker & Redirection", () => {
 
   it("filters colleges dynamically as user types in the search input", async () => {
     vi.spyOn(tenantUtils, "getSubdomainTenantSlug").mockReturnValue(null);
-    vi.spyOn(registrationApi, "getActiveColleges").mockResolvedValue(mockActiveColleges);
+    vi.spyOn(registrationApi, "getActiveColleges").mockResolvedValue(
+      mockActiveColleges,
+    );
 
     render(
       <MemoryRouter>
         <Login />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const searchInput = screen.getByRole("combobox", {
@@ -119,7 +125,9 @@ describe("Central Login - Searchable College Picker & Redirection", () => {
     fireEvent.focus(searchInput);
 
     await waitFor(() => {
-      expect(screen.getByText("Massachusetts Institute of Technology")).toBeInTheDocument();
+      expect(
+        screen.getByText("Massachusetts Institute of Technology"),
+      ).toBeInTheDocument();
       expect(screen.getByText("Stanford University")).toBeInTheDocument();
       expect(screen.getByText("Oxford University")).toBeInTheDocument();
     });
@@ -128,7 +136,9 @@ describe("Central Login - Searchable College Picker & Redirection", () => {
     fireEvent.change(searchInput, { target: { value: "Stan" } });
 
     expect(screen.getByText("Stanford University")).toBeInTheDocument();
-    expect(screen.queryByText("Massachusetts Institute of Technology")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Massachusetts Institute of Technology"),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Oxford University")).not.toBeInTheDocument();
 
     // Clear search using clear button
@@ -136,40 +146,50 @@ describe("Central Login - Searchable College Picker & Redirection", () => {
     fireEvent.click(clearBtn);
 
     expect(searchInput.value).toBe("");
-    expect(screen.getByText("Massachusetts Institute of Technology")).toBeInTheDocument();
+    expect(
+      screen.getByText("Massachusetts Institute of Technology"),
+    ).toBeInTheDocument();
   });
 
   it("shows empty state when no active college matches the search query", async () => {
     vi.spyOn(tenantUtils, "getSubdomainTenantSlug").mockReturnValue(null);
-    vi.spyOn(registrationApi, "getActiveColleges").mockResolvedValue(mockActiveColleges);
+    vi.spyOn(registrationApi, "getActiveColleges").mockResolvedValue(
+      mockActiveColleges,
+    );
 
     render(
       <MemoryRouter>
         <Login />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const searchInput = screen.getByRole("combobox", {
       name: /Search college institution/i,
     });
     fireEvent.focus(searchInput);
-    fireEvent.change(searchInput, { target: { value: "NonExistentCollege123" } });
+    fireEvent.change(searchInput, {
+      target: { value: "NonExistentCollege123" },
+    });
 
     await waitFor(() => {
       expect(
-        screen.getByText(/No active institutions found matching "NonExistentCollege123"/i)
+        screen.getByText(
+          /No active institutions found matching "NonExistentCollege123"/i,
+        ),
       ).toBeInTheDocument();
     });
   });
 
   it("redirects to <slug>.bookbuddy.com/login when a college is selected", async () => {
     vi.spyOn(tenantUtils, "getSubdomainTenantSlug").mockReturnValue(null);
-    vi.spyOn(registrationApi, "getActiveColleges").mockResolvedValue(mockActiveColleges);
+    vi.spyOn(registrationApi, "getActiveColleges").mockResolvedValue(
+      mockActiveColleges,
+    );
 
     render(
       <MemoryRouter>
         <Login />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const searchInput = screen.getByRole("combobox", {
@@ -178,7 +198,9 @@ describe("Central Login - Searchable College Picker & Redirection", () => {
     fireEvent.focus(searchInput);
 
     await waitFor(() => {
-      expect(screen.getByText("Massachusetts Institute of Technology")).toBeInTheDocument();
+      expect(
+        screen.getByText("Massachusetts Institute of Technology"),
+      ).toBeInTheDocument();
     });
 
     // Select MIT
@@ -191,12 +213,16 @@ describe("Central Login - Searchable College Picker & Redirection", () => {
     expect(
       window.location.href === "https://mit.bookbuddy.com/login" ||
         window.location.assign.mock.calls.some(
-          (call) => call[0] === "https://mit.bookbuddy.com/login"
-        )
+          (call) => call[0] === "https://mit.bookbuddy.com/login",
+        ),
     ).toBe(true);
 
     // Verify redirecting transition notice
-    expect(screen.getByText(/Redirecting to Massachusetts Institute of Technology portal/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Redirecting to Massachusetts Institute of Technology portal/i,
+      ),
+    ).toBeInTheDocument();
   });
 
   it("does not render the college picker on a tenant-scoped subdomain login page", () => {
@@ -208,13 +234,15 @@ describe("Central Login - Searchable College Picker & Redirection", () => {
     render(
       <MemoryRouter>
         <Login />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     // On tenant subdomain, picker is not shown as the central gateway
-    expect(screen.queryByText(/Student or Faculty Member\?/i)).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("combobox", { name: /Search college institution/i })
+      screen.queryByText(/Student or Faculty Member\?/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("combobox", { name: /Search college institution/i }),
     ).not.toBeInTheDocument();
     expect(getCollegesSpy).not.toHaveBeenCalled();
 

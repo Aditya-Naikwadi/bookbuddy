@@ -154,10 +154,9 @@ export const getCustomReport = async (type, params = {}) => {
 };
 
 export const getStudentJoinRequests = async (params = {}) => {
-  const { data } = await apiClient.get(
-    "/college-admin/student-join-requests",
-    { params },
-  );
+  const { data } = await apiClient.get("/college-admin/student-join-requests", {
+    params,
+  });
   return data;
 };
 

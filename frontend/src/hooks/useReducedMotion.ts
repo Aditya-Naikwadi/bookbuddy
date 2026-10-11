@@ -4,7 +4,10 @@ export function useReducedMotion() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
       return;
     }
 
@@ -23,4 +26,3 @@ export function useReducedMotion() {
 
   return prefersReducedMotion;
 }
-

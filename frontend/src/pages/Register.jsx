@@ -184,10 +184,7 @@ const Register = () => {
     } else if (e.key === "Enter") {
       if (isCollegeDropdownOpen) {
         e.preventDefault();
-        if (
-          highlightedIndex >= 0 &&
-          filteredColleges[highlightedIndex]
-        ) {
+        if (highlightedIndex >= 0 && filteredColleges[highlightedIndex]) {
           handleSelectCollege(filteredColleges[highlightedIndex]);
         }
       }
@@ -722,7 +719,9 @@ const Register = () => {
             onChange={(e) => setStudentId(e.target.value)}
             autoCapitalize="characters"
             className="w-full p-2.5 text-sm bg-surface/50 border border-edge rounded-xl text-ink focus:outline-none focus:ring-2 focus:ring-ember/50 placeholder-muted/50 transition-all shadow-sm disabled:opacity-50"
-            placeholder={normalizeRole(role) === ROLES.STUDENT ? "STU1001" : "ID1001"}
+            placeholder={
+              normalizeRole(role) === ROLES.STUDENT ? "STU1001" : "ID1001"
+            }
           />
         </motion.div>
 

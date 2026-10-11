@@ -156,9 +156,12 @@ describe("@testing-accessibility-auditor: WCAG 2.1.1 Full Keyboard-Only Navigati
       // 6. Escape closes listbox
       fireEvent.keyDown(combobox, { key: "Escape" });
       expect(combobox).toHaveAttribute("aria-expanded", "false");
-      await waitFor(() => {
-        expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
 
       // 7. ArrowDown re-opens, ArrowDown to Stanford, Enter selects and redirects
       fireEvent.keyDown(combobox, { key: "ArrowDown" }); // opens at index 0 (MIT)

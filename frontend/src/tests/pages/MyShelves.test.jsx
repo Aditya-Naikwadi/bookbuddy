@@ -52,7 +52,9 @@ describe("MyShelves Page Component", () => {
     );
 
     // Verifies loading state terminates immediately without timing out
-    expect(await screen.findByText("No Shelves Found", {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(
+      await screen.findByText("No Shelves Found", {}, { timeout: 3000 }),
+    ).toBeInTheDocument();
     expect(
       screen.getByText("Get started by creating your first reading shelf!"),
     ).toBeInTheDocument();
@@ -70,7 +72,9 @@ describe("MyShelves Page Component", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByText("No Shelves Found", {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(
+      await screen.findByText("No Shelves Found", {}, { timeout: 3000 }),
+    ).toBeInTheDocument();
     expect(
       screen.getByText("Get started by creating your first reading shelf!"),
     ).toBeInTheDocument();
@@ -152,9 +156,7 @@ describe("MyShelves Page Component", () => {
     });
     fireEvent.click(openBtn);
 
-    expect(
-      screen.getByText("Introduction to Algorithms"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Introduction to Algorithms")).toBeInTheDocument();
     expect(screen.getByText("Algorithm Design")).toBeInTheDocument();
   });
 
@@ -199,7 +201,9 @@ describe("MyShelves Page Component", () => {
   });
 
   it("renders error state when fetch fails and allows retry", async () => {
-    readingListApi.getReadingLists.mockRejectedValue(new Error("Network Error"));
+    readingListApi.getReadingLists.mockRejectedValue(
+      new Error("Network Error"),
+    );
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -207,7 +211,9 @@ describe("MyShelves Page Component", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByText(/failed to load shelves/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/failed to load shelves/i),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
   });
 });

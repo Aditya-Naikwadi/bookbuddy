@@ -3,6 +3,7 @@ const AvailabilityAlert = require('../models/AvailabilityAlert');
 const { notify } = require('../services/notificationService');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
+const { atomicConditionalUpdate } = require('../utils/atomicUpdateHelper');
 
 // @desc    Subscribe to availability alert for a book or e-resource
 // @route   POST /api/v1/availability-alerts
@@ -23,17 +24,24 @@ const subscribeAlert = asyncHandler(async (req, res) => {
 
   if (existing) {
     if (existing.status === 'active') {
-      existing.status = 'cancelled';
-      await existing.save();
+      await atomicConditionalUpdate(
+        AvailabilityAlert,
+        { _id: existing._id, status: 'active' },
+        null,
+        { $set: { status: 'cancelled' } }
+      );
       return res.json({
         success: true,
         message: 'Alert cancelled',
         data: { subscribed: false },
       });
     } else {
-      existing.status = 'active';
-      existing.notifiedAt = null;
-      await existing.save();
+      await atomicConditionalUpdate(
+        AvailabilityAlert,
+        { _id: existing._id, status: { $ne: 'active' } },
+        null,
+        { $set: { status: 'active', notifiedAt: null } }
+      );
       return res.json({
         success: true,
         message: 'Alert subscribed',

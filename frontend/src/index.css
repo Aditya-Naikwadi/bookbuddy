@@ -53,11 +53,11 @@
     @apply text-ink antialiased selection:bg-ember/30 selection:text-ember-100;
     background-color: var(--bg-void);
 
-  /* Accessibility F8.4: High-contrast focus rings for keyboard navigation */
-  *:focus-visible {
-    outline: 2px solid #6366f1 !important;
-    outline-offset: 2px !important;
-  }
+    /* Accessibility F8.4: High-contrast focus rings for keyboard navigation */
+    *:focus-visible {
+      outline: 2px solid #6366f1 !important;
+      outline-offset: 2px !important;
+    }
     background-image:
       radial-gradient(
         circle at top right,
@@ -238,7 +238,7 @@
   }
 
   .admin-stat-card::before {
-    content: '';
+    content: "";
     @apply absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-ember via-indigo to-cyan opacity-80;
   }
 
@@ -303,4 +303,3 @@
     background: var(--color-ember, #e66525);
   }
 }
-

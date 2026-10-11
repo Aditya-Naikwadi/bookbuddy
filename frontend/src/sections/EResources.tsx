@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, BookOpen, Download, Sparkles } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  BookOpen,
+  Download,
+  Sparkles,
+} from "lucide-react";
 import { SectionLabel } from "../components/ui/SectionLabel";
 import { Button } from "../components/ui/Button";
 import { BookCoverImage } from "../components/common/BookCoverImage";
@@ -23,7 +29,8 @@ const ERESOURCE_BOOKS: EResourceBook[] = [
     author: "Jane Austen",
     genre: "Classic Fiction",
     format: "EPUB / PDF",
-    coverImage: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&q=80",
+    coverImage:
+      "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&q=80",
   },
   {
     id: "eb-2",
@@ -31,7 +38,8 @@ const ERESOURCE_BOOKS: EResourceBook[] = [
     author: "Mary Shelley",
     genre: "Gothic Horror",
     format: "EPUB / PDF",
-    coverImage: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&q=80",
+    coverImage:
+      "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&q=80",
   },
   {
     id: "eb-3",
@@ -39,7 +47,8 @@ const ERESOURCE_BOOKS: EResourceBook[] = [
     author: "F. Scott Fitzgerald",
     genre: "American Literature",
     format: "EPUB / PDF",
-    coverImage: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400&q=80",
+    coverImage:
+      "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400&q=80",
   },
   {
     id: "eb-4",
@@ -47,7 +56,8 @@ const ERESOURCE_BOOKS: EResourceBook[] = [
     author: "Arthur Conan Doyle",
     genre: "Mystery & Detective",
     format: "EPUB / PDF",
-    coverImage: "https://images.unsplash.com/photo-1476275466078-4007374efbbe?w=400&q=80",
+    coverImage:
+      "https://images.unsplash.com/photo-1476275466078-4007374efbbe?w=400&q=80",
   },
   {
     id: "eb-5",
@@ -55,7 +65,8 @@ const ERESOURCE_BOOKS: EResourceBook[] = [
     author: "H.G. Wells",
     genre: "Science Fiction",
     format: "EPUB / PDF",
-    coverImage: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=400&q=80",
+    coverImage:
+      "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=400&q=80",
   },
   {
     id: "eb-6",
@@ -63,7 +74,8 @@ const ERESOURCE_BOOKS: EResourceBook[] = [
     author: "Bram Stoker",
     genre: "Horror / Gothic",
     format: "EPUB / PDF",
-    coverImage: "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400&q=80",
+    coverImage:
+      "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400&q=80",
   },
   {
     id: "eb-7",
@@ -71,7 +83,8 @@ const ERESOURCE_BOOKS: EResourceBook[] = [
     author: "Franz Kafka",
     genre: "Modernist Fiction",
     format: "EPUB / PDF",
-    coverImage: "https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=400&q=80",
+    coverImage:
+      "https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=400&q=80",
   },
 ];
 
@@ -165,12 +178,12 @@ export const EResources = () => {
             </p>
             <ul className="space-y-4 mb-8 text-ink font-medium">
               <li className="flex items-center gap-3">
-                <span className="text-success text-xl">✓</span> Full in-app PDF &
-                EPUB reader
+                <span className="text-success text-xl">✓</span> Full in-app PDF
+                & EPUB reader
               </li>
               <li className="flex items-center gap-3">
-                <span className="text-success text-xl">✓</span> Pick up where you
-                left off
+                <span className="text-success text-xl">✓</span> Pick up where
+                you left off
               </li>
               <li className="flex items-center gap-3">
                 <span className="text-success text-xl">✓</span> Download for
@@ -242,7 +255,8 @@ export const EResources = () => {
                 Popular E-Resources & Classics
               </h3>
               <p className="text-muted text-sm md:text-base mt-2 max-w-2xl">
-                Free, unrestricted access to timeless books and literature. Click any title to sign in and start reading.
+                Free, unrestricted access to timeless books and literature.
+                Click any title to sign in and start reading.
               </p>
             </div>
 
