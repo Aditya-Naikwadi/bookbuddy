@@ -26,7 +26,7 @@ const protect = async (req, res, next) => {
 
     // Fetch minimal user status
     const user = await User.findById(decoded.sub).select(
-      'isActive role collegeId subRole permissions isMfaEnabled'
+      'isActive role collegeId subRole permissions isMfaEnabled mustChangePasswordOnNextLogin'
     );
     if (!user) {
       return next(new AppError('The user belonging to this token no longer exists.', 401));
@@ -125,6 +125,7 @@ const protect = async (req, res, next) => {
       subRole: user.subRole || 'root_admin',
       permissions: user.permissions || [],
       isMfaEnabled: !!user.isMfaEnabled,
+      mustChangePasswordOnNextLogin: Boolean(user.mustChangePasswordOnNextLogin),
       collegeId: user.collegeId,
       isImpersonated: !!decoded.isImpersonated,
       originalSuperAdminId: decoded.originalSuperAdminId || null,
@@ -146,6 +147,15 @@ const requireRole = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user || !normalizedAllowed.includes(normalizeRole(req.user.role))) {
       return next(new AppError('You do not have permission to perform this action.', 403));
+    }
+    if (req.user.mustChangePasswordOnNextLogin) {
+      return next(
+        new AppError(
+          'Password change required on first login before accessing administrative features.',
+          403,
+          'PASSWORD_CHANGE_REQUIRED'
+        )
+      );
     }
     next();
   };

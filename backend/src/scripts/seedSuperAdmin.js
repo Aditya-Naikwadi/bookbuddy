@@ -13,15 +13,64 @@ async function seedSuperAdmin() {
     await connectDB();
     console.log('Database connection established.');
 
-    const seedEmail = 'SuperAdmin@bookbuddy.com';
-    const plainPassword = process.env.SEED_SUPER_ADMIN_PASSWORD || process.env.SUPERADMIN_PASSWORD;
+    const seedEmail = process.env.SEED_SUPER_ADMIN_EMAIL || 'SuperAdmin@bookbuddy.com';
+    const plainPassword = (
+      process.env.SEED_SUPER_ADMIN_PASSWORD ||
+      process.env.SUPERADMIN_PASSWORD ||
+      ''
+    ).trim();
 
-    if (!plainPassword && process.env.NODE_ENV === 'production') {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const args = process.argv.slice(2);
+
+    if (isProduction && !args.includes('--allow-production')) {
       throw new Error(
-        '❌ FATAL: SEED_SUPER_ADMIN_PASSWORD environment variable is required to provision the super admin in production.'
+        '❌ FATAL: Seeding super-admin in production requires the explicit --allow-production flag.'
       );
     }
-    const finalPlainPassword = plainPassword || 'DevSuperAdminPass@2026!';
+
+    const FORBIDDEN_PASSWORDS = [
+      'admin',
+      'admin123',
+      'password',
+      'password123',
+      'changeme',
+      'superadmin',
+      'superadmin123',
+      'devsuperadminpass@2026!',
+      '12345678',
+      '1234567890',
+    ];
+
+    if (plainPassword && FORBIDDEN_PASSWORDS.includes(plainPassword.toLowerCase())) {
+      throw new Error(
+        '❌ FATAL: Specified super-admin password is a known weak or default password. Provide a strong unique password.'
+      );
+    }
+
+    if (isProduction) {
+      if (!plainPassword) {
+        throw new Error(
+          '❌ FATAL: SEED_SUPER_ADMIN_PASSWORD environment variable is required to provision the super admin in production.'
+        );
+      }
+      if (
+        plainPassword.length < 14 ||
+        !/[A-Z]/.test(plainPassword) ||
+        !/[a-z]/.test(plainPassword) ||
+        !/[0-9]/.test(plainPassword) ||
+        !/[^A-Za-z0-9]/.test(plainPassword)
+      ) {
+        throw new Error(
+          '❌ FATAL: Production super-admin password must be at least 14 characters long and include uppercase, lowercase, numbers, and symbols.'
+        );
+      }
+    }
+
+    const crypto = require('crypto');
+    const finalPlainPassword =
+      plainPassword ||
+      `BB-${crypto.randomBytes(8).toString('hex')}-${crypto.randomInt(1000, 9999)}!Aa`;
 
     let superAdmin = await User.findOne({
       $or: [{ email: seedEmail.toLowerCase() }, { role: { $in: ['super-admin', 'super_admin'] } }],

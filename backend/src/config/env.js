@@ -23,6 +23,31 @@ const requiredString = (name, customMsg, minLen = 1) =>
       .min(minLen, customMsg || `${name} must be at least ${minLen} characters long`)
   );
 
+const KNOWN_DEFAULT_SECRETS = [
+  'secret',
+  'jwtsecret',
+  'yoursecretkey123',
+  'yourrefreshsecretkey456',
+  'supersecretrefresh123',
+  'supersecret123',
+  'supersecretsession123',
+  'testjwtsecretkey999',
+  'password',
+  'password123',
+  'admin',
+  'admin123',
+  'changeme',
+  '123456',
+  '12345678',
+  '1234567890',
+  'devsuperadminpass@2026!',
+  'bookbuddy_scanner_secret_2026',
+  'placeholder_razorpay_secret_key',
+  'rzp_test_placeholder_id',
+  'default_jwt_secret',
+  'default_secret',
+];
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().int().positive().default(5000),
@@ -44,11 +69,9 @@ const envSchema = z.object({
         'JWT_SECRET',
         'JWT_SECRET is required and must be at least 32 characters (256 bits) in production',
         process.env.NODE_ENV === 'production' ? 32 : 8
-      ).refine(
-        (val) =>
-          !['secret', 'jwtsecret', 'yoursecretkey123', 'password'].includes(val.toLowerCase()),
-        { message: 'JWT_SECRET must not use a weak or default value' }
-      ),
+      ).refine((val) => !KNOWN_DEFAULT_SECRETS.includes(val.toLowerCase()), {
+        message: 'JWT_SECRET must not use a weak or default value',
+      }),
 
   JWT_REFRESH_SECRET: isTest
     ? z.string().min(1).default('supersecretrefresh123')
@@ -56,17 +79,9 @@ const envSchema = z.object({
         'JWT_REFRESH_SECRET',
         'JWT_REFRESH_SECRET is required and must be at least 32 characters (256 bits) in production',
         process.env.NODE_ENV === 'production' ? 32 : 8
-      ).refine(
-        (val) =>
-          ![
-            'secret',
-            'jwtsecret',
-            'yourrefreshsecretkey456',
-            'supersecretrefresh123',
-            'password',
-          ].includes(val.toLowerCase()),
-        { message: 'JWT_REFRESH_SECRET must not use a weak or default value' }
-      ),
+      ).refine((val) => !KNOWN_DEFAULT_SECRETS.includes(val.toLowerCase()), {
+        message: 'JWT_REFRESH_SECRET must not use a weak or default value',
+      }),
   JWT_ACCESS_EXPIRY: z.string().default('15m'),
   JWT_REFRESH_EXPIRY: z.string().default('7d'),
   JWT_ISSUER: z.string().default('bookbuddy-api'),
@@ -188,6 +203,69 @@ const envSchema = z.object({
   TWILIO_FROM_NUMBER: z.string().optional(),
 });
 
+function checkDefaultCredentials(envData) {
+  if (envData.NODE_ENV !== 'production') {
+    return;
+  }
+
+  const errors = [];
+
+  const isKnownDefault = (val) => {
+    if (!val || typeof val !== 'string') return false;
+    const lower = val.toLowerCase().trim();
+    return KNOWN_DEFAULT_SECRETS.includes(lower);
+  };
+
+  if (isKnownDefault(envData.JWT_SECRET)) {
+    errors.push('JWT_SECRET cannot be a default or known weak secret in production');
+  }
+
+  if (isKnownDefault(envData.JWT_REFRESH_SECRET)) {
+    errors.push('JWT_REFRESH_SECRET cannot be a default or known weak secret in production');
+  }
+
+  if (
+    envData.JWT_SECRET &&
+    envData.JWT_REFRESH_SECRET &&
+    envData.JWT_SECRET === envData.JWT_REFRESH_SECRET
+  ) {
+    errors.push('JWT_REFRESH_SECRET must be different from JWT_SECRET in production');
+  }
+
+  if (envData.SCANNER_API_KEY === 'bookbuddy_scanner_secret_2026') {
+    errors.push('SCANNER_API_KEY must not use the default fallback key in production');
+  }
+
+  if (envData.MONGO_URI) {
+    const defaultMongoCreds = [
+      'admin:admin@',
+      'root:root@',
+      'root:password@',
+      'user:password@',
+      'mongo:mongo@',
+      'mongodb://127.0.0.1:27017/bookbuddy_test',
+    ];
+    if (defaultMongoCreds.some((cred) => envData.MONGO_URI.toLowerCase().includes(cred))) {
+      errors.push('MONGO_URI contains default or unauthenticated test database credentials');
+    }
+  }
+
+  const superAdminPass = process.env.SEED_SUPER_ADMIN_PASSWORD || process.env.SUPERADMIN_PASSWORD;
+  if (superAdminPass && isKnownDefault(superAdminPass)) {
+    errors.push('SEED_SUPER_ADMIN_PASSWORD cannot be a known default password in production');
+  }
+
+  if (envData.RAZORPAY_KEY_SECRET && isKnownDefault(envData.RAZORPAY_KEY_SECRET)) {
+    errors.push('RAZORPAY_KEY_SECRET cannot use default or placeholder credentials in production');
+  }
+
+  if (errors.length > 0) {
+    throw new Error(
+      `❌ Production Security Violation: Default credentials detected:\n  - ${errors.join('\n  - ')}`
+    );
+  }
+}
+
 function validateEnv() {
   const result = envSchema.safeParse(process.env);
   if (!result.success) {
@@ -216,6 +294,9 @@ function validateEnv() {
 
   const data = result.data;
 
+  // Enforce default credential prohibition in production
+  checkDefaultCredentials(data);
+
   // Additional production validation check
   if (data.NODE_ENV === 'production' && !data.VERCEL && !data.RENDER) {
     const prodRequired = ['GOOGLE_BOOKS_API_KEY', 'REDIS_URL'];
@@ -231,5 +312,6 @@ function validateEnv() {
 }
 
 const env = validateEnv();
+env.checkDefaultCredentials = checkDefaultCredentials;
 
 module.exports = env;
