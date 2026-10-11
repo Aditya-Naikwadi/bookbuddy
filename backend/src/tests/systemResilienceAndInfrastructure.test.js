@@ -46,17 +46,15 @@ describe('system Resilience And Infrastructure Consolidated Suite', () => {
       let superAdminToken;
 
       beforeAll(async () => {
-        if (mongoose.connection.readyState === 0) {
-          await mongoose.connect(process.env.MONGO_URI, {
-            serverSelectionTimeoutMS: 5000,
-            connectTimeoutMS: 5000,
-          });
-        }
+        const connectDB = require('../config/db');
+        await connectDB();
 
-        await User.deleteMany({ email: 'redis.test.sa@bookbuddy.internal' });
-        await PlatformMetricSnapshot.deleteMany({ collegeId: null });
-        await Loan.deleteMany({});
-        await Fine.deleteMany({});
+        if (mongoose.connection && mongoose.connection.readyState === 1 && mongoose.connection.db) {
+          await User.deleteMany({ email: 'redis.test.sa@bookbuddy.internal' });
+          await PlatformMetricSnapshot.deleteMany({ collegeId: null });
+          await Loan.deleteMany({});
+          await Fine.deleteMany({});
+        }
 
         superAdminUser = await User.create({
           studentId: 'SA-REDIS-001',
@@ -84,8 +82,10 @@ describe('system Resilience And Infrastructure Consolidated Suite', () => {
       });
 
       afterAll(async () => {
-        await User.deleteMany({ email: 'redis.test.sa@bookbuddy.internal' });
-        await PlatformMetricSnapshot.deleteMany({ collegeId: null });
+        if (mongoose.connection && mongoose.connection.readyState === 1 && mongoose.connection.db) {
+          await User.deleteMany({ email: 'redis.test.sa@bookbuddy.internal' });
+          await PlatformMetricSnapshot.deleteMany({ collegeId: null });
+        }
       });
 
       it('1. should serve cached data from Redis when key metrics:global:latest is present', async () => {
@@ -206,9 +206,9 @@ describe('system Resilience And Infrastructure Consolidated Suite', () => {
 
   describe('[Source: apiOptimizations.test.js]', () => {
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_optimizations_test';
-    process.env.JWT_SECRET = 'test_jwt_secret_opt';
-    process.env.JWT_REFRESH_SECRET = 'test_jwt_refresh_secret_opt';
+    process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_opt';
+    process.env.JWT_REFRESH_SECRET =
+      process.env.JWT_REFRESH_SECRET || 'test_jwt_refresh_secret_opt';
     jest.setTimeout(90000);
 
     const request = require('supertest');
@@ -236,9 +236,8 @@ describe('system Resilience And Infrastructure Consolidated Suite', () => {
       let studentToken;
 
       beforeAll(async () => {
-        if (mongoose.connection.readyState === 0) {
-          await mongoose.connect(process.env.MONGO_URI);
-        }
+        const connectDB = require('../config/db');
+        await connectDB();
 
         // Create test college
         const college = await College.create({
@@ -278,19 +277,21 @@ describe('system Resilience And Infrastructure Consolidated Suite', () => {
       });
 
       afterAll(async () => {
-        await new Promise((r) => setTimeout(r, 600));
-        await User.deleteMany({ collegeId });
-        await College.deleteMany({ _id: collegeId });
-        await Book.deleteMany({ collegeId });
-        await Loan.deleteMany({ collegeId });
-        await Reservation.deleteMany({ collegeId });
-        await Fine.deleteMany({ collegeId });
-        await Payment.deleteMany({ collegeId });
-        await Announcement.deleteMany({ collegeId });
-        await EResource.deleteMany({ collegeId });
-        await ILLRequest.deleteMany({});
-        await ReadingActivityLog.deleteMany({ collegeId });
-        await UploadJob.deleteMany({ collegeId });
+        if (mongoose.connection && mongoose.connection.readyState === 1 && mongoose.connection.db) {
+          await new Promise((r) => setTimeout(r, 600));
+          await User.deleteMany({ collegeId });
+          await College.deleteMany({ _id: collegeId });
+          await Book.deleteMany({ collegeId });
+          await Loan.deleteMany({ collegeId });
+          await Reservation.deleteMany({ collegeId });
+          await Fine.deleteMany({ collegeId });
+          await Payment.deleteMany({ collegeId });
+          await Announcement.deleteMany({ collegeId });
+          await EResource.deleteMany({ collegeId });
+          await ILLRequest.deleteMany({});
+          await ReadingActivityLog.deleteMany({ collegeId });
+          await UploadJob.deleteMany({ collegeId });
+        }
       });
 
       describe('1. Google Books Routes Protection & Scoping', () => {
@@ -895,13 +896,12 @@ describe('system Resilience And Infrastructure Consolidated Suite', () => {
           moduleSystem: 'commonjs',
         });
 
-        if (mongoose.connection.readyState === 0) {
-          await mongoose.connect(dbUri);
-        }
+        const connectDB = require('../config/db');
+        await connectDB();
       });
 
       afterAll(async () => {
-        if (mongoose.connection.db) {
+        if (mongoose.connection && mongoose.connection.readyState === 1 && mongoose.connection.db) {
           await mongoose.connection.db.dropDatabase();
         }
         // await // mongoose.disconnect();
