@@ -1,11 +1,11 @@
 const asyncHandler = require('express-async-handler');
-const axios = require('axios');
 const gutenbergService = require('../services/gutenbergService');
 const EResource = require('../models/EResource');
 const { recordQualifyingAction } = require('../services/streakService');
 const events = require('../sockets/events');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
+const { safeFetch } = require('../utils/ssrfValidator');
 
 // @desc    Browse / Search external Gutenberg books
 // @route   GET /api/eresources/external
@@ -115,48 +115,21 @@ const proxyContent = asyncHandler(async (req, res) => {
     throw new AppError(`Format ${format} is not available for this resource`, 400);
   }
 
-  // Validate that targetUrl matches approved Gutenberg domains to prevent arbitrary SSRF/XSS
   try {
-    const { hostname, protocol } = new URL(targetUrl);
-    const host = hostname.toLowerCase();
-    const isGutenberg =
-      host === 'gutenberg.org' || host.endsWith('.gutenberg.org') || host === 'gutendex.com';
-    if (protocol !== 'https:' || !isGutenberg) {
-      throw new AppError('Requested resource content URL points to an untrusted domain.', 403);
-    }
-  } catch (err) {
-    if (err instanceof AppError) {
-      throw err;
-    }
-    throw new AppError(err.message || 'Invalid or untrusted resource content URL', 403);
-  }
-
-  try {
-    // We proxy it as a stream so we don't load huge EPUBs into memory fully.
-    const response = await axios({
-      method: 'GET',
-      url: targetUrl,
-      responseType: 'stream',
+    // We proxy it as a stream with full SSRF, DNS-rebinding, content-type and size caps
+    const response = await safeFetch(targetUrl, {
+      allowedDomains: ['gutenberg.org', '*.gutenberg.org', 'gutendex.com'],
       timeout: 15000,
       maxRedirects: 5,
-      beforeRedirect: (options) => {
-        try {
-          const redirectUrl = new URL(options.href);
-          const rHost = redirectUrl.hostname.toLowerCase();
-          const isAllowed =
-            rHost === 'gutenberg.org' ||
-            rHost.endsWith('.gutenberg.org') ||
-            rHost === 'gutendex.com';
-          if (redirectUrl.protocol !== 'https:' || !isAllowed) {
-            throw new AppError(
-              'Requested resource content URL points to an untrusted domain.',
-              403
-            );
-          }
-        } catch (_e) {
-          throw new AppError('Invalid or untrusted redirect URL', 403);
-        }
-      },
+      maxContentLength: 50 * 1024 * 1024,
+      allowedContentTypes: [
+        'application/epub+zip',
+        'text/html',
+        'text/plain',
+        'application/zip',
+        'application/octet-stream',
+      ],
+      responseType: 'stream',
     });
 
     // Pass along headers and apply browser sandboxing to prevent script execution on our origin
@@ -190,7 +163,7 @@ const proxyContent = asyncHandler(async (req, res) => {
 
     response.data.pipe(res);
   } catch (error) {
-    logger.error(`[Proxy Content] Failed to fetch ${targetUrl}: ${error.message}`);
+    logger.error(`[Proxy Content] Upstream fetch error: ${error.message}`);
     if (error instanceof AppError) {
       throw error;
     }

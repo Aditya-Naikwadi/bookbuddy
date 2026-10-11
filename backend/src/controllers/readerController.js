@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const AdmZip = require('adm-zip');
-const axios = require('axios');
+const { safeFetch } = require('../utils/ssrfValidator');
 const EResource = require('../models/EResource');
 const ReadingPosition = require('../models/ReadingPosition');
 const AppError = require('../utils/AppError');
@@ -165,42 +165,26 @@ const streamEbookContent = async (req, res, next) => {
         headers.range = req.headers.range;
       }
 
+      const response = await safeFetch(targetUrl, {
+        allowedDomains: ['www.gutenberg.org', 'gutenberg.org', 'gutendex.com'],
+        headers,
+        timeout: 15000,
+        maxRedirects: 5,
+        maxContentLength: 50 * 1024 * 1024,
+        allowedContentTypes: [
+          'application/epub+zip',
+          'text/plain',
+          'text/html',
+          'application/zip',
+          'application/octet-stream',
+        ],
+        responseType: 'stream',
+      });
+
       // Strictly backend-controlled headers to block scripting attacks
       res.setHeader('Content-Type', format === 'epub' ? 'application/epub+zip' : 'text/plain');
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
-
-      let currentUrl = targetUrl;
-      let response;
-      let redirectCount = 0;
-
-      while (redirectCount < 5) {
-        const { hostname, protocol } = new URL(currentUrl);
-        const allowedHosts = ['www.gutenberg.org', 'gutenberg.org', 'gutendex.com'];
-        if (protocol !== 'https:' || !allowedHosts.includes(hostname.toLowerCase())) {
-          throw new AppError('Requested content URL points to an untrusted domain.', 403);
-        }
-
-        response = await axios({
-          method: 'GET',
-          url: currentUrl,
-          headers,
-          responseType: 'stream',
-          maxRedirects: 0,
-          validateStatus: (status) => status >= 200 && status < 400,
-        });
-
-        if (response.status >= 300 && response.status < 400) {
-          const location = response.headers.location;
-          if (!location) {
-            break;
-          }
-          currentUrl = new URL(location, currentUrl).toString();
-          redirectCount++;
-        } else {
-          break;
-        }
-      }
 
       // Forward response status (200 / 206) and size boundaries
       res.status(response.status);
