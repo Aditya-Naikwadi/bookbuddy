@@ -25,6 +25,12 @@ vi.mock("../../context/ConfigContext", () => ({
 describe("Register Flow - General Patron Registration & Redirect", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(apiClient, "get").mockImplementation((url) => {
+      if (url && url.includes("csrf")) {
+        return Promise.resolve({ data: { csrfToken: "test-csrf" } });
+      }
+      return Promise.resolve({ data: {} });
+    });
     useAuthStore.setState({
       user: null,
       token: null,
@@ -38,7 +44,7 @@ describe("Register Flow - General Patron Registration & Redirect", () => {
     render(
       <MemoryRouter>
         <Register />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const generalRadio = screen.getByLabelText(/General Patron/i);
@@ -80,7 +86,7 @@ describe("Register Flow - General Patron Registration & Redirect", () => {
     render(
       <MemoryRouter>
         <Register />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     fireEvent.change(screen.getByLabelText(/Full Name/i), {
@@ -104,12 +110,14 @@ describe("Register Flow - General Patron Registration & Redirect", () => {
           email: "jane@example.com",
           password: "Password123!",
           role: "general",
-        })
+        }),
       );
     });
 
     // Verify absolutely NO college fields are sent in the payload
-    const registerCall = postSpy.mock.calls.find((call) => call[0] === "/auth/register");
+    const registerCall = postSpy.mock.calls.find(
+      (call) => call[0] === "/auth/register",
+    );
     expect(registerCall).toBeDefined();
     const payload = registerCall[1];
     expect(payload.collegeId).toBeUndefined();
@@ -119,7 +127,9 @@ describe("Register Flow - General Patron Registration & Redirect", () => {
 
     // Verify end-to-end redirect to /general-dashboard
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/general-dashboard", { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith("/general-dashboard", {
+        replace: true,
+      });
     });
   });
 
@@ -127,25 +137,47 @@ describe("Register Flow - General Patron Registration & Redirect", () => {
     render(
       <MemoryRouter>
         <Register />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
-    expect(screen.queryByLabelText(/Select Institution/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/Select Institution/i),
+    ).not.toBeInTheDocument();
   });
 
   it("reveals searchable dropdown populated only with active colleges and filters correctly when College Student is selected", async () => {
     const mockActiveColleges = [
-      { _id: "c1", name: "Apex Engineering Institute", code: "APEX", domain: "apex.edu", status: "active" },
-      { _id: "c2", name: "Beacon Arts University", code: "BAU", domain: "beacon.edu", status: "active" },
-      { _id: "c3", name: "Crestview Medical College", code: "CMC", domain: "crestview.edu", status: "active" },
+      {
+        _id: "c1",
+        name: "Apex Engineering Institute",
+        code: "APEX",
+        domain: "apex.edu",
+        status: "active",
+      },
+      {
+        _id: "c2",
+        name: "Beacon Arts University",
+        code: "BAU",
+        domain: "beacon.edu",
+        status: "active",
+      },
+      {
+        _id: "c3",
+        name: "Crestview Medical College",
+        code: "CMC",
+        domain: "crestview.edu",
+        status: "active",
+      },
     ];
 
-    const getCollegesSpy = vi.spyOn(registrationApi, "getActiveColleges").mockResolvedValue(mockActiveColleges);
+    const getCollegesSpy = vi
+      .spyOn(registrationApi, "getActiveColleges")
+      .mockResolvedValue(mockActiveColleges);
 
     render(
       <MemoryRouter>
         <Register />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const studentRadio = screen.getByLabelText(/College Student/i);
@@ -164,7 +196,9 @@ describe("Register Flow - General Patron Registration & Redirect", () => {
     fireEvent.focus(searchInput);
 
     await waitFor(() => {
-      expect(screen.getByText("Apex Engineering Institute")).toBeInTheDocument();
+      expect(
+        screen.getByText("Apex Engineering Institute"),
+      ).toBeInTheDocument();
       expect(screen.getByText("Beacon Arts University")).toBeInTheDocument();
       expect(screen.getByText("Crestview Medical College")).toBeInTheDocument();
     });
@@ -174,8 +208,12 @@ describe("Register Flow - General Patron Registration & Redirect", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Beacon Arts University")).toBeInTheDocument();
-      expect(screen.queryByText("Apex Engineering Institute")).not.toBeInTheDocument();
-      expect(screen.queryByText("Crestview Medical College")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Apex Engineering Institute"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Crestview Medical College"),
+      ).not.toBeInTheDocument();
     });
 
     // Select filtered college
@@ -192,7 +230,7 @@ describe("Register Flow - General Patron Registration & Redirect", () => {
     render(
       <MemoryRouter>
         <Register />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     // Verify initial form fields exist
@@ -219,7 +257,11 @@ describe("Register Flow - General Patron Registration & Redirect", () => {
 
   it("renders the student-facing Pending Approval screen with zero dashboard access when no roster match is found", async () => {
     vi.spyOn(registrationApi, "getActiveColleges").mockResolvedValue([
-      { _id: "college-100", name: "Imperial Institute of Science", status: "active" },
+      {
+        _id: "college-100",
+        name: "Imperial Institute of Science",
+        status: "active",
+      },
     ]);
 
     vi.spyOn(apiClient, "post").mockResolvedValue({
@@ -227,7 +269,8 @@ describe("Register Flow - General Patron Registration & Redirect", () => {
         success: true,
         requiresApproval: true,
         status: "pending",
-        message: "Join request submitted. Awaiting college administrator approval.",
+        message:
+          "Join request submitted. Awaiting college administrator approval.",
         data: {
           requestId: "req-abc-123",
           studentId: "stu-offroster-42",
@@ -244,7 +287,7 @@ describe("Register Flow - General Patron Registration & Redirect", () => {
     render(
       <MemoryRouter>
         <Register />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     // Switch to College Student
@@ -265,7 +308,9 @@ describe("Register Flow - General Patron Registration & Redirect", () => {
     const collegeInput = screen.getByLabelText(/Select Institution/i);
     fireEvent.focus(collegeInput);
     await waitFor(() => {
-      expect(screen.getByText("Imperial Institute of Science")).toBeInTheDocument();
+      expect(
+        screen.getByText("Imperial Institute of Science"),
+      ).toBeInTheDocument();
     });
     fireEvent.click(screen.getByText("Imperial Institute of Science"));
 
@@ -280,15 +325,25 @@ describe("Register Flow - General Patron Registration & Redirect", () => {
 
     // Verify Pending Approval screen is displayed
     await waitFor(() => {
-      expect(screen.getByTestId("student-pending-approval-screen")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("student-pending-approval-screen"),
+      ).toBeInTheDocument();
       expect(screen.getByText(/Join Request Submitted/i)).toBeInTheDocument();
-      expect(screen.getByText(/Pending Administrator Approval/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Pending Administrator Approval/i),
+      ).toBeInTheDocument();
       expect(screen.getByText(/Locked Until Approved/i)).toBeInTheDocument();
     });
 
     // Verify ZERO navigation to dashboard occurred
-    expect(mockNavigate).not.toHaveBeenCalledWith("/student", expect.anything());
-    expect(mockNavigate).not.toHaveBeenCalledWith("/general-dashboard", expect.anything());
+    expect(mockNavigate).not.toHaveBeenCalledWith(
+      "/student",
+      expect.anything(),
+    );
+    expect(mockNavigate).not.toHaveBeenCalledWith(
+      "/general-dashboard",
+      expect.anything(),
+    );
 
     // Test Return to Home button
     fireEvent.click(screen.getByRole("button", { name: /Return to Home/i }));

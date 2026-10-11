@@ -1,11 +1,19 @@
 const jwt = require('jsonwebtoken');
+const config = require('../config');
 
 const TOKEN_EXPIRY_SECONDS = 30;
 
 /**
  * Generates a signed 30-second time-boxed verification token for gate scanning.
  */
-const generatePatronToken = (userId, studentId, secretKey = process.env.JWT_SECRET || 'secret') => {
+const generatePatronToken = (
+  userId,
+  studentId,
+  secretKey = config.jwt.secret || process.env.JWT_SECRET
+) => {
+  if (!secretKey) {
+    throw new Error('JWT secret key is required to sign patron tokens');
+  }
   const now = Math.floor(Date.now() / 1000);
   const expiresAt = now + TOKEN_EXPIRY_SECONDS;
 
@@ -15,8 +23,11 @@ const generatePatronToken = (userId, studentId, secretKey = process.env.JWT_SECR
       studentId,
       type: 'patron-card-gate',
       exp: expiresAt,
+      iss: config.jwt.issuer || 'bookbuddy-api',
+      aud: config.jwt.audience || 'bookbuddy-client',
     },
-    secretKey
+    secretKey,
+    { algorithm: 'HS256' }
   );
 
   return {
@@ -28,9 +39,14 @@ const generatePatronToken = (userId, studentId, secretKey = process.env.JWT_SECR
 /**
  * Validates a scanned patron card gate token.
  */
-const verifyPatronToken = (token, secretKey = process.env.JWT_SECRET || 'secret') => {
+const verifyPatronToken = (token, secretKey = config.jwt.secret || process.env.JWT_SECRET) => {
   try {
-    const decoded = jwt.verify(token, secretKey);
+    if (!secretKey) {
+      return { valid: false, reason: 'JWT secret key is missing' };
+    }
+    const decoded = jwt.verify(token, secretKey, {
+      algorithms: ['HS256'],
+    });
     if (decoded.type !== 'patron-card-gate') {
       return { valid: false, reason: 'Invalid token type' };
     }

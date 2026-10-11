@@ -10,6 +10,8 @@ const config = {
     refreshSecret: env.JWT_REFRESH_SECRET,
     accessExpiry: env.JWT_ACCESS_EXPIRY,
     refreshExpiry: env.JWT_REFRESH_EXPIRY,
+    issuer: env.JWT_ISSUER || 'bookbuddy-api',
+    audience: env.JWT_AUDIENCE || 'bookbuddy-client',
   },
   clientOrigin: env.CLIENT_ORIGIN,
   nodeEnv: env.NODE_ENV,
@@ -37,9 +39,24 @@ const config = {
     userWindowMs: env.RATE_LIMIT_USER_WINDOW_MS,
     expensiveMax: env.RATE_LIMIT_EXPENSIVE_MAX,
     expensiveWindowMs: env.RATE_LIMIT_EXPENSIVE_WINDOW_MS,
+    searchMax: env.RATE_LIMIT_SEARCH_MAX,
+    searchWindowMs: env.RATE_LIMIT_SEARCH_WINDOW_MS,
     patronCardVerifyMax: env.RATE_LIMIT_PATRON_CARD_VERIFY_MAX,
     patronCardVerifyWindowMs: env.RATE_LIMIT_PATRON_CARD_VERIFY_WINDOW_MS,
   },
+  loginLockout: {
+    maxAttempts: env.LOGIN_LOCKOUT_MAX_ATTEMPTS,
+    durationS: env.LOGIN_LOCKOUT_DURATION_S,
+    windowS: env.LOGIN_LOCKOUT_WINDOW_S,
+  },
+  trustProxy: (() => {
+    const val = env.TRUST_PROXY;
+    if (val === true || val === 'true') return true;
+    if (val === false || val === 'false' || val === undefined || val === null || val === '')
+      return false;
+    if (!isNaN(Number(val))) return Number(val);
+    return val;
+  })(),
   scannerApiKey: env.SCANNER_API_KEY,
   razorpayKeyId: env.RAZORPAY_KEY_ID,
   razorpayKeySecret: env.RAZORPAY_KEY_SECRET,

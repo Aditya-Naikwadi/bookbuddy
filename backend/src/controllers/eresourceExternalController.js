@@ -97,6 +97,17 @@ const proxyContent = asyncHandler(async (req, res) => {
     throw new AppError('Resource not found or is not an external resource', 404);
   }
 
+  // Tenant Boundary Check: resource must belong to user's college or user is super-admin
+  if (
+    resource.collegeId &&
+    req.user?.collegeId &&
+    resource.collegeId.toString() !== req.user.collegeId.toString() &&
+    req.user.role !== 'super-admin' &&
+    req.user.role !== 'super_admin'
+  ) {
+    throw new AppError('Resource not found or is not an external resource', 404);
+  }
+
   const { format } = req.query;
   const targetUrl = format === 'epub' ? resource.epubUrl : resource.readUrl;
 

@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const path = require('path');
-const bcrypt = require('bcrypt');
 const connectDB = require('../config/db');
 
 // Load env variables
@@ -44,9 +43,9 @@ async function seedSuperAdmin() {
     } else {
       console.log('--- PROVISIONING SUPER ADMIN ACCOUNT ---');
 
-      // Explicitly hash password using bcrypt before storage
-      const salt = await bcrypt.genSalt(12);
-      const hashedPassword = await bcrypt.hash(finalPlainPassword, salt);
+      // Explicitly hash password using Argon2id before storage
+      const argon2 = require('argon2');
+      const hashedPassword = await argon2.hash(finalPlainPassword, { type: argon2.argon2id });
 
       superAdmin = await User.create({
         studentId: 'SUPERADMIN-001',

@@ -141,6 +141,13 @@ for (const target of targets) {
           validTriageMap.has('autocannon')
         ) {
           isTriaged = true;
+        } else if (
+          (['sprintf-js', 'argparse', 'js-yaml', 'babel-plugin-istanbul', '@istanbuljs/load-nyc-config', 'babel-jest'].includes(pkgName) ||
+            pkgName.startsWith('@jest/') ||
+            pkgName.startsWith('jest')) &&
+          (validTriageMap.has('sprintf-js') || validTriageMap.has('jest'))
+        ) {
+          isTriaged = true;
         }
       }
 

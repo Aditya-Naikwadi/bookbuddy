@@ -153,7 +153,7 @@ export const Fines = () => {
 
       // STEP 2: Launch Razorpay hosted checkout SDK
       const options = {
-        key: orderData.keyId || "rzp_test_dummy_key_id",
+        key: orderData.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID || "",
         amount: orderData.amount,
         currency: orderData.currency || "INR",
         name: "BookBuddy Library Fines",

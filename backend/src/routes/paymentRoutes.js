@@ -15,19 +15,40 @@ const {
   handlePaymentWebhook,
 } = require('../controllers/paymentController');
 
+const { expensiveRouteLimiter } = require('../middlewares/rateLimiters');
+
 // Webhook endpoint (signature verified internally in controller)
 router.post('/webhook', handlePaymentWebhook);
 
 // Razorpay Order Creation & Payment Verification
-router.post('/create-order', protect, validate(createPaymentOrderRouteSchema), createOrder);
-router.post('/verify-payment', protect, validate(verifyPaymentRouteSchema), verifyPayment);
+router.post(
+  '/create-order',
+  protect,
+  expensiveRouteLimiter,
+  validate(createPaymentOrderRouteSchema),
+  createOrder
+);
+router.post(
+  '/verify-payment',
+  protect,
+  expensiveRouteLimiter,
+  validate(verifyPaymentRouteSchema),
+  verifyPayment
+);
 router.get('/:orderId/status', protect, getOrderStatus);
 
 // Checkout session creation endpoints (enforce idempotency)
-router.post('/checkout-session', protect, requireIdempotency, createCheckoutSession);
+router.post(
+  '/checkout-session',
+  protect,
+  expensiveRouteLimiter,
+  requireIdempotency,
+  createCheckoutSession
+);
 router.post(
   '/fines/:id/create-checkout-session',
   protect,
+  expensiveRouteLimiter,
   requireIdempotency,
   createCheckoutSession
 );

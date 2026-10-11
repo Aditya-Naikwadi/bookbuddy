@@ -40,7 +40,7 @@
     "test:concurrency": "jest src/tests/concurrencyRaceConditions.test.js --runInBand --detectOpenHandles --forceExit",
     "ci:check": "npm run lint && npm run format:check && npm run check:transactions && npm run check:races && npm run check:contracts && npm run check:normalization && npm test",
     "test": "jest src/tests --runInBand --detectOpenHandles --forceExit",
-    "audit": "npm audit"
+    "audit": "npm audit --audit-level=high"
   },
   "keywords": [],
   "author": "",
@@ -53,7 +53,7 @@
     "adm-zip": "^0.6.1",
     "algoliasearch": "^5.56.0",
     "argon2": "^0.45.1",
-    "axios": "^1.18.0",
+    "axios": "^1.20.0",
     "bad-words": "^3.0.4",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.10.0",
@@ -73,11 +73,11 @@
     "migrate-mongo": "^11.0.0",
     "mongodb": "^6.21.0",
     "mongoose": "^9.7.1",
-    "morgan": "^1.11.0",
+    "morgan": "^1.12.1",
     "multer": "^2.4.0",
     "node-cache": "^5.1.2",
     "node-cron": "^4.4.1",
-    "nodemailer": "^9.0.5",
+    "nodemailer": "^10.0.16",
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
@@ -102,10 +102,18 @@
     "supertest": "^7.2.2"
   },
   "overrides": {
-    "brace-expansion": "^5.0.9",
+    "nodemon": {
+      "chokidar": "^4.0.3"
+    },
+    "brace-expansion": "^5.0.12",
     "multer": "^2.4.0",
     "adm-zip": "^0.6.1",
     "ip-address": "^10.3.1",
-    "js-yaml": "^3.15.2"
+    "js-yaml": "^4.1.0",
+    "chokidar": "^4.0.3",
+    "engine.io": "^6.6.11",
+    "nodemailer": "^10.0.16",
+    "proxy-addr": "^2.0.8",
+    "qs": "^6.16.0"
   }
 }

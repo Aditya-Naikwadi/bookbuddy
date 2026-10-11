@@ -1,8 +1,16 @@
+const path = require('path');
+const dotenv = require('dotenv');
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
 const mongoose = require('mongoose');
+
+if (process.env.MONGO_URI && process.env.MONGO_URI.includes('/bookbuddy?')) {
+  process.env.MONGO_URI = process.env.MONGO_URI.replace('/bookbuddy?', '/bookbuddy_test?');
+}
 
 jest.setTimeout(30000);
 
-beforeEach(async () => {
+const connectToDb = async () => {
   if (mongoose.connection.readyState === 0) {
     const primaryUri = process.env.MONGO_URI;
     const fallbackUris = [
@@ -14,8 +22,8 @@ beforeEach(async () => {
     for (const uri of uris) {
       try {
         await mongoose.connect(uri, {
-          serverSelectionTimeoutMS: 2000,
-          connectTimeoutMS: 2000,
+          serverSelectionTimeoutMS: 5000,
+          connectTimeoutMS: 5000,
           bufferCommands: false,
           tlsAllowInvalidCertificates: true,
         });
@@ -25,6 +33,14 @@ beforeEach(async () => {
       }
     }
   }
+};
+
+beforeAll(async () => {
+  await connectToDb();
+});
+
+beforeEach(async () => {
+  await connectToDb();
   const { resetAllLimiters } = require('../middlewares/rateLimiters');
   resetAllLimiters();
 });

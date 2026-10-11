@@ -206,7 +206,15 @@ const getOrderStatus = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
   const payment = await Payment.findOne({ gatewayOrderId: orderId });
 
-  if (!payment) {
+  const currentUserId = (req.user?.id || req.user?._id)?.toString();
+  const isAuthorized =
+    payment &&
+    (!payment.userId ||
+      req.user?.role === 'super-admin' ||
+      req.user?.role === 'super_admin' ||
+      (currentUserId && payment.userId.toString() === currentUserId));
+
+  if (!payment || !isAuthorized) {
     throw new AppError('Payment record not found.', 404);
   }
 
@@ -256,7 +264,21 @@ const verifyPayment = asyncHandler(async (req, res) => {
     throw new AppError('Invalid payment signature. Verification failed.', 400);
   }
 
+  const currentUserId = (req.user?.id || req.user?._id)?.toString();
   const payment = await Payment.findOne({ gatewayOrderId: razorpay_order_id });
+
+  // BOLA authorization check: caller must own this payment or be super-admin
+  if (
+    payment &&
+    payment.userId &&
+    currentUserId &&
+    payment.userId.toString() !== currentUserId &&
+    req.user?.role !== 'super-admin' &&
+    req.user?.role !== 'super_admin'
+  ) {
+    throw new AppError('Payment record not found.', 404);
+  }
+
   if (payment && payment.status !== 'paid') {
     payment.status = 'paid';
     payment.gatewayPaymentId = razorpay_payment_id;
@@ -272,17 +294,26 @@ const verifyPayment = asyncHandler(async (req, res) => {
   }
 
   if (targetFineIds.length > 0) {
-    await Fine.updateMany(
-      { _id: { $in: targetFineIds }, status: 'unpaid' },
-      {
-        $set: {
-          status: 'paid',
-          paymentStatus: 'paid',
-          paidAt: new Date(),
-          paymentTransactionId: razorpay_payment_id,
-        },
+    // Strictly scope fine updates to current user's owned fines to prevent IDOR manipulation
+    const fineFilter = {
+      _id: { $in: targetFineIds },
+      status: 'unpaid',
+    };
+    if (req.user && req.user.role !== 'super-admin' && req.user.role !== 'super_admin') {
+      fineFilter.userId = req.user.id || req.user._id;
+      if (req.user.collegeId) {
+        fineFilter.collegeId = req.user.collegeId;
       }
-    );
+    }
+
+    await Fine.updateMany(fineFilter, {
+      $set: {
+        status: 'paid',
+        paymentStatus: 'paid',
+        paidAt: new Date(),
+        paymentTransactionId: razorpay_payment_id,
+      },
+    });
   }
 
   res.status(200).json({

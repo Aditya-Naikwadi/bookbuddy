@@ -362,11 +362,16 @@ const updateReview = asyncHandler(async (req, res) => {
   }
 
   const userId = (req.user.id || req.user._id).toString();
-  if (
-    review.userId.toString() !== userId &&
-    !['super-admin', 'college-admin'].includes(req.user.role)
-  ) {
-    throw new AppError('Not authorized to edit this review', 403);
+  const isSuperAdmin = req.user.role === 'super-admin' || req.user.role === 'super_admin';
+  const isCollegeAdmin =
+    ['college-admin', 'college_admin', 'admin', 'librarian'].includes(req.user.role) &&
+    review.collegeId &&
+    req.user.collegeId &&
+    review.collegeId.toString() === req.user.collegeId.toString();
+  const isOwner = review.userId && review.userId.toString() === userId;
+
+  if (!isOwner && !isSuperAdmin && !isCollegeAdmin) {
+    throw new AppError('Review not found', 404);
   }
 
   const oldRating = Number(review.rating);
@@ -430,11 +435,16 @@ const deleteReview = asyncHandler(async (req, res) => {
   }
 
   const userId = (req.user.id || req.user._id).toString();
-  if (
-    review.userId.toString() !== userId &&
-    !['super-admin', 'college-admin'].includes(req.user.role)
-  ) {
-    throw new AppError('Not authorized to delete this review', 403);
+  const isSuperAdmin = req.user.role === 'super-admin' || req.user.role === 'super_admin';
+  const isCollegeAdmin =
+    ['college-admin', 'college_admin', 'admin', 'librarian'].includes(req.user.role) &&
+    review.collegeId &&
+    req.user.collegeId &&
+    review.collegeId.toString() === req.user.collegeId.toString();
+  const isOwner = review.userId && review.userId.toString() === userId;
+
+  if (!isOwner && !isSuperAdmin && !isCollegeAdmin) {
+    throw new AppError('Review not found', 404);
   }
 
   const wasApproved = review.status === 'approved';

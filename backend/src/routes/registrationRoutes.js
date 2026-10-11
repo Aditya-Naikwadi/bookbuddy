@@ -76,7 +76,7 @@ router.post(
 );
 
 // Flow B: Domain ownership verification token link
-router.get('/verify-domain', verifyAdminDomain);
+router.get('/verify-domain', authLimiter, verifyAdminDomain);
 router.post('/verify-domain-dns', authLimiter, verifyDomainDns);
 
 // Flow B: Resubmit rejected application

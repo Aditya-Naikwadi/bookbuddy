@@ -268,8 +268,26 @@ userSchema
     this.isLeaderboardVisible = v;
   });
 
-userSchema.set('toJSON', { virtuals: true });
-userSchema.set('toObject', { virtuals: true });
+userSchema.set('toJSON', {
+  virtuals: true,
+  transform: (doc, ret) => {
+    delete ret.password;
+    delete ret.cardSecret;
+    delete ret.mfaSecret;
+    delete ret.activationTokenHash;
+    return ret;
+  },
+});
+userSchema.set('toObject', {
+  virtuals: true,
+  transform: (doc, ret) => {
+    delete ret.password;
+    delete ret.cardSecret;
+    delete ret.mfaSecret;
+    delete ret.activationTokenHash;
+    return ret;
+  },
+});
 
 // Compound unique indexes scoped to collegeId
 userSchema.index({ collegeId: 1, studentId: 1 }, { unique: true, sparse: true });

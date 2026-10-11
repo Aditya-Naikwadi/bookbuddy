@@ -3,7 +3,26 @@ const { objectIdSchema } = require('./common');
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 const passwordMessage =
-  'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)';
+  'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&), or be a passphrase of at least 16 characters';
+
+const COMMON_BREACHED_PASSWORDS = new Set([
+  'password',
+  'password123',
+  'admin123',
+  '12345678',
+  '123456789',
+  'qwertyuiop',
+  'letmein123',
+]);
+
+const validateSecurePassword = (val) => {
+  if (typeof val !== 'string') return false;
+  if (val.length < 8) return false;
+  if (COMMON_BREACHED_PASSWORDS.has(val.toLowerCase())) return false;
+  // OWASP: Allow long passphrases (>= 16 characters) without arbitrary character composition restrictions
+  if (val.length >= 16) return true;
+  return passwordRegex.test(val);
+};
 
 /**
  * Student registration payload schema (Flow A)
@@ -12,7 +31,7 @@ const studentRegisterBodySchema = z
   .object({
     name: z.string().min(2, 'Full name must be at least 2 characters').trim(),
     email: z.string().trim().toLowerCase().email('Invalid email address'),
-    password: z.string().regex(passwordRegex, passwordMessage),
+    password: z.string().refine(validateSecurePassword, passwordMessage),
     confirmPassword: z.string(),
     collegeId: objectIdSchema,
     studentId: z.string().trim().toLowerCase().min(2, 'Student / Enrollment ID is required'),

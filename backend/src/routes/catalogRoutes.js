@@ -11,12 +11,14 @@ const scopeToTenant = require('../middlewares/scopeToTenant');
 const validate = require('../middlewares/validate');
 const { paramIdSchema, paramLoanIdSchema } = require('@bookbuddy/shared/schemas/common');
 
+const { searchLimiter } = require('../middlewares/rateLimiters');
+
 // Protect all routes
 router.use(protect);
 router.use(scopeToTenant);
 
 // Search catalog
-router.get('/search', searchCatalog);
+router.get('/search', searchLimiter, searchCatalog);
 
 // Catalog item details
 router.get('/:id', validate(paramIdSchema), getCatalogItemDetails);

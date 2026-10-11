@@ -1,15 +1,16 @@
 // Progressive login rate limiter using rate-limiter-flexible
 const { RateLimiterRedis, RateLimiterMemory } = require('rate-limiter-flexible');
-const { redisClient } = require('./rateLimiters');
+const { redisClient, getClientIp } = require('./rateLimiters');
+const config = require('../config');
 const AppError = require('../utils/AppError');
-
-const maxConsecutiveFailsByRoute = 5;
-const durationInSeconds = 900; // 15 minutes window
-const blockDurationInSeconds = 900; // 15 minutes block penalty
 
 let limiterConsecutiveFails;
 
 const createLimiter = () => {
+  const maxConsecutiveFailsByRoute = config.loginLockout?.maxAttempts || 5;
+  const durationInSeconds = config.loginLockout?.windowS || 900;
+  const blockDurationInSeconds = config.loginLockout?.durationS || 900;
+
   const opts = {
     keyPrefix: 'login_fail_consecutive',
     points: maxConsecutiveFailsByRoute,
@@ -30,16 +31,11 @@ const createLimiter = () => {
 createLimiter();
 
 const getClientKey = (req) => {
-  const forwardedFor = req?.headers?.['x-forwarded-for'];
-  const ip =
-    (forwardedFor && typeof forwardedFor === 'string' ? forwardedFor.split(',')[0].trim() : null) ||
-    req.ip ||
-    req.socket?.remoteAddress ||
-    'unknown';
+  const ip = getClientIp(req);
   const rawIdent =
-    typeof req.body?.email === 'string'
+    typeof req?.body?.email === 'string'
       ? req.body.email
-      : typeof req.body?.studentId === 'string'
+      : typeof req?.body?.studentId === 'string'
         ? req.body.studentId
         : '';
   const email = rawIdent.toLowerCase().trim();
@@ -52,20 +48,29 @@ const loginRateLimiter = async (req, res, next) => {
   }
 
   const key = getClientKey(req);
+  const maxConsecutiveFailsByRoute = config.loginLockout?.maxAttempts || 5;
+  const blockDurationInSeconds = config.loginLockout?.durationS || 900;
 
   try {
     const resLimiter = await limiterConsecutiveFails.get(key);
 
     if (resLimiter && resLimiter.consumedPoints >= maxConsecutiveFailsByRoute) {
-      const retrySecs = Math.round(resLimiter.msBeforeNext / 1000) || durationInSeconds;
-      res.set('Retry-After', String(retrySecs));
+      const retrySecs = Math.round(resLimiter.msBeforeNext / 1000) || blockDurationInSeconds;
+      res.setHeader('Retry-After', String(retrySecs));
       return next(new AppError('Too many failed login attempts, please try again later.', 429));
     }
+
+    // Progressive backoff: After 2 failed attempts, add a progressive artificial delay
+    if (resLimiter && resLimiter.consumedPoints >= 2) {
+      const backoffDelay = Math.min((resLimiter.consumedPoints - 1) * 300, 1500);
+      await new Promise((resolve) => setTimeout(resolve, backoffDelay));
+    }
+
     next();
   } catch (error) {
     if (error && error.msBeforeNext) {
-      const retrySecs = Math.round(error.msBeforeNext / 1000) || durationInSeconds;
-      res.set('Retry-After', String(retrySecs));
+      const retrySecs = Math.round(error.msBeforeNext / 1000) || blockDurationInSeconds;
+      res.setHeader('Retry-After', String(retrySecs));
       return next(new AppError('Too many failed login attempts, please try again later.', 429));
     }
     next();
@@ -93,9 +98,9 @@ const resetFailedLogins = async (req) => {
   try {
     const { limiters } = require('./rateLimiters');
     const rawIdent =
-      typeof req.body?.email === 'string'
+      typeof req?.body?.email === 'string'
         ? req.body.email
-        : typeof req.body?.studentId === 'string'
+        : typeof req?.body?.studentId === 'string'
           ? req.body.studentId
           : '';
     const email = rawIdent.toLowerCase().trim();
@@ -107,8 +112,13 @@ const resetFailedLogins = async (req) => {
   }
 };
 
+const resetLoginLimiter = () => {
+  createLimiter();
+};
+
 module.exports = {
   loginRateLimiter,
   consumeFailedLogin,
   resetFailedLogins,
+  resetLoginLimiter,
 };

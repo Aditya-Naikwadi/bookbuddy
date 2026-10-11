@@ -40,13 +40,37 @@ const envSchema = z.object({
 
   JWT_SECRET: isTest
     ? z.string().min(1).default('testjwtsecretkey999')
-    : requiredString('JWT_SECRET', 'JWT_SECRET is required', 8),
+    : requiredString(
+        'JWT_SECRET',
+        'JWT_SECRET is required and must be at least 32 characters (256 bits) in production',
+        process.env.NODE_ENV === 'production' ? 32 : 8
+      ).refine(
+        (val) =>
+          !['secret', 'jwtsecret', 'yoursecretkey123', 'password'].includes(val.toLowerCase()),
+        { message: 'JWT_SECRET must not use a weak or default value' }
+      ),
 
   JWT_REFRESH_SECRET: isTest
     ? z.string().min(1).default('supersecretrefresh123')
-    : requiredString('JWT_REFRESH_SECRET', 'JWT_REFRESH_SECRET is required', 8),
+    : requiredString(
+        'JWT_REFRESH_SECRET',
+        'JWT_REFRESH_SECRET is required and must be at least 32 characters (256 bits) in production',
+        process.env.NODE_ENV === 'production' ? 32 : 8
+      ).refine(
+        (val) =>
+          ![
+            'secret',
+            'jwtsecret',
+            'yourrefreshsecretkey456',
+            'supersecretrefresh123',
+            'password',
+          ].includes(val.toLowerCase()),
+        { message: 'JWT_REFRESH_SECRET must not use a weak or default value' }
+      ),
   JWT_ACCESS_EXPIRY: z.string().default('15m'),
   JWT_REFRESH_EXPIRY: z.string().default('7d'),
+  JWT_ISSUER: z.string().default('bookbuddy-api'),
+  JWT_AUDIENCE: z.string().default('bookbuddy-client'),
 
   CLIENT_ORIGIN: z.string().default('*'),
   CLIENT_URL: z.string().optional(),
@@ -119,8 +143,14 @@ const envSchema = z.object({
   RATE_LIMIT_USER_WINDOW_MS: z.coerce.number().default(60000),
   RATE_LIMIT_EXPENSIVE_MAX: z.coerce.number().default(10),
   RATE_LIMIT_EXPENSIVE_WINDOW_MS: z.coerce.number().default(60000),
+  RATE_LIMIT_SEARCH_MAX: z.coerce.number().default(30),
+  RATE_LIMIT_SEARCH_WINDOW_MS: z.coerce.number().default(60000),
   RATE_LIMIT_PATRON_CARD_VERIFY_MAX: z.coerce.number().default(60),
   RATE_LIMIT_PATRON_CARD_VERIFY_WINDOW_MS: z.coerce.number().default(60000),
+  LOGIN_LOCKOUT_MAX_ATTEMPTS: z.coerce.number().default(5),
+  LOGIN_LOCKOUT_DURATION_S: z.coerce.number().default(900),
+  LOGIN_LOCKOUT_WINDOW_S: z.coerce.number().default(900),
+  TRUST_PROXY: z.union([z.boolean(), z.number(), z.string()]).default(false),
 
   // Scanner Gate Verification Security
   SCANNER_API_KEY: z.string().default('bookbuddy_scanner_secret_2026'),

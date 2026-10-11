@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const bcrypt = require('bcrypt');
+const argon2 = require('argon2');
 const College = require('../models/College');
 const User = require('../models/User');
 const RegistrationRequest = require('../models/RegistrationRequest');
@@ -88,9 +88,8 @@ const registerStudent = async (req, res, next) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = new Date(Date.now() + 15 * 60 * 1000);
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
+    // Hash password with Argon2id
+    const passwordHash = await argon2.hash(password, { type: argon2.argon2id });
 
     // 6. Create or update RegistrationRequest
     let regRequest = await RegistrationRequest.findOne({
@@ -383,9 +382,8 @@ const submitTenantOnboarding = async (req, res, next) => {
       docUrl = `/uploads/proofs/${req.file.filename}`;
     }
 
-    // Hash admin password
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
+    // Hash admin password with Argon2id
+    const passwordHash = await argon2.hash(password, { type: argon2.argon2id });
 
     // Generate domain verification token
     const domainVerificationToken = crypto.randomBytes(32).toString('hex');
@@ -506,18 +504,36 @@ const verifyAdminDomain = async (req, res, next) => {
 const resubmitTenantOnboarding = async (req, res, next) => {
   try {
     const { requestId } = req.params;
+    const {
+      adminEmail,
+      legalName,
+      shortName,
+      institutionType,
+      domain,
+      adminName,
+      designation,
+      desiredSlug,
+    } = req.body;
+
+    if (!adminEmail) {
+      return next(
+        new AppError(
+          'Admin email is required to verify ownership before resubmitting application.',
+          400
+        )
+      );
+    }
+
     const regRequest = await RegistrationRequest.findOne({
       _id: requestId,
       type: 'tenant_onboarding',
       status: 'rejected',
+      'tenantData.adminEmail': normalizeEmail(adminEmail),
     });
 
     if (!regRequest) {
       return next(new AppError('Rejected onboarding application not found.', 404));
     }
-
-    const { legalName, shortName, institutionType, domain, adminName, designation, desiredSlug } =
-      req.body;
 
     if (legalName) regRequest.tenantData.legalName = legalName.trim();
     if (shortName !== undefined) regRequest.tenantData.shortName = shortName.trim();

@@ -90,11 +90,11 @@ router.get('/logout', logoutUser);
 
 // @desc    MFA Setup & Verification
 // @access  Private
-router.post('/mfa/setup', protect, setupMfa);
-router.post('/mfa/verify', protect, verifyMfa);
+router.post('/mfa/setup', protect, authLimiter, setupMfa);
+router.post('/mfa/verify', protect, authLimiter, verifyMfa);
 
 // @desc    Change password (first-login forced change or user update)
 // @access  Private
-router.post('/change-password', protect, changePassword);
+router.post('/change-password', protect, authLimiter, changePassword);
 
 module.exports = router;

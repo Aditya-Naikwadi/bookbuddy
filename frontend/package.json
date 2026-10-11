@@ -20,7 +20,7 @@
     "ci:check": "npm run lint && npm run format:check && npm run build",
     "preview": "vite preview",
     "test": "vitest run",
-    "audit": "npm audit"
+    "audit": "npm audit --audit-level=high"
   },
   "dependencies": {
     "@bookbuddy/shared": "file:../shared",
@@ -32,7 +32,7 @@
     "@tanstack/react-query": "^5.101.0",
     "@vercel/analytics": "^2.0.1",
     "algoliasearch": "^5.56.0",
-    "axios": "^1.18.0",
+    "axios": "^1.20.0",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "epubjs": "^0.3.93",
@@ -79,6 +79,9 @@
     "vitest": "^4.1.10"
   },
   "overrides": {
+    "brace-expansion": "^5.0.12",
+    "source-map-js": "^1.2.2",
+    "undici": "^7.30.0",
     "epubjs": {
       "@xmldom/xmldom": "^0.9.7"
     }

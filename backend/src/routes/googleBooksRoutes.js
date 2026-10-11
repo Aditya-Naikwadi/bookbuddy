@@ -8,9 +8,10 @@ const {
 } = require('../controllers/googleBooksController');
 
 const { protect, requireRole } = require('../middlewares/auth');
+const { searchLimiter } = require('../middlewares/rateLimiters');
 
 // Public search and detail routes
-router.get('/search', searchGoogleBooks);
+router.get('/search', searchLimiter, searchGoogleBooks);
 router.get('/volume/:id', getGoogleBookById);
 
 // Import and Seed routes (Protected for staff/admins)

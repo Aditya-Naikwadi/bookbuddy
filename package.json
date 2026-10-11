@@ -4,7 +4,7 @@
   "description": "BookBuddy Campus Library & Digital Hub",
   "private": true,
   "engines": {
-    "node": "24.x"
+    "node": ">=22.0.0"
   },
   "workspaces": [
     "shared",
@@ -62,14 +62,14 @@
     "artillery": "^2.0.33",
     "autocannon": "^8.0.0",
     "husky": "^9.1.7",
-    "lint-staged": "^15.4.3"
+    "lint-staged": "^16.4.0"
   },
   "dependencies": {
     "@sentry/node": "^8.55.2",
     "adm-zip": "^0.6.1",
     "algoliasearch": "^5.20.0",
     "argon2": "^0.45.1",
-    "axios": "^1.18.0",
+    "axios": "^1.20.0",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.5.1",
     "cors": "^2.8.6",
@@ -87,7 +87,7 @@
     "migrate-mongo": "^11.0.0",
     "mongodb": "^6.13.0",
     "mongoose": "^9.7.1",
-    "morgan": "^1.11.0",
+    "morgan": "^1.12.1",
     "multer": "^2.4.0",
     "node-cache": "^5.1.2",
     "node-cron": "^4.4.1",
@@ -101,11 +101,40 @@
     "zod": "^4.4.3"
   },
   "overrides": {
+    "@grpc/grpc-js": "^1.14.6",
+    "http-cache-semantics": "^4.3.0",
+    "joi": "^17.13.8",
     "multer": "^2.4.0",
     "adm-zip": "^0.6.1",
     "ip-address": "^10.3.1",
-    "js-yaml": "^3.15.2",
+    "js-yaml": "^4.1.0",
+    "@istanbuljs/load-nyc-config": {
+      "js-yaml": "^4.1.0"
+    },
     "@faker-js/faker": "^10.5.0",
+    "brace-expansion": "^5.0.12",
+    "chokidar": "^4.0.3",
+    "nodemon": {
+      "chokidar": "^4.0.3"
+    },
+    "server": {
+      "chokidar": "^4.0.3",
+      "nodemon": {
+        "chokidar": "^4.0.3"
+      }
+    },
+    "backend": {
+      "chokidar": "^4.0.3",
+      "nodemon": {
+        "chokidar": "^4.0.3"
+      }
+    },
+    "engine.io": "^6.6.11",
+    "nodemailer": "^10.0.16",
+    "proxy-addr": "^2.0.8",
+    "qs": "^6.16.0",
+    "source-map-js": "^1.2.2",
+    "undici": "^7.30.0",
     "epubjs": {
       "@xmldom/xmldom": "^0.9.7"
     }

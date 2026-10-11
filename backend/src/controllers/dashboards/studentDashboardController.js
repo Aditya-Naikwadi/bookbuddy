@@ -667,13 +667,14 @@ const createStudentBookmark = async (req, res, next) => {
 // @access  Private/Student
 const deleteStudentBookmark = async (req, res, next) => {
   try {
-    const bookmark = await Bookmark.findById(req.params.id);
+    const bookmark = await Bookmark.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
 
     if (!bookmark) {
       return next(new AppError('Bookmark not found.', 404));
     }
-
-    assertOwner(bookmark, req.user.id);
 
     await bookmark.deleteOne();
 
@@ -734,13 +735,14 @@ const saveStudentSearch = async (req, res, next) => {
 // @access  Private/Student
 const deleteStudentSearch = async (req, res, next) => {
   try {
-    const search = await SavedSearch.findById(req.params.id);
+    const search = await SavedSearch.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
 
     if (!search) {
       return next(new AppError('Saved search not found.', 404));
     }
-
-    assertOwner(search, req.user.id);
 
     await search.deleteOne();
 
@@ -758,13 +760,14 @@ const deleteStudentSearch = async (req, res, next) => {
 // @access  Private/Student
 const toggleSavedSearchAlerts = async (req, res, next) => {
   try {
-    const search = await SavedSearch.findById(req.params.id);
+    const search = await SavedSearch.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
 
     if (!search) {
       return next(new AppError('Saved search not found.', 404));
     }
-
-    assertOwner(search, req.user.id);
 
     search.alertsEnabled = req.body.alertsEnabled;
     await search.save();

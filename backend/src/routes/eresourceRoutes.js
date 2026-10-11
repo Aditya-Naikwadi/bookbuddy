@@ -65,8 +65,8 @@ router.post(
   validateMagicBytes(['application/pdf', 'application/epub+zip']),
   submitEResource
 );
-router.get('/:id/download-url', getSignedDownloadUrl);
-router.post('/:id/offline-token', issueOfflineToken);
+router.get('/:id/download-url', expensiveRouteLimiter, getSignedDownloadUrl);
+router.post('/:id/offline-token', expensiveRouteLimiter, issueOfflineToken);
 
 router.route('/').get(listInternalResources);
 router.route('/:eresourceId/progress').post(validate(updateProgressSchema), updateProgress);

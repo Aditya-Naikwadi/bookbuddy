@@ -264,7 +264,7 @@ describe('security And App Protection Consolidated Suite', () => {
         });
 
         it('4.2 Rejects malware test signature (EICAR string) in file uploads', async () => {
-          const eicarPath = path.join(__dirname, 'eicar_test.txt');
+          const eicarPath = path.join(__dirname, 'eicar_test.csv');
           fs.writeFileSync(
             eicarPath,
             'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'

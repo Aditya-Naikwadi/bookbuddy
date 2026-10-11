@@ -27,10 +27,15 @@ const generateTokenPair = (user, impersonationOptions = null) => {
     payload.originalSuperAdminId = impersonationOptions.originalSuperAdminId;
   }
 
+  const issuer = config.jwt.issuer || 'bookbuddy-api';
+  const audience = config.jwt.audience || 'bookbuddy-client';
+
   // Access Token payload includes userId (sub), role, and collegeId
   const accessToken = jwt.sign(payload, config.jwt.secret, {
     algorithm: 'HS256',
     expiresIn: expiry,
+    issuer,
+    audience,
   });
 
   // Refresh Token payload contains minimal info (userId) plus a unique identifier
@@ -40,7 +45,12 @@ const generateTokenPair = (user, impersonationOptions = null) => {
       jti: crypto.randomBytes(16).toString('hex'),
     },
     config.jwt.refreshSecret,
-    { algorithm: 'HS256', expiresIn: config.jwt.refreshExpiry }
+    {
+      algorithm: 'HS256',
+      expiresIn: config.jwt.refreshExpiry,
+      issuer,
+      audience,
+    }
   );
 
   // Hash the refresh token for database persistence
@@ -54,11 +64,65 @@ const hashToken = (token) => {
   return crypto.createHash('sha256').update(token).digest('hex');
 };
 
-const verifyAccessToken = (token) => {
+const verifyAccessToken = (token, options = {}) => {
   if (!token || typeof token !== 'string') {
     throw new Error('Token string must be provided');
   }
-  return jwt.verify(token, config.jwt.secret, { algorithms: ['HS256'] });
+
+  const expectedIssuer = options.issuer || config.jwt.issuer || 'bookbuddy-api';
+  const expectedAudience = options.audience || config.jwt.audience || 'bookbuddy-client';
+
+  // Strictly pin algorithm to HS256 (rejects 'none', algorithm-confusion attacks)
+  const decoded = jwt.verify(token, config.jwt.secret, {
+    algorithms: ['HS256'],
+  });
+
+  // Verify audience if present in token or required
+  if (decoded.aud) {
+    const audList = Array.isArray(decoded.aud) ? decoded.aud : [decoded.aud];
+    if (!audList.includes(expectedAudience)) {
+      throw new jwt.JsonWebTokenError(`jwt audience invalid. expected: ${expectedAudience}`);
+    }
+  } else if (options.requireAudience) {
+    throw new jwt.JsonWebTokenError(`jwt audience missing. expected: ${expectedAudience}`);
+  }
+
+  // Verify issuer if present in token or required
+  if (decoded.iss) {
+    if (decoded.iss !== expectedIssuer) {
+      throw new jwt.JsonWebTokenError(`jwt issuer invalid. expected: ${expectedIssuer}`);
+    }
+  } else if (options.requireIssuer) {
+    throw new jwt.JsonWebTokenError(`jwt issuer missing. expected: ${expectedIssuer}`);
+  }
+
+  return decoded;
+};
+
+const verifyRefreshToken = (token, options = {}) => {
+  if (!token || typeof token !== 'string') {
+    throw new Error('Token string must be provided');
+  }
+
+  const expectedIssuer = options.issuer || config.jwt.issuer || 'bookbuddy-api';
+  const expectedAudience = options.audience || config.jwt.audience || 'bookbuddy-client';
+
+  const decoded = jwt.verify(token, config.jwt.refreshSecret, {
+    algorithms: ['HS256'],
+  });
+
+  if (decoded.aud) {
+    const audList = Array.isArray(decoded.aud) ? decoded.aud : [decoded.aud];
+    if (!audList.includes(expectedAudience)) {
+      throw new jwt.JsonWebTokenError(`jwt audience invalid. expected: ${expectedAudience}`);
+    }
+  }
+
+  if (decoded.iss && decoded.iss !== expectedIssuer) {
+    throw new jwt.JsonWebTokenError(`jwt issuer invalid. expected: ${expectedIssuer}`);
+  }
+
+  return decoded;
 };
 
 const revokedTokenHashes = new Set();
@@ -125,6 +189,7 @@ module.exports = {
   generateAccessToken,
   hashToken,
   verifyAccessToken,
+  verifyRefreshToken,
   blacklistToken,
   isTokenBlacklisted,
 };

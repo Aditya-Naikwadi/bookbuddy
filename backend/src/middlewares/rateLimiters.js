@@ -149,6 +149,11 @@ const limiters = {
     config.rateLimits.expensiveMax,
     Math.ceil(config.rateLimits.expensiveWindowMs / 1000)
   ),
+  search: getLimiter(
+    'search',
+    config.rateLimits.searchMax || 30,
+    Math.ceil((config.rateLimits.searchWindowMs || 60000) / 1000)
+  ),
   generalDashboard: getLimiter('generalDashboard', 100, 900),
   college: getLimiter('collegeRateLimit', 1000, 900),
   patronCardVerify: getLimiter(
@@ -158,13 +163,18 @@ const limiters = {
   ),
 };
 
-// Helper to extract clean client IP
+// Helper to extract clean client IP safely behind reverse proxies
 const getClientIp = (req) => {
-  const forwardedFor = req?.headers?.['x-forwarded-for'];
-  if (forwardedFor && typeof forwardedFor === 'string') {
-    return forwardedFor.split(',')[0].trim();
+  // If req.ip is set (Express trust proxy resolved), use it
+  if (req?.ip) {
+    return req.ip;
   }
-  return req?.ip || req?.socket?.remoteAddress || 'unknown-ip';
+  // If trust proxy is explicitly configured and raw headers exist, extract trusted client IP
+  if (config.trustProxy && req?.headers?.['x-forwarded-for']) {
+    const list = String(req.headers['x-forwarded-for']).split(',');
+    return list[list.length - 1].trim();
+  }
+  return req?.socket?.remoteAddress || 'unknown-ip';
 };
 
 const isSystemProbeRoute = (path) => {
@@ -262,12 +272,35 @@ const userLimiter = async (req, res, next) => {
     return next();
   }
 
-  const key = req.user && req.user.id ? req.user.id : getClientIp(req);
+  const ip = getClientIp(req);
+  const userKey = req.user && req.user.id ? `user:${req.user.id}` : null;
+  const ipKey = `ip:${ip}`;
+
   try {
-    await limiters.user(key);
+    if (userKey) {
+      await limiters.user(userKey);
+    }
+    await limiters.user(ipKey);
     next();
   } catch (rej) {
-    handleRejection(key, 'user', req, res, next, rej);
+    handleRejection(userKey || ipKey, 'user', req, res, next, rej);
+  }
+};
+
+const searchLimiter = async (req, res, next) => {
+  if (isSystemProbeRoute(req.path)) {
+    return next();
+  }
+
+  const ip = getClientIp(req);
+  const userKey = req.user && req.user.id ? `user:${req.user.id}` : null;
+  const key = userKey || `ip:${ip}`;
+
+  try {
+    await limiters.search(key);
+    next();
+  } catch (rej) {
+    handleRejection(key, 'search', req, res, next, rej);
   }
 };
 
@@ -276,7 +309,7 @@ const expensiveRouteLimiter = async (req, res, next) => {
     return next();
   }
 
-  const key = req.user && req.user.id ? req.user.id : getClientIp(req);
+  const key = req.user && req.user.id ? `user:${req.user.id}` : `ip:${getClientIp(req)}`;
   try {
     await limiters.expensive(key);
     next();
@@ -322,6 +355,8 @@ const handleRejection = (key, tierName, req, res, next, rej, userId = null) => {
     success: false,
     message: `Too many requests on ${tierName} limiter. Please retry after ${retryAfterSeconds} seconds.`,
     code: 429,
+    statusCode: 429,
+    retryAfterSeconds,
   });
 };
 
@@ -355,6 +390,11 @@ const resetAllLimiters = () => {
     'expensive',
     config.rateLimits.expensiveMax,
     Math.ceil(config.rateLimits.expensiveWindowMs / 1000)
+  );
+  limiters.search = getLimiter(
+    'search',
+    config.rateLimits.searchMax || 30,
+    Math.ceil((config.rateLimits.searchWindowMs || 60000) / 1000)
   );
   limiters.generalDashboard = getLimiter('generalDashboard', 100, 900);
   limiters.college = getLimiter('collegeRateLimit', 1000, 900);
@@ -405,11 +445,15 @@ const collegeRateLimiter = async (req, res, next) => {
       return next();
     }
 
+    const retrySecs = Math.ceil((err.msBeforeNext || 60000) / 1000);
+    res.setHeader('Retry-After', String(retrySecs));
     res.status(429).json({
       success: false,
       message:
         'Your institution has exceeded its allocated request quota. Please try again shortly.',
-      retryAfterSeconds: Math.ceil((err.msBeforeNext || 60000) / 1000),
+      code: 429,
+      statusCode: 429,
+      retryAfterSeconds: retrySecs,
     });
   }
 };
@@ -418,10 +462,12 @@ module.exports = {
   globalLimiter,
   authLimiter,
   userLimiter,
+  searchLimiter,
   expensiveRouteLimiter,
   generalDashboardLimiter,
   collegeRateLimiter,
   patronCardVerifyLimiter,
+  getClientIp,
   getLimiter,
   redisClient,
   resetAllLimiters,
