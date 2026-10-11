@@ -105,8 +105,9 @@ describe('auth Lifecycle Consolidated Suite', () => {
       });
 
       afterAll(async () => {
-        await mongoose.connection.db.dropDatabase();
-        // await // mongoose.connection.close();
+        if (mongoose.connection.readyState === 1 && mongoose.connection.db) {
+          await mongoose.connection.db.dropDatabase();
+        }
       });
 
       // Assertion 1: Register student returns tokens, hides password
@@ -1258,8 +1259,9 @@ describe('auth Lifecycle Consolidated Suite', () => {
       let superAdminToken;
 
       beforeAll(async () => {
+        const connectDB = require('../config/db');
         if (mongoose.connection.readyState === 0) {
-          await mongoose.connect(process.env.MONGO_URI);
+          await connectDB();
         }
       });
 
@@ -1475,6 +1477,10 @@ describe('auth Lifecycle Consolidated Suite', () => {
       let collegeB;
 
       beforeEach(async () => {
+        const connectDB = require('../config/db');
+        if (mongoose.connection.readyState === 0) {
+          await connectDB();
+        }
         await User.deleteMany({});
         await College.deleteMany({});
         await RegistrationRequest.deleteMany({});
