@@ -6,11 +6,13 @@ const {
   deleteBookmark,
 } = require('../controllers/bookmarkController');
 const { protect } = require('../middlewares/auth');
+const noCache = require('../middlewares/noCache');
 const validate = require('../middlewares/validate');
 const { paramIdSchema } = require('@bookbuddy/shared/schemas/common');
 const { createBookmarkSchema } = require('@bookbuddy/shared/schemas/personalization');
 
 router.use(protect);
+router.use(noCache);
 
 router.route('/').post(validate(createBookmarkSchema), createBookmark);
 

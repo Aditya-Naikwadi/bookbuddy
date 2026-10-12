@@ -5,7 +5,8 @@ const readingPositionSchema = new mongoose.Schema(
     collegeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'College',
-      required: true,
+      required: false,
+      default: null,
       index: true,
     },
     userId: {
@@ -15,8 +16,7 @@ const readingPositionSchema = new mongoose.Schema(
       index: true,
     },
     resourceId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'EResource',
+      type: mongoose.Schema.Types.Mixed,
       required: true,
       index: true,
     },

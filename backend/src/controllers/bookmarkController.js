@@ -31,8 +31,16 @@ const getMyBookmarks = asyncHandler(async (req, res) => {
 const createBookmark = asyncHandler(async (req, res) => {
   const { eresourceId, locationRef, note } = req.body;
 
-  // Enforce tenant scoping: verify eresource belongs to user's college
-  const eresource = await EResource.findOne({ _id: eresourceId, collegeId: req.user.collegeId });
+  // Enforce tenant scoping: verify eresource belongs to user's college or is public
+  const eresourceQuery = { _id: eresourceId };
+  if (req.user.collegeId) {
+    eresourceQuery.$or = [
+      { collegeId: req.user.collegeId },
+      { collegeId: null },
+      { collegeId: { $exists: false } },
+    ];
+  }
+  const eresource = await EResource.findOne(eresourceQuery);
   if (!eresource) {
     throw new AppError('EResource not found or unauthorized access.', 404);
   }
@@ -56,10 +64,15 @@ const createBookmark = asyncHandler(async (req, res) => {
 // @route   DELETE /api/bookmarks/:id
 // @access  Private
 const deleteBookmark = asyncHandler(async (req, res) => {
-  const bookmark = await Bookmark.findOne({ _id: req.params.id, userId: req.user.id });
+  const bookmark = await Bookmark.findById(req.params.id);
 
   if (!bookmark) {
     throw new AppError('Bookmark not found', 404);
+  }
+
+  // IDOR Protection: Confirm caller owns this bookmark
+  if (String(bookmark.userId) !== String(req.user.id)) {
+    throw new AppError('Forbidden: You do not have permission to delete this bookmark.', 403);
   }
 
   await bookmark.deleteOne();

@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
 const Loan = require('../models/Loan');
@@ -39,47 +40,62 @@ const verifyResourceAccess = async (user, resourceId) => {
   }
 
   // 3. Fallback: Full verification across Loan / EResource / Book
-  // 3a. Check if user has an active or historic Loan for this book
-  const loan = await Loan.findOne({ userId, bookId: resourceId });
-  if (loan) {
+  const isObjectId = mongoose.Types.ObjectId.isValid(String(resourceId));
+  if (isObjectId) {
+    // 3a. Check if user has an active or historic Loan for this book
+    const loan = await Loan.findOne({ userId, bookId: resourceId });
+    if (loan) {
+      const accessInfo = { hasAccess: true, defaultResourceType: 'epub' };
+      await setCache(cacheKey, accessInfo, 600);
+      return accessInfo;
+    }
+
+    // 3b. Check if resourceId is an EResource
+    const eresource = await EResource.findById(resourceId);
+    if (eresource) {
+      // Enforce tenant isolation if collegeId exists on user and resource
+      if (
+        user.collegeId &&
+        eresource.collegeId &&
+        eresource.collegeId.toString() !== user.collegeId.toString()
+      ) {
+        throw new AppError('Access denied. You do not have access to this resource.', 403);
+      }
+
+      const isPublishedOrApproved =
+        eresource.isPublished || ['approved', 'published'].includes(eresource.moderationStatus);
+      const isOwner = eresource.uploadedBy && eresource.uploadedBy.toString() === userId.toString();
+      const isAdmin = ['super-admin', 'college-admin'].includes(user.role);
+
+      if (isPublishedOrApproved || isOwner || isAdmin) {
+        const accessInfo = { hasAccess: true, defaultResourceType: eresource.type || 'epub' };
+        await setCache(cacheKey, accessInfo, 600);
+        return accessInfo;
+      }
+
+      throw new AppError('Access denied. This e-resource is not available.', 403);
+    }
+
+    // 3c. Check if resource exists as a Book in the catalog that user hasn't borrowed
+    const book = await Book.findById(resourceId);
+    if (book) {
+      throw new AppError('Access denied. You have not borrowed this book.', 403);
+    }
+  }
+
+  // 3d. Non-ObjectId or external public domain resources (Gutenberg, Google Books, Open Library)
+  // allow patrons and students to track their personal reading progress on open access materials
+  if (
+    !isObjectId ||
+    String(resourceId).startsWith('gutenberg') ||
+    String(resourceId).startsWith('ext_')
+  ) {
     const accessInfo = { hasAccess: true, defaultResourceType: 'epub' };
     await setCache(cacheKey, accessInfo, 600);
     return accessInfo;
   }
 
-  // 3b. Check if resourceId is an EResource
-  const eresource = await EResource.findById(resourceId);
-  if (eresource) {
-    // Enforce tenant isolation if collegeId exists on user and resource
-    if (
-      user.collegeId &&
-      eresource.collegeId &&
-      eresource.collegeId.toString() !== user.collegeId.toString()
-    ) {
-      throw new AppError('Access denied. You do not have access to this resource.', 403);
-    }
-
-    const isPublishedOrApproved =
-      eresource.isPublished || ['approved', 'published'].includes(eresource.moderationStatus);
-    const isOwner = eresource.uploadedBy && eresource.uploadedBy.toString() === userId.toString();
-    const isAdmin = ['super-admin', 'college-admin'].includes(user.role);
-
-    if (isPublishedOrApproved || isOwner || isAdmin) {
-      const accessInfo = { hasAccess: true, defaultResourceType: eresource.type || 'epub' };
-      await setCache(cacheKey, accessInfo, 600);
-      return accessInfo;
-    }
-
-    throw new AppError('Access denied. This e-resource is not available.', 403);
-  }
-
-  // 3c. Check if resource exists as a Book in the catalog that user hasn't borrowed
-  const book = await Book.findById(resourceId);
-  if (book) {
-    throw new AppError('Access denied. You have not borrowed this book.', 403);
-  }
-
-  // 3d. Resource not found or no loan/access record
+  // 3e. Resource not found or no loan/access record
   throw new AppError('Access denied. Resource not found or not borrowed.', 403);
 };
 

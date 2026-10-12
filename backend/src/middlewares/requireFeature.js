@@ -16,6 +16,11 @@ function requireFeature(requiredFeatureId) {
         return next();
       }
 
+      // Allow General Patrons bypass (no college affiliation required for personal features)
+      if (userRole === 'general' || !req.user?.collegeId) {
+        return next();
+      }
+
       const tenantId = req.tenantId || req.user?.collegeId;
       if (!tenantId) {
         return res.status(403).json({

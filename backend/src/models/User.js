@@ -290,7 +290,10 @@ userSchema.set('toObject', {
 });
 
 // Compound unique indexes scoped to collegeId
-userSchema.index({ collegeId: 1, studentId: 1 }, { unique: true, sparse: true });
+userSchema.index(
+  { collegeId: 1, studentId: 1 },
+  { unique: true, partialFilterExpression: { studentId: { $type: 'string' } } }
+);
 userSchema.index(
   { collegeId: 1, email: 1 },
   {

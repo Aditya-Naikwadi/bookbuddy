@@ -1,13 +1,18 @@
 import { syncAnnotationsApi } from "../api/annotationApi";
 
-const QUEUE_KEY = "bookbuddy_offline_annotations_queue";
+export const getQueueKey = (userId) => {
+  return userId
+    ? `bookbuddy_offline_annotations_queue_${userId}`
+    : "bookbuddy_offline_annotations_queue_guest";
+};
 
 /**
- * Get queued offline annotations from storage
+ * Get queued offline annotations from storage for a specific user
  */
-export const getOfflineQueue = () => {
+export const getOfflineQueue = (userId = null) => {
   try {
-    const raw = localStorage.getItem(QUEUE_KEY);
+    const key = getQueueKey(userId);
+    const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -15,10 +20,16 @@ export const getOfflineQueue = () => {
 };
 
 /**
- * Queue an annotation for offline sync
+ * Queue an annotation for offline sync scoped to a specific user
  */
-export const queueOfflineAnnotation = (bookId, annotationData) => {
-  const queue = getOfflineQueue();
+export const queueOfflineAnnotation = (
+  bookId,
+  annotationData,
+  userId = null,
+) => {
+  const effectiveUserId = userId || annotationData.userId || null;
+
+  const queue = getOfflineQueue(effectiveUserId);
   const clientId =
     annotationData.clientId ||
     (typeof crypto !== "undefined" && crypto.randomUUID
@@ -29,12 +40,14 @@ export const queueOfflineAnnotation = (bookId, annotationData) => {
     ...annotationData,
     bookId,
     clientId,
+    userId: effectiveUserId,
     queuedAt: new Date().toISOString(),
   };
 
   queue.push(newItem);
   try {
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    const key = getQueueKey(effectiveUserId);
+    localStorage.setItem(key, JSON.stringify(queue));
   } catch (err) {
     console.error("Failed to queue offline annotation:", err);
   }
@@ -42,25 +55,35 @@ export const queueOfflineAnnotation = (bookId, annotationData) => {
 };
 
 /**
- * Clear or filter synced items from offline queue
+ * Clear or filter synced items from offline queue for a specific user
  */
-export const clearOfflineQueue = (syncedClientIds = null) => {
+export const clearOfflineQueue = (syncedClientIds = null, userId = null) => {
+  const key = getQueueKey(userId);
   if (!syncedClientIds) {
-    localStorage.removeItem(QUEUE_KEY);
+    try {
+      localStorage.removeItem(key);
+      localStorage.removeItem("bookbuddy_offline_annotations_queue");
+    } catch {
+      // ignore
+    }
     return;
   }
-  const queue = getOfflineQueue();
+  const queue = getOfflineQueue(userId);
   const remaining = queue.filter(
     (item) => !syncedClientIds.includes(item.clientId),
   );
-  localStorage.setItem(QUEUE_KEY, JSON.stringify(remaining));
+  try {
+    localStorage.setItem(key, JSON.stringify(remaining));
+  } catch {
+    // ignore
+  }
 };
 
 /**
- * Flush offline queue to server
+ * Flush offline queue to server strictly for the matching user
  */
-export const flushOfflineQueue = async (bookId) => {
-  const queue = getOfflineQueue();
+export const flushOfflineQueue = async (bookId = null, userId = null) => {
+  const queue = getOfflineQueue(userId);
   if (!queue.length) return { syncedCount: 0 };
 
   const bookItems = bookId
@@ -75,12 +98,27 @@ export const flushOfflineQueue = async (bookId) => {
     );
     if (res.success) {
       const syncedIds = bookItems.map((i) => i.clientId);
-      clearOfflineQueue(syncedIds);
+      clearOfflineQueue(syncedIds, userId);
     }
     return res;
   } catch (err) {
     console.warn("Offline annotation sync flush paused:", err.message);
     return { success: false, error: err.message };
+  }
+};
+
+/**
+ * Clear all offline queues for a user on logout
+ */
+export const clearAllOfflineQueues = (userId = null) => {
+  try {
+    if (userId) {
+      localStorage.removeItem(getQueueKey(userId));
+    }
+    localStorage.removeItem("bookbuddy_offline_annotations_queue_guest");
+    localStorage.removeItem("bookbuddy_offline_annotations_queue");
+  } catch {
+    // ignore
   }
 };
 

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router({ mergeParams: true });
 const { protect } = require('../middlewares/auth');
 const requireFeature = require('../middlewares/requireFeature');
+const noCache = require('../middlewares/noCache');
 const {
   createAnnotation,
   getAnnotations,
@@ -13,6 +14,7 @@ const {
 } = require('../controllers/annotationController');
 
 router.use(protect);
+router.use(noCache);
 router.use(requireFeature('digital_annotations'));
 
 router.get('/search', searchAnnotations);

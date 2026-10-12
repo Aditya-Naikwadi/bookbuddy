@@ -14,6 +14,9 @@ import { disconnectSocket } from "../lib/socketClient";
 import { toast } from "./toastStore";
 import { getSubdomainTenantSlug } from "../utils/tenantSubdomain";
 import { ROLES, normalizeRole } from "@bookbuddy/shared";
+import { clearLocalProgress } from "../lib/progressCache";
+import { clearAllOfflineQueues } from "../utils/annotationOfflineStore";
+import { clearLocalBookmarks } from "../hooks/useLocalBookmarks";
 
 const isTokenExpiredOrNearExpiry = (token, thresholdSeconds = 60) => {
   if (!token || typeof token !== "string") return true;
@@ -46,6 +49,11 @@ const initialSuperAdminToken =
 
 const useAuthStore = create((set) => {
   setOnUnauthorizedCallback(() => {
+    const currentUser = useAuthStore.getState().user;
+    const currentUserId = currentUser?._id || currentUser?.id || null;
+    clearAllOfflineQueues(currentUserId);
+    clearLocalBookmarks(currentUserId);
+    clearLocalProgress(currentUserId).catch(() => {});
     set({ user: null, token: null, isAuthenticated: false, isLoading: false });
   });
 
@@ -284,6 +292,15 @@ const useAuthStore = create((set) => {
       } catch (err) {
         console.error("Logout request error on server:", err);
       } finally {
+        const currentUser = useAuthStore.getState().user;
+        const currentUserId = currentUser?._id || currentUser?.id || null;
+
+        // Clean up per-user offline annotations queue & bookmarks to prevent leakage across users
+        clearAllOfflineQueues(currentUserId);
+        clearLocalBookmarks(currentUserId);
+        clearLocalProgress(currentUserId).catch(() => {});
+        clearLocalProgress("guest").catch(() => {});
+
         // Clear all token & auth states
         setInMemoryToken(null);
         setCsrfToken(null);

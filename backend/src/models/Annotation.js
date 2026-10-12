@@ -11,7 +11,8 @@ const annotationSchema = new mongoose.Schema(
     collegeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'College',
-      required: true,
+      required: false,
+      default: null,
       index: true,
     },
     bookId: {
@@ -90,8 +91,26 @@ annotationSchema
     this.bookId = val;
   });
 
-// Compound index for user book type queries
+// Compound indexes for user book queries
+annotationSchema.index({ userId: 1, bookId: 1 });
+annotationSchema.index({ userId: 1, bookId: 1, type: 1 });
 annotationSchema.index({ userId: 1, collegeId: 1, bookId: 1, type: 1 });
+
+// Uniqueness indexes for bookmarks and highlights at exact location
+annotationSchema.index(
+  { userId: 1, bookId: 1, type: 1, cfiRange: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { cfiRange: { $type: 'string' } },
+  }
+);
+annotationSchema.index(
+  { userId: 1, bookId: 1, page: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { type: 'bookmark', page: { $type: 'number' } },
+  }
+);
 
 // Full-text search index
 annotationSchema.index(

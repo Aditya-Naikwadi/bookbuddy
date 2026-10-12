@@ -1,4 +1,5 @@
 // Controller managing student-specific dashboard catalog actions, loans, holds, fines, and digital/personalization services.
+const mongoose = require('mongoose');
 const Book = require('../../models/Book');
 const Loan = require('../../models/Loan');
 const Fine = require('../../models/Fine');
@@ -7,6 +8,7 @@ const EResource = require('../../models/EResource');
 const ReadingList = require('../../models/ReadingList');
 const ReadingProgress = require('../../models/ReadingProgress');
 const Bookmark = require('../../models/Bookmark');
+const Annotation = require('../../models/Annotation');
 const SavedSearch = require('../../models/SavedSearch');
 const LabBooking = require('../../models/LabBooking');
 const BookSuggestion = require('../../models/BookSuggestion');
@@ -621,18 +623,66 @@ const upsertReadingProgress = async (req, res, next) => {
 // @access  Private/Student
 const getStudentBookmarks = async (req, res, next) => {
   try {
-    const { eresourceId } = req.query;
+    const userId = req.user.id || req.user._id;
+    const { eresourceId, resourceId } = req.query;
+    const targetId = eresourceId || resourceId;
 
-    const filter = { userId: req.user.id };
-    if (eresourceId) {
-      filter.eresourceId = eresourceId;
+    const annotationFilter = { userId };
+    const bookmarkFilter = { userId };
+    if (targetId) {
+      annotationFilter.bookId = targetId;
+      const isTargetObjectId = mongoose.Types.ObjectId.isValid(String(targetId));
+      if (isTargetObjectId) {
+        bookmarkFilter.$or = [{ eresourceId: targetId }, { bookId: targetId }];
+      } else {
+        bookmarkFilter.bookId = targetId;
+      }
     }
 
-    const bookmarks = await Bookmark.find(filter).sort('-createdAt');
+    const [annotations, bookmarks] = await Promise.all([
+      Annotation.find(annotationFilter).sort('-createdAt').lean(),
+      Bookmark.find(bookmarkFilter).sort('-createdAt').lean(),
+    ]);
+
+    // Format unified list for student bookmarks UI
+    const mappedAnnotations = annotations.map((a) => ({
+      _id: a._id,
+      id: a._id,
+      bookId: a.bookId,
+      bookTitle: a.label || a.bookId,
+      page: a.page || 1,
+      highlightText: a.highlightText,
+      noteText: a.noteText,
+      color: a.color || 'yellow',
+      tags: a.tags || [],
+      type: a.type,
+      createdAt: a.createdAt,
+    }));
+
+    const mappedBookmarks = bookmarks.map((b) => ({
+      _id: b._id,
+      id: b._id,
+      eresourceId: b.eresourceId,
+      bookId: b.bookId || b.eresourceId,
+      bookTitle: b.bookTitle || 'E-Resource',
+      locationRef: b.locationRef,
+      page: b.page || 1,
+      highlightText: b.highlightText,
+      noteText: b.noteText || b.note,
+      color: b.color || 'yellow',
+      tags: b.tags || [],
+      type: 'bookmark',
+      createdAt: b.createdAt,
+    }));
+
+    // Combine and sort by createdAt descending
+    const combined = [...mappedAnnotations, ...mappedBookmarks].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
 
     res.json({
       success: true,
-      data: bookmarks,
+      data: combined,
     });
   } catch (error) {
     next(error);
@@ -644,18 +694,63 @@ const getStudentBookmarks = async (req, res, next) => {
 // @access  Private/Student
 const createStudentBookmark = async (req, res, next) => {
   try {
-    const { eresourceId, locationRef, note } = req.body;
-
-    const bookmark = await Bookmark.create({
-      userId: req.user.id,
+    const userId = req.user.id || req.user._id;
+    const collegeId = req.user.collegeId || null;
+    const {
       eresourceId,
+      resourceId,
       locationRef,
       note,
+      bookTitle,
+      page,
+      highlightText,
+      noteText,
+      color,
+      tags,
+    } = req.body;
+
+    const rawBookId = eresourceId || resourceId;
+
+    // Persist as Annotation for rich reader highlights and notes
+    const annotation = await Annotation.create({
+      userId,
+      collegeId,
+      bookId: rawBookId || 'digital-resource',
+      type: highlightText ? 'highlight' : noteText ? 'note' : 'bookmark',
+      page: page || 1,
+      highlightText: highlightText ? highlightText.substring(0, 2000) : undefined,
+      noteText: noteText || note,
+      label: bookTitle,
+      color: color || 'yellow',
+      tags: Array.isArray(tags) ? tags : tags ? [tags] : [],
+    });
+
+    const safeEresourceId =
+      eresourceId && mongoose.Types.ObjectId.isValid(eresourceId)
+        ? eresourceId
+        : resourceId && mongoose.Types.ObjectId.isValid(resourceId)
+          ? resourceId
+          : undefined;
+
+    // Also persist to Bookmark model for backward compatibility
+    const bookmark = await Bookmark.create({
+      userId,
+      collegeId,
+      eresourceId: safeEresourceId,
+      bookId: rawBookId,
+      locationRef: locationRef || (page ? `page-${page}` : 'loc-1'),
+      note: noteText || note,
+      bookTitle,
+      page,
+      highlightText,
+      noteText,
+      color: color || 'yellow',
+      tags: Array.isArray(tags) ? tags : [],
     });
 
     res.status(201).json({
       success: true,
-      data: bookmark,
+      data: annotation || bookmark,
     });
   } catch (error) {
     next(error);
@@ -667,21 +762,30 @@ const createStudentBookmark = async (req, res, next) => {
 // @access  Private/Student
 const deleteStudentBookmark = async (req, res, next) => {
   try {
-    const bookmark = await Bookmark.findOne({
-      _id: req.params.id,
-      userId: req.user.id,
-    });
+    const userId = req.user.id || req.user._id;
+    const { id } = req.params;
 
-    if (!bookmark) {
-      return next(new AppError('Bookmark not found.', 404));
+    // Check Annotation first
+    const annotation = await Annotation.findOne({ _id: id, userId });
+    if (annotation) {
+      await annotation.deleteOne();
+      return res.json({
+        success: true,
+        message: 'Bookmark successfully deleted.',
+      });
     }
 
-    await bookmark.deleteOne();
+    // Check Bookmark second
+    const bookmark = await Bookmark.findOne({ _id: id, userId });
+    if (bookmark) {
+      await bookmark.deleteOne();
+      return res.json({
+        success: true,
+        message: 'Bookmark successfully deleted.',
+      });
+    }
 
-    res.json({
-      success: true,
-      message: 'Bookmark successfully deleted.',
-    });
+    return next(new AppError('Bookmark not found.', 404));
   } catch (error) {
     next(error);
   }

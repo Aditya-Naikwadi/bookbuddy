@@ -8,10 +8,12 @@ const readingProgressSchema = new mongoose.Schema(
       required: true,
     },
     resourceId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed,
+      required: true,
+      index: true,
     },
     eresourceId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed,
     },
     resourceType: {
       type: String,

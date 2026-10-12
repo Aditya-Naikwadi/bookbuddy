@@ -82,9 +82,19 @@ const updateProgressRouteSchema = z.object({
 });
 
 const createBookmarkBodySchema = z.object({
-  eresourceId: objectIdSchema,
-  locationRef: z.string().min(1, 'Location reference is required'),
+  eresourceId: z.union([objectIdSchema, z.string()]).optional(),
+  resourceId: z.union([objectIdSchema, z.string()]).optional(),
+  bookId: z.union([objectIdSchema, z.string()]).optional(),
+  bookTitle: z.string().optional(),
+  locationRef: z.string().optional(),
+  cfi: z.string().optional(),
+  page: z.number().optional(),
+  highlightText: z.string().optional(),
+  noteText: z.string().optional(),
   note: z.string().optional(),
+  color: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  label: z.string().optional(),
 });
 
 const createBookmarkRouteSchema = z.object({

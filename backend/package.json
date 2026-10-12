@@ -113,6 +113,7 @@
     "adm-zip": "^0.6.1",
     "ip-address": "^10.3.1",
     "js-yaml": "^4.1.0",
+    "argparse": "^2.0.1",
     "chokidar": "^4.0.3",
     "engine.io": "^6.6.11",
     "nodemailer": "^10.0.16",

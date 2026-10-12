@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const AdmZip = require('adm-zip');
+const mongoose = require('mongoose');
 const { safeFetch } = require('../utils/ssrfValidator');
 const EResource = require('../models/EResource');
 const ReadingPosition = require('../models/ReadingPosition');
@@ -233,12 +234,16 @@ const getReadingPosition = async (req, res, next) => {
   try {
     const { resourceId } = req.params;
 
-    const resource = await EResource.findById(resourceId);
-    const positionDoc = await ReadingPosition.findOne({
+    const isObjectId = mongoose.Types.ObjectId.isValid(String(resourceId));
+    const resource = isObjectId ? await EResource.findById(resourceId) : null;
+    const positionQuery = {
       userId: req.user.id || req.user._id,
       resourceId,
-      collegeId: req.user.collegeId,
-    });
+    };
+    if (req.user.collegeId) {
+      positionQuery.collegeId = req.user.collegeId;
+    }
+    const positionDoc = await ReadingPosition.findOne(positionQuery);
 
     const isPdf =
       resource &&
@@ -272,8 +277,9 @@ const setReadingPosition = async (req, res, next) => {
     const { resourceId } = req.params;
     const { cfi, page, progressPercentage, position } = req.body;
 
-    const resource = await EResource.findById(resourceId);
-    if (!resource) {
+    const isObjectId = mongoose.Types.ObjectId.isValid(String(resourceId));
+    const resource = isObjectId ? await EResource.findById(resourceId) : null;
+    if (isObjectId && !resource) {
       throw new AppError('E-resource not found.', 404);
     }
 
@@ -296,6 +302,7 @@ const setReadingPosition = async (req, res, next) => {
     const updateFields = {
       position: isPdf ? String(page) : cfi || position,
       progressPercentage: progressPercentage || 0,
+      collegeId: req.user.collegeId || null,
     };
 
     if (isPdf) {
@@ -304,18 +311,18 @@ const setReadingPosition = async (req, res, next) => {
       updateFields.cfi = cfi || position;
     }
 
-    const updated = await ReadingPosition.findOneAndUpdate(
-      {
-        userId: req.user.id || req.user._id,
-        resourceId,
-        collegeId: req.user.collegeId,
-      },
-      updateFields,
-      {
-        returnDocument: 'after',
-        upsert: true,
-      }
-    );
+    const positionFilter = {
+      userId: req.user.id || req.user._id,
+      resourceId,
+    };
+    if (req.user.collegeId) {
+      positionFilter.collegeId = req.user.collegeId;
+    }
+
+    const updated = await ReadingPosition.findOneAndUpdate(positionFilter, updateFields, {
+      returnDocument: 'after',
+      upsert: true,
+    });
 
     // Write/increment today's ReadingActivityLog row for historical time-series analytics
     const ReadingActivityLog = require('../models/ReadingActivityLog');

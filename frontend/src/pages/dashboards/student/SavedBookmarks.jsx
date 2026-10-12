@@ -2,18 +2,22 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Bookmark, Search, Tag, BookOpen, Trash2, Filter } from "lucide-react";
 import apiClient from "../../../api/client";
+import useAuthStore from "../../../store/authStore";
+import { toast } from "../../../store/toastStore";
 
 export const SavedBookmarks = () => {
+  const { user } = useAuthStore();
+  const userId = user?.id || user?._id || "guest";
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState("all");
 
-  // Fetch saved bookmarks and annotations
+  // Fetch saved bookmarks and annotations scoped strictly by userId
   const {
     data: bookmarks = [],
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["student-bookmarks"],
+    queryKey: ["student-bookmarks", userId],
     queryFn: async () => {
       try {
         const { data } = await apiClient.get("/dashboards/student/bookmarks");
@@ -22,6 +26,7 @@ export const SavedBookmarks = () => {
         return [];
       }
     },
+    enabled: !!user,
   });
 
   const availableTags = ["all", "exam-prep", "important", "quote", "research"];
@@ -43,9 +48,11 @@ export const SavedBookmarks = () => {
   const handleDeleteBookmark = async (id) => {
     try {
       await apiClient.delete(`/dashboards/student/bookmarks/${id}`);
+      toast.info("Bookmark Deleted", "Item removed from your saved bookmarks.");
       refetch();
     } catch (err) {
       console.error("Failed to delete bookmark:", err);
+      toast.error("Deletion Failed", "Unable to remove bookmark at this time.");
     }
   };
 

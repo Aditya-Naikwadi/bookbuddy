@@ -71,16 +71,6 @@
       "acceptedBy": "@security-appsec-engineer",
       "reviewDate": "2026-09-24",
       "expiresAt": "2026-12-31"
-    },
-    {
-      "packageName": "sprintf-js",
-      "advisoryId": "GHSA-hp3w-g68c-fv3c",
-      "severity": "moderate",
-      "environment": "development-only (backend test runner)",
-      "rationale": "Transitive sprintf-js via argparse and js-yaml in @istanbuljs/load-nyc-config used by Jest test runner for local coverage parsing. Completely isolated from production runtime, serverless functions, and user inputs.",
-      "acceptedBy": "@security-appsec-engineer",
-      "reviewDate": "2026-10-09",
-      "expiresAt": "2026-12-31"
     }
   ]
 }

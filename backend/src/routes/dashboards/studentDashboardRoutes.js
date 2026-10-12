@@ -79,6 +79,7 @@ const {
   createBookingRouteSchema,
 } = require('@bookbuddy/shared/schemas/facilities');
 const { userLimiter, expensiveRouteLimiter } = require('../../middlewares/rateLimiters');
+const noCache = require('../../middlewares/noCache');
 
 // Apply middleware gates to all routes
 router.use(protect);
@@ -139,8 +140,9 @@ router.delete(
 // Reading Progress
 router
   .route('/reading-progress/:eresourceId')
-  .get(validate(paramEResourceIdSchema), getReadingProgress)
+  .get(noCache, validate(paramEResourceIdSchema), getReadingProgress)
   .put(
+    noCache,
     expensiveRouteLimiter,
     validate(paramEResourceIdSchema),
     validate(updateProgressSchema),
@@ -150,9 +152,9 @@ router
 // Bookmarks
 router
   .route('/bookmarks')
-  .get(getStudentBookmarks)
-  .post(validate(createBookmarkSchema), createStudentBookmark);
-router.delete('/bookmarks/:id', validate(paramIdSchema), deleteStudentBookmark);
+  .get(noCache, getStudentBookmarks)
+  .post(noCache, validate(createBookmarkSchema), createStudentBookmark);
+router.delete('/bookmarks/:id', noCache, validate(paramIdSchema), deleteStudentBookmark);
 
 // Saved Searches
 router

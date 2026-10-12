@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
+import { toast } from "../../store/toastStore";
 import apiClient from "../../api/client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -628,7 +629,8 @@ const DigitalReaderModal = ({
   const [error, setError] = useState(null);
 
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
+  const userId = user?.id || user?._id || null;
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   // Annotations & UI State
@@ -720,7 +722,7 @@ const DigitalReaderModal = ({
 
     const loadData = async () => {
       try {
-        await flushOfflineQueue(targetId);
+        await flushOfflineQueue(targetId, userId);
         const res = await getBookAnnotations(targetId);
         if (isMounted && res.success) {
           setAnnotations(res.data || []);
@@ -734,7 +736,7 @@ const DigitalReaderModal = ({
     return () => {
       isMounted = false;
     };
-  }, [isModalOpen, targetId, isAuthenticated]);
+  }, [isModalOpen, targetId, isAuthenticated, userId]);
 
   const handleNext = useCallback(() => {
     if (currentPage < totalPages) {
@@ -875,15 +877,21 @@ const DigitalReaderModal = ({
           const res = await createAnnotationApi(targetId, payload);
           if (res.success) {
             setAnnotations((prev) => [res.data, ...prev]);
+            toast.success("Highlight Saved", "Added highlight to your notes.");
           }
         } catch {
           // Offline fallback
-          const queued = queueOfflineAnnotation(targetId, payload);
+          const queued = queueOfflineAnnotation(targetId, payload, userId);
           setAnnotations((prev) => [queued, ...prev]);
+          toast.info(
+            "Offline Saved",
+            "Highlight saved locally; will sync when reconnected.",
+          );
         }
       }
     } catch (err) {
       console.error("Save annotation failed:", err);
+      toast.error("Save Failed", "Could not save highlight.");
     } finally {
       setActiveToolbar(null);
     }
@@ -926,10 +934,15 @@ const DigitalReaderModal = ({
       const res = await createAnnotationApi(targetId, payload);
       if (res.success) {
         setAnnotations((prev) => [res.data, ...prev]);
+        toast.success("Bookmark Added", `Bookmarked ${label}`);
       }
     } catch {
-      const queued = queueOfflineAnnotation(targetId, payload);
+      const queued = queueOfflineAnnotation(targetId, payload, userId);
       setAnnotations((prev) => [queued, ...prev]);
+      toast.info(
+        "Offline Saved",
+        "Bookmark saved locally; will sync when reconnected.",
+      );
     } finally {
       setShowBookmarkPrompt(false);
       setBookmarkLabelInput("");
@@ -948,8 +961,10 @@ const DigitalReaderModal = ({
       setAnnotations((prev) =>
         prev.filter((a) => a._id !== id && a.id !== id && a.clientId !== id),
       );
+      toast.info("Deleted", "Annotation removed.");
     } catch (err) {
       console.error("Delete annotation error:", err);
+      toast.error("Delete Failed", "Unable to remove annotation.");
     } finally {
       setActiveToolbar(null);
     }

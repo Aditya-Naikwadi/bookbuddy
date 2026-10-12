@@ -9,6 +9,7 @@ const {
   setReadingPosition,
 } = require('../controllers/readerController');
 const { protect } = require('../middlewares/auth');
+const noCache = require('../middlewares/noCache');
 const scopeToTenant = require('../middlewares/scopeToTenant');
 const { expensiveRouteLimiter } = require('../middlewares/rateLimiters');
 
@@ -43,7 +44,7 @@ router.post(
 router.get('/:resourceId/content', expensiveRouteLimiter, streamEbookContent);
 
 // Ebook reading position bookmarks
-router.get('/:resourceId/position', getReadingPosition);
-router.put('/:resourceId/position', setReadingPosition);
+router.get('/:resourceId/position', noCache, getReadingPosition);
+router.put('/:resourceId/position', noCache, setReadingPosition);
 
 module.exports = router;

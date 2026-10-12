@@ -20,6 +20,7 @@ import { ReaderToolbar } from "../../../components/student/ebook-reader/ReaderTo
 import { TableOfContents } from "../../../components/student/ebook-reader/TableOfContents";
 import { ReaderThemeControls } from "../../../components/student/ebook-reader/ReaderThemeControls";
 import { ResumePromptToast } from "../../../components/student/ebook-reader/ResumePromptToast";
+import { toast } from "../../../store/toastStore";
 
 const EbookReader = () => {
   const { id, resourceId: rawResourceId } = useParams();
@@ -273,6 +274,10 @@ const EbookReader = () => {
         tags: [annotationTag],
       });
       setAnnotationSuccess(true);
+      toast.success(
+        "Bookmark & Note Saved",
+        "Successfully saved to your study notes.",
+      );
       setTimeout(() => {
         setAnnotationSuccess(false);
         setAnnotationModalOpen(false);
@@ -281,6 +286,10 @@ const EbookReader = () => {
       }, 1200);
     } catch (err) {
       console.error("Failed to persist annotation:", err);
+      toast.error(
+        "Save Failed",
+        err?.response?.data?.message || "Failed to persist annotation.",
+      );
     } finally {
       setIsSavingAnnotation(false);
     }

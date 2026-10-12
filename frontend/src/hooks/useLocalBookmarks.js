@@ -1,25 +1,55 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "../store/toastStore";
+import useAuthStore from "../store/authStore";
 
-const LOCAL_STORAGE_KEY = "bookbuddy_public_bookmarks";
+export const getBookmarkStorageKey = (userId) => {
+  return userId ? `bookbuddy_bookmarks_${userId}` : "bookbuddy_bookmarks_guest";
+};
+
+export const clearLocalBookmarks = (userId) => {
+  try {
+    const key = getBookmarkStorageKey(userId);
+    localStorage.removeItem(key);
+    // Also remove legacy un-namespaced key if present
+    localStorage.removeItem("bookbuddy_public_bookmarks");
+  } catch {
+    // ignore local storage errors
+  }
+};
 
 export const useLocalBookmarks = () => {
-  const [bookmarks, setBookmarks] = useState(() => {
+  const { user } = useAuthStore();
+  const userId = user?.id || user?._id || null;
+  const storageKey = useMemo(() => getBookmarkStorageKey(userId), [userId]);
+
+  const loadBookmarksFromStorage = useCallback(() => {
     try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const saved =
+        localStorage.getItem(storageKey) ||
+        localStorage.getItem("bookbuddy_public_bookmarks");
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
-  });
+  }, [storageKey]);
 
+  const [prevStorageKey, setPrevStorageKey] = useState(storageKey);
+  const [bookmarks, setBookmarks] = useState(loadBookmarksFromStorage);
+
+  // Synchronize state when user or storageKey changes without cascading effect renders
+  if (prevStorageKey !== storageKey) {
+    setPrevStorageKey(storageKey);
+    setBookmarks(loadBookmarksFromStorage());
+  }
+
+  // Persist bookmarks whenever state updates
   useEffect(() => {
     try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(bookmarks));
+      localStorage.setItem(storageKey, JSON.stringify(bookmarks));
     } catch (err) {
       console.warn("Failed to save bookmarks to localStorage:", err);
     }
-  }, [bookmarks]);
+  }, [bookmarks, storageKey]);
 
   const addBookmark = (item) => {
     setBookmarks((prev) => {
@@ -52,6 +82,11 @@ export const useLocalBookmarks = () => {
 
   const clearBookmarks = () => {
     setBookmarks([]);
+    try {
+      localStorage.removeItem(storageKey);
+    } catch {
+      // ignore
+    }
     toast.info("Collection Cleared", "All saved items removed.");
   };
 

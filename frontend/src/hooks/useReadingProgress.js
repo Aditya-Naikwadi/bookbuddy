@@ -3,6 +3,7 @@ import debounce from "lodash/debounce";
 import apiClient from "../api/client";
 import { getLocalProgress, setLocalProgress } from "../lib/progressCache";
 import { useSocket } from "./useSocket";
+import useAuthStore from "../store/authStore";
 
 /**
  * Custom hook for reading progress tracking, debouncing, IndexedDB caching,
@@ -13,6 +14,9 @@ import { useSocket } from "./useSocket";
  * @param {function} [options.onRemotePositionUpdate] - Callback when remote tab updates position
  */
 export const useReadingProgress = (resourceId, options = {}) => {
+  const { user } = useAuthStore();
+  const userId = user?.id || user?._id || "guest";
+
   const [localProgress, setLocalProgressState] = useState(null);
   const [serverProgress, setServerProgressState] = useState(null);
   const [currentProgress, setCurrentProgress] = useState(null);
@@ -36,7 +40,7 @@ export const useReadingProgress = (resourceId, options = {}) => {
       setIsLoading(true);
       try {
         // Read local IDB cache first
-        const localData = await getLocalProgress(resourceId);
+        const localData = await getLocalProgress(resourceId, userId);
         if (isMounted && localData) {
           setLocalProgressState(localData);
           setCurrentProgress(localData);
@@ -56,7 +60,10 @@ export const useReadingProgress = (resourceId, options = {}) => {
             setServerProgressState(serverData);
             if (!localData) {
               setCurrentProgress(serverData);
-              await setLocalProgress(resourceId, serverData).catch(() => {});
+              await setLocalProgress(resourceId, {
+                ...serverData,
+                userId,
+              }).catch(() => {});
             } else {
               // Reconcile: Compare local and server positions
               const localPage =
@@ -93,7 +100,7 @@ export const useReadingProgress = (resourceId, options = {}) => {
     return () => {
       isMounted = false;
     };
-  }, [resourceId]);
+  }, [resourceId, userId]);
 
   // 2. Core debounced server PUT function (4s delay)
   const sendServerUpdate = useCallback(
@@ -128,6 +135,7 @@ export const useReadingProgress = (resourceId, options = {}) => {
 
       const payload = {
         resourceId,
+        userId,
         ...progressData,
         updatedAt: new Date().toISOString(),
       };
@@ -140,7 +148,7 @@ export const useReadingProgress = (resourceId, options = {}) => {
       // Debounce server PUT call (4s)
       debouncedSaveRef.current(payload);
     },
-    [resourceId],
+    [resourceId, userId],
   );
 
   // 4. Force-flush any pending write on unmount / reader close

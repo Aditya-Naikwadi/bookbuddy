@@ -11,7 +11,7 @@ const { emitAnnotationUpsert, emitAnnotationDelete } = require('../sockets');
 const createAnnotation = async (req, res, next) => {
   try {
     const userId = req.user.id || req.user._id;
-    const collegeId = req.user.collegeId;
+    const collegeId = req.user.collegeId || null;
 
     const rawBookId = req.params.bookId || req.body.bookId || req.body.resourceId;
     if (!rawBookId) {
@@ -35,7 +35,7 @@ const createAnnotation = async (req, res, next) => {
 
     // Check offline idempotency via clientId
     if (clientId) {
-      const existing = await Annotation.findOne({ clientId, userId, collegeId });
+      const existing = await Annotation.findOne({ clientId, userId });
       if (existing) {
         return res.status(200).json({
           success: true,
@@ -48,7 +48,6 @@ const createAnnotation = async (req, res, next) => {
     // Soft cap check: 500 annotations per user per book
     const currentCount = await Annotation.countDocuments({
       userId,
-      collegeId,
       bookId: rawBookId,
     });
 
@@ -70,6 +69,22 @@ const createAnnotation = async (req, res, next) => {
 
     // Process snapshot text length cap (2000 chars)
     const truncatedHighlight = highlightText ? highlightText.substring(0, 2000) : undefined;
+
+    // Check for existing bookmark at this exact location to prevent duplicates
+    if (type === 'bookmark') {
+      const duplicateQuery = { userId, bookId: rawBookId, type: 'bookmark' };
+      if (cfiRange) duplicateQuery.cfiRange = cfiRange;
+      else if (page !== undefined) duplicateQuery.page = page;
+
+      const existingBookmark = await Annotation.findOne(duplicateQuery);
+      if (existingBookmark) {
+        return res.status(200).json({
+          success: true,
+          data: existingBookmark,
+          isDuplicate: true,
+        });
+      }
+    }
 
     const annotation = await Annotation.create({
       userId,
@@ -100,12 +115,10 @@ const createAnnotation = async (req, res, next) => {
       data: annotation,
     });
   } catch (error) {
-    if (error.code === 11000 && req.body.clientId) {
-      const existing = await Annotation.findOne({
-        clientId: req.body.clientId,
-        userId: req.user.id || req.user._id,
-        collegeId: req.user.collegeId,
-      });
+    if (error.code === 11000) {
+      const query = { userId: req.user.id || req.user._id };
+      if (req.body.clientId) query.clientId = req.body.clientId;
+      const existing = await Annotation.findOne(query);
       if (existing) {
         return res.status(200).json({ success: true, data: existing, isDuplicate: true });
       }
@@ -122,12 +135,14 @@ const createAnnotation = async (req, res, next) => {
 const getAnnotations = async (req, res, next) => {
   try {
     const userId = req.user.id || req.user._id;
-    const collegeId = req.user.collegeId;
 
     const rawBookId = req.params.bookId || req.query.bookId || req.query.resourceId;
     const { type } = req.query;
 
-    const query = { userId, collegeId };
+    const query = { userId };
+    if (req.user.collegeId) {
+      query.collegeId = req.user.collegeId;
+    }
     if (rawBookId) {
       query.bookId = rawBookId;
     }
@@ -148,14 +163,13 @@ const getAnnotations = async (req, res, next) => {
 };
 
 /**
- * @desc    Update an annotation (note, color, tags, label)
+ * @desc    Update an annotation (note, color, tags, label) with IDOR protection
  * @route   PATCH /api/v1/annotations/:id (and PUT /api/v1/annotations/:id)
  * @access  Private (Student)
  */
 const updateAnnotation = async (req, res, next) => {
   try {
     const userId = req.user.id || req.user._id;
-    const collegeId = req.user.collegeId;
     const { id } = req.params;
     const { noteText, color, tags, highlightText, label } = req.body;
 
@@ -163,9 +177,14 @@ const updateAnnotation = async (req, res, next) => {
       throw new AppError('Note text cannot exceed 5000 characters.', 400);
     }
 
-    const annotation = await Annotation.findOne({ _id: id, userId, collegeId });
+    const annotation = await Annotation.findById(id);
     if (!annotation) {
-      throw new AppError('Annotation not found or unauthorized access.', 404);
+      throw new AppError('Annotation not found.', 404);
+    }
+
+    // IDOR Protection: Confirm caller owns this annotation
+    if (String(annotation.userId) !== String(userId)) {
+      throw new AppError('Forbidden: You do not have permission to modify this annotation.', 403);
     }
 
     if (noteText !== undefined) annotation.noteText = noteText;
@@ -194,20 +213,26 @@ const updateAnnotation = async (req, res, next) => {
 };
 
 /**
- * @desc    Delete an annotation
+ * @desc    Delete an annotation with IDOR protection
  * @route   DELETE /api/v1/annotations/:id
  * @access  Private (Student)
  */
 const deleteAnnotation = async (req, res, next) => {
   try {
     const userId = req.user.id || req.user._id;
-    const collegeId = req.user.collegeId;
     const { id } = req.params;
 
-    const annotation = await Annotation.findOneAndDelete({ _id: id, userId, collegeId });
+    const annotation = await Annotation.findById(id);
     if (!annotation) {
-      throw new AppError('Annotation not found or unauthorized access.', 404);
+      throw new AppError('Annotation not found.', 404);
     }
+
+    // IDOR Protection: Confirm caller owns this annotation
+    if (String(annotation.userId) !== String(userId)) {
+      throw new AppError('Forbidden: You do not have permission to delete this annotation.', 403);
+    }
+
+    await annotation.deleteOne();
 
     // Emit domain event
     domainEvents.emit('annotation.deleted', { id, bookId: annotation.bookId });
@@ -232,7 +257,7 @@ const deleteAnnotation = async (req, res, next) => {
 const syncAnnotations = async (req, res, next) => {
   try {
     const userId = req.user.id || req.user._id;
-    const collegeId = req.user.collegeId;
+    const collegeId = req.user.collegeId || null;
     const rawBookId = req.params.bookId || req.body.bookId;
 
     const items = req.body.items || (Array.isArray(req.body) ? req.body : []);
@@ -248,14 +273,14 @@ const syncAnnotations = async (req, res, next) => {
       if (!itemBookId) continue;
 
       if (item.clientId) {
-        const existing = await Annotation.findOne({ clientId: item.clientId, userId, collegeId });
+        const existing = await Annotation.findOne({ clientId: item.clientId, userId });
         if (existing) {
           synced.push(existing);
           continue;
         }
       }
 
-      const count = await Annotation.countDocuments({ userId, collegeId, bookId: itemBookId });
+      const count = await Annotation.countDocuments({ userId, bookId: itemBookId });
       if (count >= 500) {
         continue; // Skip items exceeding count cap during bulk sync
       }
@@ -303,12 +328,14 @@ const syncAnnotations = async (req, res, next) => {
 const exportAnnotations = async (req, res, next) => {
   try {
     const userId = req.user.id || req.user._id;
-    const collegeId = req.user.collegeId;
     const { bookId } = req.params;
 
-    const annotations = await Annotation.find({ userId, collegeId, bookId })
-      .sort({ page: 1, createdAt: 1 })
-      .lean();
+    const query = { userId, bookId };
+    if (req.user.collegeId) {
+      query.collegeId = req.user.collegeId;
+    }
+
+    const annotations = await Annotation.find(query).sort({ page: 1, createdAt: 1 }).lean();
 
     res.json({
       success: true,
@@ -345,10 +372,12 @@ const exportAnnotations = async (req, res, next) => {
 const searchAnnotations = async (req, res, next) => {
   try {
     const userId = req.user.id || req.user._id;
-    const collegeId = req.user.collegeId;
     const { q } = req.query;
 
-    const baseQuery = { userId, collegeId };
+    const baseQuery = { userId };
+    if (req.user.collegeId) {
+      baseQuery.collegeId = req.user.collegeId;
+    }
 
     if (!q || q.trim() === '') {
       const all = await Annotation.find(baseQuery).sort({ createdAt: -1 }).lean();
