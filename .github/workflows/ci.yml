@@ -266,7 +266,7 @@ jobs:
 
       - name: Upload Audit History Artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: deployment-audit-log-${{ github.sha }}
           path: logs/deployment-audit.jsonl

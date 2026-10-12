@@ -52,7 +52,7 @@ jobs:
 
       - name: Upload AI Review Report Artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ai-code-review-report
           path: logs/ai-code-review-report.json
