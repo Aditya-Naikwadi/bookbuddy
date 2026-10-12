@@ -70,7 +70,7 @@
     "google-auth-library": "^10.9.1",
     "helmet": "^8.3.0",
     "hpp": "^0.2.3",
-    "ioredis": "^5.11.1",
+    "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "luxon": "^3.7.2",
     "migrate-mongo": "^11.0.0",
