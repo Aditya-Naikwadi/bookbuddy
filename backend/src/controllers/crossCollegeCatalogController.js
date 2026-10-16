@@ -28,12 +28,22 @@ const getCrossCollegeCatalog = asyncHandler(async (req, res) => {
   let books = [];
   let eresources = [];
 
+  const bookSelect =
+    'title author category genre format copiesAvailable reservedCopies copiesTotal coverImage shelfLocation collegeId isShareableAcrossColleges createdAt isbn';
+
   if (!type || type === 'book') {
-    books = await Book.find(query).populate('collegeId', 'name shortName code').lean();
+    books = await Book.find(query)
+      .select(bookSelect)
+      .populate('collegeId', 'name shortName code')
+      .sort({ createdAt: -1 })
+      .lean();
   }
 
   if (!type || type === 'eresource') {
-    eresources = await EResource.find(query).populate('collegeId', 'name shortName code').lean();
+    eresources = await EResource.find(query)
+      .populate('collegeId', 'name shortName code')
+      .sort({ createdAt: -1 })
+      .lean();
   }
 
   res.json({

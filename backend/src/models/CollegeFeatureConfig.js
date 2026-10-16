@@ -9,6 +9,12 @@ const CollegeFeatureConfigSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
+    realtimeMode: {
+      type: String,
+      enum: ['on', 'off', 'polling_only'],
+      default: 'on',
+      index: true,
+    },
     enabledFeatures: [
       {
         type: String,

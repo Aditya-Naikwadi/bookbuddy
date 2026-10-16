@@ -5,6 +5,7 @@ const {
   enableOrRequestFeature,
   getPublicCollegeBySlug,
   checkSlugAvailability,
+  updateRealtimeMode,
 } = require('../controllers/collegeFeatureController');
 
 const { protect, restrictTo } = require('../middlewares/auth');
@@ -23,6 +24,13 @@ router.post(
   restrictTo('collegeadmin', 'superadmin'),
   bindTenantContext,
   enableOrRequestFeature
+);
+router.patch(
+  '/features/realtime-mode',
+  protect,
+  restrictTo('collegeadmin', 'superadmin'),
+  bindTenantContext,
+  updateRealtimeMode
 );
 
 module.exports = router;

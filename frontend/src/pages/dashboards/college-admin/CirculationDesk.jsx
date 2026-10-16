@@ -1,46 +1,30 @@
-import { useState, useEffect } from "react";
-import { ArrowRightLeft, UserCheck, Loader2, Radio } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { ArrowRightLeft, UserCheck, Loader2, AlertCircle } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
-import socket from "../../../lib/socketClient";
+import { useSocket } from "../../../hooks/useSocket";
 
 export default function CirculationDesk() {
-  const queryClient = useQueryClient();
+  const { isConnected, isPaused } = useSocket();
   const [checkoutUser, setCheckoutUser] = useState("");
   const [checkoutBookId, setCheckoutBookId] = useState("");
   const [returnLoanId, setReturnLoanId] = useState("");
   const [activeTab, setActiveTab] = useState("loans");
-  const [lastSyncEvent, setLastSyncEvent] = useState(null);
+  const [page] = useState(1);
 
-  useEffect(() => {
-    const handleSync = (_event) => {
-      queryClient.invalidateQueries({ queryKey: ["circulationQueue"] });
-      setLastSyncEvent(
-        `Real-time sync event received at ${new Date().toLocaleTimeString()}`,
-      );
-      setTimeout(() => setLastSyncEvent(null), 4000);
-    };
-
-    socket.on("loan:checkout", handleSync);
-    socket.on("loan:return", handleSync);
-    socket.on("reservation:created", handleSync);
-
-    return () => {
-      socket.off("loan:checkout", handleSync);
-      socket.off("loan:return", handleSync);
-      socket.off("reservation:created", handleSync);
-    };
-  }, [queryClient]);
-
-  const { data: queueData, isLoading } = useQuery({
-    queryKey: ["circulationQueue"],
-    queryFn: () => collegeAdminApi.getCirculationQueue(),
+  const {
+    data: queueData,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["circulationQueue", { page }],
+    queryFn: () => collegeAdminApi.getCirculationQueue({ page, limit: 25 }),
   });
 
   const checkoutMutation = useMutation({
     mutationFn: (payload) => collegeAdminApi.checkoutBook(payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["circulationQueue"] });
       setCheckoutUser("");
       setCheckoutBookId("");
     },
@@ -49,7 +33,6 @@ export default function CirculationDesk() {
   const returnMutation = useMutation({
     mutationFn: (payload) => collegeAdminApi.returnBook(payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["circulationQueue"] });
       setReturnLoanId("");
     },
   });
@@ -79,22 +62,33 @@ export default function CirculationDesk() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-mono">
+          <div
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono border ${
+              isConnected && !isPaused
+                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                : "bg-amber-500/10 border-amber-500/20 text-amber-400"
+            }`}
+          >
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <span
+                className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                  isConnected && !isPaused ? "bg-emerald-400" : "bg-amber-400"
+                }`}
+              ></span>
+              <span
+                className={`relative inline-flex rounded-full h-2 w-2 ${
+                  isConnected && !isPaused ? "bg-emerald-500" : "bg-amber-500"
+                }`}
+              ></span>
             </span>
-            <span>OPAC Live Sync Active</span>
+            <span>
+              {isConnected && !isPaused
+                ? "OPAC Live Sync Active"
+                : "Live Updates Paused"}
+            </span>
           </div>
         </div>
       </div>
-
-      {lastSyncEvent && (
-        <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-xs text-indigo-300 font-mono flex items-center gap-2 animate-fadeIn">
-          <Radio size={14} className="text-indigo-400 animate-pulse" />
-          <span>{lastSyncEvent}</span>
-        </div>
-      )}
 
       {/* Quick Action Forms */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -199,7 +193,7 @@ export default function CirculationDesk() {
         </div>
       </div>
 
-      {/* Queue Table */}
+      {/* Queue & Loans Tables */}
       <div className="space-y-4">
         <div className="flex border-b border-slate-800 text-sm font-semibold gap-6">
           <button
@@ -226,8 +220,18 @@ export default function CirculationDesk() {
 
         {isLoading ? (
           <div className="py-12 text-center text-slate-400 flex items-center justify-center gap-2">
-            <Loader2 className="animate-spin text-indigo-400" size={20} />{" "}
+            <Loader2 className="animate-spin text-indigo-400" size={20} />
             Loading circulation data...
+          </div>
+        ) : isError ? (
+          <div className="p-6 text-center text-rose-400 bg-rose-950/20 border border-rose-900/50 rounded-2xl flex flex-col items-center gap-2">
+            <AlertCircle size={24} />
+            <p className="text-sm font-medium">
+              Failed to load circulation records
+            </p>
+            <p className="text-xs text-slate-400">
+              {error?.message || "Please check your network and retry."}
+            </p>
           </div>
         ) : activeTab === "loans" ? (
           loans.length === 0 ? (
@@ -243,26 +247,46 @@ export default function CirculationDesk() {
                     <th className="p-3.5">Book Title</th>
                     <th className="p-3.5">Issue Date</th>
                     <th className="p-3.5">Due Date</th>
+                    <th className="p-3.5">Renewals</th>
                     <th className="p-3.5">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800 text-slate-300">
+                <tbody className="divide-y border-t border-slate-800 divide-slate-800 text-slate-300">
                   {loans.map((loan) => (
-                    <tr key={loan._id}>
+                    <tr
+                      key={loan._id}
+                      className="hover:bg-slate-800/40 transition-colors"
+                    >
                       <td className="p-3.5 font-medium text-white">
-                        {loan.userId?.name || "Student"} ({loan.userId?.email})
+                        {loan.userId?.name || "Student"} (
+                        {loan.userId?.email || loan.userId?.studentId})
                       </td>
                       <td className="p-3.5">
                         {loan.bookId?.title || "Physical Book"}
                       </td>
                       <td className="p-3.5 font-mono">
-                        {new Date(loan.issuedAt).toLocaleDateString()}
+                        {loan.issueDate
+                          ? new Date(loan.issueDate).toLocaleDateString()
+                          : loan.createdAt
+                            ? new Date(loan.createdAt).toLocaleDateString()
+                            : "—"}
                       </td>
                       <td className="p-3.5 font-mono">
-                        {new Date(loan.dueDate).toLocaleDateString()}
+                        {loan.dueDate
+                          ? new Date(loan.dueDate).toLocaleDateString()
+                          : "—"}
+                      </td>
+                      <td className="p-3.5 font-mono text-[11px]">
+                        {loan.renewalCount || 0} / {loan.maxRenewals || 2}
                       </td>
                       <td className="p-3.5">
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                            loan.status === "overdue"
+                              ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                              : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          }`}
+                        >
                           {loan.status}
                         </span>
                       </td>
@@ -281,25 +305,46 @@ export default function CirculationDesk() {
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-950 text-slate-400 font-mono uppercase">
                 <tr>
+                  <th className="p-3.5">Queue #</th>
                   <th className="p-3.5">Student</th>
                   <th className="p-3.5">Book Title</th>
                   <th className="p-3.5">Reservation Date</th>
+                  <th className="p-3.5">Pickup Deadline</th>
                   <th className="p-3.5">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800 text-slate-300">
+              <tbody className="divide-y border-t border-slate-800 divide-slate-800 text-slate-300">
                 {reservations.map((res) => (
-                  <tr key={res._id}>
+                  <tr
+                    key={res._id}
+                    className="hover:bg-slate-800/40 transition-colors"
+                  >
+                    <td className="p-3.5 font-mono font-bold text-indigo-400">
+                      #{res.queuePosition}
+                    </td>
                     <td className="p-3.5 font-medium text-white">
                       {res.userId?.name || "Student"}
                     </td>
                     <td className="p-3.5">{res.bookId?.title || "Book"}</td>
                     <td className="p-3.5 font-mono">
-                      {new Date(res.createdAt).toLocaleDateString()}
+                      {res.createdAt
+                        ? new Date(res.createdAt).toLocaleDateString()
+                        : "—"}
+                    </td>
+                    <td className="p-3.5 font-mono text-[11px]">
+                      {res.expiresAt
+                        ? new Date(res.expiresAt).toLocaleTimeString()
+                        : "—"}
                     </td>
                     <td className="p-3.5">
-                      <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                        {res.status}
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                          res.status === "ready_for_pickup"
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 animate-pulse"
+                            : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        }`}
+                      >
+                        {res.status.replace("_", " ")}
                       </span>
                     </td>
                   </tr>

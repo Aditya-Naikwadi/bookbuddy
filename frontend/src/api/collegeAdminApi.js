@@ -25,8 +25,10 @@ export const returnBook = async (payload) => {
   return data;
 };
 
-export const getAllPatrons = async () => {
-  const { data } = await apiClient.get("/dashboards/college-admin/patrons");
+export const getAllPatrons = async (params = {}) => {
+  const { data } = await apiClient.get("/dashboards/college-admin/patrons", {
+    params,
+  });
   return data;
 };
 

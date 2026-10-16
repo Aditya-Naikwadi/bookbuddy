@@ -17,10 +17,15 @@ const normalizeItem = (item) => {
     title: item.title,
     author: item.author,
     category: item.category,
+    genre: item.genre,
+    coverImage: item.coverImage,
     format: isBook ? item.format : 'ebook',
     copiesAvailable: isBook ? item.copiesAvailable : null,
+    reservedCopies: isBook ? item.reservedCopies || 0 : null,
     copiesTotal: isBook ? item.copiesTotal : null,
     shelfLocation: isBook ? item.shelfLocation : null,
+    isShareableAcrossColleges: isBook ? Boolean(item.isShareableAcrossColleges) : false,
+    collegeId: item.collegeId,
     fileUrl: !isBook ? item.fileUrl : null,
     readUrl: !isBook ? item.readUrl || item.url : null,
     source: isBook ? 'catalog' : 'eresource',
@@ -130,7 +135,9 @@ const searchCatalog = asyncHandler(async (req, res) => {
   const sortConfig = sortBy === 'title' ? { title: 1, _id: 1 } : { createdAt: -1, _id: -1 };
 
   if (searchPhysical) {
-    const booksQuery = bookRepo.find(bookFilter);
+    const bookSelect =
+      'title author category genre format copiesAvailable reservedCopies copiesTotal coverImage shelfLocation collegeId isShareableAcrossColleges createdAt isbn';
+    const booksQuery = bookRepo.find(bookFilter).select(bookSelect).lean();
     books = await booksQuery.sort(sortConfig).limit(dbLimit);
   }
 

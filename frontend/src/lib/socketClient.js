@@ -12,10 +12,13 @@ const getSocketUrl = () => {
 
 const SOCKET_URL = getSocketUrl();
 
-const socket = io(SOCKET_URL, {
+export const socket = io(SOCKET_URL, {
   autoConnect: false,
-  reconnectionAttempts: 5,
+  reconnection: true,
   reconnectionDelay: 1000,
+  reconnectionDelayMax: 10000,
+  reconnectionAttempts: Infinity,
+  randomizationFactor: 0.5,
   auth: (cb) => {
     const token =
       getInMemoryToken() ||
@@ -27,6 +30,10 @@ const socket = io(SOCKET_URL, {
 });
 
 socket.on("connect_error", (err) => {
+  if (err?.message?.includes("REALTIME_DISABLED")) {
+    socket.io.opts.reconnection = false;
+    return;
+  }
   if (import.meta.env.DEV) {
     console.warn("[Socket Connection Warning]:", err.message);
   }

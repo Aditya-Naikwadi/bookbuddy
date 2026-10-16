@@ -14,6 +14,7 @@ import apiClient from "../../../api/client";
 import { Button } from "../../../components/ui/Button";
 import useAuthStore from "../../../store/authStore";
 import { BookDetail } from "../../../components/BookDetail";
+import BookCoverImage from "../../../components/common/BookCoverImage";
 
 // Fetch catalog with complete search & filter parameters and cancellation signal
 const fetchCatalog = async ({ queryKey, signal }) => {
@@ -454,22 +455,13 @@ const Catalog = () => {
 
                   {/* Thumbnail / Cover section */}
                   <div className="h-44 bg-surface/50 w-full relative flex items-center justify-center border-b border-edge/35 overflow-hidden">
-                    {book.coverImage ? (
-                      <img
-                        src={book.coverImage}
-                        alt=""
-                        loading="lazy"
-                        decoding="async"
-                        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300 aspect-[3/4]"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center text-muted/30 select-none">
-                        <BookOpen size={40} />
-                        <span className="text-[10px] mt-2 font-semibold">
-                          NO COVER
-                        </span>
-                      </div>
-                    )}
+                    <BookCoverImage
+                      src={book.coverImage}
+                      alt={book.title}
+                      fallbackTitle={book.title}
+                      fallbackCategory={book.category}
+                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                    />
 
                     {/* Format Badge */}
                     <span className="absolute bottom-2 left-2 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-void/80 text-parchment backdrop-blur-sm border border-edge/20 shadow-sm">
@@ -477,17 +469,36 @@ const Catalog = () => {
                     </span>
 
                     {/* Availability Status Badge */}
-                    <span
-                      className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm ${
-                        book.copiesAvailable > 0
-                          ? "bg-success/15 border border-success/30 text-success"
-                          : "bg-danger/15 border border-danger/30 text-danger"
-                      }`}
-                    >
-                      {book.copiesAvailable > 0
-                        ? `Available (${book.copiesAvailable})`
-                        : "Out of Stock"}
-                    </span>
+                    {(() => {
+                      const avail = book.copiesAvailable || 0;
+                      const res = book.reservedCopies || 0;
+                      if (avail > 2) {
+                        return (
+                          <span className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                            Available ({avail})
+                          </span>
+                        );
+                      }
+                      if (avail > 0) {
+                        return (
+                          <span className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                            Few left ({avail})
+                          </span>
+                        );
+                      }
+                      if (res > 0) {
+                        return (
+                          <span className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm bg-purple-500/15 border border-purple-500/30 text-purple-400">
+                            Reserved ({res})
+                          </span>
+                        );
+                      }
+                      return (
+                        <span className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm bg-rose-500/15 border border-rose-500/30 text-rose-400">
+                          Unavailable
+                        </span>
+                      );
+                    })()}
                   </div>
 
                   <div className="p-4 flex-1 flex flex-col">

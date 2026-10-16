@@ -196,10 +196,16 @@ sequenceDiagram
 ### Real-Time WebSocket Architecture (Socket.io + Redis)
 
 - **Clustered Sockets**: In multi-instance deployments, Socket.io utilizes `@socket.io/redis-adapter` to seamlessly broadcast events across server instances.
-- **Tenant Room Isolation**: Upon connection, clients join dedicated socket rooms:
-  - `college:<collegeId>` — Campus-wide announcements and catalog availability alerts.
-  - `user:<userId>` — Personal loan due warnings, hold fulfillments, and streak updates.
-  - `bulk-upload:<collegeId>` — Real-time progress percentage bar during asynchronous student roster CSV imports.
+- **Tenant & Desk Room Isolation**: Upon connection, authenticated clients join dedicated, strictly isolated socket rooms:
+  - `college:<collegeId>` — Campus-wide announcements, emergency broadcasts, and catalog availability alerts.
+  - `user:<userId>` — Personal loan due warnings, hold fulfillment notifications, and gamification streak updates.
+  - `desk:circulation:<collegeId>` — Live circulation desk event stream for checkouts, returns, and queue hold claims.
+  - `desk:inventory:<collegeId>` — Instant stock level changes, condition audits, and damaged copy updates.
+  - `desk:patrons:<collegeId>` — Real-time patron status, suspension alerts, and membership profile modifications.
+  - `bulk-upload:<collegeId>` — Real-time percentage progress bar during asynchronous student roster CSV imports.
+- **Runtime Emergency Kill Switch & Feature Flags (`realtimeFlagService.js`)**: Granular runtime toggles (`realtime_sync_enabled`, `realtime_circulation_enabled`, `realtime_inventory_enabled`) allowing administrators to dynamically bypass or throttle socket broadcasting under high load or degraded network performance without requiring application restarts.
+- **Client Realtime Provider Layer (`SocketContext.jsx`, `useSocket.js`, `socketClient.js`)**: React 19 context provider with automatic reconnection backoff, JWT credential injection, dynamic desk subscription lifecycle (`join:desk`, `leave:desk`), and connection health telemetry.
+- **Dynamic Query Cache Patcher (`queryCachePatcher.js`)**: Seamlessly binds incoming Socket.io events directly to TanStack Query caches, executing zero-latency surgical in-memory mutations for stock availability, loans, and reservation queue positions without triggering expensive network refetches.
 
 ---
 
@@ -259,10 +265,10 @@ A comprehensive ERP back-office providing complete operational control over camp
 
 | Desk Module                   | Route                           | Operational Functionality                                                                                                                                                                                                                                                         |
 | :---------------------------- | :------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Circulation Desk**          | `/college-admin/circulation`    | High-speed barcode/RFID book checkout with atomic copy decrements (`copiesAvailable - 1`), return processing with automatic overdue calculation, renewal overrides, lost item marking, and ready-for-pickup hold notice dispatch.                                                 |
-| **Patrons Desk**              | `/college-admin/patrons`        | Student roster directory with search by name, email, or Student ID; active loan auditing, unpaid fine reviews, profile verification, borrowing suspension toggles, and physical card printing.                                                                                    |
+| **Circulation Desk**          | `/college-admin/circulation`    | High-speed barcode/RFID book checkout with atomic copy decrements (`copiesAvailable - 1`), transaction side-effect isolation (`runInTransaction` + `afterCommitFn`), renewal enforcement (`MAX_RENEWALS`), lost item marking, automated ready-for-pickup hold dispatch, and real-time live event streaming (`desk:circulation:<collegeId>`). |
+| **Patrons Desk**              | `/college-admin/patrons`        | Student roster directory with multi-field search and debounce (name, email, Student ID); resilient truncation protection and pagination for large campuses (5,000+ patrons); active loan auditing, unpaid fine reviews, borrowing suspension toggles, and live patron status sync (`desk:patrons:<collegeId>`). |
 | **Cataloging Desk**           | `/college-admin/cataloging`     | Add and update physical catalog records with automated ISBN metadata auto-fetch from Google Books and Open Library, physical shelf address assignment (`Shelf A-12-04`), copy barcode generation, and media categorization.                                                       |
-| **Inventory Overview**        | `/college-admin/inventory`      | Real-time shelf auditing, missing/damaged item tracking (`ItemReport`), condition assessment (Good, Fair, Damaged), low-stock alerts, and book withdrawal workflows.                                                                                                              |
+| **Inventory Overview**        | `/college-admin/inventory`      | Real-time shelf auditing and live stock monitoring (`copiesAvailable` vs `totalCopies`), reservation queues, stock movement audit trail, missing/damaged item tracking (`ItemReport`), condition assessment (Good, Fair, Damaged), low-stock alerts, and live inventory sync (`desk:inventory:<collegeId>`). |
 | **Finances Desk**             | `/college-admin/finances`       | Overdue penalty audit trails, counter cash fine collection receipts, manual fine waivers with required justification notes logged to `AuditLog`, and Razorpay transaction reconciliations.                                                                                        |
 | **Facilities Desk**           | `/college-admin/facilities`     | Computer lab workstation designer, bulk workstation seat generation, hardware specification tagging (RAM, GPU, OS, dual monitors), maintenance mode toggles (`operational` vs `under_maintenance`), and live hourly seat occupancy monitoring.                                    |
 | **Digital Assets Desk**       | `/college-admin/digital-assets` | Institutional EPUB/PDF e-resource uploads, digital access permission settings, download count analytics, and review/moderation queue for student-submitted study notes and thesis guides (`EResourceSubmission`).                                                                 |
@@ -1082,6 +1088,18 @@ node src/scripts/seedBadges.js
 
 # Seed master Super Admin account
 npm run seed:superadmin
+
+# Optional: Validate database migrations via non-destructive dry-run
+node src/scripts/migrationDryRun.js
+
+# Optional: Enable Pilot Batch 2A feature flags for test institutions
+node src/scripts/enableBatch2A.js
+
+# Optional: Recompute dashboard metrics and cache snapshots
+node src/scripts/recomputeSnapshots.js
+
+# Optional: Generate automated daily pilot operations telemetry report
+node src/scripts/dailyPilotReport.js
 ```
 
 ### 3. Launching Development Servers
@@ -1108,11 +1126,18 @@ BookBuddy enforces a multi-tier automated testing strategy covering unit, integr
 
 ### Backend Jest Integration Test Suite
 
-Executes 79 test suites containing over 428 integration tests using in-memory/isolated MongoDB instances:
+Executes 80+ test suites containing over 450 integration tests using in-memory/isolated MongoDB instances:
 
 ```bash
 cd backend
 npm test
+
+# Run targeted core subsystem verification suites:
+npm test -- src/tests/socketFoundation.test.js      # WebSocket auth, rooms & heartbeat
+npm test -- src/tests/realtimeKillSwitch.test.js     # Real-time feature flags & kill-switch
+npm test -- src/tests/domainBCatalog.test.js         # Catalog search, covers & tenant isolation
+npm test -- src/tests/domainCCirculation.test.js     # Atomic circulation, renewals & hold queues
+npm test -- src/tests/patronsDeskTruncation.test.js  # Patron roster pagination & truncation bounds
 ```
 
 ### Frontend Vitest & React Testing Library Suite
@@ -1232,15 +1257,15 @@ BookBuddy/
 │   │   ├── app.js                # Express app configuration & middleware pipeline
 │   │   ├── server.js             # HTTP entrypoint & Socket.io server initialization
 │   │   ├── config/               # Database, Redis, Zod env validation, Passport OAuth
-│   │   ├── controllers/          # API route controllers grouped by domain
+│   │   ├── controllers/          # API route controllers (catalog, inventory, circulation, auth)
 │   │   │   └── dashboards/       # General, Student, College Admin, and Super Admin controllers
 │   │   ├── middlewares/          # Auth, Tenant Scoping, CSRF, Rate Limiting, RBAC, Validation
 │   │   ├── models/               # Mongoose 9 schemas (User, Book, Loan, Reservation, etc.)
-│   │   ├── routes/               # Express 5 route definitions (50+ endpoint modules)
-│   │   ├── scripts/              # Database seeders and migration scripts
-│   │   ├── services/             # Core business logic & background cron services
-│   │   ├── sockets/              # Socket.io event handlers & room dispatchers
-│   │   ├── tests/                # Jest integration test suites (79 suites, 428 tests)
+│   │   ├── routes/               # Express 5 route definitions (inventory, catalog, loans, etc.)
+│   │   ├── scripts/              # Seeders, migrations, dry-runs, and pilot rollout scripts
+│   │   ├── services/             # Core logic, cron, search, and realtime flag services
+│   │   ├── sockets/              # Socket.io event handlers, room dispatchers, and auth
+│   │   ├── tests/                # Jest integration test suites (80+ suites, 450+ tests)
 │   │   └── utils/                # Logger, cache manager, atomicUpdateHelper, transactionHelper
 │   └── package.json
 └── frontend/                     # React 19 + Vite 8 Client Single-Page Application
@@ -1254,13 +1279,14 @@ BookBuddy/
     │   │   ├── general/          # Digital reader, Annotation sidebar, Filter chips
     │   │   ├── student/          # NotificationCenter, LoansTracker, StreakWidget
     │   │   └── ui/               # Accessible buttons, input fields, badges, charts
-    │   ├── context/              # React context providers (ThemeContext, FeatureFlagContext)
+    │   ├── context/              # React context providers (SocketContext, FeatureFlagContext, ThemeContext)
     │   ├── layouts/              # Top-level page shells (DashboardLayout, AuthLayout)
+    │   ├── lib/                  # Realtime query cache patcher and socket client singleton
     │   ├── pages/
     │   │   ├── dashboards/
     │   │   │   ├── general/      # Public discovery dashboard pages
     │   │   │   ├── student/      # Student learning portal pages (14+ views)
-    │   │   │   ├── college-admin/# College admin operations hub (12 desks)
+    │   │   │   ├── college-admin/# College admin operations hub (13 desks)
     │   │   │   └── admin-portal/ # Super admin platform command center
     │   │   └── public/           # Landing page, Registration, College activation
     │   ├── store/                # Zustand client state stores (authStore, toastStore)
@@ -1282,5 +1308,8 @@ BookBuddy implements comprehensive defense-in-depth security standards:
 6. **Input Sanitization**: Request bodies sanitized with `express-mongo-sanitize` to neutralize NoSQL injection attacks and `hpp` to block HTTP Parameter Pollution.
 7. **Payment Webhook Verification**: Razorpay webhooks capture raw request buffers for exact HMAC-SHA256 signature verification and process payments idempotently.
 8. **MFA-Gated Impersonation**: Platform administrators can only assume user personas with an active audit trail and a persistent UI warning banner.
+9. **Per-User IDOR Protection & Scoping**: Strict identity validation ensuring private shelves, annotations, and bookmarks cannot be accessed or altered by unauthorized users or cross-college actors.
+10. **PII Masking & Structured Log Neutralization**: Automatic masking of sensitive patron identifiers, credential scrubbing in error trackers, and CRLF neutralization to prevent log forgery.
+11. **Server-Side Request Forgery (SSRF) Defense**: External cover fetching and metadata harvesting enforce domain allowlists, strictly blocking loopback (127.0.0.1), link-local metadata (169.254.169.254), and private RFC1918 subnets.
 
 ---

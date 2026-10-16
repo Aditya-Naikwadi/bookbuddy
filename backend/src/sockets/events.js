@@ -1,48 +1,77 @@
 /**
- * Shared Socket.io event names and description of payloads.
+ * Canonical Socket.io event names and descriptions.
+ * Follows the strict entity:action naming convention.
  */
 const events = {
-  /**
-   * Emitted to user's room when their daily streak changes.
-   * Payload: { currentStreak: Number, maxStreak: Number, freezesAvailable: Number }
-   */
-  STREAK_UPDATED: 'streak:updated',
-
-  /**
-   * Emitted to user's room when a new notification is generated.
-   * Payload: { _id: String, type: String, message: String, read: Boolean, createdAt: String }
-   */
-  NOTIFICATION_NEW: 'notification:new',
-
-  /**
-   * Emitted to college room when a book is checked out.
-   * Payload: { bookId: String, loanId: String, copiesAvailable: Number }
-   */
-  LOAN_CHECKOUT: 'loan:checkout',
-
-  /**
-   * Emitted to college room when a book is returned.
-   * Payload: { bookId: String, loanId: String, copiesAvailable: Number }
-   */
-  LOAN_RETURN: 'loan:return',
-
-  /**
-   * Emitted to college room when a reservation is created.
-   * Payload: { bookId: String, reservationId: String, queuePosition: Number }
-   */
-  RESERVATION_CREATED: 'reservation:created',
-
-  /**
-   * Emitted to user's room when their reservation is ready for pickup.
-   * Payload: { bookId: String, reservationId: String, bookTitle: String }
-   */
+  // === Canonical entity:action Events ===
+  LOAN_ISSUED: 'loan:issued',
+  LOAN_RETURNED: 'loan:returned',
+  LOAN_RENEWED: 'loan:renewed',
   RESERVATION_READY: 'reservation:ready',
+  BOOK_UPDATED: 'book:updated',
+  FINE_CREATED: 'fine:created',
+  FINE_PAID: 'fine:paid',
+  SEAT_BOOKED: 'seat:booked',
+  SEAT_NO_SHOW: 'seat:no_show',
+  STREAK_UPDATED: 'streak:updated',
+  BADGE_UNLOCKED: 'badge:unlocked',
+  NOTIFICATION_NEW: 'notification:new',
+  DASHBOARD_STATS: 'dashboard:stats',
 
-  /**
-   * Emitted to college room when an acquisition order status changes.
-   * Payload: { orderId: String, status: String, vendorName: String }
-   */
+  // === Backward-Compatible Aliases ===
+  LOAN_CHECKOUT: 'loan:checkout',
+  LOAN_RETURN: 'loan:return',
+  RESERVATION_CREATED: 'reservation:created',
   ACQUISITION_UPDATED: 'acquisition:updated',
 };
 
-module.exports = events;
+const toCleanObject = (val) => {
+  if (!val) return val;
+  if (typeof val !== 'object') return val;
+  if (val instanceof Date) return val.toISOString();
+  if (typeof val._bsontype === 'string' || val._id) {
+    // If Mongoose document or ObjectId
+    if (typeof val.toObject === 'function') {
+      return toCleanObject(val.toObject());
+    }
+  }
+  if (Array.isArray(val)) {
+    return val.map(toCleanObject);
+  }
+  const out = {};
+  for (const [k, v] of Object.entries(val)) {
+    if (k.startsWith('$') || k === '_doc' || k === '__v') continue;
+    out[k] = toCleanObject(v);
+  }
+  return out;
+};
+
+/**
+ * Standard event payload factory
+ * @param {Object} params
+ * @param {string} params.entityId
+ * @param {string} params.collegeId
+ * @param {string} [params.updatedAt]
+ * @param {Object} [params.changed]
+ * @param {Object} [params.extra]
+ */
+const createEventPayload = ({
+  entityId,
+  collegeId,
+  updatedAt = new Date().toISOString(),
+  changed = {},
+  ...extra
+}) => ({
+  entityId: String(entityId || ''),
+  collegeId: collegeId ? String(collegeId) : null,
+  updatedAt: typeof updatedAt === 'string' ? updatedAt : new Date(updatedAt).toISOString(),
+  changed: toCleanObject(changed) || {},
+  ...toCleanObject(extra),
+});
+
+module.exports = {
+  events,
+  createEventPayload,
+  // Direct export of event constants for convenience
+  ...events,
+};

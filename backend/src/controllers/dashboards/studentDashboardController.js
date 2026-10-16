@@ -209,6 +209,111 @@ const renewStudentLoan = async (req, res, next) => {
   }
 };
 
+// @desc    Get collapsed student loans tracker summary (collapses 5 queries into 1 fast projected call)
+// @route   GET /api/dashboards/student/loans-tracker-summary
+// @access  Private/Student
+const getLoansTrackerSummary = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const User = require('../../models/User');
+
+    const [loans, reservations, fines, user] = await Promise.all([
+      Loan.find({ userId })
+        .select('bookId issueDate dueDate returnDate renewalCount maxRenewals status createdAt')
+        .populate('bookId', 'title author isbn coverImage format copiesAvailable')
+        .sort('-createdAt')
+        .lean(),
+      Reservation.find({ userId, status: { $in: ['queued', 'ready_for_pickup'] } })
+        .select('bookId queuePosition status readyAt expiresAt createdAt')
+        .populate('bookId', 'title author isbn coverImage copiesAvailable')
+        .sort('queuePosition')
+        .lean(),
+      Fine.find({ userId })
+        .select('loanId amount overdueDays status paidAt paymentStatus createdAt')
+        .sort('-createdAt')
+        .lean(),
+      User.findById(userId)
+        .select('fineWaiverCoupons patronBarcode name email studentId readingStreak longestStreak')
+        .lean(),
+    ]);
+
+    const activeLoans = [];
+    const historyLoans = [];
+    const unpaidFines = fines.filter((f) => f.status === 'unpaid');
+    const totalUnpaid = unpaidFines.reduce((sum, f) => sum + (f.amount || 0), 0);
+    const maxFineLimit = config.unpaidFineLimit || 100;
+
+    // Batch check active book holds
+    const activeBookIds = loans
+      .filter((l) => (l.status === 'active' || l.status === 'overdue') && l.bookId)
+      .map((l) => l.bookId._id || l.bookId);
+
+    const queuedHolds =
+      activeBookIds.length > 0
+        ? await Reservation.distinct('bookId', {
+            bookId: { $in: activeBookIds },
+            status: { $in: ['queued', 'ready_for_pickup'] },
+            userId: { $ne: userId },
+          })
+        : [];
+    const heldBookSet = new Set(queuedHolds.map((id) => id.toString()));
+
+    for (const loan of loans) {
+      const remainingRenewals = Math.max(
+        0,
+        (loan.maxRenewals || config.maxRenewals) - (loan.renewalCount || 0)
+      );
+      const loanObj = {
+        ...loan,
+        remainingRenewals,
+      };
+
+      if (loan.status === 'active' || loan.status === 'overdue') {
+        let eligible = true;
+        let reason = null;
+
+        if (totalUnpaid > maxFineLimit) {
+          eligible = false;
+          reason = `Blocked: ₹${totalUnpaid.toFixed(2)} unpaid fines exceed the ₹${maxFineLimit} limit`;
+        } else if (remainingRenewals <= 0) {
+          eligible = false;
+          reason = 'limit_reached';
+        } else {
+          const bookIdStr = (loan.bookId?._id || loan.bookId)?.toString();
+          if (bookIdStr && heldBookSet.has(bookIdStr)) {
+            eligible = false;
+            reason = 'on_hold';
+          }
+        }
+
+        loanObj.renewalEligibility = { eligible, reason };
+        activeLoans.push(loanObj);
+      } else {
+        historyLoans.push(loanObj);
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        loans: {
+          active: activeLoans,
+          history: historyLoans,
+        },
+        queue: reservations,
+        fines,
+        finesSummary: {
+          totalUnpaid,
+          unpaidCount: unpaidFines.length,
+        },
+        profile: user,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Place reservation hold
 // @route   POST /api/dashboards/student/reservations
 // @access  Private/Student
@@ -1395,6 +1500,7 @@ module.exports = {
   getStudentRecommendations,
   getStudentLoans,
   renewStudentLoan,
+  getLoansTrackerSummary,
   placeStudentHold,
   getStudentQueuePosition,
   getStudentFines,

@@ -19,6 +19,16 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       set: normalizeStudentId,
     },
+    prn: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    barcode: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     name: {
       type: String,
       required: true,
@@ -36,6 +46,11 @@ const userSchema = new mongoose.Schema(
     year: {
       type: String,
       trim: true,
+    },
+    academicYear: {
+      type: String,
+      trim: true,
+      default: null,
     },
     phone: {
       type: String,
@@ -308,6 +323,14 @@ userSchema.index({ collegeId: 1, status: 1 });
 userSchema.index({ collegeId: 1, role: 1, createdAt: -1 });
 userSchema.index({ collegeId: 1, role: 1, department: 1, createdAt: -1 });
 userSchema.index({ collegeId: 1, role: 1, studentId: 1 });
+userSchema.index(
+  { collegeId: 1, prn: 1 },
+  { partialFilterExpression: { prn: { $type: 'string' } }, background: true }
+);
+userSchema.index(
+  { collegeId: 1, barcode: 1 },
+  { partialFilterExpression: { barcode: { $type: 'string' } }, background: true }
+);
 userSchema.index({ status: 1, createdAt: -1 });
 
 // Super Admin Directory & Query Optimization Indexes

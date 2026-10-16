@@ -39,9 +39,24 @@ export const BookCoverImage = ({
     );
   }
 
+  // Optimize Cloudinary URLs with auto-format, auto-quality and size limit
+  const optimizeCloudinaryUrl = (url) => {
+    if (!url || typeof url !== "string") return url;
+    if (
+      url.includes("res.cloudinary.com") &&
+      url.includes("/upload/") &&
+      !url.includes("f_auto")
+    ) {
+      return url.replace("/upload/", "/upload/f_auto,q_auto,w_300,c_limit/");
+    }
+    return url;
+  };
+
+  const optimizedSrc = optimizeCloudinaryUrl(src);
+
   return (
     <img
-      src={src}
+      src={optimizedSrc}
       alt={alt}
       loading="lazy"
       onError={() => setHasError(true)}

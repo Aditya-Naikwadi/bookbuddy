@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   UserPlus,
@@ -17,7 +17,12 @@ import {
   RotateCw,
   FileText,
 } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
 import apiClient from "../../../api/client";
 import { toast } from "../../../store/toastStore";
@@ -48,8 +53,21 @@ export default function PatronsDesk() {
   // Enrolled Patrons states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPatronId, setSelectedPatronId] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [statusFilter, setStatusFilter] = useState("all");
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setPage(1);
+  };
+
+  const handleStatusFilterChange = (st) => {
+    setStatusFilter(st);
+    setPage(1);
+  };
 
   // Form states (Add Patron Modal)
   const [name, setName] = useState("");
@@ -68,10 +86,24 @@ export default function PatronsDesk() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [rejectionReasonError, setRejectionReasonError] = useState("");
 
-  // Queries: Enrolled Patrons
-  const { data: patronsData, isLoading } = useQuery({
-    queryKey: ["allPatrons"],
-    queryFn: () => collegeAdminApi.getAllPatrons(),
+  // Queries: Enrolled Patrons (Server-side paginated & filtered)
+  const {
+    data: patronsData,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch: refetchPatrons,
+  } = useQuery({
+    queryKey: ["allPatrons", page, limit, debouncedSearch, statusFilter],
+    queryFn: () =>
+      collegeAdminApi.getAllPatrons({
+        page,
+        limit,
+        search: debouncedSearch.trim() || undefined,
+        status: statusFilter === "all" ? undefined : statusFilter,
+      }),
+    placeholderData: keepPreviousData,
   });
 
   const { data: patronDetailData, isLoading: isDetailLoading } = useQuery({
@@ -189,24 +221,13 @@ export default function PatronsDesk() {
   });
 
   const patrons = patronsData?.data || EMPTY_ARRAY;
+  const meta = patronsData?.meta || patronsData?.pagination || {};
+  const totalPatrons = meta.total ?? patrons.length;
+  const totalPages =
+    meta.totalPages ??
+    meta.pages ??
+    Math.max(1, Math.ceil(totalPatrons / limit));
   const joinRequests = joinRequestsData?.data || EMPTY_ARRAY;
-
-  const filteredPatrons = useMemo(() => {
-    return patrons.filter((p) => {
-      const matchesSearch =
-        !searchQuery ||
-        p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.studentId?.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "active" && p.isActive !== false) ||
-        (statusFilter === "inactive" && p.isActive === false);
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [patrons, searchQuery, statusFilter]);
 
   const patronDetail = patronDetailData?.data || {};
 
@@ -251,7 +272,7 @@ export default function PatronsDesk() {
           <Users size={16} />
           <span>Enrolled Patrons Roster</span>
           <span className="ml-1.5 text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-950/80 text-indigo-300 border border-indigo-500/20">
-            {patrons.length}
+            {totalPatrons}
           </span>
         </button>
 
@@ -288,7 +309,7 @@ export default function PatronsDesk() {
                 Total Patrons
               </div>
               <div className="text-2xl font-mono font-extrabold text-white mt-1">
-                {patrons.length}
+                {totalPatrons}
               </div>
               <div className="text-[10px] text-indigo-400 mt-0.5">
                 Enrolled Accounts
@@ -303,127 +324,211 @@ export default function PatronsDesk() {
                 {patrons.filter((p) => p.isActive !== false).length}
               </div>
               <div className="text-[10px] text-emerald-400/80 mt-0.5">
-                Good Standing
+                Good Standing (Page)
               </div>
             </div>
 
             <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl">
               <div className="text-[11px] font-mono font-bold uppercase text-slate-400">
-                Filtered View
+                Page Total
               </div>
               <div className="text-2xl font-mono font-extrabold text-cyan-400 mt-1">
-                {filteredPatrons.length}
+                {patrons.length}
               </div>
               <div className="text-[10px] text-cyan-400/80 mt-0.5">
-                Matching Criteria
+                Showing on Screen
               </div>
             </div>
 
             <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl">
               <div className="text-[11px] font-mono font-bold uppercase text-slate-400">
-                Departments
+                Pages
               </div>
               <div className="text-2xl font-mono font-extrabold text-purple-400 mt-1">
-                {new Set(patrons.map((p) => p.department || "General")).size}
+                {totalPages}
               </div>
               <div className="text-[10px] text-purple-400/80 mt-0.5">
-                Academic Units
+                Page {page} of {totalPages}
               </div>
             </div>
           </div>
 
           {/* Search & Filter Toolbar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="relative w-full sm:w-80">
+            <div className="relative w-full sm:w-96">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search patron by name, email, ID..."
+                placeholder="Search patron by name, email, PRN, barcode..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                onChange={handleSearchChange}
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => handleSearchChange({ target: { value: "" } })}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              {["all", "active", "inactive"].map((st) => (
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              {[
+                { id: "all", label: "All" },
+                { id: "active", label: "Active" },
+                { id: "inactive", label: "Inactive" },
+                { id: "hasOverdue", label: "Has Overdue" },
+                { id: "hasFines", label: "Has Fines" },
+              ].map(({ id, label }) => (
                 <button
-                  key={st}
-                  onClick={() => setStatusFilter(st)}
+                  key={id}
+                  onClick={() => handleStatusFilterChange(id)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold capitalize transition-colors ${
-                    statusFilter === st
+                    statusFilter === id
                       ? "bg-indigo-600 text-white"
                       : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
                   }`}
                 >
-                  {st}
+                  {label}
                 </button>
               ))}
+
+              <div className="flex items-center gap-1.5 ml-2 border-l border-slate-800 pl-3">
+                <span className="text-[11px] font-mono text-slate-400">
+                  Rows:
+                </span>
+                <select
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-300 font-mono focus:outline-none focus:border-indigo-500"
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
             </div>
           </div>
 
           {isLoading ? (
-            <div className="py-12 text-center text-slate-400 flex items-center justify-center gap-2">
-              <Loader2 className="animate-spin text-indigo-400" size={20} />{" "}
-              Loading patrons roster...
+            <div className="py-12 text-center text-slate-400 flex flex-col items-center justify-center gap-2">
+              <Loader2 className="animate-spin text-indigo-400" size={24} />
+              <span className="text-xs font-mono">
+                Loading patrons roster...
+              </span>
             </div>
-          ) : filteredPatrons.length === 0 ? (
+          ) : isError ? (
+            <div className="py-12 text-center text-rose-400 border border-rose-500/20 bg-rose-500/5 rounded-2xl flex flex-col items-center justify-center gap-3">
+              <XCircle size={28} className="text-rose-400" />
+              <p className="text-sm">
+                Failed to load patrons:{" "}
+                {error?.message || "An unexpected error occurred."}
+              </p>
+              <button
+                onClick={() => refetchPatrons()}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white transition-colors flex items-center gap-2"
+              >
+                <RotateCw size={14} /> Retry
+              </button>
+            </div>
+          ) : patrons.length === 0 ? (
             <div className="py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">
               No registered patrons found matching your search.
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900 shadow-xl">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-950 text-slate-400 font-mono uppercase border-b border-slate-800">
-                  <tr>
-                    <th className="p-3.5">Name</th>
-                    <th className="p-3.5">Student / Card ID</th>
-                    <th className="p-3.5">Campus Email</th>
-                    <th className="p-3.5">Department</th>
-                    <th className="p-3.5">Status</th>
-                    <th className="p-3.5 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/80 text-slate-300">
-                  {filteredPatrons.map((patron) => (
-                    <tr key={patron._id} className="hover:bg-slate-800/30">
-                      <td className="p-3.5 font-bold text-white">
-                        {patron.name}
-                      </td>
-                      <td className="p-3.5 font-mono text-indigo-300">
-                        {patron.studentId || "—"}
-                      </td>
-                      <td className="p-3.5 font-mono text-slate-400">
-                        {patron.email}
-                      </td>
-                      <td className="p-3.5">
-                        {patron.department || patron.major || "General"}
-                      </td>
-                      <td className="p-3.5">
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                            patron.isActive !== false
-                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                              : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                          }`}
-                        >
-                          {patron.isActive !== false
-                            ? "Active Member"
-                            : "Suspended"}
-                        </span>
-                      </td>
-                      <td className="p-3.5 text-right">
-                        <button
-                          onClick={() => setSelectedPatronId(patron._id)}
-                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors"
-                        >
-                          View Details
-                        </button>
-                      </td>
+            <div className="space-y-4">
+              <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900 shadow-xl">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-950 text-slate-400 font-mono uppercase border-b border-slate-800">
+                    <tr>
+                      <th className="p-3.5">Name</th>
+                      <th className="p-3.5">Student / PRN ID</th>
+                      <th className="p-3.5">Campus Email</th>
+                      <th className="p-3.5">Department</th>
+                      <th className="p-3.5">Status</th>
+                      <th className="p-3.5 text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/80 text-slate-300">
+                    {patrons.map((patron) => (
+                      <tr key={patron._id} className="hover:bg-slate-800/30">
+                        <td className="p-3.5 font-bold text-white">
+                          {patron.name}
+                        </td>
+                        <td className="p-3.5 font-mono text-indigo-300">
+                          {patron.prn || patron.studentId || "—"}
+                        </td>
+                        <td className="p-3.5 font-mono text-slate-400">
+                          {patron.email}
+                        </td>
+                        <td className="p-3.5">
+                          {patron.department || patron.major || "General"}
+                        </td>
+                        <td className="p-3.5">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                              patron.isActive !== false
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                            }`}
+                          >
+                            {patron.isActive !== false
+                              ? "Active Member"
+                              : "Suspended"}
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-right">
+                          <button
+                            onClick={() => setSelectedPatronId(patron._id)}
+                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors"
+                          >
+                            View Details
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination Controls */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-3 px-2 text-xs">
+                <div className="text-slate-400 font-mono">
+                  Showing {totalPatrons === 0 ? 0 : (page - 1) * limit + 1} to{" "}
+                  {Math.min(page * limit, totalPatrons)} of {totalPatrons}{" "}
+                  patrons
+                  {isFetching && (
+                    <span className="ml-2 text-indigo-400 animate-pulse">
+                      (updating...)
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1 || isFetching}
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-mono"
+                  >
+                    Previous
+                  </button>
+                  <span className="font-mono text-slate-300 px-2">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages || isFetching}
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-mono"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

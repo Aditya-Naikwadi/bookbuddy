@@ -41,6 +41,34 @@ const bookSchema = new mongoose.Schema(
       min: 0,
       default: 1,
     },
+    reservedCopies: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    coverImage: {
+      type: String,
+      default: null,
+    },
+    genre: {
+      type: String,
+      default: null,
+    },
+    deweyDecimal: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    callNumber: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    purchasePrice: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     shelfLocation: {
       type: String,
     },
@@ -127,6 +155,11 @@ bookSchema.index({ collegeId: 1, copiesAvailable: -1, title: 1 });
 bookSchema.index({ collegeId: 1, copiesAvailable: 1 });
 bookSchema.index({ collegeId: 1, isbn: 1 });
 bookSchema.index({ collegeId: 1, createdAt: -1 });
+bookSchema.index(
+  { isShareableAcrossColleges: 1, createdAt: -1, collegeId: 1 },
+  { background: true }
+);
+bookSchema.index({ collegeId: 1, shelfLocation: 1 }, { background: true });
 
 // Text index for search
 bookSchema.index({ title: 'text', author: 'text', isbn: 'text' });

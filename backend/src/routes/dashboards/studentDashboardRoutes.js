@@ -8,6 +8,7 @@ const {
   getStudentRecommendations,
   getStudentLoans,
   renewStudentLoan,
+  getLoansTrackerSummary,
   placeStudentHold,
   getStudentQueuePosition,
   getStudentFines,
@@ -97,6 +98,7 @@ router.get('/catalog/recommendations', expensiveRouteLimiter, getStudentRecommen
 
 // Circulation & Loans
 router.get('/loans', getStudentLoans);
+router.get('/loans-tracker-summary', getLoansTrackerSummary);
 router.post('/loans/:id/renew', validate(renewLoanSchema), renewStudentLoan);
 
 // Reservations & Holds

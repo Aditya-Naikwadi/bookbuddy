@@ -47,32 +47,54 @@ const createStudent = async (req, res, next) => {
 };
 
 // @desc    Get all patrons
+// @desc    Get all patrons (students) with server-side pagination, search, and filtering
 // @route   GET /api/dashboards/college-admin/patrons
 // @access  Private/CollegeAdmin
 const getAllPatrons = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 100;
+    // 1. Pagination parameters (default page 1, default limit 25, clamped to max 100)
+    const rawPage = parseInt(req.query.page, 10);
+    const rawLimit = parseInt(req.query.limit, 10);
+    const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1;
+    const limit = Number.isInteger(rawLimit) ? Math.min(100, Math.max(1, rawLimit)) : 25;
     const skip = (page - 1) * limit;
 
-    const filter = { role: 'student', ...req.tenantFilter };
+    // 2. Strict tenant-scoping: always use req.user.collegeId
+    const collegeId = req.user?.collegeId;
+    if (!collegeId) {
+      return next(new AppError('Unauthorized: Missing tenant context.', 403));
+    }
 
-    const search = req.query.search ? String(req.query.search).trim() : '';
-    if (search) {
+    const filter = {
+      collegeId,
+      role: { $in: ['student', 'college-student'] },
+    };
+
+    // 3. Server-side search with length capping and regex escaping
+    const rawSearch = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    if (rawSearch.length > 0) {
+      const search = rawSearch.slice(0, 64);
+      // Escape regex special characters to prevent regex injection or crashes
       const escaped = search.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const lowerEscaped = escaped.toLowerCase();
+
       filter.$or = [
         { name: { $regex: escaped, $options: 'i' } },
         { studentId: { $regex: escaped, $options: 'i' } },
-        { email: { $regex: escaped, $options: 'i' } },
+        { prn: { $regex: `^${escaped}`, $options: 'i' } },
+        { barcode: { $regex: `^${escaped}`, $options: 'i' } },
+        { email: { $regex: `^${lowerEscaped}`, $options: 'i' } },
       ];
     }
 
+    // Explicit studentId query if provided
     if (req.query.studentId) {
       const sId = String(req.query.studentId).trim();
       filter.studentId = normalizeStudentId(sId);
     }
 
-    if (req.query.department) {
+    // Explicit department filter
+    if (req.query.department && req.query.department !== 'all') {
       const dept = String(req.query.department).trim();
       const escapedDept = dept.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
       filter.$and = filter.$and || [];
@@ -86,23 +108,127 @@ const getAllPatrons = async (req, res, next) => {
       });
     }
 
-    const total = await User.countDocuments(filter);
+    // Academic Year filter
+    if (req.query.academicYear && req.query.academicYear !== 'all') {
+      const year = String(req.query.academicYear).trim();
+      const escapedYear = year.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      filter.$and = filter.$and || [];
+      filter.$and.push({
+        $or: [
+          { academicYear: year },
+          { year: year },
+          { academicYear: { $regex: `^${escapedYear}$`, $options: 'i' } },
+          { year: { $regex: `^${escapedYear}$`, $options: 'i' } },
+        ],
+      });
+    }
 
-    const patrons = await User.find(filter)
-      .select('-password')
-      .sort('-createdAt')
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    // Status / Operational filter
+    const statusFilter = req.query.status || req.query.filter;
+    if (statusFilter && statusFilter !== 'all') {
+      if (statusFilter === 'active') {
+        filter.isActive = true;
+      } else if (statusFilter === 'inactive') {
+        filter.isActive = false;
+      } else if (statusFilter === 'isApproved') {
+        filter.isActive = true;
+        filter.status = 'active';
+      } else if (statusFilter === 'hasOverdue') {
+        const overdueUserIds = await Loan.distinct('userId', {
+          collegeId,
+          status: { $in: ['active', 'overdue'] },
+          dueDate: { $lt: new Date() },
+        });
+        filter._id = { $in: overdueUserIds };
+      } else if (statusFilter === 'hasUnreturned') {
+        const activeLoanUserIds = await Loan.distinct('userId', {
+          collegeId,
+          status: { $in: ['active', 'overdue'] },
+        });
+        filter._id = { $in: activeLoanUserIds };
+      } else if (statusFilter === 'hasFines') {
+        const fineUserIds = await Fine.distinct('userId', {
+          collegeId,
+          status: 'unpaid',
+        });
+        filter._id = { $in: fineUserIds };
+      }
+    }
+
+    // Sort order
+    let sortQuery = { createdAt: -1 };
+    if (req.query.sort) {
+      switch (req.query.sort) {
+        case 'name_asc':
+          sortQuery = { name: 1 };
+          break;
+        case 'name_desc':
+          sortQuery = { name: -1 };
+          break;
+        case 'oldest':
+          sortQuery = { createdAt: 1 };
+          break;
+        case 'studentId_asc':
+          sortQuery = { studentId: 1 };
+          break;
+        default:
+          sortQuery = { createdAt: -1 };
+      }
+    }
+
+    // Parallel count and find execution with projection and .lean()
+    const [total, rawPatrons] = await Promise.all([
+      User.countDocuments(filter),
+      User.find(filter)
+        .select(
+          'name email studentId prn barcode department major year academicYear role isActive status fineWaiverCoupons points avatar avatarUrl createdAt updatedAt'
+        )
+        .sort(sortQuery)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ]);
+
+    const formattedPatrons = rawPatrons.map((p) => ({
+      _id: p._id,
+      name: p.name,
+      email: p.email,
+      studentId: p.studentId,
+      prn: p.prn || p.studentId,
+      barcode: p.barcode || p.studentId,
+      department: p.department || p.major || 'General',
+      academicYear: p.academicYear || p.year || 'N/A',
+      role: p.role,
+      isActive: p.isActive !== false,
+      isApproved: p.isActive !== false && p.status === 'active',
+      status: p.status || 'active',
+      avatarUrl: p.avatarUrl || p.avatar || null,
+      fineWaiverCoupons: p.fineWaiverCoupons || 0,
+      points: p.points || 0,
+      createdAt: p.createdAt,
+    }));
+
+    const totalPages = Math.ceil(total / limit) || 1;
+    const hasMore = page < totalPages;
+
+    const meta = {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasMore,
+    };
 
     res.json({
       success: true,
-      data: patrons,
+      data: formattedPatrons,
+      meta,
       pagination: {
         total,
         page,
         limit,
-        pages: Math.ceil(total / limit),
+        pages: totalPages,
+        hasMore,
       },
     });
   } catch (error) {
@@ -141,8 +267,49 @@ const getPatronDetails = async (req, res, next) => {
 // @access  Private/CollegeAdmin
 const addBook = async (req, res, next) => {
   try {
-    const book = await Book.create({ ...req.body, collegeId: req.user.collegeId });
-    res.status(201).json({ success: true, data: book });
+    const { runInTransaction } = require('../../utils/transactionHelper');
+    const { emitRealtimeEvent, events } = require('../../sockets');
+
+    const result = await runInTransaction(
+      async (session) => {
+        const [book] = await Book.create([{ ...req.body, collegeId: req.user.collegeId }], {
+          session,
+        });
+        return book;
+      },
+      async (book) => {
+        try {
+          const collegeId = req.user.collegeId;
+          const rooms = [
+            collegeId ? `college:${collegeId}` : null,
+            book.isShareableAcrossColleges ? 'cross-college:public' : null,
+          ].filter(Boolean);
+
+          emitRealtimeEvent({
+            event: events.BOOK_UPDATED,
+            rooms,
+            entityId: book._id,
+            collegeId,
+            changed: {
+              copiesAvailable: book.copiesAvailable,
+              reservedCopies: book.reservedCopies || 0,
+              copiesTotal: book.copiesTotal,
+              title: book.title,
+              author: book.author,
+              coverImage: book.coverImage,
+            },
+            payload: {
+              bookId: book._id,
+              book: typeof book.toObject === 'function' ? book.toObject() : book,
+            },
+          });
+        } catch (_err) {
+          // Non-blocking socket emit
+        }
+      }
+    );
+
+    res.status(201).json({ success: true, data: result });
   } catch (error) {
     next(error);
   }
@@ -153,17 +320,58 @@ const addBook = async (req, res, next) => {
 // @access  Private/CollegeAdmin
 const updateBook = async (req, res, next) => {
   try {
-    const book = await Book.findOneAndUpdate(
-      { _id: req.params.id, ...req.tenantFilter },
-      req.body,
-      {
-        returnDocument: 'after',
+    const { runInTransaction } = require('../../utils/transactionHelper');
+    const { emitRealtimeEvent, events } = require('../../sockets');
+
+    const result = await runInTransaction(
+      async (session) => {
+        const book = await Book.findOneAndUpdate(
+          { _id: req.params.id, ...req.tenantFilter },
+          req.body,
+          {
+            returnDocument: 'after',
+            session,
+          }
+        );
+        if (!book) {
+          throw new AppError('Book not found or unauthorized', 404);
+        }
+        return book;
+      },
+      async (book) => {
+        try {
+          const collegeId = req.user.collegeId;
+          const rooms = [
+            collegeId ? `college:${collegeId}` : null,
+            book.isShareableAcrossColleges ? 'cross-college:public' : null,
+          ].filter(Boolean);
+
+          emitRealtimeEvent({
+            event: events.BOOK_UPDATED,
+            rooms,
+            entityId: book._id,
+            collegeId,
+            changed: {
+              copiesAvailable: book.copiesAvailable,
+              reservedCopies: book.reservedCopies || 0,
+              copiesTotal: book.copiesTotal,
+              title: book.title,
+              author: book.author,
+              shelfLocation: book.shelfLocation,
+              coverImage: book.coverImage,
+            },
+            payload: {
+              bookId: book._id,
+              book: typeof book.toObject === 'function' ? book.toObject() : book,
+            },
+          });
+        } catch (_err) {
+          // Non-blocking socket emit
+        }
       }
     );
-    if (!book) {
-      return next(new AppError('Book not found or unauthorized', 404));
-    }
-    res.json({ success: true, data: book });
+
+    res.json({ success: true, data: result });
   } catch (error) {
     next(error);
   }
@@ -494,34 +702,82 @@ const returnBook = async (req, res, next) => {
 // @desc    Get current hold queues
 // @route   GET /api/dashboards/college-admin/circulation/queue
 // @access  Private/CollegeAdmin
+// @route   GET /api/dashboards/college-admin/circulation/queue
+// @access  Private/CollegeAdmin
 const getCirculationQueue = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 100;
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 100);
     const skip = (page - 1) * limit;
 
-    const filter = {
+    const resFilter = {
       ...req.tenantFilter,
       status: { $in: ['queued', 'ready_for_pickup'] },
     };
-    const total = await Reservation.countDocuments(filter);
 
-    const queue = await Reservation.find(filter)
+    if (req.query.cursor) {
+      resFilter._id = { $gt: req.query.cursor };
+    }
+
+    const totalReservations = await Reservation.countDocuments(resFilter);
+
+    const queue = await Reservation.find(resFilter)
+      .select('bookId userId status queuePosition readyAt expiresAt createdAt')
       .populate('bookId', 'title author isbn copiesAvailable')
       .populate('userId', 'name email studentId')
       .sort('queuePosition')
-      .skip(skip)
-      .limit(limit)
+      .skip(req.query.cursor ? 0 : skip)
+      .limit(limit + 1)
       .lean();
+
+    const hasMoreReservations = queue.length > limit;
+    const slicedQueue = queue.slice(0, limit);
+    const nextResCursor =
+      hasMoreReservations && slicedQueue.length > 0
+        ? slicedQueue[slicedQueue.length - 1]._id
+        : null;
+
+    // Active loans on desk
+    const loanFilter = {
+      ...req.tenantFilter,
+      status: { $in: ['active', 'overdue'] },
+    };
+    if (req.query.loanCursor) {
+      loanFilter._id = { $lt: req.query.loanCursor };
+    }
+
+    const totalActiveLoans = await Loan.countDocuments(loanFilter);
+
+    const activeLoans = await Loan.find(loanFilter)
+      .select(
+        'bookId userId issueDate dueDate returnDate renewalCount maxRenewals status createdAt'
+      )
+      .populate('bookId', 'title author isbn coverImage format copiesAvailable')
+      .populate('userId', 'name email studentId')
+      .sort({ createdAt: -1 })
+      .limit(limit + 1)
+      .lean();
+
+    const hasMoreLoans = activeLoans.length > limit;
+    const slicedLoans = activeLoans.slice(0, limit);
+    const nextLoanCursor =
+      hasMoreLoans && slicedLoans.length > 0 ? slicedLoans[slicedLoans.length - 1]._id : null;
 
     res.json({
       success: true,
-      data: queue,
+      data: slicedQueue,
+      reservations: slicedQueue,
+      activeLoans: slicedLoans,
       pagination: {
-        total,
+        total: totalReservations,
+        totalLoans: totalActiveLoans,
         page,
         limit,
-        pages: Math.ceil(total / limit),
+        pages: Math.ceil(totalReservations / limit),
+        nextCursor: nextResCursor,
+        nextLoanCursor,
+        hasMore: hasMoreReservations,
+        hasMoreLoans,
       },
     });
   } catch (error) {

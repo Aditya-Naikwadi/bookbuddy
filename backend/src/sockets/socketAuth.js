@@ -40,6 +40,15 @@ const socketAuth = async (socket, next) => {
         );
       }
 
+      // Check Global Real-time Mode
+      const { getRealtimeMode } = require('../services/realtimeFlagService');
+      const globalMode = await getRealtimeMode(null);
+      if (globalMode === 'off' || globalMode === 'polling_only') {
+        return next(
+          new Error(`REALTIME_DISABLED: Real-time sockets globally paused (mode: ${globalMode})`)
+        );
+      }
+
       activeAnonymousConnections.set(clientIp, currentIpConns + 1);
 
       socket.data.user = {
@@ -64,8 +73,18 @@ const socketAuth = async (socket, next) => {
     let decoded;
     try {
       decoded = verifyAccessToken(token);
-    } catch {
+    } catch (err) {
+      if (err.name === 'TokenExpiredError') {
+        return next(new Error('Token has expired'));
+      }
       return next(new Error('Invalid or expired authentication token'));
+    }
+
+    // Check if token has been revoked
+    const { isTokenBlacklisted } = require('../utils/token');
+    const blacklisted = await isTokenBlacklisted(token);
+    if (blacklisted) {
+      return next(new Error('Token has been revoked'));
     }
 
     // Verify user exists and is active in the database
@@ -76,6 +95,15 @@ const socketAuth = async (socket, next) => {
 
     if (!user.isActive) {
       return next(new Error('Account has been deactivated'));
+    }
+
+    // Check Real-time Layer Kill Switch / Mode
+    const { getRealtimeMode } = require('../services/realtimeFlagService');
+    const realtimeMode = await getRealtimeMode(decoded.collegeId);
+    if (realtimeMode === 'off' || realtimeMode === 'polling_only') {
+      return next(
+        new Error(`REALTIME_DISABLED: Real-time sockets paused by policy (mode: ${realtimeMode})`)
+      );
     }
 
     // Attach user information to socket data

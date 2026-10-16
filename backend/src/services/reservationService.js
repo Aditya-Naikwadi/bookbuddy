@@ -60,6 +60,34 @@ const placeHold = async (userId, bookId, collegeId) => {
     }
   }
 
+  const updatedBook = await Book.findOneAndUpdate(
+    { _id: bookId, collegeId },
+    { $inc: { reservedCopies: 1 } },
+    { returnDocument: 'after' }
+  );
+
+  try {
+    const { emitRealtimeEvent, events } = require('../sockets');
+    const rooms = [
+      collegeId ? `college:${collegeId}` : null,
+      updatedBook?.isShareableAcrossColleges ? 'cross-college:public' : null,
+    ].filter(Boolean);
+
+    emitRealtimeEvent({
+      event: events.BOOK_UPDATED,
+      rooms,
+      entityId: bookId,
+      collegeId,
+      changed: {
+        copiesAvailable: updatedBook ? updatedBook.copiesAvailable : 0,
+        reservedCopies: updatedBook ? updatedBook.reservedCopies : 1,
+        copiesTotal: updatedBook ? updatedBook.copiesTotal : 0,
+      },
+    });
+  } catch (_err) {
+    // Non-blocking socket emit
+  }
+
   return reservation;
 };
 
@@ -78,6 +106,10 @@ const getQueuePosition = async (userId, bookId) => {
 };
 
 const promoteNextHold = async (bookId, collegeId) => {
+  const config = require('../config');
+  const holdPickupWindowHours = config.holdPickupWindowHours || 48;
+  const expiresAt = new Date(Date.now() + holdPickupWindowHours * 60 * 60 * 1000);
+
   const nextHold = await Reservation.findOneAndUpdate(
     {
       bookId,
@@ -88,6 +120,7 @@ const promoteNextHold = async (bookId, collegeId) => {
       $set: {
         status: 'ready_for_pickup',
         readyAt: new Date(),
+        expiresAt,
       },
     },
     {
@@ -105,6 +138,50 @@ const promoteNextHold = async (bookId, collegeId) => {
       nextHold.bookId,
       'Book'
     );
+
+    try {
+      const { emitRealtimeEvent, events } = require('../sockets');
+      emitRealtimeEvent({
+        event: events.RESERVATION_READY,
+        rooms: [`user:${nextHold.userId}`, collegeId ? `role:${collegeId}:librarian` : null].filter(
+          Boolean
+        ),
+        entityId: nextHold._id,
+        collegeId,
+        changed: {
+          status: 'ready_for_pickup',
+          bookId: nextHold.bookId,
+          expiresAt: nextHold.expiresAt,
+        },
+        payload: {
+          reservationId: nextHold._id,
+          bookId: nextHold.bookId,
+          userId: nextHold.userId,
+          expiresAt: nextHold.expiresAt,
+        },
+      });
+
+      const book = await Book.findById(bookId);
+      const rooms = [
+        collegeId ? `college:${collegeId}` : null,
+        book?.isShareableAcrossColleges ? 'cross-college:public' : null,
+      ].filter(Boolean);
+
+      emitRealtimeEvent({
+        event: events.BOOK_UPDATED,
+        rooms,
+        entityId: bookId,
+        collegeId,
+        changed: {
+          copiesAvailable: book ? book.copiesAvailable : 0,
+          reservedCopies: book?.reservedCopies || 0,
+          copiesTotal: book?.copiesTotal || 0,
+        },
+      });
+    } catch (_err) {
+      // Non-blocking socket emit
+    }
+
     return nextHold;
   }
   return null;
@@ -138,6 +215,40 @@ const leaveQueue = async (reservationId, userId) => {
       throw new AppError('Reservation not found.', 404);
     }
     throw new AppError('Only active reservations can be cancelled.', 400);
+  }
+
+  if (reservation) {
+    try {
+      const updatedBook = await Book.findOneAndUpdate(
+        { _id: reservation.bookId },
+        { $inc: { reservedCopies: -1 } },
+        { returnDocument: 'after' }
+      );
+      if (updatedBook && updatedBook.reservedCopies < 0) {
+        await Book.updateOne({ _id: updatedBook._id }, { $set: { reservedCopies: 0 } });
+        updatedBook.reservedCopies = 0;
+      }
+
+      const { emitRealtimeEvent, events } = require('../sockets');
+      const rooms = [
+        reservation.collegeId ? `college:${reservation.collegeId}` : null,
+        updatedBook?.isShareableAcrossColleges ? 'cross-college:public' : null,
+      ].filter(Boolean);
+
+      emitRealtimeEvent({
+        event: events.BOOK_UPDATED,
+        rooms,
+        entityId: reservation.bookId,
+        collegeId: reservation.collegeId,
+        changed: {
+          copiesAvailable: updatedBook ? updatedBook.copiesAvailable : 0,
+          reservedCopies: updatedBook ? updatedBook.reservedCopies : 0,
+          copiesTotal: updatedBook ? updatedBook.copiesTotal : 0,
+        },
+      });
+    } catch (_err) {
+      // Non-blocking socket emit
+    }
   }
 
   return reservation;

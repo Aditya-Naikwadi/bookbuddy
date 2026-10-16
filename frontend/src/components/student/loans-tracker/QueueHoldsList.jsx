@@ -1,4 +1,5 @@
-import { HelpCircle, Trash2, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { HelpCircle, Trash2, Loader2, Sparkles, Clock } from "lucide-react";
 
 export const QueueHoldsList = ({
   queue,
@@ -6,6 +7,24 @@ export const QueueHoldsList = ({
   isCancelling,
   cancellingHoldId,
 }) => {
+  const [now, setNow] = useState(() => Date.now());
+
+  // Update countdown every 30 seconds
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatExpiresCountdown = (expiresAt) => {
+    if (!expiresAt) return "Within 48 hours";
+    const diff = new Date(expiresAt).getTime() - now;
+    if (diff <= 0) return "Pickup window expired";
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (hours > 0) return `${hours}h ${minutes}m left to pickup`;
+    return `${minutes}m left to pickup`;
+  };
+
   if (queue.length === 0) {
     return (
       <div className="text-center py-8 flex flex-col items-center">
@@ -22,29 +41,59 @@ export const QueueHoldsList = ({
       {queue.map((item) => {
         const isCurrentCancelling =
           isCancelling && cancellingHoldId === item._id;
+        const isReady = item.status === "ready_for_pickup";
 
         return (
           <div
             key={item._id}
-            className="flex items-center justify-between p-4 border border-edge/30 bg-surface/20 rounded-xl hover:border-edge/50 transition-colors"
+            className={`flex items-center justify-between p-4 border rounded-xl transition-all ${
+              isReady
+                ? "bg-emerald-500/10 border-emerald-500/30 shadow-sm"
+                : "bg-surface/20 border-edge/30 hover:border-edge/50"
+            }`}
           >
-            <div className="min-w-0">
-              <h4 className="font-bold text-ink text-sm leading-tight truncate max-w-[200px] sm:max-w-[350px]">
-                {item.bookId?.title || "Library Book"}
-              </h4>
-              <p className="text-[10px] text-muted mt-1 uppercase tracking-wider font-semibold">
-                Status: {item.status ? item.status.replace("_", " ") : "Queued"}
-              </p>
+            <div className="min-w-0 pr-2">
+              <div className="flex items-center gap-2">
+                <h4 className="font-bold text-ink text-sm leading-tight truncate max-w-[200px] sm:max-w-[350px]">
+                  {item.bookId?.title || "Library Book"}
+                </h4>
+                {isReady && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase animate-pulse">
+                    <Sparkles size={10} />
+                    Ready for Pickup
+                  </span>
+                )}
+              </div>
+
+              {isReady ? (
+                <div className="flex items-center gap-1 text-[11px] text-emerald-300 font-medium mt-1">
+                  <Clock size={12} />
+                  <span>{formatExpiresCountdown(item.expiresAt)}</span>
+                </div>
+              ) : (
+                <p className="text-[10px] text-muted mt-1 uppercase tracking-wider font-semibold">
+                  Status:{" "}
+                  {item.status ? item.status.replace("_", " ") : "Queued"}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center gap-4 shrink-0">
               <div className="text-right">
-                <span className="block text-2xl font-serif font-black text-ember leading-none">
-                  #{item.queuePosition}
-                </span>
-                <span className="text-[9px] text-muted uppercase tracking-wider font-bold">
-                  in line
-                </span>
+                {isReady ? (
+                  <span className="block text-xs font-mono font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-1 rounded">
+                    PICKUP READY
+                  </span>
+                ) : (
+                  <>
+                    <span className="block text-2xl font-serif font-black text-ember leading-none">
+                      #{item.queuePosition}
+                    </span>
+                    <span className="text-[9px] text-muted uppercase tracking-wider font-bold">
+                      in line
+                    </span>
+                  </>
+                )}
               </div>
 
               <button
@@ -74,3 +123,5 @@ export const QueueHoldsList = ({
     </div>
   );
 };
+
+export default QueueHoldsList;

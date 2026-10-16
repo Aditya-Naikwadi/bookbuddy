@@ -444,6 +444,8 @@ app.use('/api/v1/colleges', require('./routes/collegeFeatureRoutes'));
 app.use('/api/v1/college/:id/books', require('./routes/collegeBookRoutes'));
 app.use('/api/v1/catalog/cross-college', require('./routes/crossCollegeCatalogRoutes'));
 app.use('/api/v1/catalog', require('./routes/catalogRoutes'));
+app.use('/api/v1/inventory', require('./routes/inventoryRoutes'));
+app.use('/api/inventory', deprecationWarning, require('./routes/inventoryRoutes'));
 app.use('/api/v1/services', require('./routes/serviceRoutes'));
 app.use('/api/v1/college/:id', require('./routes/bulkUploadRoutes'));
 app.use('/api/v1/config', require('./routes/configRoutes'));

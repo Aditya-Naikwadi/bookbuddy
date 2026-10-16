@@ -120,6 +120,11 @@ export const LoanCard = ({
             <span className="text-xs font-semibold text-ink">
               Due: {dueDateStr}
             </span>
+            <span className="inline-flex items-center gap-1 text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-surface/50 border border-edge/40 text-muted">
+              Renewals: {loan.renewalCount || 0}/{loan.maxRenewals || 2} (
+              {Math.max(0, (loan.maxRenewals || 2) - (loan.renewalCount || 0))}{" "}
+              left)
+            </span>
           </div>
         </div>
       </div>

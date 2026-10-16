@@ -9,6 +9,7 @@ import {
   Send,
 } from "lucide-react";
 import ShareRequestStatusTracker from "../components/ShareRequestStatusTracker";
+import socket from "../lib/socketClient";
 
 export const CrossCollegeCatalog = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -77,7 +78,25 @@ export const CrossCollegeCatalog = () => {
     fetchCrossCollegeCatalog();
     fetchMyRequests();
 
+    // Subscribe to cross-college public room on mount
+    socket.emit("subscribe:cross-college");
+
+    const handleBookUpdated = (payload) => {
+      if (!payload) return;
+      const { entityId, changed = {} } = payload;
+      setCatalogItems((prev) => ({
+        ...prev,
+        books: (prev.books || []).map((b) =>
+          (b._id || b.id) === entityId ? { ...b, ...changed } : b,
+        ),
+      }));
+    };
+
+    socket.on("book:updated", handleBookUpdated);
+
     return () => {
+      socket.off("book:updated", handleBookUpdated);
+      socket.emit("unsubscribe:cross-college");
       if (searchAbortRef.current) {
         searchAbortRef.current.abort();
       }

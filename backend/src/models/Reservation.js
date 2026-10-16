@@ -35,6 +35,10 @@ const reservationSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    expiresAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -44,6 +48,10 @@ const reservationSchema = new mongoose.Schema(
 // Compound indexes
 reservationSchema.index({ collegeId: 1, status: 1, queuePosition: 1 });
 reservationSchema.index({ collegeId: 1, bookId: 1, status: 1 });
+reservationSchema.index(
+  { collegeId: 1, expiresAt: 1 },
+  { partialFilterExpression: { status: 'ready_for_pickup' } }
+);
 reservationSchema.index({ bookId: 1, status: 1 });
 reservationSchema.index({ bookId: 1, status: 1, createdAt: 1 });
 reservationSchema.index({ userId: 1, status: 1 });

@@ -11,6 +11,8 @@ import App from "./App.jsx";
 import { ThemeProvider } from "./context/ThemeContext.tsx";
 import { ConfigProvider, useConfig } from "./context/ConfigContext.jsx";
 
+import { SocketProvider } from "./context/SocketContext.jsx";
+
 function DynamicGoogleOAuthProvider({ children }) {
   const { googleClientId } = useConfig();
   // Provide clientId to GoogleOAuthProvider dynamically from backend config only when valid
@@ -61,10 +63,12 @@ createRoot(document.getElementById("root")).render(
     <ConfigProvider>
       <DynamicGoogleOAuthProvider>
         <QueryClientProvider client={queryClient}>
-          <ThemeProvider>
-            <App />
-            <DeferredAnalytics />
-          </ThemeProvider>
+          <SocketProvider>
+            <ThemeProvider>
+              <App />
+              <DeferredAnalytics />
+            </ThemeProvider>
+          </SocketProvider>
         </QueryClientProvider>
       </DynamicGoogleOAuthProvider>
     </ConfigProvider>

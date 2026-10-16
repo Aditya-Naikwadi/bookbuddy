@@ -329,9 +329,54 @@ const checkSlugAvailability = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * @desc    Get or Update real-time layer mode (kill-switch)
+ * @route   PATCH /api/colleges/features/realtime-mode
+ * @access  Private (CollegeAdmin / SuperAdmin)
+ */
+const updateRealtimeMode = asyncHandler(async (req, res, next) => {
+  const isSuperAdmin =
+    req.user && (req.user.role === 'super-admin' || req.user.role === 'superadmin');
+  const { mode, isGlobal, collegeId: targetCollegeId } = req.body;
+
+  if (!mode || !['on', 'off', 'polling_only'].includes(mode)) {
+    return next(new AppError('Valid mode is required: on, off, or polling_only', 400));
+  }
+
+  if (isGlobal && !isSuperAdmin) {
+    return next(new AppError('Only SuperAdmins can modify global real-time mode', 403));
+  }
+
+  const collegeId = isGlobal
+    ? null
+    : (isSuperAdmin ? targetCollegeId : null) || req.tenantId || req.user?.collegeId;
+
+  if (!isGlobal && !collegeId) {
+    return next(new AppError('Target college context is required', 400));
+  }
+
+  const { setRealtimeMode } = require('../services/realtimeFlagService');
+  const result = await setRealtimeMode({
+    collegeId,
+    mode,
+    isGlobal: !!isGlobal,
+    user: req.user,
+    ip: req.ip,
+  });
+
+  res.json({
+    success: true,
+    message: isGlobal
+      ? `Global real-time mode set to ${mode}`
+      : `Real-time mode for college updated to ${mode}`,
+    data: result,
+  });
+});
+
 module.exports = {
   getMyCollegeConfig,
   enableOrRequestFeature,
   getPublicCollegeBySlug,
   checkSlugAvailability,
+  updateRealtimeMode,
 };

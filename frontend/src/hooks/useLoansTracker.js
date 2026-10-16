@@ -1,49 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../api/client";
 
-// Fetch functions with robust fallback error handling
-const fetchLoans = async () => {
+// Unified fetch function collapsing 5 queries into 1 fast projected summary
+const fetchSummary = async () => {
   try {
-    const { data } = await apiClient.get("/dashboards/student/loans");
-    return data.data || { active: [], history: [] };
+    const { data } = await apiClient.get(
+      "/dashboards/student/loans-tracker-summary",
+    );
+    return (
+      data.data || {
+        loans: { active: [], history: [] },
+        queue: [],
+        fines: [],
+        finesSummary: { totalUnpaid: 0, unpaidCount: 0 },
+        profile: null,
+      }
+    );
   } catch {
-    return { active: [], history: [] };
-  }
-};
-
-const fetchQueue = async () => {
-  try {
-    const { data } = await apiClient.get("/reservations/me");
-    return data.data || [];
-  } catch {
-    return [];
-  }
-};
-
-const fetchFines = async () => {
-  try {
-    const { data } = await apiClient.get("/fines/me");
-    return data.data || [];
-  } catch {
-    return [];
-  }
-};
-
-const fetchFinesSummary = async () => {
-  try {
-    const { data } = await apiClient.get("/fines/me/summary");
-    return data.data || { totalUnpaid: 0, unpaidCount: 0 };
-  } catch {
-    return { totalUnpaid: 0, unpaidCount: 0 };
-  }
-};
-
-const fetchProfile = async () => {
-  try {
-    const { data } = await apiClient.get("/auth/profile");
-    return data.data || null;
-  } catch {
-    return null;
+    return {
+      loans: { active: [], history: [] },
+      queue: [],
+      fines: [],
+      finesSummary: { totalUnpaid: 0, unpaidCount: 0 },
+      profile: null,
+    };
   }
 };
 
@@ -51,31 +31,23 @@ const fetchProfile = async () => {
 export const useLoansTracker = () => {
   const queryClient = useQueryClient();
 
-  // 1. Queries
-  const loansQuery = useQuery({
-    queryKey: ["my-loans"],
-    queryFn: fetchLoans,
+  // 1. Single collapsed summary query
+  const summaryQuery = useQuery({
+    queryKey: ["loans-tracker-summary"],
+    queryFn: fetchSummary,
+    staleTime: 60000,
   });
 
-  const queueQuery = useQuery({
-    queryKey: ["my-queue"],
-    queryFn: fetchQueue,
-  });
-
-  const finesQuery = useQuery({
-    queryKey: ["my-fines"],
-    queryFn: fetchFines,
-  });
-
-  const finesSummaryQuery = useQuery({
-    queryKey: ["my-fines-summary"],
-    queryFn: fetchFinesSummary,
-  });
-
-  const profileQuery = useQuery({
-    queryKey: ["user-profile"],
-    queryFn: fetchProfile,
-  });
+  const loans = summaryQuery.data?.loans || { active: [], history: [] };
+  const queue = summaryQuery.data?.queue || [];
+  const fines = summaryQuery.data?.fines || [];
+  const finesSummary = summaryQuery.data?.finesSummary || {
+    totalUnpaid: 0,
+    unpaidCount: 0,
+  };
+  const profile = summaryQuery.data?.profile || null;
+  const isLoading = summaryQuery.isLoading;
+  const isError = summaryQuery.isError;
 
   // 2. Mutations
 
@@ -88,109 +60,121 @@ export const useLoansTracker = () => {
       return data;
     },
     onMutate: async (loanId) => {
-      await queryClient.cancelQueries({ queryKey: ["my-loans"] });
+      await queryClient.cancelQueries({ queryKey: ["loans-tracker-summary"] });
+      const previousSummary = queryClient.getQueryData([
+        "loans-tracker-summary",
+      ]);
 
-      const previousLoans = queryClient.getQueryData(["my-loans"]);
-
-      // Optimistically modify the target loan in cache
-      queryClient.setQueryData(["my-loans"], (old) => {
-        if (!old) return old;
-        const updatedActive = old.active.map((loan) => {
-          if (loan._id === loanId) {
+      queryClient.setQueryData(["loans-tracker-summary"], (old) => {
+        if (!old || !old.loans) return old;
+        const updatedActive = (old.loans.active || []).map((loan) => {
+          if ((loan._id || loan.id) === loanId) {
             const currentDue = new Date(loan.dueDate);
-            currentDue.setDate(currentDue.getDate() + 14); // Optimistically add 14 days
+            currentDue.setDate(currentDue.getDate() + 14);
             return {
               ...loan,
               dueDate: currentDue.toISOString(),
-              renewalCount: loan.renewalCount + 1,
+              renewalCount: (loan.renewalCount || 0) + 1,
+              remainingRenewals: Math.max(
+                0,
+                (loan.remainingRenewals ?? loan.maxRenewals) - 1,
+              ),
             };
           }
           return loan;
         });
-        return { ...old, active: updatedActive };
+
+        return {
+          ...old,
+          loans: { ...old.loans, active: updatedActive },
+        };
       });
 
-      return { previousLoans };
+      return { previousSummary };
     },
     onError: (err, loanId, context) => {
-      if (context?.previousLoans) {
-        queryClient.setQueryData(["my-loans"], context.previousLoans);
+      if (context?.previousSummary) {
+        queryClient.setQueryData(
+          ["loans-tracker-summary"],
+          context.previousSummary,
+        );
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-loans"] });
+      queryClient.invalidateQueries({ queryKey: ["loans-tracker-summary"] });
     },
   });
 
-  // Pay Fine mutation with Idempotency-Key
+  // Fine payment mutation (server confirmation, no optimistic UI for payments per acceptance criteria)
   const payFineMutation = useMutation({
     mutationFn: async ({ fineId, useWaiver = false }) => {
-      const idempotencyKey = `fine_pay_${fineId}_${Date.now()}`;
       const { data } = await apiClient.post(
-        `/fines/${fineId}/pay`,
-        {
-          useWaiver,
-        },
-        {
-          headers: {
-            "Idempotency-Key": idempotencyKey,
-          },
-        },
+        `/dashboards/student/fines/${fineId}/pay`,
+        { useWaiver },
       );
-      return data.data;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-fines"] });
-      queryClient.invalidateQueries({ queryKey: ["my-fines-summary"] });
-      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["loans-tracker-summary"] });
     },
   });
 
-  // Cancel hold mutation
+  // Cancel hold reservation mutation
   const cancelHoldMutation = useMutation({
     mutationFn: async (reservationId) => {
-      const { data } = await apiClient.delete(`/reservations/${reservationId}`);
-      return data.data;
+      const { data } = await apiClient.delete(
+        `/dashboards/student/reservations/${reservationId}`,
+      );
+      return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-queue"] });
-      // Invalidate loans query as well, in case renewal availability shifts
-      queryClient.invalidateQueries({ queryKey: ["my-loans"] });
+    onMutate: async (reservationId) => {
+      await queryClient.cancelQueries({ queryKey: ["loans-tracker-summary"] });
+      const previousSummary = queryClient.getQueryData([
+        "loans-tracker-summary",
+      ]);
+
+      queryClient.setQueryData(["loans-tracker-summary"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          queue: (old.queue || []).filter(
+            (q) => (q._id || q.id) !== reservationId,
+          ),
+        };
+      });
+
+      return { previousSummary };
+    },
+    onError: (err, reservationId, context) => {
+      if (context?.previousSummary) {
+        queryClient.setQueryData(
+          ["loans-tracker-summary"],
+          context.previousSummary,
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["loans-tracker-summary"] });
     },
   });
 
   return {
-    // Queries data & statuses
-    loans: loansQuery.data || { active: [], history: [] },
-    queue: queueQuery.data || [],
-    fines: finesQuery.data || [],
-    finesSummary: finesSummaryQuery.data || { totalUnpaid: 0, unpaidCount: 0 },
-    profile: profileQuery.data || null,
-
-    isLoading:
-      loansQuery.isLoading ||
-      queueQuery.isLoading ||
-      finesQuery.isLoading ||
-      finesSummaryQuery.isLoading ||
-      profileQuery.isLoading,
-
-    isError:
-      loansQuery.isError ||
-      queueQuery.isError ||
-      finesQuery.isError ||
-      finesSummaryQuery.isError ||
-      profileQuery.isError,
-
-    // Mutation triggers
+    loans,
+    queue,
+    fines,
+    finesSummary,
+    profile,
+    isLoading,
+    isError,
     renewLoan: renewMutation.mutateAsync,
+    payFine: payFineMutation.mutateAsync,
+    cancelHold: cancelHoldMutation.mutateAsync,
     isRenewing: renewMutation.isPending,
     renewingLoanId: renewMutation.variables,
-
-    payFine: payFineMutation.mutateAsync,
     isPaying: payFineMutation.isPending,
-
-    cancelHold: cancelHoldMutation.mutateAsync,
     isCancellingHold: cancelHoldMutation.isPending,
     cancellingHoldId: cancelHoldMutation.variables,
   };
 };
+
+export default useLoansTracker;

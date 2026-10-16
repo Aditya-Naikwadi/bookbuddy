@@ -92,34 +92,78 @@ const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
       if (!result || !result.loan) return;
       const { loan, book } = result;
 
-      // Post-transaction side-effects execute strictly after successful commit
+      // 1. Immediate real-time socket event broadcast
       try {
-        await streakService.recordQualifyingAction(userId, collegeId, 'checkout');
-      } catch (err) {
+        const { emitRealtimeEvent, events } = require('../sockets');
+        const rooms = [
+          collegeId ? `college:${collegeId}` : null,
+          collegeId ? `role:${collegeId}:librarian` : null,
+          userId ? `user:${userId}` : null,
+        ].filter(Boolean);
+
+        emitRealtimeEvent({
+          event: events.LOAN_ISSUED,
+          rooms,
+          entityId: loan._id,
+          collegeId,
+          changed: {
+            status: 'active',
+            bookId,
+            userId,
+            dueDate: loan.dueDate,
+            renewalCount: loan.renewalCount || 0,
+            maxRenewals: loan.maxRenewals || config.maxRenewals,
+            copiesAvailable: book ? book.copiesAvailable : 0,
+            book: book
+              ? {
+                  _id: book._id,
+                  title: book.title,
+                  author: book.author,
+                  coverImage: book.coverImage,
+                }
+              : undefined,
+          },
+          payload: {
+            loanId: loan._id,
+            bookId,
+            userId,
+            copiesAvailable: book ? book.copiesAvailable : 0,
+            loan: typeof loan?.toObject === 'function' ? loan.toObject() : loan,
+          },
+        });
+
+        const bookRooms = [
+          collegeId ? `college:${collegeId}` : null,
+          book?.isShareableAcrossColleges ? 'cross-college:public' : null,
+        ].filter(Boolean);
+
+        emitRealtimeEvent({
+          event: events.BOOK_UPDATED,
+          rooms: bookRooms,
+          entityId: bookId,
+          collegeId,
+          changed: {
+            copiesAvailable: book ? book.copiesAvailable : 0,
+            reservedCopies: book?.reservedCopies || 0,
+            copiesTotal: book?.copiesTotal || 0,
+          },
+        });
+      } catch (_err) {
+        // Non-blocking socket emit
+      }
+
+      // 2. Post-transaction streak and badge updates
+      streakService.recordQualifyingAction(userId, collegeId, 'checkout').catch((err) => {
         logger.error(
           `Error recording qualifying streak action after book checkout: ${err.message}`
         );
-      }
+      });
 
       badgeService
         .evaluateBadges(userId, 'book_borrowed', { bookId, loanId: loan._id })
         .catch((err) =>
           logger.error(`Error evaluating badges after book checkout: ${err.message}`)
         );
-
-      try {
-        const socketModule = require('../sockets');
-        const io =
-          socketModule && typeof socketModule.getIo === 'function' ? socketModule.getIo() : null;
-        if (io && collegeId) {
-          io.to(`college:${collegeId}`).emit('book:availability_updated', {
-            bookId,
-            availableCopies: book ? book.copiesAvailable : undefined,
-          });
-        }
-      } catch (_err) {
-        // Non-blocking socket emit
-      }
     }
   );
 
@@ -166,6 +210,8 @@ const returnBook = async (loanId, collegeId) => {
         updatedBook || (await Book.findOne({ _id: loan.bookId, collegeId }).session(session));
 
       // 4. Promote next hold reservation in database within session
+      const holdPickupWindowHours = config.holdPickupWindowHours || 48;
+      const expiresAt = new Date(Date.now() + holdPickupWindowHours * 60 * 60 * 1000);
       const nextHold = await Reservation.findOneAndUpdate(
         {
           bookId: loan.bookId,
@@ -176,6 +222,7 @@ const returnBook = async (loanId, collegeId) => {
           $set: {
             status: 'ready_for_pickup',
             readyAt: new Date(),
+            expiresAt,
           },
         },
         {
@@ -196,11 +243,85 @@ const returnBook = async (loanId, collegeId) => {
         .evaluateBadges(loan.userId, 'book_returned', { loanId: loan._id, bookId: loan.bookId })
         .catch((err) => logger.error(`Error evaluating badges after book return: ${err.message}`));
 
+      // 2. Realtime socket event broadcast immediately
+      try {
+        const { emitRealtimeEvent, events } = require('../sockets');
+        const returnRooms = [
+          collegeId ? `college:${collegeId}` : null,
+          collegeId ? `role:${collegeId}:librarian` : null,
+          loan.userId ? `user:${loan.userId}` : null,
+        ].filter(Boolean);
+
+        emitRealtimeEvent({
+          event: events.LOAN_RETURNED,
+          rooms: returnRooms,
+          entityId: loan._id,
+          collegeId,
+          changed: {
+            status: 'returned',
+            returnDate: loan.returnDate,
+            bookId: loan.bookId,
+            userId: loan.userId,
+            copiesAvailable: book ? book.copiesAvailable : 0,
+          },
+          payload: {
+            loanId: loan._id,
+            bookId: loan.bookId,
+            userId: loan.userId,
+            copiesAvailable: book ? book.copiesAvailable : 0,
+            loan: typeof loan?.toObject === 'function' ? loan.toObject() : loan,
+          },
+        });
+
+        const bookRooms = [
+          collegeId ? `college:${collegeId}` : null,
+          book?.isShareableAcrossColleges ? 'cross-college:public' : null,
+        ].filter(Boolean);
+
+        emitRealtimeEvent({
+          event: events.BOOK_UPDATED,
+          rooms: bookRooms,
+          entityId: loan.bookId,
+          collegeId,
+          changed: {
+            copiesAvailable: book ? book.copiesAvailable : 0,
+            reservedCopies: book?.reservedCopies || 0,
+            copiesTotal: book?.copiesTotal || 0,
+          },
+        });
+
+        if (nextHold) {
+          emitRealtimeEvent({
+            event: events.RESERVATION_READY,
+            rooms: [
+              `user:${nextHold.userId}`,
+              collegeId ? `role:${collegeId}:librarian` : null,
+            ].filter(Boolean),
+            entityId: nextHold._id,
+            collegeId,
+            changed: {
+              status: 'ready_for_pickup',
+              bookId: nextHold.bookId,
+              expiresAt: nextHold.expiresAt,
+              bookTitle,
+            },
+            payload: {
+              reservationId: nextHold._id,
+              bookId: nextHold.bookId,
+              userId: nextHold.userId,
+              expiresAt: nextHold.expiresAt,
+              bookTitle,
+            },
+          });
+        }
+      } catch (_err) {
+        // Non-blocking socket emit
+      }
+
+      // 3. Borrower return confirmation notification & email (asynchronous background)
       const { sendNotificationWithEmailFallback } = require('./emailService');
       const bookTitle = book ? book.title : 'Catalog Item';
-
-      // 2. Borrower return confirmation notification & email
-      await sendNotificationWithEmailFallback(
+      sendNotificationWithEmailFallback(
         loan.userId,
         'book_returned',
         `Your borrowed book "${bookTitle}" was successfully returned to the library.`,
@@ -212,21 +333,6 @@ const returnBook = async (loanId, collegeId) => {
       ).catch((err) => {
         logger.error(`Error sending return confirmation email to borrower: ${err.message}`);
       });
-
-      // 3. Realtime socket event
-      try {
-        const socketModule = require('../sockets');
-        const io =
-          socketModule && typeof socketModule.getIo === 'function' ? socketModule.getIo() : null;
-        if (io && collegeId) {
-          io.to(`college:${collegeId}`).emit('book:availability_updated', {
-            bookId: loan.bookId,
-            availableCopies: book ? book.copiesAvailable : undefined,
-          });
-        }
-      } catch (_err) {
-        // Non-blocking socket emit
-      }
 
       // 4. Promoted hold patron notification
       if (nextHold) {
@@ -369,6 +475,36 @@ const renewLoan = async (loanId, userId, collegeId) => {
         } catch (streakErr) {
           logger.error(`Error recording renewal streak action: ${streakErr.message}`);
         }
+      }
+
+      try {
+        const { emitRealtimeEvent, events } = require('../sockets');
+        const renewRooms = [
+          loan.collegeId ? `college:${loan.collegeId}` : null,
+          loan.collegeId ? `role:${loan.collegeId}:librarian` : null,
+          loan.userId ? `user:${loan.userId}` : null,
+        ].filter(Boolean);
+
+        emitRealtimeEvent({
+          event: events.LOAN_RENEWED,
+          rooms: renewRooms,
+          entityId: loan._id,
+          collegeId: loan.collegeId,
+          changed: {
+            dueDate: loan.dueDate,
+            renewalCount: loan.renewalCount,
+            status: loan.status,
+            maxRenewals: loan.maxRenewals,
+          },
+          payload: {
+            loanId: loan._id,
+            dueDate: loan.dueDate,
+            renewalCount: loan.renewalCount,
+            loan,
+          },
+        });
+      } catch (_err) {
+        // Non-blocking socket emit
       }
     }
   );
