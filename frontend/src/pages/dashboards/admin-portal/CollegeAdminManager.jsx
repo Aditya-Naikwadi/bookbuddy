@@ -44,11 +44,16 @@ export default function CollegeAdminManager() {
     async function loadColleges() {
       try {
         setIsLoading(true);
-        const data = await adminApi.listColleges();
+        setError("");
+        const data = await adminApi.listColleges(reloadToken > 0);
         if (!ignore) setColleges(data || []);
       } catch (err) {
         console.error(err);
-        if (!ignore) setError("Failed to load college institution records.");
+        if (!ignore)
+          setError(
+            err.response?.data?.message ||
+              "Failed to load college institution records.",
+          );
       } finally {
         if (!ignore) setIsLoading(false);
       }
@@ -299,7 +304,18 @@ export default function CollegeAdminManager() {
         {/* Error Alert */}
         {error && (
           <div className="bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 p-4 rounded-xl text-rose-700 dark:text-rose-300 text-xs flex items-center justify-between shadow-xs">
-            <span>{error}</span>
+            <div className="flex items-center gap-2">
+              <span>{error}</span>
+              <button
+                onClick={() => {
+                  setError("");
+                  fetchColleges();
+                }}
+                className="underline font-bold hover:text-rose-900 dark:hover:text-rose-100 ml-2"
+              >
+                Retry
+              </button>
+            </div>
             <button
               onClick={() => setError("")}
               className="text-rose-800 dark:text-rose-200 font-semibold hover:underline"

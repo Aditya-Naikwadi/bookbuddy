@@ -162,7 +162,7 @@ export const featureApi = {
       return data.data || data;
     } catch (err) {
       console.warn("Backend update feature config call failed:", err);
-      return { enabledFeatures };
+      throw err;
     }
   },
 

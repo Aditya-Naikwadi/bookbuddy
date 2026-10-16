@@ -309,6 +309,24 @@ const expensiveRouteLimiter = async (req, res, next) => {
     return next();
   }
 
+  // Super-admin platform operators are exempt from the 10 req/min expensive limiter
+  if (req.user && (req.user.role === 'super-admin' || req.user.role === 'superadmin')) {
+    return next();
+  }
+
+  if (!req.user && req.headers.authorization?.startsWith('Bearer ')) {
+    try {
+      const { verifyAccessToken } = require('../utils/token');
+      const token = req.headers.authorization.split(' ')[1];
+      const decoded = verifyAccessToken(token);
+      if (decoded && (decoded.role === 'super-admin' || decoded.role === 'superadmin')) {
+        return next();
+      }
+    } catch {
+      // Ignore token decode errors here and continue to normal rate limiting
+    }
+  }
+
   const key = req.user && req.user.id ? `user:${req.user.id}` : `ip:${getClientIp(req)}`;
   try {
     await limiters.expensive(key);

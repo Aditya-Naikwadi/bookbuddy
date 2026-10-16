@@ -51,25 +51,36 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
+let csrfSingleFlightPromise = null;
+
 export const fetchCsrfToken = async () => {
-  try {
-    const { data } = await apiClient.get("/auth/csrf-token");
-    if (data?.csrfToken) {
-      setCsrfToken(data.csrfToken);
-      return data.csrfToken;
-    }
-  } catch {
-    const cookieCsrf = getCookie("_csrf");
-    if (cookieCsrf) {
-      setCsrfToken(cookieCsrf);
-      return cookieCsrf;
-    }
+  if (csrfSingleFlightPromise) {
+    return csrfSingleFlightPromise;
   }
+  csrfSingleFlightPromise = (async () => {
+    try {
+      const { data } = await apiClient.get("/auth/csrf-token");
+      if (data?.csrfToken) {
+        setCsrfToken(data.csrfToken);
+        return data.csrfToken;
+      }
+    } catch {
+      const cookieCsrf = getCookie("_csrf");
+      if (cookieCsrf) {
+        setCsrfToken(cookieCsrf);
+        return cookieCsrf;
+      }
+    } finally {
+      csrfSingleFlightPromise = null;
+    }
+    return null;
+  })();
+  return csrfSingleFlightPromise;
 };
 
 // Request Interceptor
 apiClient.interceptors.request.use(
-  (config) => {
+  async (config) => {
     const token =
       inMemoryAccessToken ||
       (typeof localStorage !== "undefined"
@@ -82,7 +93,14 @@ apiClient.interceptors.request.use(
     // Attach CSRF header on state-changing requests
     const stateChangingMethods = ["post", "put", "delete", "patch"];
     if (stateChangingMethods.includes(config.method?.toLowerCase())) {
-      const csrf = inMemoryCsrfToken || getCookie("_csrf");
+      let csrf = inMemoryCsrfToken || getCookie("_csrf");
+      if (!csrf && !config.url?.includes("/auth/csrf-token")) {
+        try {
+          csrf = await fetchCsrfToken();
+        } catch {
+          // Fallback to existing headers or cookie if token retrieval fails
+        }
+      }
       if (csrf) {
         config.headers["x-csrf-token"] = csrf;
       }

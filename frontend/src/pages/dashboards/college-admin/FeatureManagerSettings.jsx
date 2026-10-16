@@ -35,6 +35,7 @@ export default function FeatureManagerSettings() {
     queryKey: ["adminCollegesList"],
     queryFn: () => adminApi.listColleges(),
     enabled: isSuperAdmin,
+    staleTime: 60 * 1000,
   });
 
   const targetCollegeId = isSuperAdmin
@@ -47,6 +48,7 @@ export default function FeatureManagerSettings() {
     queryKey: ["myCollegeConfig", targetCollegeId || "all"],
     queryFn: () => featureApi.getCollegeFeatures(targetCollegeId || "all"),
     enabled: !!user,
+    staleTime: 30 * 1000,
   });
 
   const rawFeatures = configData?.enabledFeatures ||
@@ -81,24 +83,20 @@ export default function FeatureManagerSettings() {
     user?.collegeProfile?.slug ||
     "my-college";
 
-  const [enabledFeatures, setEnabledFeatures] = useState(
-    () => new Set(getEnabledFeaturesList(collegeProfile.enabledFeatures)),
+  const baseFeatures = new Set(
+    getEnabledFeaturesList(
+      configData?.enabledFeatures || collegeProfile.enabledFeatures,
+    ),
   );
-  const [prevConfigData, setPrevConfigData] = useState(configData);
-
-  if (configData !== prevConfigData) {
-    setPrevConfigData(configData);
-    if (configData?.enabledFeatures) {
-      setEnabledFeatures(
-        new Set(getEnabledFeaturesList(configData.enabledFeatures)),
-      );
-    }
-  }
+  const [overrideFeatures, setOverrideFeatures] = useState(null);
+  const enabledFeatures = overrideFeatures || baseFeatures;
 
   const [pendingApprovalSet, setPendingApprovalSet] = useState(
     new Set(["leaderboards"]),
   );
   const [saveSuccessMsg, setSaveSuccessMsg] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleToggle = (featId) => {
     const feat = CATALOG_REGISTRY[featId];
@@ -118,7 +116,7 @@ export default function FeatureManagerSettings() {
         feat.requires.forEach((reqId) => next.add(reqId));
       }
     }
-    setEnabledFeatures(next);
+    setOverrideFeatures(next);
   };
 
   const handleRequestApproval = (featId) => {
@@ -133,6 +131,8 @@ export default function FeatureManagerSettings() {
 
   const handleSave = async () => {
     try {
+      setIsSaving(true);
+      setSaveError("");
       const isSyncAll = isSuperAdmin && selectedCollegeId === "all";
       await featureApi.updateCollegeFeatures(
         Array.from(enabledFeatures),
@@ -148,9 +148,15 @@ export default function FeatureManagerSettings() {
           `Feature configuration saved for ${targetCollegeName}!`,
         );
       }
+      setOverrideFeatures(null);
       setTimeout(() => setSaveSuccessMsg(""), 4000);
-    } catch {
-      setSaveSuccessMsg("Failed to save changes.");
+    } catch (err) {
+      setSaveError(
+        err.response?.data?.message || "Failed to save feature configuration.",
+      );
+      setTimeout(() => setSaveError(""), 5000);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -216,7 +222,10 @@ export default function FeatureManagerSettings() {
               <select
                 id="feature-target-tenant"
                 value={selectedCollegeId}
-                onChange={(e) => setSelectedCollegeId(e.target.value)}
+                onChange={(e) => {
+                  setSelectedCollegeId(e.target.value);
+                  setOverrideFeatures(null);
+                }}
                 className="bg-slate-900 border border-slate-700 text-white rounded-lg px-2.5 py-1 text-xs font-semibold focus:outline-none focus:border-indigo-500"
               >
                 <option value="all">⚡ All Institutions (Global Sync)</option>
@@ -234,29 +243,42 @@ export default function FeatureManagerSettings() {
               <CheckCircle2 className="w-4 h-4" /> {saveSuccessMsg}
             </span>
           )}
+          {saveError && (
+            <span className="text-xs font-semibold text-rose-400 flex items-center gap-1">
+              {saveError}
+            </span>
+          )}
           <button
             onClick={handleSave}
-            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2 cursor-pointer"
+            disabled={isSaving}
+            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2 cursor-pointer"
           >
-            <Check className="w-4 h-4" />
+            {isSaving ? (
+              <Clock className="w-4 h-4 animate-spin" />
+            ) : (
+              <Check className="w-4 h-4" />
+            )}
             <span>
-              {isSuperAdmin && selectedCollegeId === "all"
-                ? "Sync Across All Tenants"
-                : "Save Configuration"}
+              {isSaving
+                ? "Saving..."
+                : isSuperAdmin && selectedCollegeId === "all"
+                  ? "Sync Across All Tenants"
+                  : "Save Configuration"}
             </span>
           </button>
         </div>
       </div>
 
-      {FEATURE_CATEGORIES.map((cat) => {
+      {Object.values(FEATURE_CATEGORIES).map((cat) => {
         const catFeatures = Object.values(CATALOG_REGISTRY).filter(
-          (f) => f.category === cat.id,
+          (f) => f.category === cat.key,
         );
+        if (catFeatures.length === 0) return null;
 
         return (
-          <div key={cat.id} className="space-y-4">
+          <div key={cat.key} className="space-y-4">
             <div className="border-b border-slate-800 pb-2">
-              <h2 className="text-base font-bold text-white">{cat.name}</h2>
+              <h2 className="text-base font-bold text-white">{cat.label}</h2>
               <p className="text-xs text-slate-400">{cat.description}</p>
             </div>
 

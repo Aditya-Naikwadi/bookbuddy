@@ -51,14 +51,14 @@ const { rejectOnboardingSchema } = require('@bookbuddy/shared/schemas/auth');
 const { paramIdSchema, paramRequestIdSchema } = require('@bookbuddy/shared/schemas/common');
 const { moderateEResourceRouteSchema } = require('@bookbuddy/shared/schemas/moderation');
 
-const { userLimiter, expensiveRouteLimiter } = require('../../middlewares/rateLimiters');
+const { userLimiter } = require('../../middlewares/rateLimiters');
 
 // Require authentication and super_admin privileges globally for these endpoints.
 // Note: super_admin operates globally and does not scope to a specific tenantFilter.
 router.use(protect, requireRole('super-admin'));
 router.use(userLimiter);
 
-router.route('/overview').get(expensiveRouteLimiter, getOverview);
+router.route('/overview').get(getOverview);
 router
   .route('/admins')
   .get(getAdmins)
@@ -66,7 +66,7 @@ router
 
 router
   .route('/colleges')
-  .get(expensiveRouteLimiter, listColleges)
+  .get(listColleges)
   .post(validate(createCollegeSchema), auditLog('college.create'), createCollege);
 
 router
@@ -82,7 +82,7 @@ router
   .route('/colleges/:id/status')
   .patch(validate(paramIdSchema), auditLog('college.status_patch'), patchCollegeStatus);
 
-router.route('/audit-logs').get(expensiveRouteLimiter, getAuditLogs);
+router.route('/audit-logs').get(getAuditLogs);
 
 // Global content moderation routes
 router.route('/moderation/pending').get(getGlobalPendingEResources);
@@ -147,14 +147,14 @@ router
 router.route('/users/revoke-impersonation').post(revokeImpersonationToken);
 
 // Infrastructure Telemetry & Cron Job routes
-router.route('/system/health').get(expensiveRouteLimiter, getSystemHealth);
-router.route('/system/cron-logs').get(expensiveRouteLimiter, getCronLogs);
+router.route('/system/health').get(getSystemHealth);
+router.route('/system/cron-logs').get(getCronLogs);
 router.route('/predictive-forecasting').get(getPredictiveDemandForecast);
 
 // Data Oversight routes
-router.route('/data/loans').get(expensiveRouteLimiter, getGlobalLoans);
-router.route('/data/fines').get(expensiveRouteLimiter, getGlobalFines);
-router.route('/data/catalog').get(expensiveRouteLimiter, getGlobalCatalog);
+router.route('/data/loans').get(getGlobalLoans);
+router.route('/data/fines').get(getGlobalFines);
+router.route('/data/catalog').get(getGlobalCatalog);
 
 // Support & Complaints routes
 router.route('/support/complaints').get(getGlobalComplaints);

@@ -68,6 +68,7 @@ export default function UserManagement() {
     async function loadData() {
       try {
         setIsLoading(true);
+        setError("");
         const collegeList = await adminApi.listColleges();
         if (isMounted) setColleges(collegeList || []);
 
@@ -88,7 +89,10 @@ export default function UserManagement() {
         }
       } catch (err) {
         console.error(err);
-        if (isMounted) setError("Failed to load user directory.");
+        if (isMounted)
+          setError(
+            err.response?.data?.message || "Failed to load user directory.",
+          );
       } finally {
         if (isMounted) setIsLoading(false);
       }

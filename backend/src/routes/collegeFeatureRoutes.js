@@ -21,14 +21,14 @@ router.get('/my-config', protect, bindTenantContext, getMyCollegeConfig);
 router.post(
   '/features/enable',
   protect,
-  restrictTo('collegeadmin', 'superadmin'),
+  restrictTo('collegeadmin', 'superadmin', 'college-admin', 'super-admin'),
   bindTenantContext,
   enableOrRequestFeature
 );
 router.patch(
   '/features/realtime-mode',
   protect,
-  restrictTo('collegeadmin', 'superadmin'),
+  restrictTo('collegeadmin', 'superadmin', 'college-admin', 'super-admin'),
   bindTenantContext,
   updateRealtimeMode
 );

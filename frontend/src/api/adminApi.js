@@ -5,6 +5,17 @@ import {
   createAdminBodySchema,
 } from "@shared/schemas/admin";
 
+let listCollegesPromise = null;
+let listCollegesCached = null;
+let listCollegesCachedAt = 0;
+const CACHE_TTL_MS = 15000; // 15 seconds
+
+export const invalidateCollegesCache = () => {
+  listCollegesCached = null;
+  listCollegesCachedAt = 0;
+  listCollegesPromise = null;
+};
+
 export const adminApi = {
   getOverview: async (refresh = false) => {
     const { data } = await apiClient.get("/dashboards/admin-portal/overview", {
@@ -12,9 +23,30 @@ export const adminApi = {
     });
     return data.data;
   },
-  listColleges: async () => {
-    const { data } = await apiClient.get("/dashboards/admin-portal/colleges");
-    return data.data;
+  listColleges: async (forceRefresh = false) => {
+    if (
+      !forceRefresh &&
+      listCollegesCached &&
+      Date.now() - listCollegesCachedAt < CACHE_TTL_MS
+    ) {
+      return listCollegesCached;
+    }
+    if (listCollegesPromise) {
+      return listCollegesPromise;
+    }
+    listCollegesPromise = (async () => {
+      try {
+        const { data } = await apiClient.get(
+          "/dashboards/admin-portal/colleges",
+        );
+        listCollegesCached = data.data;
+        listCollegesCachedAt = Date.now();
+        return data.data;
+      } finally {
+        listCollegesPromise = null;
+      }
+    })();
+    return listCollegesPromise;
   },
   getCollegeDetails: async (id) => {
     const { data } = await apiClient.get(
@@ -28,6 +60,7 @@ export const adminApi = {
       "/dashboards/admin-portal/colleges",
       validated,
     );
+    invalidateCollegesCache();
     return data;
   },
   updateCollege: async (id, collegeData) => {
@@ -35,6 +68,7 @@ export const adminApi = {
       `/dashboards/admin-portal/colleges/${id}`,
       collegeData,
     );
+    invalidateCollegesCache();
     return data;
   },
   updateCollegeStatus: async (id, status) => {
@@ -42,6 +76,7 @@ export const adminApi = {
       `/dashboards/admin-portal/colleges/${id}/status`,
       { status },
     );
+    invalidateCollegesCache();
     return data;
   },
   getAdmins: async (collegeId) => {
