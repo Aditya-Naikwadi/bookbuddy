@@ -7,49 +7,54 @@ const logger = require('../utils/logger');
  * Extract candidate tenant subdomain slug from HTTP request
  */
 function extractSubdomain(req) {
-  // 1. Check explicit test / proxy header
-  const headerSubdomain = req.headers['x-tenant-subdomain'] || req.headers['x-college-slug'];
-  if (headerSubdomain && typeof headerSubdomain === 'string') {
-    return headerSubdomain.trim().toLowerCase();
-  }
-
-  // 2. Parse Host / X-Forwarded-Host header
-  const rawHost = req.headers['x-forwarded-host'] || req.headers.host || req.hostname || '';
+  // 1. Parse Host / X-Forwarded-Host header first
+  const rawHost = req?.headers?.['x-forwarded-host'] || req?.headers?.host || req?.hostname || '';
   const hostWithoutPort = rawHost.split(':')[0].trim().toLowerCase();
 
-  if (!hostWithoutPort) return null;
-
-  // Check against root or bare domains
+  let hostSubdomain = null;
   const rootDomains = ['localhost', '127.0.0.1', 'bookbuddy.com', 'bookbuddy.app', 'vercel.app'];
 
-  if (rootDomains.includes(hostWithoutPort)) {
-    return null;
-  }
-
-  // Check subdomains of localhost: e.g. "mit.localhost" -> "mit"
-  if (hostWithoutPort.endsWith('.localhost')) {
-    const parts = hostWithoutPort.split('.');
-    if (parts.length === 2 && parts[0]) {
-      return parts[0];
+  if (hostWithoutPort && !rootDomains.includes(hostWithoutPort)) {
+    if (hostWithoutPort.endsWith('.localhost')) {
+      const parts = hostWithoutPort.split('.');
+      if (parts.length === 2 && parts[0]) {
+        hostSubdomain = parts[0];
+      }
+    } else {
+      const bookBuddyMatch = hostWithoutPort.match(
+        /^([a-z0-9-]+)\.bookbuddy\.(?:com|app|io|org|net)$/i
+      );
+      if (bookBuddyMatch && bookBuddyMatch[1]) {
+        hostSubdomain = bookBuddyMatch[1].toLowerCase();
+      } else {
+        const parts = hostWithoutPort.split('.');
+        if (parts.length >= 3 && !hostWithoutPort.endsWith('.vercel.app')) {
+          hostSubdomain = parts[0].toLowerCase();
+        }
+      }
     }
   }
 
-  // Check subdomains of bookbuddy: e.g. "stanford.bookbuddy.com" -> "stanford"
-  const bookBuddyMatch = hostWithoutPort.match(
-    /^([a-z0-9-]+)\.bookbuddy\.(?:com|app|io|org|net)$/i
-  );
-  if (bookBuddyMatch && bookBuddyMatch[1]) {
-    return bookBuddyMatch[1].toLowerCase();
+  // 2. Check explicit test / proxy / client header
+  const headerSubdomain =
+    req?.headers?.['x-tenant-subdomain'] ||
+    req?.headers?.['x-college-subdomain'] ||
+    req?.headers?.['x-college-slug'];
+
+  const cleanHeader =
+    headerSubdomain && typeof headerSubdomain === 'string'
+      ? headerSubdomain.trim().toLowerCase()
+      : null;
+
+  // 3. Spoofed header detection: If the request arrived on an explicit host subdomain
+  // (e.g. mit.bookbuddy.com), but passed a conflicting tenant header (e.g. x-college-subdomain: stanford),
+  // flag spoofing!
+  if (hostSubdomain && cleanHeader && hostSubdomain !== cleanHeader) {
+    if (req) req.subdomainSpoofDetected = true;
+    return '__spoofed_subdomain__';
   }
 
-  // Check general multi-part subdomain (excluding vercel preview branches e.g. xxx.vercel.app)
-  const parts = hostWithoutPort.split('.');
-  if (parts.length >= 3 && !hostWithoutPort.endsWith('.vercel.app')) {
-    const candidate = parts[0];
-    return candidate.toLowerCase();
-  }
-
-  return null;
+  return hostSubdomain || cleanHeader || null;
 }
 
 /**
@@ -64,6 +69,18 @@ const subdomainTenantResolver = async (req, res, next) => {
       return next();
     }
 
+    if (candidateSlug === '__spoofed_subdomain__' || req.subdomainSpoofDetected) {
+      logger.warn(
+        `[SPOOFED SUBDOMAIN DETECTED] Host vs Header mismatch on request from ${req.ip || 'unknown IP'}`
+      );
+      return next(
+        new AppError(
+          'Security violation: Spoofed tenant subdomain header does not match host domain.',
+          403
+        )
+      );
+    }
+
     // Ignore reserved tokens (e.g. api, admin, app, portal)
     if (isSlugReserved(candidateSlug)) {
       return next();
@@ -75,7 +92,16 @@ const subdomainTenantResolver = async (req, res, next) => {
       return next(new AppError(`Institution library portal "${candidateSlug}" not found.`, 404));
     }
 
-    if (college.status !== 'active' && college.isActive === false) {
+    if (college.status === 'suspended') {
+      return next(
+        new AppError(
+          `The library portal for "${college.name}" is currently suspended. Please contact institutional support.`,
+          403
+        )
+      );
+    }
+
+    if (college.status !== 'active' || college.isActive === false) {
       return next(
         new AppError(`The library portal for "${college.name}" is currently inactive.`, 403)
       );

@@ -1,34 +1,34 @@
-const fs = require('fs');
-const path = require('path');
-const serverDir = fs.existsSync(path.join(__dirname, '../../backend'))
-  ? path.join(__dirname, '../../backend')
-  : path.join(__dirname, '../server');
+const fs = require("fs");
+const path = require("path");
+const serverDir = fs.existsSync(path.join(__dirname, "../../backend"))
+  ? path.join(__dirname, "../../backend")
+  : path.join(__dirname, "../server");
 
 let dotenv;
 try {
-  dotenv = require('dotenv');
+  dotenv = require("dotenv");
 } catch (_err) {
   try {
-    dotenv = require(path.join(serverDir, 'node_modules/dotenv'));
+    dotenv = require(path.join(serverDir, "node_modules/dotenv"));
   } catch (_e) {
     // Optional fallback if dotenv is absent
   }
 }
-if (dotenv && typeof dotenv.config === 'function') {
-  dotenv.config({ path: path.join(serverDir, '.env') });
+if (dotenv && typeof dotenv.config === "function") {
+  dotenv.config({ path: path.join(serverDir, ".env") });
 }
 
 let mongoose;
 try {
-  mongoose = require('mongoose');
+  mongoose = require("mongoose");
 } catch (_err) {
-  mongoose = require(path.join(serverDir, 'node_modules/mongoose'));
+  mongoose = require(path.join(serverDir, "node_modules/mongoose"));
 }
 
-const connectDB = require(path.join(serverDir, 'src/config/db'));
-const Book = require(path.join(serverDir, 'src/models/Book'));
-const Tag = require(path.join(serverDir, 'src/models/Tag'));
-const { normalizeTag } = require(path.join(serverDir, 'src/utils/tagUtils'));
+const connectDB = require(path.join(serverDir, "src/config/db"));
+const Book = require(path.join(serverDir, "src/models/Book"));
+const Tag = require(path.join(serverDir, "src/models/Tag"));
+const { normalizeTag } = require(path.join(serverDir, "src/utils/tagUtils"));
 
 const migrateTags = async (options = { quiet: false }) => {
   const log = (...args) => {
@@ -37,7 +37,7 @@ const migrateTags = async (options = { quiet: false }) => {
     }
   };
 
-  log('Starting Tag Migration Process...');
+  log("Starting Tag Migration Process...");
 
   // 1. Fetch all books from DB with skipTenantScope option
   const books = await Book.find({}, null, { skipTenantScope: true });
@@ -76,7 +76,9 @@ const migrateTags = async (options = { quiet: false }) => {
     updatedBooksCount++;
   }
 
-  log(`Upserting ${tagCountMap.size} unique normalized tags into Tag collection...`);
+  log(
+    `Upserting ${tagCountMap.size} unique normalized tags into Tag collection...`,
+  );
 
   // 2. Upsert unique tags into Tag collection & update usageCount
   for (const [slug, { name, count }] of tagCountMap.entries()) {
@@ -86,7 +88,7 @@ const migrateTags = async (options = { quiet: false }) => {
         $setOnInsert: { slug, name },
         $inc: { usageCount: count },
       },
-      { upsert: true, returnDocument: 'after', runValidators: true }
+      { upsert: true, returnDocument: "after", runValidators: true },
     );
   }
 
@@ -111,7 +113,7 @@ if (require.main === module) {
       await migrateTags();
       process.exit(0);
     } catch (err) {
-      console.error('Error running migrateTags script:', err);
+      console.error("Error running migrateTags script:", err);
       process.exit(1);
     }
   })();

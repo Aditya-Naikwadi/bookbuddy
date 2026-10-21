@@ -55,10 +55,10 @@ const {
 } = require('@bookbuddy/shared/schemas/auth');
 
 const validate = require('../middlewares/validate');
-const { authLimiter } = require('../middlewares/rateLimiters');
+const { authLimiter, searchLimiter } = require('../middlewares/rateLimiters');
 
 // Public route to get list of active colleges for Flow A dropdown
-router.get('/colleges', getActiveColleges);
+router.get('/colleges', searchLimiter, getActiveColleges);
 
 // Flow A: Student Self-Registration & OTP Verification
 router.post('/student', authLimiter, validate(studentRegisterRouteSchema), registerStudent);

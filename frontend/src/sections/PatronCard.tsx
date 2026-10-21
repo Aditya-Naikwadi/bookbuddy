@@ -119,10 +119,14 @@ export const PatronCardSection = () => {
                     PATRON
                   </p>
                   <p className="text-white text-lg font-bold tracking-wider">
-                    PRADNYA PAWAR
+                    {isAuthenticated && user?.name
+                      ? user.name.toUpperCase()
+                      : "CAMPUS PATRON"}
                   </p>
                   <p className="text-indigo-200 text-sm font-mono mt-1 opacity-80">
-                    ID: 8493 2049 1194
+                    {isAuthenticated && (user?.studentId || user?.email)
+                      ? `ID: ${user?.studentId || user?.email}`
+                      : "DIGITAL PASS ACTIVE"}
                   </p>
                 </div>
                 <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center p-1 shadow-lg">

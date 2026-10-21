@@ -42,6 +42,7 @@
     "check:races": "cd backend && npm run check:races",
     "check:contracts": "cd backend && npm run check:contracts",
     "check:normalization": "cd backend && npm run check:normalization",
+    "check:links-and-lighthouse": "node scripts/testing/check-broken-links-and-lighthouse.js",
     "ci:gates": "npm run check:audit && npm run scan:secrets && npm run check:tenant-isolation && npm run check:nplusone && npm run check:transactions && npm run check:races && npm run check:contracts && npm run check:normalization",
     "test:load": "k6 run tests/load/k6/k6-load-test.js",
     "loadtest:smoke": "node tests/load/smoke.js",

@@ -2,4 +2,4 @@
 /**
  * Root forwarding entrypoint for Render monitoring
  */
-require('./deployment/render-monitor.js');
+require("./deployment/render-monitor.js");

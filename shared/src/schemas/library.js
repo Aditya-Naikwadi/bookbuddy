@@ -98,6 +98,30 @@ const createStudentBodySchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters long'),
 });
 
+const publicCatalogQuerySchema = z.object({
+  search: z.string().max(200, 'Search term too long').trim().optional(),
+  category: z.string().max(100, 'Category too long').trim().optional(),
+  limit: z.coerce.number().int('Limit must be an integer').min(1, 'Limit must be at least 1').max(50, 'Limit cannot exceed 50').default(12).optional(),
+  page: z.coerce.number().int('Page must be an integer').min(1, 'Page must be at least 1').default(1).optional(),
+  sort: z.enum(['newest', 'popular', 'title', 'availability']).default('newest').optional(),
+});
+
+const publicCatalogRouteSchema = z.object({
+  query: publicCatalogQuerySchema,
+});
+
+const publicEResourcesQuerySchema = z.object({
+  search: z.string().max(200, 'Search term too long').trim().optional(),
+  genre: z.string().max(100, 'Genre too long').trim().optional(),
+  limit: z.coerce.number().int('Limit must be an integer').min(1, 'Limit must be at least 1').max(50, 'Limit cannot exceed 50').default(12).optional(),
+  page: z.coerce.number().int('Page must be an integer').min(1, 'Page must be at least 1').default(1).optional(),
+  sort: z.enum(['newest', 'popular', 'title']).default('newest').optional(),
+});
+
+const publicEResourcesRouteSchema = z.object({
+  query: publicEResourcesQuerySchema,
+});
+
 const createStudentRouteSchema = z.object({
   body: createStudentBodySchema,
 });
@@ -131,4 +155,8 @@ module.exports = {
   createStudentBodySchema,
   createStudentRouteSchema,
   createStudentSchema: createStudentRouteSchema,
+  publicCatalogQuerySchema,
+  publicCatalogRouteSchema,
+  publicEResourcesQuerySchema,
+  publicEResourcesRouteSchema,
 };

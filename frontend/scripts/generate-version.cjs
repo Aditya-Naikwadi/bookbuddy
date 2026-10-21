@@ -24,6 +24,26 @@ const versionData = {
   environment: process.env.NODE_ENV || "production",
 };
 
+// Build-Time Environment Variable Validation
+const apiUrl = process.env.VITE_API_URL || process.env.VITE_API_BASE_URL || "/api/v1";
+if (apiUrl.startsWith("http://") && process.env.NODE_ENV === "production" && !apiUrl.includes("localhost")) {
+  console.warn("⚠️ Warning: Production VITE_API_URL is using insecure http:// protocol instead of https://");
+}
+if (!apiUrl.startsWith("/") && !apiUrl.startsWith("http://") && !apiUrl.startsWith("https://")) {
+  throw new Error(`Build Error: Invalid VITE_API_URL specified: "${apiUrl}". Must be relative or absolute http(s) URL.`);
+}
+
+// Ensure no secrets leaked into VITE_ prefixed environment variables
+Object.keys(process.env).forEach((key) => {
+  if (key.startsWith("VITE_")) {
+    const val = process.env[key] || "";
+    if (/mongodb(\+srv)?:\/\/|bearer |secret_key|private_key/i.test(val)) {
+      throw new Error(`Build Security Error: Potentially sensitive secret detected in frontend environment variable ${key}!`);
+    }
+  }
+});
+console.log("✅ Build-time environment variable validation passed. Base API:", apiUrl);
+
 const targetPath = path.join(__dirname, "..", "public", "version.json");
 try {
   const dir = path.dirname(targetPath);

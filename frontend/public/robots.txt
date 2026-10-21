@@ -1,0 +1,19 @@
+# BookBuddy robots.txt
+User-agent: *
+Allow: /
+Allow: /#catalog-search
+Allow: /#e-resources
+Allow: /#features
+Allow: /#how-it-works
+Allow: /#for-colleges
+Allow: /privacy-policy
+Allow: /terms
+
+# Disallow private user dashboards and authenticated administrative routes
+Disallow: /student
+Disallow: /general-dashboard
+Disallow: /college-admin
+Disallow: /admin-portal
+Disallow: /api/
+
+Sitemap: https://bookbuddy.app/sitemap.xml

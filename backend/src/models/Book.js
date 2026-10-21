@@ -155,6 +155,9 @@ bookSchema.index({ collegeId: 1, copiesAvailable: -1, title: 1 });
 bookSchema.index({ collegeId: 1, copiesAvailable: 1 });
 bookSchema.index({ collegeId: 1, isbn: 1 });
 bookSchema.index({ collegeId: 1, createdAt: -1 });
+bookSchema.index({ collegeId: 1, category: 1, createdAt: -1 });
+bookSchema.index({ createdAt: -1 });
+bookSchema.index({ category: 1, createdAt: -1 });
 bookSchema.index(
   { isShareableAcrossColleges: 1, createdAt: -1, collegeId: 1 },
   { background: true }

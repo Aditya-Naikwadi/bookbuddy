@@ -2,4 +2,4 @@
 /**
  * Root forwarding entrypoint for AI code review
  */
-require('./testing/ai-code-review.js');
+require("./testing/ai-code-review.js");

@@ -47,12 +47,18 @@ const {
   updateProgress,
   issueOfflineToken,
   getSignedDownloadUrl,
+  getPublicEResources,
 } = require('../controllers/eresourceController');
 
 const { protect } = require('../middlewares/auth');
 const scopeToTenant = require('../middlewares/scopeToTenant');
+const { searchLimiter } = require('../middlewares/rateLimiters');
 const validate = require('../middlewares/validate');
 const { updateProgressSchema } = require('@bookbuddy/shared/schemas/personalization');
+const { publicEResourcesRouteSchema } = require('@bookbuddy/shared/schemas/library');
+
+// Public e-resources route for landing page carousel (approved/published only)
+router.get('/public', searchLimiter, validate(publicEResourcesRouteSchema), getPublicEResources);
 
 router.use(protect);
 router.use(scopeToTenant);

@@ -1,6 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { getBooks, getBookById, getBookAvailability } = require('../controllers/bookController');
+const {
+  getBooks,
+  getBookById,
+  getBookAvailability,
+  getPublicBooks,
+} = require('../controllers/bookController');
 const {
   createReview,
   getBookReviews,
@@ -10,10 +15,14 @@ const {
 const { watchBook, unwatchBook, getWatchStatus } = require('../controllers/watchController');
 const validate = require('../middlewares/validate');
 const { paramIdSchema } = require('@bookbuddy/shared/schemas/common');
+const { publicCatalogRouteSchema } = require('@bookbuddy/shared/schemas/library');
 const { protect } = require('../middlewares/auth');
 const scopeToTenant = require('../middlewares/scopeToTenant');
-const { userLimiter } = require('../middlewares/rateLimiters');
+const { userLimiter, searchLimiter } = require('../middlewares/rateLimiters');
 const profanityFilter = require('../middlewares/profanityFilter');
+
+// Public catalog search route for landing page and unauthenticated visitors
+router.get('/public', searchLimiter, validate(publicCatalogRouteSchema), getPublicBooks);
 
 router.use(protect);
 router.use(scopeToTenant);

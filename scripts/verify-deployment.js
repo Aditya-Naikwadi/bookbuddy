@@ -2,4 +2,4 @@
 /**
  * Root forwarding entrypoint for deployment verification
  */
-require('./deployment/verify-deployment.js');
+require("./deployment/verify-deployment.js");

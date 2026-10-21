@@ -263,6 +263,45 @@ const getSignedDownloadUrl = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get public approved e-resources for landing page carousel
+// @route   GET /api/v1/eresources/public
+// @access  Public
+const getPublicEResources = asyncHandler(async (req, res) => {
+  const limit = Math.max(1, Math.min(50, Number(req.query.limit) || 12));
+  const { search, genre } = req.query;
+
+  // STRICT REQUIREMENT 11: Only approved/published items appear (no pending, rejected, or draft e-resources)
+  const andConditions = [{ moderationStatus: { $in: ['approved', 'published'] } }];
+
+  if (search) {
+    const escaped = escapeRegExp(String(search).trim());
+    andConditions.push({
+      $or: [
+        { title: { $regex: escaped, $options: 'i' } },
+        { author: { $regex: escaped, $options: 'i' } },
+      ],
+    });
+  }
+
+  if (genre && genre !== 'All') {
+    const escapedGenre = escapeRegExp(genre);
+    andConditions.push({
+      $or: [
+        { type: { $regex: new RegExp(`^${escapedGenre}$`, 'i') } },
+        { category: { $regex: new RegExp(`^${escapedGenre}$`, 'i') } },
+      ],
+    });
+  }
+
+  const resources = await EResource.find({ $and: andConditions })
+    .select('title author type format coverImage fileUrl moderationStatus category source readUrl')
+    .limit(limit)
+    .sort({ createdAt: -1 });
+
+  res.set('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
+  res.json({ success: true, data: resources });
+});
+
 module.exports = {
   listInternalResources,
   submitEResource,
@@ -270,4 +309,5 @@ module.exports = {
   updateProgress,
   issueOfflineToken,
   getSignedDownloadUrl,
+  getPublicEResources,
 };

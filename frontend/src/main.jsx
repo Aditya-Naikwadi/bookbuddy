@@ -10,8 +10,11 @@ import "./i18n/config.js";
 import App from "./App.jsx";
 import { ThemeProvider } from "./context/ThemeContext.tsx";
 import { ConfigProvider, useConfig } from "./context/ConfigContext.jsx";
-
 import { SocketProvider } from "./context/SocketContext.jsx";
+import { reportWebVitals } from "./utils/reportWebVitals.js";
+
+// Initialize Core Web Vitals telemetry
+reportWebVitals();
 
 function DynamicGoogleOAuthProvider({ children }) {
   const { googleClientId } = useConfig();

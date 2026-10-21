@@ -47,6 +47,17 @@ const initialSuperAdminToken =
     ? localStorage.getItem("originalSuperAdminToken")
     : null;
 
+let initialUser = null;
+try {
+  const storedUser =
+    typeof window !== "undefined" ? localStorage.getItem("user") : null;
+  if (storedUser && initialToken) {
+    initialUser = JSON.parse(storedUser);
+  }
+} catch {
+  initialUser = null;
+}
+
 const useAuthStore = create((set) => {
   setOnUnauthorizedCallback(() => {
     const currentUser = useAuthStore.getState().user;
@@ -54,13 +65,14 @@ const useAuthStore = create((set) => {
     clearAllOfflineQueues(currentUserId);
     clearLocalBookmarks(currentUserId);
     clearLocalProgress(currentUserId).catch(() => {});
+    localStorage.removeItem("user");
     set({ user: null, token: null, isAuthenticated: false, isLoading: false });
   });
 
   return {
-    user: null,
+    user: initialUser,
     token: initialToken,
-    isAuthenticated: false,
+    isAuthenticated: Boolean(initialToken && initialUser),
     isLoading: !!initialToken,
     error: null,
     mfaRequired: false,
@@ -159,6 +171,9 @@ const useAuthStore = create((set) => {
         const accessToken = data.accessToken;
         setInMemoryToken(accessToken);
         localStorage.setItem("token", accessToken);
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
 
         set({
           user: data.user,
@@ -198,6 +213,9 @@ const useAuthStore = create((set) => {
         const accessToken = data.accessToken;
         setInMemoryToken(accessToken);
         localStorage.setItem("token", accessToken);
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
 
         set({
           user: data.user,
@@ -262,6 +280,9 @@ const useAuthStore = create((set) => {
         const accessToken = data.accessToken;
         setInMemoryToken(accessToken);
         localStorage.setItem("token", accessToken);
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
 
         set({
           user: data.user,
@@ -305,6 +326,7 @@ const useAuthStore = create((set) => {
         setInMemoryToken(null);
         setCsrfToken(null);
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
         localStorage.removeItem("originalSuperAdminToken");
         sessionStorage.removeItem("redirectAfterLogin");
 
@@ -381,6 +403,9 @@ const useAuthStore = create((set) => {
         const hasOriginalToken = !!localStorage.getItem(
           "originalSuperAdminToken",
         );
+        if (profileRes.data?.data) {
+          localStorage.setItem("user", JSON.stringify(profileRes.data.data));
+        }
 
         set({
           user: profileRes.data.data,
@@ -427,6 +452,7 @@ const useAuthStore = create((set) => {
         setInMemoryToken(null);
         setCsrfToken(null);
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
         localStorage.removeItem("originalSuperAdminToken");
         sessionStorage.removeItem("redirectAfterLogin");
         clearQueryCache();

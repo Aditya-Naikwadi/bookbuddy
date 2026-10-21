@@ -29,6 +29,10 @@ const StudentActivationPage = lazy(
   () => import("./pages/public/StudentActivationPage"),
 );
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
+const PrivacyPolicy = lazy(() => import("./pages/public/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/public/TermsOfService"));
+const ContactSupport = lazy(() => import("./pages/public/ContactSupport"));
+const NotFound = lazy(() => import("./pages/public/NotFound"));
 
 // Lazy loaded layout components
 const DashboardLayout = lazy(() => import("./layouts/DashboardLayout"));
@@ -256,6 +260,10 @@ function App() {
                     element={<CollegeDeepLinkEntry />}
                   />
                   <Route path="/unauthorized" element={<Unauthorized />} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<TermsOfService />} />
+                  <Route path="/support" element={<ContactSupport />} />
+                  <Route path="/contact" element={<ContactSupport />} />
 
                   {/* Top-level Route Aliases & Fallbacks */}
                   <Route
@@ -688,6 +696,9 @@ function App() {
                       element={<EbookReader />}
                     />
                   </Route>
+
+                  {/* Wildcard 404 Route for unknown URLs */}
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
             </ErrorBoundary>

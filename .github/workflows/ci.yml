@@ -108,6 +108,9 @@ jobs:
           cd frontend
           npm run build
 
+      - name: Run Lighthouse CI & Broken-Link Checker
+        run: npm run check:links-and-lighthouse
+
   deploy-vercel:
     name: Deploy to Vercel Production
     needs: ci

@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useGoogleLogin } from "@react-oauth/google";
 import { getSubdomainTenantSlug } from "../utils/tenantSubdomain";
 import { registrationApi } from "../api/registrationApi";
+import { trackEvent } from "../utils/analytics";
 
 const GoogleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -62,6 +63,33 @@ function GoogleSignInButton({ isAvailable, onSuccess, onError }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
+export function isSafeRelativePath(path) {
+  if (typeof path !== "string") return false;
+  const trimmed = path.trim();
+  // Must start with single / and not protocol-relative // or windows path separator /\ or \
+  if (
+    !trimmed.startsWith("/") ||
+    trimmed.startsWith("//") ||
+    trimmed.startsWith("/\\") ||
+    trimmed.includes("\\")
+  ) {
+    return false;
+  }
+  // Prevent scheme tricks (javascript:, data:, vbscript:, etc.)
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed)) {
+    return false;
+  }
+  try {
+    const url = new URL(trimmed, "http://localhost");
+    if (url.origin !== "http://localhost") return false;
+    if (!url.pathname.startsWith("/")) return false;
+  } catch {
+    return false;
+  }
+  return true;
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -100,11 +128,56 @@ export default function Login() {
       defaultRoute = "/admin-portal";
     }
 
-    const savedPath = location.state?.from?.pathname;
-    const targetPath =
-      savedPath && isUserAllowedForRoute(user, savedPath)
-        ? savedPath
-        : defaultRoute;
+    let targetPath = defaultRoute;
+    const searchParams = new URLSearchParams(location.search);
+    const queryFrom = searchParams.get("from");
+    const queryReturnUrl = searchParams.get("returnUrl");
+    const stateFrom = location.state?.from;
+    const stateReturnUrl = location.state?.returnUrl;
+    const bookId = location.state?.bookId;
+    const isEResource = location.state?.isEResource;
+
+    let candidatePath = null;
+    if (queryReturnUrl && isSafeRelativePath(queryReturnUrl)) {
+      candidatePath = queryReturnUrl;
+    } else if (queryFrom && isSafeRelativePath(queryFrom)) {
+      candidatePath = queryFrom;
+    } else if (stateReturnUrl && isSafeRelativePath(stateReturnUrl)) {
+      candidatePath = stateReturnUrl;
+    } else if (stateFrom?.pathname && isSafeRelativePath(stateFrom.pathname)) {
+      candidatePath = `${stateFrom.pathname}${stateFrom.search || ""}`;
+    } else if (typeof stateFrom === "string" && isSafeRelativePath(stateFrom)) {
+      candidatePath = stateFrom;
+    }
+
+    if (
+      candidatePath &&
+      isUserAllowedForRoute(user, candidatePath.split("?")[0])
+    ) {
+      targetPath = candidatePath;
+    } else if (bookId) {
+      if (isEResource) {
+        targetPath = `/eresources/read/${bookId}`;
+      } else if (user?.role === "general") {
+        targetPath = `/general-dashboard/search?bookId=${encodeURIComponent(bookId)}`;
+      } else {
+        targetPath = `/student/catalog?bookId=${encodeURIComponent(bookId)}`;
+      }
+    }
+
+    trackEvent("login_success", {
+      role: user?.role,
+      hasTargetRedirect: Boolean(
+        bookId || location.state?.from || location.search,
+      ),
+    });
+    if (
+      typeof window !== "undefined" &&
+      !localStorage.getItem("bookbuddy_has_logged_in")
+    ) {
+      localStorage.setItem("bookbuddy_has_logged_in", "true");
+      trackEvent("first_login", { role: user?.role });
+    }
 
     const isSuper =
       user?.role === "super-admin" || user?.role === "super_admin";
@@ -129,11 +202,20 @@ export default function Login() {
   const [isLoadingColleges, setIsLoadingColleges] = useState(
     Boolean(isCentralLogin),
   );
-  const [collegeSearch, setCollegeSearch] = useState("");
+  const [collegeSearchInput, setCollegeSearchInput] = useState("");
+  const [debouncedCollegeSearch, setDebouncedCollegeSearch] = useState("");
   const [isCollegeDropdownOpen, setIsCollegeDropdownOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const collegeDropdownRef = useRef(null);
   const listboxRef = useRef(null);
+
+  // Debounce search input for college filtering (200ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedCollegeSearch(collegeSearchInput);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [collegeSearchInput]);
 
   useEffect(() => {
     let isMounted = true;
@@ -179,7 +261,7 @@ export default function Login() {
   }, []);
 
   const filteredColleges = useMemo(() => {
-    const term = collegeSearch.toLowerCase().trim();
+    const term = debouncedCollegeSearch.toLowerCase().trim();
     if (!term) return colleges;
     return colleges.filter((c) => {
       return (
@@ -190,7 +272,7 @@ export default function Login() {
         c.slug?.toLowerCase().includes(term)
       );
     });
-  }, [colleges, collegeSearch]);
+  }, [colleges, debouncedCollegeSearch]);
 
   // Auto-scroll highlighted combobox option into view
   useEffect(() => {
@@ -397,9 +479,9 @@ export default function Login() {
                     : undefined
                 }
                 aria-label="Search college institution"
-                value={collegeSearch}
+                value={collegeSearchInput}
                 onChange={(e) => {
-                  setCollegeSearch(e.target.value);
+                  setCollegeSearchInput(e.target.value);
                   setIsCollegeDropdownOpen(true);
                   setHighlightedIndex(-1);
                 }}
@@ -422,11 +504,12 @@ export default function Login() {
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-muted" />
                 ) : (
                   <>
-                    {collegeSearch && (
+                    {collegeSearchInput && (
                       <button
                         type="button"
                         onClick={() => {
-                          setCollegeSearch("");
+                          setCollegeSearchInput("");
+                          setDebouncedCollegeSearch("");
                           setHighlightedIndex(-1);
                         }}
                         className="p-1 text-muted hover:text-ink transition-colors"
@@ -470,7 +553,8 @@ export default function Login() {
                 >
                   {filteredColleges.length === 0 ? (
                     <div className="p-4 text-center text-xs text-muted">
-                      No active institutions found matching "{collegeSearch}".
+                      No active institutions found matching "
+                      {debouncedCollegeSearch}".
                     </div>
                   ) : (
                     filteredColleges.map((college, index) => {

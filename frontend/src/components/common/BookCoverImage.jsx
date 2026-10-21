@@ -59,6 +59,9 @@ export const BookCoverImage = ({
       src={optimizedSrc}
       alt={alt}
       loading="lazy"
+      decoding="async"
+      width={300}
+      height={400}
       onError={() => setHasError(true)}
       className={`w-full ${aspectRatio} object-cover rounded-xl shadow-xs transition-opacity duration-300 ${className}`}
     />

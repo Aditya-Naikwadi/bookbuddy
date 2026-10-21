@@ -4,8 +4,11 @@ import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import MyShelves from "../../pages/MyShelves";
 import { Navbar } from "../../components/layout/Navbar";
+import { Footer } from "../../components/layout/Footer";
+import { Hero } from "../../sections/Hero";
 import { EResources } from "../../sections/EResources";
 import { CatalogSearch } from "../../sections/CatalogSearch";
+import { ForColleges } from "../../sections/ForColleges";
 import Landing from "../../pages/public/Landing";
 import { Fines } from "../../pages/Fines";
 import * as readingListApi from "../../api/readingListApi";
@@ -28,6 +31,18 @@ vi.mock("../../api/readingListApi", () => ({
   deleteReadingList: vi.fn(),
   removeReadingListItem: vi.fn(),
 }));
+
+vi.mock("../../api/client", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    default: {
+      get: vi.fn().mockResolvedValue({ data: { success: true, data: [] } }),
+      post: vi.fn(),
+    },
+    setOnUnauthorizedCallback: vi.fn(),
+  };
+});
 
 const createTestQueryClient = () =>
   new QueryClient({
@@ -337,17 +352,17 @@ describe("Shelves and Landing Consolidated Suite", () => {
       catalogSection.remove();
     });
 
-    it("4. EResources section displays horizontal book carousel and clicking a card redirects unauthenticated users to /auth/login", () => {
+    it("4. EResources section displays horizontal book carousel and clicking a card redirects unauthenticated users to /auth/login", async () => {
       render(
         <MemoryRouter>
           <EResources />
         </MemoryRouter>,
       );
 
-      const carousel = screen.getByTestId("eresources-carousel");
+      const carousel = await screen.findByTestId("eresources-carousel");
       expect(carousel).toBeInTheDocument();
 
-      const bookCards = screen.getAllByTestId("eresources-book-card");
+      const bookCards = await screen.findAllByTestId("eresources-book-card");
       expect(bookCards.length).toBeGreaterThan(0);
 
       fireEvent.click(bookCards[0]);
@@ -359,17 +374,17 @@ describe("Shelves and Landing Consolidated Suite", () => {
       );
     });
 
-    it("5. CatalogSearch section displays horizontal book carousel and clicking a card redirects unauthenticated users to /auth/login", () => {
+    it("5. CatalogSearch section displays horizontal book carousel and clicking a card redirects unauthenticated users to /auth/login", async () => {
       render(
         <MemoryRouter>
           <CatalogSearch />
         </MemoryRouter>,
       );
 
-      const carousel = screen.getByTestId("catalog-carousel");
+      const carousel = await screen.findByTestId("catalog-carousel");
       expect(carousel).toBeInTheDocument();
 
-      const bookCards = screen.getAllByTestId("catalog-book-card");
+      const bookCards = await screen.findAllByTestId("catalog-book-card");
       expect(bookCards.length).toBeGreaterThan(0);
 
       fireEvent.click(bookCards[0]);
@@ -381,15 +396,168 @@ describe("Shelves and Landing Consolidated Suite", () => {
       );
     });
 
-    it("6. Landing page renders both EResources and CatalogSearch sections with carousels", () => {
+    it("6. Landing page renders both EResources and CatalogSearch sections with carousels", async () => {
       render(
         <MemoryRouter>
           <Landing />
         </MemoryRouter>,
       );
 
-      expect(screen.getByTestId("eresources-carousel")).toBeInTheDocument();
-      expect(screen.getByTestId("catalog-carousel")).toBeInTheDocument();
+      expect(
+        await screen.findByTestId("eresources-carousel"),
+      ).toBeInTheDocument();
+      expect(await screen.findByTestId("catalog-carousel")).toBeInTheDocument();
+    });
+
+    it("7. Hero section renders headline, subheadline, primary CTA ('Browse the Library'), and secondary CTA ('Login / Register')", () => {
+      render(
+        <MemoryRouter>
+          <Hero />
+        </MemoryRouter>,
+      );
+
+      expect(
+        screen.getByRole("heading", { name: /The Library in Your Pocket/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Borrow, reserve, read 70,000\+ free books/i),
+      ).toBeInTheDocument();
+
+      const primaryCta = screen.getByRole("button", {
+        name: /Browse the Library/i,
+      });
+      const secondaryCta = screen.getByRole("button", {
+        name: /Login \/ Register/i,
+      });
+
+      expect(primaryCta).toBeInTheDocument();
+      expect(secondaryCta).toBeInTheDocument();
+    });
+
+    it("8. Hero primary CTA scrolls to catalog and secondary CTA navigates to /auth/login", () => {
+      const scrollIntoViewMock = vi.fn();
+      window.HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+
+      const catalogSection = document.createElement("section");
+      catalogSection.id = "catalog-search";
+      document.body.appendChild(catalogSection);
+
+      render(
+        <MemoryRouter>
+          <Hero />
+        </MemoryRouter>,
+      );
+
+      const primaryCta = screen.getByRole("button", {
+        name: /Browse the Library/i,
+      });
+      fireEvent.click(primaryCta);
+      expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: "smooth" });
+
+      const secondaryCta = screen.getByRole("button", {
+        name: /Login \/ Register/i,
+      });
+      fireEvent.click(secondaryCta);
+      expect(mockNavigate).toHaveBeenCalledWith("/auth/login");
+
+      catalogSection.remove();
+    });
+
+    it("9. Footer renders Privacy Policy, Terms, Contact/Support links, and correct dynamic copyright year", () => {
+      render(
+        <MemoryRouter>
+          <Footer />
+        </MemoryRouter>,
+      );
+
+      const currentYear = new Date().getFullYear().toString();
+      expect(screen.getByText(new RegExp(currentYear))).toBeInTheDocument();
+
+      const privacyLinks = screen.getAllByRole("link", {
+        name: /Privacy Policy/i,
+      });
+      expect(privacyLinks.length).toBeGreaterThanOrEqual(1);
+      expect(privacyLinks[0]).toHaveAttribute("href", "/privacy");
+
+      const termsLinks = screen.getAllByRole("link", { name: /^Terms$/i });
+      expect(termsLinks.length).toBeGreaterThanOrEqual(1);
+      expect(termsLinks[0]).toHaveAttribute("href", "/terms");
+
+      const supportLinks = screen.getAllByRole("link", {
+        name: /Contact\/Support/i,
+      });
+      expect(supportLinks.length).toBeGreaterThanOrEqual(1);
+      expect(supportLinks[0]).toHaveAttribute("href", "/support");
+    });
+
+    it("10. For Colleges section renders institutional features, stats, and registration CTA", () => {
+      render(
+        <MemoryRouter>
+          <ForColleges />
+        </MemoryRouter>,
+      );
+
+      expect(
+        screen.getByText(/CAMPUS & INSTITUTIONAL PARTNERSHIPS/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", {
+          name: /Empower your campus library with BookBuddy/i,
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Multi-Tenant Campus Isolation/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Circulation Insights & Analytics/i),
+      ).toBeInTheDocument();
+
+      const registerCollegeBtn = screen.getByRole("button", {
+        name: /Register Your College/i,
+      });
+      expect(registerCollegeBtn).toBeInTheDocument();
+      fireEvent.click(registerCollegeBtn);
+      expect(mockNavigate).toHaveBeenCalledWith("/auth/register");
+    });
+
+    it("11. Landing page renders sections in intended order and contains no mock demo users", async () => {
+      render(
+        <MemoryRouter>
+          <Landing />
+        </MemoryRouter>,
+      );
+
+      // Verify sections are present
+      expect(
+        screen.getByRole("heading", { name: /The Library in Your Pocket/i }),
+      ).toBeInTheDocument();
+      expect(await screen.findByTestId("catalog-carousel")).toBeInTheDocument();
+      expect(
+        await screen.findByTestId("eresources-carousel"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", {
+          name: /The complete library experience/i,
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /How it works/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", {
+          name: /Empower your campus library with BookBuddy/i,
+        }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("contentinfo")).toBeInTheDocument(); // footer
+
+      // Verify no mock demo user feed text is visible
+      expect(
+        screen.queryByText(/Sarah started a 14-day streak/i),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/David just borrowed/i),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/PRADNYA PAWAR/i)).not.toBeInTheDocument();
     });
   });
 

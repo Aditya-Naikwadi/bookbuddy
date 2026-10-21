@@ -1,15 +1,18 @@
 import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import useAuthStore from "../store/authStore";
 import { SectionLabel } from "../components/ui/SectionLabel";
 import { Button } from "../components/ui/Button";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 import { motion, useScroll, useTransform, Variants } from "framer-motion";
+import { trackEvent } from "../utils/analytics";
 
 const HeroComponent = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { isAuthenticated, user } = useAuthStore();
 
   // High-performance scroll parallax using Framer Motion
@@ -78,20 +81,26 @@ const HeroComponent = () => {
           className="w-full md:w-1/2 md:pr-12 pointer-events-auto z-20 flex flex-col items-center text-center md:items-start md:text-left"
         >
           <motion.div variants={textItemVariants}>
-            <SectionLabel>Built for Students</SectionLabel>
+            <SectionLabel>
+              {t("landing.heroBadge", "Built for Students")}
+            </SectionLabel>
           </motion.div>
           <motion.h1
             variants={textItemVariants}
             className="font-serif text-5xl md:text-6xl lg:text-[72px] leading-[1.1] tracking-tight text-gradient-primary mb-4 md:mb-6 mt-4"
           >
-            The Library in <br className="hidden md:block" /> Your Pocket.
+            {t("landing.heroTitle1", "The Library in")}{" "}
+            <br className="hidden md:block" />{" "}
+            {t("landing.heroTitle2", "Your Pocket.")}
           </motion.h1>
           <motion.p
             variants={textItemVariants}
             className="text-base md:text-lg text-muted mb-8 max-w-md leading-relaxed"
           >
-            Borrow, reserve, read 70,000+ free books, track your streaks, and
-            never miss a due date — all from one beautifully simple dashboard.
+            {t(
+              "landing.heroSubtitle",
+              "Borrow, reserve, read 70,000+ free books, track your streaks, and never miss a due date — all from one beautifully simple dashboard.",
+            )}
           </motion.p>
           <motion.div
             variants={textItemVariants}
@@ -101,6 +110,10 @@ const HeroComponent = () => {
               size="lg"
               className="w-full sm:w-auto"
               onClick={() => {
+                trackEvent("hero_cta_browse_click", {
+                  authenticated: isAuthenticated,
+                  target: isAuthenticated ? "dashboard" : "catalog",
+                });
                 if (isAuthenticated && user) {
                   const role = user.role;
                   if (role === "college-admin") navigate("/college-admin");
@@ -108,14 +121,47 @@ const HeroComponent = () => {
                   else if (role === "super-admin") navigate("/admin-portal");
                   else navigate("/student");
                 } else {
-                  navigate("/auth/register");
+                  const catalogEl =
+                    document.getElementById("catalog-search") ||
+                    document.querySelector('[data-section="catalog-search"]');
+                  if (catalogEl) {
+                    catalogEl.scrollIntoView({ behavior: "smooth" });
+                  } else {
+                    navigate("/#catalog-search");
+                  }
                 }
               }}
             >
-              Get Started Free
+              {isAuthenticated
+                ? t("landing.goToDashboard", "Go to Dashboard →")
+                : t("landing.browseLibrary", "Browse the Library →")}
             </Button>
-            <Button variant="ghost" size="lg" className="w-full sm:w-auto">
-              Watch Demo ▶
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto border-white/20 hover:border-ember/40 hover:text-ember transition-colors"
+              onClick={() => {
+                trackEvent("hero_cta_login_click", {
+                  authenticated: isAuthenticated,
+                  target: isAuthenticated ? "catalog" : "login",
+                });
+                if (isAuthenticated && user) {
+                  const catalogEl =
+                    document.getElementById("catalog-search") ||
+                    document.querySelector('[data-section="catalog-search"]');
+                  if (catalogEl) {
+                    catalogEl.scrollIntoView({ behavior: "smooth" });
+                  } else {
+                    navigate("/#catalog-search");
+                  }
+                } else {
+                  navigate("/auth/login");
+                }
+              }}
+            >
+              {isAuthenticated
+                ? t("landing.browseCatalog", "Browse Catalog")
+                : t("landing.loginRegister", "Login / Register")}
             </Button>
           </motion.div>
         </motion.div>

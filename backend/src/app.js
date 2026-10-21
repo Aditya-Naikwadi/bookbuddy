@@ -114,9 +114,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// CORS Configuration supporting multi-origin dev setups & Vercel preview deployment URLs
+// CORS Configuration supporting multi-origin dev setups, production bookbuddy.app & subdomains, and Vercel preview deployment URLs
 const allowedOrigins = [
   config.clientOrigin,
+  'https://bookbuddy.app',
+  'https://www.bookbuddy.app',
   'https://book-buddy-eight-rosy.vercel.app',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
@@ -125,6 +127,7 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 const vercelDomainRegex = /^https:\/\/(?:[a-z0-9-]+\.)?book-buddy[a-z0-9-]*\.vercel\.app$/i;
+const bookBuddySubdomainRegex = /^https:\/\/(?:[a-z0-9-]+\.)?bookbuddy\.(?:app|com)$/i;
 
 app.use(
   cors({
@@ -132,7 +135,8 @@ app.use(
       if (
         !origin ||
         allowedOrigins.includes(origin) ||
-        (typeof origin === 'string' && vercelDomainRegex.test(origin))
+        (typeof origin === 'string' &&
+          (vercelDomainRegex.test(origin) || bookBuddySubdomainRegex.test(origin)))
       ) {
         return callback(null, true);
       }

@@ -18,9 +18,23 @@
       property="og:description"
       content="Borrow books, read 70,000+ free e-books, track streaks, and manage your library from one beautiful student dashboard."
     />
-    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:url" content="https://bookbuddy.app/" />
+    <meta property="og:site_name" content="BookBuddy" />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://bookbuddy.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="BookBuddy — Digital Library System and Reading Platform" />
+    <meta property="og:locale" content="en_US" />
+
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BookBuddy — The Library in Your Pocket" />
+    <meta
+      name="twitter:description"
+      content="Borrow books, read 70,000+ free e-books, track streaks, and manage your library from one beautiful student dashboard."
+    />
+    <meta name="twitter:image" content="https://bookbuddy.app/og-image.png" />
+    <meta name="twitter:image:alt" content="BookBuddy — Digital Library Platform" />
     <meta name="theme-color" content="#0A0B10" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
@@ -28,7 +42,49 @@
       content="black-translucent"
     />
     <link rel="manifest" href="/manifest.json" />
-    <link rel="canonical" href="https://bookbuddy.app" />
+    <link rel="canonical" href="https://bookbuddy.app/" />
+
+    <!-- Schema.org JSON-LD Structured Data: WebSite & Organization -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://bookbuddy.app/#website",
+            "url": "https://bookbuddy.app/",
+            "name": "BookBuddy",
+            "description": "Smart Library System & Digital Reading Platform for Universities and Students",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://bookbuddy.app/#catalog-search?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://bookbuddy.app/#organization",
+            "name": "BookBuddy",
+            "url": "https://bookbuddy.app/",
+            "logo": "https://bookbuddy.app/favicon.png",
+            "sameAs": [
+              "https://twitter.com/bookbuddyapp",
+              "https://github.com/Aditya-Naikwadi/bookbuddy"
+            ]
+          }
+        ]
+      }
+    </script>
+
+    <!-- Performance & Font Optimization: Preconnect + font-display: swap + Devanagari regional scripts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://res.cloudinary.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Serif+Devanagari:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <script>
       (function () {
         try {
@@ -46,6 +102,24 @@
     </script>
   </head>
   <body>
+    <!-- Non-JS SPA Search Engine Fallback & Indexing Content -->
+    <noscript>
+      <div style="padding: 2rem; max-width: 800px; margin: auto; font-family: sans-serif; color: #111;">
+        <h1>BookBuddy — The Library in Your Pocket</h1>
+        <p>Borrow books, read 70,000+ free e-books, track reading streaks, and manage campus library resources with BookBuddy.</p>
+        <nav aria-label="Noscript Directory">
+          <ul>
+            <li><a href="/#catalog-search">Catalog Search (15,000+ campus volumes)</a></li>
+            <li><a href="/#e-resources">E-Resources & Free Books (70,000+ open classics)</a></li>
+            <li><a href="/#features">Features & Campus Workflows</a></li>
+            <li><a href="/#how-it-works">How It Works</a></li>
+            <li><a href="/#for-colleges">For Colleges & University Libraries</a></li>
+            <li><a href="/auth/login">Patron & Student Sign In</a></li>
+            <li><a href="/auth/register">Sign Up for Free</a></li>
+          </ul>
+        </nav>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

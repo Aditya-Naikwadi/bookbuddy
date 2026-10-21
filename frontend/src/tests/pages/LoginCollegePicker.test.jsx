@@ -135,20 +135,24 @@ describe("Central Login - Searchable College Picker & Redirection", () => {
     // Type query "Stan"
     fireEvent.change(searchInput, { target: { value: "Stan" } });
 
-    expect(screen.getByText("Stanford University")).toBeInTheDocument();
-    expect(
-      screen.queryByText("Massachusetts Institute of Technology"),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByText("Oxford University")).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Stanford University")).toBeInTheDocument();
+      expect(
+        screen.queryByText("Massachusetts Institute of Technology"),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Oxford University")).not.toBeInTheDocument();
+    });
 
     // Clear search using clear button
     const clearBtn = screen.getByLabelText(/Clear college search/i);
     fireEvent.click(clearBtn);
 
     expect(searchInput.value).toBe("");
-    expect(
-      screen.getByText("Massachusetts Institute of Technology"),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByText("Massachusetts Institute of Technology"),
+      ).toBeInTheDocument();
+    });
   });
 
   it("shows empty state when no active college matches the search query", async () => {

@@ -67,7 +67,7 @@ const getAllPatrons = async (req, res, next) => {
 
     const filter = {
       collegeId,
-      role: { $in: ['student', 'college-student'] },
+      role: ROLES.STUDENT,
     };
 
     // 3. Server-side search with length capping and regex escaping

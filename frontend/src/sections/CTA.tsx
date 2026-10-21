@@ -153,6 +153,16 @@ export const CTA = () => {
             variant="ghost"
             size="lg"
             className="w-full sm:w-auto text-white hover:bg-white/10 border border-white/20 hover:border-white/50 px-10 h-16 text-lg rounded-xl transition-all duration-300 backdrop-blur-md"
+            onClick={() => {
+              const collegesEl =
+                document.getElementById("for-colleges") ||
+                document.querySelector('[data-section="for-colleges"]');
+              if (collegesEl) {
+                collegesEl.scrollIntoView({ behavior: "smooth" });
+              } else {
+                navigate("/#for-colleges");
+              }
+            }}
           >
             Contact Sales
           </Button>

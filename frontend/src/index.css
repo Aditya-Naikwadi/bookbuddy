@@ -20,8 +20,10 @@
   --color-success: #10b981;
   --color-danger: #ef4444;
 
-  --font-sans: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", sans-serif;
-  --font-serif: "DM Serif Display", serif;
+  --font-sans:
+    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", "Noto Sans Devanagari",
+    "Mukta", sans-serif;
+  --font-serif: "DM Serif Display", "Rozha One", "Noto Serif Devanagari", serif;
 }
 
 @layer base {
@@ -129,8 +131,10 @@
     justify-content: center;
     align-items: center;
     gap: 5px;
-    width: 40px;
-    height: 40px;
+    min-width: 44px;
+    min-height: 44px;
+    width: 44px;
+    height: 44px;
     background: transparent;
     border: none;
     cursor: pointer;
@@ -301,5 +305,44 @@
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: var(--color-ember, #e66525);
+  }
+}
+
+/* Accessibility: WCAG 2.1 AA Motion Sensitivity Guard */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print Stylesheet */
+@media print {
+  header,
+  nav,
+  .hamburger-button,
+  .nav-drawer-overlay,
+  #responsive-nav-drawer,
+  .scroll-progress-bar,
+  footer {
+    display: none !important;
+  }
+
+  body,
+  main,
+  #main-content {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 80%;
   }
 }

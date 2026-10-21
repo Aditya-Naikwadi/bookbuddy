@@ -2,4 +2,4 @@
 /**
  * Root forwarding entrypoint for auto-remediator
  */
-require('./maintenance/auto-remediator.js');
+require("./maintenance/auto-remediator.js");

@@ -17,11 +17,25 @@ const { escapeRegExp } = require('../utils/sanitize');
 // @access  Public
 const getActiveColleges = async (req, res, next) => {
   try {
-    const colleges = await College.find({ status: 'active', isActive: true })
+    const limit = Math.max(1, Math.min(100, Number(req.query?.limit) || 100));
+    const query = { status: 'active', isActive: true };
+
+    if (req.query?.search) {
+      const escaped = escapeRegExp(String(req.query.search).trim());
+      query.$or = [
+        { name: { $regex: escaped, $options: 'i' } },
+        { shortName: { $regex: escaped, $options: 'i' } },
+        { slug: { $regex: escaped, $options: 'i' } },
+      ];
+    }
+
+    const colleges = await College.find(query)
       .select('_id name shortName code slug domain configuredDepartments')
+      .limit(limit)
       .sort({ name: 1 })
       .lean();
 
+    res.set('Cache-Control', 'public, max-age=120, s-maxage=300, stale-while-revalidate=600');
     res.json({
       success: true,
       data: colleges,

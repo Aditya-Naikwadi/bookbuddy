@@ -6,14 +6,14 @@
  * triggers rollback alerts on failure, and posts GitHub Step Summaries & Slack alerts.
  */
 
-const fs = require('fs');
-const http = require('http');
-const https = require('https');
-const path = require('path');
+const fs = require("fs");
+const http = require("http");
+const https = require("https");
+const path = require("path");
 
 // --- Configuration & Inputs ---
-const RENDER_BACKEND_DEFAULT = 'https://bookbuddy-kcwl.onrender.com';
-const VERCEL_FRONTEND_DEFAULT = 'https://book-buddy-eight-rosy.vercel.app';
+const RENDER_BACKEND_DEFAULT = "https://bookbuddy-kcwl.onrender.com";
+const VERCEL_FRONTEND_DEFAULT = "https://book-buddy-eight-rosy.vercel.app";
 
 let targetBackendUrl = (
   process.env.BACKEND_APP_URL ||
@@ -21,30 +21,45 @@ let targetBackendUrl = (
   process.env.APP_URL ||
   process.argv[2] ||
   RENDER_BACKEND_DEFAULT
-).replace(/\/$/, '');
+).replace(/\/$/, "");
 
 let targetFrontendUrl = (
   process.env.FRONTEND_APP_URL ||
   process.env.PRODUCTION_FRONTEND_URL ||
   VERCEL_FRONTEND_DEFAULT
-).replace(/\/$/, '');
+).replace(/\/$/, "");
 
 // If targetBackendUrl was passed pointing to a Vercel frontend URL, swap it to Render backend
-if (targetBackendUrl.includes('vercel.app')) {
+if (targetBackendUrl.includes("vercel.app")) {
   targetFrontendUrl = targetBackendUrl;
-  targetBackendUrl = process.env.BACKEND_APP_URL || process.env.RENDER_APP_URL || RENDER_BACKEND_DEFAULT;
+  targetBackendUrl =
+    process.env.BACKEND_APP_URL ||
+    process.env.RENDER_APP_URL ||
+    RENDER_BACKEND_DEFAULT;
 }
 
 const APP_URL = targetBackendUrl;
 const FRONTEND_URL = targetFrontendUrl;
-const EXPECTED_COMMIT_SHA = process.env.EXPECTED_COMMIT_SHA || process.argv[3] || process.env.GITHUB_SHA || '';
-const TIMEOUT_SECONDS = parseInt(process.env.TIMEOUT_SECONDS || process.argv[4] || '300', 10);
-const POLL_INTERVAL_SECONDS = parseInt(process.env.POLL_INTERVAL_SECONDS || process.argv[5] || '10', 10);
-const RENDER_SERVICE_ID = process.env.RENDER_SERVICE_ID || 'srv-d9rltltbedkc73c1khkg';
-const RENDER_API_KEY = process.env.RENDER_API_KEY || '';
-const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL || '';
-const SUMMARY_FILE = process.env.GITHUB_STEP_SUMMARY || '';
-const TRIGGER_EVENT = process.env.GITHUB_EVENT_NAME || (process.argv[6] || 'manual');
+const EXPECTED_COMMIT_SHA =
+  process.env.EXPECTED_COMMIT_SHA ||
+  process.argv[3] ||
+  process.env.GITHUB_SHA ||
+  "";
+const TIMEOUT_SECONDS = parseInt(
+  process.env.TIMEOUT_SECONDS || process.argv[4] || "300",
+  10,
+);
+const POLL_INTERVAL_SECONDS = parseInt(
+  process.env.POLL_INTERVAL_SECONDS || process.argv[5] || "10",
+  10,
+);
+const RENDER_SERVICE_ID =
+  process.env.RENDER_SERVICE_ID || "srv-d9rltltbedkc73c1khkg";
+const RENDER_API_KEY = process.env.RENDER_API_KEY || "";
+const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL || "";
+const SUMMARY_FILE = process.env.GITHUB_STEP_SUMMARY || "";
+const TRIGGER_EVENT =
+  process.env.GITHUB_EVENT_NAME || process.argv[6] || "manual";
 
 // HTTP Helper using native modules (no external npm dependencies required)
 const makeRequest = (urlStr, options = {}, redirectCount = 0) => {
@@ -58,25 +73,25 @@ const makeRequest = (urlStr, options = {}, redirectCount = 0) => {
         ok: false,
         status: 0,
         error: `Invalid URL: ${err.message}`,
-        body: '',
+        body: "",
         json: null,
         responseTimeMs: 0,
       });
     }
 
-    const isHttps = urlObj.protocol === 'https:';
+    const isHttps = urlObj.protocol === "https:";
     const client = isHttps ? https : http;
 
     const reqOptions = {
       hostname: urlObj.hostname,
       port: urlObj.port || (isHttps ? 443 : 80),
       path: urlObj.pathname + urlObj.search,
-      method: options.method || 'GET',
+      method: options.method || "GET",
       timeout: options.timeout || 30000,
       headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        Pragma: 'no-cache',
-        'User-Agent': 'Deployment-Verifier/1.0',
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        "User-Agent": "Deployment-Verifier/1.0",
         ...(options.headers || {}),
       },
       ...options,
@@ -90,12 +105,16 @@ const makeRequest = (urlStr, options = {}, redirectCount = 0) => {
         redirectCount < 5
       ) {
         const nextUrlObj = new URL(res.headers.location, urlStr);
-        return makeRequest(nextUrlObj.toString(), options, redirectCount + 1).then(resolve);
+        return makeRequest(
+          nextUrlObj.toString(),
+          options,
+          redirectCount + 1,
+        ).then(resolve);
       }
 
-      let body = '';
-      res.on('data', (chunk) => (body += chunk));
-      res.on('end', () => {
+      let body = "";
+      res.on("data", (chunk) => (body += chunk));
+      res.on("end", () => {
         let json = null;
         try {
           json = JSON.parse(body);
@@ -113,24 +132,24 @@ const makeRequest = (urlStr, options = {}, redirectCount = 0) => {
       });
     });
 
-    req.on('error', (err) => {
+    req.on("error", (err) => {
       resolve({
         ok: false,
         status: 0,
         error: err.message,
-        body: '',
+        body: "",
         json: null,
         responseTimeMs: Date.now() - startTime,
       });
     });
 
-    req.on('timeout', () => {
+    req.on("timeout", () => {
       req.destroy();
       resolve({
         ok: false,
         status: 408,
-        error: 'Request Timeout (10s)',
-        body: '',
+        error: "Request Timeout (10s)",
+        body: "",
         json: null,
         responseTimeMs: Date.now() - startTime,
       });
@@ -146,7 +165,9 @@ const makeRequestWithRetry = async (urlStr, options = {}, maxRetries = 3) => {
   while (attempt <= maxRetries) {
     const res = await makeRequest(urlStr, options);
     const isTransientError =
-      !res.ok && ([502, 503, 504, 408, 0].includes(res.status) || (res.error && !res.error.includes('Invalid URL')));
+      !res.ok &&
+      ([502, 503, 504, 408, 0].includes(res.status) ||
+        (res.error && !res.error.includes("Invalid URL")));
 
     if (!isTransientError || attempt === maxRetries) {
       return res;
@@ -155,7 +176,7 @@ const makeRequestWithRetry = async (urlStr, options = {}, maxRetries = 3) => {
     attempt++;
     const backoffMs = Math.pow(2, attempt - 1) * 1000;
     console.log(
-      `   ⚠️ Transient error (${res.status || res.error}). Retrying in ${backoffMs}ms (Attempt ${attempt}/${maxRetries})...`
+      `   ⚠️ Transient error (${res.status || res.error}). Retrying in ${backoffMs}ms (Attempt ${attempt}/${maxRetries})...`,
     );
     await new Promise((resolve) => setTimeout(resolve, backoffMs));
   }
@@ -164,23 +185,23 @@ const makeRequestWithRetry = async (urlStr, options = {}, maxRetries = 3) => {
 // Write persistent JSONL Audit Log Entry
 const writeAuditLog = (entry) => {
   try {
-    const logDir = path.join(__dirname, '..', 'logs');
+    const logDir = path.join(__dirname, "..", "logs");
     if (!fs.existsSync(logDir)) {
       fs.mkdirSync(logDir, { recursive: true });
     }
-    const logFile = path.join(logDir, 'deployment-audit.jsonl');
-    const logLine = JSON.stringify(entry) + '\n';
-    fs.appendFileSync(logFile, logLine, 'utf8');
+    const logFile = path.join(logDir, "deployment-audit.jsonl");
+    const logLine = JSON.stringify(entry) + "\n";
+    fs.appendFileSync(logFile, logLine, "utf8");
     console.log(`\n📜 Execution logged to persistent audit store (${logFile})`);
   } catch (err) {
-    console.error('⚠️ Could not write deployment audit log:', err.message);
+    console.error("⚠️ Could not write deployment audit log:", err.message);
   }
 };
 
 const sendSlackNotification = async (payload) => {
   if (!SLACK_WEBHOOK_URL) return;
   try {
-    const isHttps = SLACK_WEBHOOK_URL.startsWith('https:');
+    const isHttps = SLACK_WEBHOOK_URL.startsWith("https:");
     const client = isHttps ? https : http;
     const urlObj = new URL(SLACK_WEBHOOK_URL);
     const data = JSON.stringify(payload);
@@ -191,28 +212,34 @@ const sendSlackNotification = async (payload) => {
           hostname: urlObj.hostname,
           port: urlObj.port,
           path: urlObj.pathname + urlObj.search,
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) },
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(data),
+          },
         },
-        resolve
+        resolve,
       );
-      req.on('error', () => resolve());
+      req.on("error", () => resolve());
       req.write(data);
       req.end();
     });
   } catch (err) {
-    console.error('⚠️ Failed to send Slack alert:', err.message);
+    console.error("⚠️ Failed to send Slack alert:", err.message);
   }
 };
 
-const RENDER_DEPLOY_HOOK_URL = process.env.RENDER_DEPLOY_HOOK_URL || '';
-const ALLOW_SHA_MISMATCH = process.env.ALLOW_SHA_MISMATCH === 'true' || process.env.SKIP_SHA_CHECK === 'true';
+const RENDER_DEPLOY_HOOK_URL = process.env.RENDER_DEPLOY_HOOK_URL || "";
+const ALLOW_SHA_MISMATCH =
+  process.env.ALLOW_SHA_MISMATCH === "true" ||
+  process.env.SKIP_SHA_CHECK === "true";
 
 const shasMatch = (expected, actual) => {
   if (ALLOW_SHA_MISMATCH) return true;
   if (!expected || !actual) return true;
   const act = actual.trim().toLowerCase();
-  if (['unknown', 'unregistered-build', 'local-dev', 'n/a'].includes(act)) return true; // Graceful fallback if SHA is unpopulated
+  if (["unknown", "unregistered-build", "local-dev", "n/a"].includes(act))
+    return true; // Graceful fallback if SHA is unpopulated
   const exp = expected.trim().toLowerCase();
   return exp.startsWith(act) || act.startsWith(exp);
 };
@@ -238,26 +265,30 @@ const checkRenderDeployStatus = async () => {
 };
 
 const runVerification = async () => {
-  console.log('=====================================================');
-  console.log('🚀 POST-PUSH DEPLOYMENT VERIFICATION AUTOMATION');
-  console.log('=====================================================');
+  console.log("=====================================================");
+  console.log("🚀 POST-PUSH DEPLOYMENT VERIFICATION AUTOMATION");
+  console.log("=====================================================");
   console.log(`🌐 Target APP_URL:          ${APP_URL}`);
-  console.log(`📌 Expected Commit SHA:     ${EXPECTED_COMMIT_SHA || '(Not specified, skipping SHA lock)'}`);
+  console.log(
+    `📌 Expected Commit SHA:     ${EXPECTED_COMMIT_SHA || "(Not specified, skipping SHA lock)"}`,
+  );
   console.log(`⏱️ Timeout Window:          ${TIMEOUT_SECONDS} seconds`);
   console.log(`🔄 Polling Interval:        ${POLL_INTERVAL_SECONDS} seconds`);
-  console.log('-----------------------------------------------------\n');
+  console.log("-----------------------------------------------------\n");
 
   const startTime = Date.now();
   const endTime = startTime + TIMEOUT_SECONDS * 1000;
 
   let versionMatched = false;
-  let liveCommitSha = 'unknown';
-  let liveVersion = 'unknown';
+  let liveCommitSha = "unknown";
+  let liveVersion = "unknown";
   let pollAttempts = 0;
   let lastVersionResponse = null;
 
   // --- Step 1: Version/Commit Verification Loop ---
-  console.log('🔍 STEP 1: Polling /version endpoint for commit SHA alignment (with CDN cache-busting & exponential backoff retries)...');
+  console.log(
+    "🔍 STEP 1: Polling /version endpoint for commit SHA alignment (with CDN cache-busting & exponential backoff retries)...",
+  );
   while (Date.now() < endTime) {
     pollAttempts++;
     const versionUrl = `${APP_URL}/version?_cb=${Date.now()}`;
@@ -265,11 +296,12 @@ const runVerification = async () => {
     lastVersionResponse = res;
 
     if (res.ok && res.json) {
-      liveCommitSha = res.json.commitSha || res.json.shortCommitSha || 'unknown';
-      liveVersion = res.json.version || '1.0.0';
+      liveCommitSha =
+        res.json.commitSha || res.json.shortCommitSha || "unknown";
+      liveVersion = res.json.version || "1.0.0";
 
       const match = shasMatch(EXPECTED_COMMIT_SHA, liveCommitSha);
-      let renderDeployNote = '';
+      let renderDeployNote = "";
       if (!match && RENDER_API_KEY && pollAttempts % 3 === 1) {
         const renderDeploy = await checkRenderDeployStatus();
         if (renderDeploy) {
@@ -277,7 +309,7 @@ const runVerification = async () => {
         }
       }
       console.log(
-        `   [Attempt ${pollAttempts}] Status: ${res.status} | Live SHA: ${liveCommitSha} | Expected SHA: ${EXPECTED_COMMIT_SHA || 'ANY'} | Match: ${match ? '✅ YES' : '⏳ NO'}${renderDeployNote}`
+        `   [Attempt ${pollAttempts}] Status: ${res.status} | Live SHA: ${liveCommitSha} | Expected SHA: ${EXPECTED_COMMIT_SHA || "ANY"} | Match: ${match ? "✅ YES" : "⏳ NO"}${renderDeployNote}`,
       );
 
       if (match) {
@@ -285,7 +317,9 @@ const runVerification = async () => {
         break;
       }
     } else {
-      console.log(`   [Attempt ${pollAttempts}] Endpoint unavailable or returned status ${res.status} (${res.error || 'bad response'})`);
+      console.log(
+        `   [Attempt ${pollAttempts}] Endpoint unavailable or returned status ${res.status} (${res.error || "bad response"})`,
+      );
     }
 
     if (!EXPECTED_COMMIT_SHA) {
@@ -296,20 +330,67 @@ const runVerification = async () => {
       }
     }
 
-    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_SECONDS * 1000));
+    await new Promise((resolve) =>
+      setTimeout(resolve, POLL_INTERVAL_SECONDS * 1000),
+    );
   }
 
   const pollDurationSec = ((Date.now() - startTime) / 1000).toFixed(1);
 
   // --- Step 2: Critical Health Checks ---
-  console.log('\n🏥 STEP 2: Running critical route health checks (with retry logic)...');
+  console.log(
+    "\n🏥 STEP 2: Running critical route health checks (with retry logic)...",
+  );
 
   const healthRoutes = [
-    { url: `${APP_URL}/health`, path: '/health', expectedStatus: 200, name: 'System Health Check' },
-    { url: `${APP_URL}/version`, path: '/version', expectedStatus: 200, name: 'Version Metadata Check' },
-    { url: `${APP_URL}/api/v1/auth/me`, path: '/api/v1/auth/me', expectedStatus: 401, name: 'Auth Middleware Security (Unauthenticated 401)' },
-    { url: `${APP_URL}/api/v1/colleges/slug-check?slug=test`, path: '/api/v1/colleges/slug-check', expectedStatus: 200, name: 'Database Connectivity & Colleges API' },
-    { url: `${FRONTEND_URL}/version.json`, path: '/version.json', expectedStatus: 200, name: 'Frontend Live Client Version' },
+    {
+      url: `${APP_URL}/health`,
+      path: "/health",
+      expectedStatus: 200,
+      name: "System Health Check",
+    },
+    {
+      url: `${APP_URL}/version`,
+      path: "/version",
+      expectedStatus: 200,
+      name: "Version Metadata Check",
+    },
+    {
+      url: `${APP_URL}/api/v1/books/public`,
+      path: "/api/v1/books/public",
+      expectedStatus: 200,
+      name: "Public Books Carousel API",
+    },
+    {
+      url: `${APP_URL}/api/v1/eresources/public`,
+      path: "/api/v1/eresources/public",
+      expectedStatus: 200,
+      name: "Public E-Resources Carousel API",
+    },
+    {
+      url: `${APP_URL}/api/v1/registration/colleges`,
+      path: "/api/v1/registration/colleges",
+      expectedStatus: 200,
+      name: "Active Colleges Directory API",
+    },
+    {
+      url: `${APP_URL}/api/v1/auth/me`,
+      path: "/api/v1/auth/me",
+      expectedStatus: 401,
+      name: "Auth Middleware Security (Unauthenticated 401)",
+    },
+    {
+      url: `${FRONTEND_URL}/`,
+      path: "/",
+      expectedStatus: 200,
+      name: "Live Landing Page UI",
+    },
+    {
+      url: `${FRONTEND_URL}/version.json`,
+      path: "/version.json",
+      expectedStatus: 200,
+      name: "Frontend Live Client Version",
+    },
   ];
 
   const healthResults = [];
@@ -331,42 +412,50 @@ const runVerification = async () => {
       actualStatus: res.status,
       latencyMs: res.responseTimeMs,
       passed,
-      error: res.error || (res.json ? res.json.message : ''),
+      error: res.error || (res.json ? res.json.message : ""),
     });
 
     console.log(
-      `   ${passed ? '✅ PASS' : '❌ FAIL'} | ${route.name} (${route.path}) -> Expected: ${route.expectedStatus}, Got: ${res.status} (${res.responseTimeMs}ms)`
+      `   ${passed ? "✅ PASS" : "❌ FAIL"} | ${route.name} (${route.path}) -> Expected: ${route.expectedStatus}, Got: ${res.status} (${res.responseTimeMs}ms)`,
     );
   }
 
   // --- Step 3: Rollback Signal & Outcome Determination ---
   const overallSuccess = versionMatched && allHealthPassed;
-  const statusEmoji = overallSuccess ? '✅' : '🚨';
-  const statusTitle = overallSuccess ? 'DEPLOYMENT VERIFIED LIVE' : 'DEPLOYMENT VERIFICATION FAILED - ROLLBACK REQUIRED';
+  const statusEmoji = overallSuccess ? "✅" : "🚨";
+  const statusTitle = overallSuccess
+    ? "DEPLOYMENT VERIFIED LIVE"
+    : "DEPLOYMENT VERIFICATION FAILED - ROLLBACK REQUIRED";
 
-  console.log('\n=====================================================');
+  console.log("\n=====================================================");
   console.log(`${statusEmoji} OVERALL RESULT: ${statusTitle}`);
-  console.log('=====================================================');
-  console.log(`Pushed Commit SHA:    ${EXPECTED_COMMIT_SHA || 'N/A'}`);
+  console.log("=====================================================");
+  console.log(`Pushed Commit SHA:    ${EXPECTED_COMMIT_SHA || "N/A"}`);
   console.log(`Live Commit SHA:      ${liveCommitSha}`);
-  console.log(`Version Match:        ${versionMatched ? 'PASSED ✅' : 'FAILED ❌'}`);
-  console.log(`Health Checks:        ${allHealthPassed ? 'PASSED ✅' : 'FAILED ❌'}`);
-  console.log(`Verification Time:    ${pollDurationSec}s (${pollAttempts} poll attempts)`);
+  console.log(
+    `Version Match:        ${versionMatched ? "PASSED ✅" : "FAILED ❌"}`,
+  );
+  console.log(
+    `Health Checks:        ${allHealthPassed ? "PASSED ✅" : "FAILED ❌"}`,
+  );
+  console.log(
+    `Verification Time:    ${pollDurationSec}s (${pollAttempts} poll attempts)`,
+  );
 
   // --- Step 4: Generate Markdown Summary & Reports ---
   const markdownReport = `
 ## ${statusEmoji} Post-Push Deployment Verification Report
 
-**Status:** ${overallSuccess ? '**LIVE & HEALTHY** ✅' : '**FAILED — ROLLBACK RECOMMENDED** 🚨'}
+**Status:** ${overallSuccess ? "**LIVE & HEALTHY** ✅" : "**FAILED — ROLLBACK RECOMMENDED** 🚨"}
 **Timestamp:** \`${new Date().toISOString()}\`
 
 | Parameter | Details |
 | :--- | :--- |
 | **App URL** | [${APP_URL}](${APP_URL}) |
-| **Pushed Commit SHA** | \`${EXPECTED_COMMIT_SHA || 'N/A'}\` |
+| **Pushed Commit SHA** | \`${EXPECTED_COMMIT_SHA || "N/A"}\` |
 | **Live Deployed SHA** | \`${liveCommitSha}\` |
 | **App Version** | \`${liveVersion}\` |
-| **Version Match** | ${versionMatched ? '✅ Matched' : '❌ Mismatch / Timeout'} |
+| **Version Match** | ${versionMatched ? "✅ Matched" : "❌ Mismatch / Timeout"} |
 | **Verification Duration** | ${pollDurationSec}s (${pollAttempts} polls) |
 
 ### 🏥 Endpoint Health Check Results
@@ -376,9 +465,9 @@ const runVerification = async () => {
 ${healthResults
   .map(
     (r) =>
-      `| \`${r.path}\` | ${r.name} | \`${r.expectedStatus}\` | \`${r.actualStatus}\` | ${r.latencyMs}ms | ${r.passed ? '✅ PASS' : '❌ FAIL'} |`
+      `| \`${r.path}\` | ${r.name} | \`${r.expectedStatus}\` | \`${r.actualStatus}\` | ${r.latencyMs}ms | ${r.passed ? "✅ PASS" : "❌ FAIL"} |`,
   )
-  .join('\n')}
+  .join("\n")}
 
 ${
   !overallSuccess
@@ -393,9 +482,11 @@ ${
   if (SUMMARY_FILE) {
     try {
       fs.appendFileSync(SUMMARY_FILE, markdownReport);
-      console.log(`\n📄 Written deployment summary to GITHUB_STEP_SUMMARY (${SUMMARY_FILE})`);
+      console.log(
+        `\n📄 Written deployment summary to GITHUB_STEP_SUMMARY (${SUMMARY_FILE})`,
+      );
     } catch (err) {
-      console.error('⚠️ Could not write GITHUB_STEP_SUMMARY:', err.message);
+      console.error("⚠️ Could not write GITHUB_STEP_SUMMARY:", err.message);
     }
   }
 
@@ -405,21 +496,33 @@ ${
       text: `${statusEmoji} *Post-Push Deploy Verification:* ${statusTitle}`,
       attachments: [
         {
-          color: overallSuccess ? '#2eb886' : '#a30200',
+          color: overallSuccess ? "#2eb886" : "#a30200",
           fields: [
-            { title: 'App URL', value: APP_URL, short: true },
-            { title: 'App Version', value: liveVersion, short: true },
-            { title: 'Expected Commit', value: EXPECTED_COMMIT_SHA || 'N/A', short: true },
-            { title: 'Live Commit', value: liveCommitSha, short: true },
-            { title: 'Version Match', value: versionMatched ? 'Passed ✅' : 'Failed ❌', short: true },
-            { title: 'Health Checks', value: allHealthPassed ? 'Passed ✅' : 'Failed ❌', short: true },
+            { title: "App URL", value: APP_URL, short: true },
+            { title: "App Version", value: liveVersion, short: true },
+            {
+              title: "Expected Commit",
+              value: EXPECTED_COMMIT_SHA || "N/A",
+              short: true,
+            },
+            { title: "Live Commit", value: liveCommitSha, short: true },
+            {
+              title: "Version Match",
+              value: versionMatched ? "Passed ✅" : "Failed ❌",
+              short: true,
+            },
+            {
+              title: "Health Checks",
+              value: allHealthPassed ? "Passed ✅" : "Failed ❌",
+              short: true,
+            },
           ],
           ts: Math.floor(Date.now() / 1000),
         },
       ],
     };
     await sendSlackNotification(slackPayload);
-    console.log('📲 Slack notification sent successfully.');
+    console.log("📲 Slack notification sent successfully.");
   }
 
   // --- Step 5: Persistent Audit Log Entry ---
@@ -427,7 +530,7 @@ ${
     timestamp: new Date().toISOString(),
     triggerEvent: TRIGGER_EVENT,
     appUrl: APP_URL,
-    pushedSha: EXPECTED_COMMIT_SHA || 'N/A',
+    pushedSha: EXPECTED_COMMIT_SHA || "N/A",
     liveSha: liveCommitSha,
     liveVersion,
     overallSuccess,
@@ -440,19 +543,27 @@ ${
 
   // --- Step 6: Exit Code Enforcement ---
   if (!overallSuccess) {
-    console.error('\n🚨 Verification process exiting with Code 1 due to failure.');
+    console.error(
+      "\n🚨 Verification process exiting with Code 1 due to failure.",
+    );
     process.exit(1);
   } else {
-    console.log('\n🎉 Verification process completed successfully (Code 0).');
+    console.log("\n🎉 Verification process completed successfully (Code 0).");
     process.exit(0);
   }
 };
 
-module.exports = { makeRequest, makeRequestWithRetry, writeAuditLog, runVerification, shasMatch };
+module.exports = {
+  makeRequest,
+  makeRequestWithRetry,
+  writeAuditLog,
+  runVerification,
+  shasMatch,
+};
 
 if (require.main === module) {
   runVerification().catch((err) => {
-    console.error('❌ Unexpected verification script error:', err);
+    console.error("❌ Unexpected verification script error:", err);
     process.exit(1);
   });
 }

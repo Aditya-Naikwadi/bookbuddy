@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useGoogleLogin } from "@react-oauth/google";
 import { registrationApi } from "../api/registrationApi";
 import { ROLES, normalizeRole } from "@bookbuddy/shared";
+import { trackEvent } from "../utils/analytics";
 
 const GoogleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -77,10 +78,19 @@ const Register = () => {
     normalizeRole(role) === ROLES.STUDENT,
   );
   const [collegeSearch, setCollegeSearch] = useState("");
+  const [debouncedCollegeSearch, setDebouncedCollegeSearch] = useState("");
   const [isCollegeDropdownOpen, setIsCollegeDropdownOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const collegeDropdownRef = useRef(null);
   const listboxRef = useRef(null);
+
+  // Debounce search input for college filtering (200ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedCollegeSearch(collegeSearch);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [collegeSearch]);
 
   useEffect(() => {
     let isMounted = true;
@@ -123,7 +133,7 @@ const Register = () => {
   }, []);
 
   const filteredColleges = useMemo(() => {
-    const term = collegeSearch.toLowerCase().trim();
+    const term = debouncedCollegeSearch.toLowerCase().trim();
     if (!term) return colleges;
     return colleges.filter((c) => {
       return (
@@ -133,7 +143,7 @@ const Register = () => {
         c.domain?.toLowerCase().includes(term)
       );
     });
-  }, [colleges, collegeSearch]);
+  }, [colleges, debouncedCollegeSearch]);
 
   // Auto-scroll highlighted combobox option into view
   useEffect(() => {
@@ -237,6 +247,7 @@ const Register = () => {
       navigate("/register");
       return;
     }
+    trackEvent("register_submitted", { role });
     const result = await register(
       name,
       email,
@@ -246,10 +257,12 @@ const Register = () => {
       collegeId,
     );
     if (result && typeof result === "object" && result.requiresApproval) {
+      trackEvent("register_success", { role, requiresApproval: true });
       setPendingJoinRequest(result.joinRequest);
       return;
     }
     if (result) {
+      trackEvent("register_success", { role, requiresApproval: false });
       if (role === "general") {
         navigate("/general-dashboard", { replace: true });
       } else {

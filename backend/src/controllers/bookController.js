@@ -166,8 +166,47 @@ const getBookAvailability = asyncHandler(async (req, res, next) => {
   res.json({ success: true, availability: book });
 });
 
+// @desc    Get public catalog books for landing page carousel
+// @route   GET /api/v1/books/public
+// @access  Public
+const getPublicBooks = asyncHandler(async (req, res) => {
+  const limit = Math.max(1, Math.min(50, Number(req.query.limit) || 12));
+  const { search, category } = req.query;
+
+  const andConditions = [];
+
+  if (search) {
+    const escaped = escapeRegExp(String(search).trim());
+    andConditions.push({
+      $or: [
+        { title: { $regex: escaped, $options: 'i' } },
+        { author: { $regex: escaped, $options: 'i' } },
+      ],
+    });
+  }
+
+  if (category && category !== 'All') {
+    andConditions.push({
+      category: { $regex: new RegExp(`^${escapeRegExp(category)}$`, 'i') },
+    });
+  }
+
+  const queryFilter = andConditions.length > 0 ? { $and: andConditions } : {};
+
+  const books = await Book.find(queryFilter)
+    .select(
+      'title author category shelfLocation copiesAvailable copiesTotal coverImage isbn format'
+    )
+    .limit(limit)
+    .sort({ createdAt: -1 });
+
+  res.set('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
+  res.json({ success: true, data: books });
+});
+
 module.exports = {
   getBooks,
   getBookById,
   getBookAvailability,
+  getPublicBooks,
 };

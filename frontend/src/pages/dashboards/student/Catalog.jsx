@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Bell,
   Filter,
@@ -56,6 +57,8 @@ const CatalogSkeleton = () => (
 
 const Catalog = () => {
   const { user } = useAuthStore();
+  const [searchParams] = useSearchParams();
+  const bookIdParam = searchParams.get("bookId");
   const [searchInput, setSearchInput] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [format, setFormat] = useState("all");
@@ -88,8 +91,22 @@ const Catalog = () => {
     keepPreviousData: true,
   });
 
-  const books = data?.data || [];
+  const books = useMemo(() => data?.data || [], [data?.data]);
   const pagination = data?.pagination || { total: 0, page: 1, pages: 1 };
+
+  // Automatically open book details modal if bookId is present in query parameters
+  useEffect(() => {
+    if (bookIdParam && books.length > 0 && !selectedBook) {
+      const match = books.find(
+        (b) => String(b._id || b.id) === String(bookIdParam),
+      );
+      if (match) {
+        setTimeout(() => {
+          setSelectedBook(match);
+        }, 0);
+      }
+    }
+  }, [bookIdParam, books, selectedBook]);
 
   // Dynamically compute the screen reader live region announcement to avoid synchronous setState inside useEffect
   const term = debouncedQuery ? ` matching "${debouncedQuery}"` : "";

@@ -12,11 +12,11 @@
  * 3. Requires all validate() arguments to be imported directly from `@bookbuddy/shared`.
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const projectRoot = path.resolve(__dirname, '../..');
-const routesDir = path.join(projectRoot, 'backend/src/routes');
+const projectRoot = path.resolve(__dirname, "../..");
+const routesDir = path.join(projectRoot, "backend/src/routes");
 
 function getFiles(dir) {
   let results = [];
@@ -25,7 +25,7 @@ function getFiles(dir) {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       results = results.concat(getFiles(fullPath));
-    } else if (entry.name.endsWith('.js')) {
+    } else if (entry.name.endsWith(".js")) {
       results.push(fullPath);
     }
   }
@@ -37,35 +37,41 @@ const violations = [];
 let totalValidatedEndpoints = 0;
 
 for (const file of routeFiles) {
-  const relPath = path.relative(projectRoot, file).replace(/\\/g, '/');
-  const content = fs.readFileSync(file, 'utf8');
-  const lines = content.split('\n');
+  const relPath = path.relative(projectRoot, file).replace(/\\/g, "/");
+  const content = fs.readFileSync(file, "utf8");
+  const lines = content.split("\n");
 
   // Collect all imported symbols from @bookbuddy/shared
   const sharedSymbols = new Set();
   const nonSharedValidationImports = [];
 
   // Parse require statements (handles multi-line and single-line requires)
-  const requireRegex = /const\s+(?:{([^}]+)}|([a-zA-Z0-9_]+))\s*=\s*require\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+  const requireRegex =
+    /const\s+(?:{([^}]+)}|([a-zA-Z0-9_]+))\s*=\s*require\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
   let requireMatch;
   while ((requireMatch = requireRegex.exec(content)) !== null) {
     const destructure = requireMatch[1];
     const singleVar = requireMatch[2];
     const modulePath = requireMatch[3];
 
-    const isShared = modulePath.startsWith('@bookbuddy/shared') || modulePath.startsWith('@shared');
+    const isShared =
+      modulePath.startsWith("@bookbuddy/shared") ||
+      modulePath.startsWith("@shared");
 
     if (isShared) {
       if (destructure) {
-        destructure.split(',').forEach((sym) => {
+        destructure.split(",").forEach((sym) => {
           const trimmed = sym.trim();
           if (trimmed) sharedSymbols.add(trimmed);
         });
       } else if (singleVar) {
         sharedSymbols.add(singleVar.trim());
       }
-    } else if (modulePath.includes('validation')) {
-      nonSharedValidationImports.push({ line: content.slice(0, requireMatch.index).split('\n').length, path: modulePath });
+    } else if (modulePath.includes("validation")) {
+      nonSharedValidationImports.push({
+        line: content.slice(0, requireMatch.index).split("\n").length,
+        path: modulePath,
+      });
     }
   }
 
@@ -86,10 +92,14 @@ for (const file of routeFiles) {
   while ((valMatch = validateRegex.exec(content)) !== null) {
     totalValidatedEndpoints++;
     const schemaArg = valMatch[1].trim();
-    const lineIndex = content.slice(0, valMatch.index).split('\n').length;
+    const lineIndex = content.slice(0, valMatch.index).split("\n").length;
 
     // Rule 1: Inline schema detection
-    if (schemaArg.includes('z.') || schemaArg.includes('zod') || schemaArg.includes('{')) {
+    if (
+      schemaArg.includes("z.") ||
+      schemaArg.includes("zod") ||
+      schemaArg.includes("{")
+    ) {
       violations.push({
         file: relPath,
         line: lineIndex,
@@ -109,18 +119,22 @@ for (const file of routeFiles) {
   }
 }
 
-console.log('--- CI Structural Contract Layer Enforcement ---');
+console.log("--- CI Structural Contract Layer Enforcement ---");
 console.log(`Scanned ${routeFiles.length} route files across backend.`);
 console.log(`Total validate() endpoints checked: ${totalValidatedEndpoints}`);
 
 if (violations.length > 0) {
-  console.error('\n❌ Architectural Contract Violations Detected:');
+  console.error("\n❌ Architectural Contract Violations Detected:");
   for (const v of violations) {
     console.error(`  - ${v.file}:${v.line} -> ${v.issue}`);
   }
-  console.error('\nFAIL: All route validations must import schemas from @bookbuddy/shared to prevent API contract drift.\n');
+  console.error(
+    "\nFAIL: All route validations must import schemas from @bookbuddy/shared to prevent API contract drift.\n",
+  );
   process.exit(1);
 }
 
-console.log('✅ PASS: All route validations strictly import from @bookbuddy/shared. Zero inline or local drift detected.\n');
+console.log(
+  "✅ PASS: All route validations strictly import from @bookbuddy/shared. Zero inline or local drift detected.\n",
+);
 process.exit(0);

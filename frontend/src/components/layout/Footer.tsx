@@ -1,9 +1,9 @@
 import React from "react";
-import { BookOpen } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const Footer = () => {
   return (
-    <footer className="bg-void border-t border-edge py-16">
+    <footer className="bg-void border-t border-edge py-16" aria-label="Footer">
       <div className="max-w-7xl mx-auto px-6 md:px-12 xl:px-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
         <div>
           <div className="flex items-center gap-2 mb-4">
@@ -19,83 +19,125 @@ export const Footer = () => {
             </span>
           </div>
           <p className="text-muted text-sm leading-relaxed">
-            The Library in Your Pocket. Manage your borrowing, read free
-            e-books, and build your reading streak.
+            The Library in Your Pocket. Manage course reserves, read free
+            e-books, track your streaks, and connect with your campus library.
           </p>
         </div>
+
         <div>
           <h4 className="font-semibold text-ink mb-4">Product</h4>
           <ul className="space-y-3 text-sm text-muted">
             <li>
-              <a href="#features" className="hover:text-ember">
+              <a
+                href="#catalog-search"
+                className="hover:text-ember transition-colors"
+              >
+                Catalog Search
+              </a>
+            </li>
+            <li>
+              <a
+                href="#e-resources"
+                className="hover:text-ember transition-colors"
+              >
+                E-Resources
+              </a>
+            </li>
+            <li>
+              <a
+                href="#features"
+                className="hover:text-ember transition-colors"
+              >
                 Features
               </a>
             </li>
             <li>
-              <a href="#e-books" className="hover:text-ember">
-                E-Books
+              <a
+                href="#how-it-works"
+                className="hover:text-ember transition-colors"
+              >
+                How It Works
               </a>
             </li>
             <li>
-              <a href="#streaks" className="hover:text-ember">
-                Streaks
-              </a>
-            </li>
-            <li>
-              <a href="#features" className="hover:text-ember">
-                Lab Booking
+              <a href="#streaks" className="hover:text-ember transition-colors">
+                Streaks & Rewards
               </a>
             </li>
           </ul>
         </div>
+
         <div>
-          <h4 className="font-semibold text-ink mb-4">Institution</h4>
+          <h4 className="font-semibold text-ink mb-4">Institutions</h4>
           <ul className="space-y-3 text-sm text-muted">
             <li>
-              <a href="#" className="hover:text-ember">
-                For Libraries
+              <a
+                href="#for-colleges"
+                className="hover:text-ember transition-colors"
+              >
+                For Colleges
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-ember">
-                API
-              </a>
+              <Link
+                to="/auth/register"
+                className="hover:text-ember transition-colors"
+              >
+                College Admin Onboarding
+              </Link>
             </li>
             <li>
-              <a href="#" className="hover:text-ember">
-                Pricing
-              </a>
+              <Link
+                to="/support"
+                className="hover:text-ember transition-colors"
+              >
+                Institutional Support
+              </Link>
             </li>
           </ul>
         </div>
+
         <div>
-          <h4 className="font-semibold text-ink mb-4">Company</h4>
+          <h4 className="font-semibold text-ink mb-4">Legal & Support</h4>
           <ul className="space-y-3 text-sm text-muted">
             <li>
-              <a href="#" className="hover:text-ember">
-                About
-              </a>
+              <Link
+                to="/privacy"
+                className="hover:text-ember transition-colors"
+              >
+                Privacy Policy
+              </Link>
             </li>
             <li>
-              <a href="#" className="hover:text-ember">
-                Blog
-              </a>
+              <Link to="/terms" className="hover:text-ember transition-colors">
+                Terms
+              </Link>
             </li>
             <li>
-              <a href="#" className="hover:text-ember">
-                Contact
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-ember">
-                Privacy & Terms
-              </a>
+              <Link
+                to="/support"
+                className="hover:text-ember transition-colors"
+              >
+                Contact/Support
+              </Link>
             </li>
           </ul>
         </div>
       </div>
-      <div className="max-w-7xl mx-auto px-6 md:px-12 xl:px-24 mt-16 pt-8 border-t border-edge text-xs text-muted text-center flex flex-col md:flex-row items-center justify-between">
+
+      <div className="max-w-7xl mx-auto px-6 md:px-12 xl:px-24 mt-16 pt-8 border-t border-edge text-xs text-muted flex flex-col md:flex-row items-center justify-between gap-4">
         <p>&copy; {new Date().getFullYear()} BookBuddy. All rights reserved.</p>
+        <div className="flex items-center gap-6">
+          <Link to="/privacy" className="hover:text-ember transition-colors">
+            Privacy Policy
+          </Link>
+          <Link to="/terms" className="hover:text-ember transition-colors">
+            Terms
+          </Link>
+          <Link to="/support" className="hover:text-ember transition-colors">
+            Contact/Support
+          </Link>
+        </div>
       </div>
     </footer>
   );

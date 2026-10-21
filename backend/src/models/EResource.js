@@ -230,8 +230,9 @@ eResourceSchema.index({ collegeId: 1, moderationStatus: 1, category: 1 });
 
 // Queue index for processing pending reviews in FIFO/LIFO order
 eResourceSchema.index({ moderationStatus: 1, submittedAt: 1 });
-eResourceSchema.index({ moderationStatus: 1, createdAt: 1 });
 eResourceSchema.index({ moderationStatus: 1, createdAt: -1 });
+eResourceSchema.index({ moderationStatus: 1, category: 1, createdAt: -1 });
+eResourceSchema.index({ moderationStatus: 1, type: 1, createdAt: -1 });
 
 // Tenant catalog view index (approved & published resources)
 eResourceSchema.index({ collegeId: 1, moderationStatus: 1, isPublished: 1 });

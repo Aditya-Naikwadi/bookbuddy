@@ -3,6 +3,14 @@ const AppError = require('../utils/AppError');
 const { verifyAccessToken, isTokenBlacklisted } = require('../utils/token');
 
 const protect = async (req, res, next) => {
+  // Strictly enforce private no-cache on all protected per-user routes
+  res.set({
+    'Cache-Control': 'private, no-store, no-cache, must-revalidate, proxy-revalidate',
+    Pragma: 'no-cache',
+    Expires: '0',
+    Vary: 'Authorization, Cookie, Accept-Encoding',
+  });
+
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
@@ -130,6 +138,14 @@ const protect = async (req, res, next) => {
       isImpersonated: !!decoded.isImpersonated,
       originalSuperAdminId: decoded.originalSuperAdminId || null,
     };
+
+    // Strictly enforce private no-cache on all authenticated per-user responses
+    res.set({
+      'Cache-Control': 'private, no-store, no-cache, must-revalidate, proxy-revalidate',
+      Pragma: 'no-cache',
+      Expires: '0',
+      Vary: 'Authorization, Cookie, Accept-Encoding',
+    });
 
     next();
   } catch (error) {

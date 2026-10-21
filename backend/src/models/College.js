@@ -276,6 +276,8 @@ collegeSchema.index({ name: 'text', code: 'text' });
 
 // Compound indexes for directory filtering and sorting
 collegeSchema.index({ status: 1, createdAt: -1 });
+collegeSchema.index({ status: 1, isActive: 1, name: 1 });
+collegeSchema.index({ status: 1, isActive: 1, slug: 1 });
 collegeSchema.index({ status: 1, subscriptionPlan: 1 });
 
 module.exports = mongoose.model('College', collegeSchema);
