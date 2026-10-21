@@ -1,7 +1,7 @@
 import { useRef } from "react";
-import { BookOpen, Clock, AlertTriangle, RefreshCw } from "lucide-react";
+import { BookOpen, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "../../ui/Button";
-import { useReducedMotion } from "../../../hooks/useReducedMotion";
+import { StatusBadge } from "../../common/StatusBadge";
 
 export const LoanCard = ({
   loan,
@@ -11,7 +11,6 @@ export const LoanCard = ({
   renewingLoanId,
 }) => {
   const renewBtnRef = useRef(null);
-  const prefersReducedMotion = useReducedMotion();
 
   const isOverdue = urgency.level === 3;
   const isDueSoon = urgency.level === 2;
@@ -98,25 +97,12 @@ export const LoanCard = ({
 
           <div className="flex items-center gap-2 mt-2">
             {/* Status Badge */}
-            <span
-              className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
-                isOverdue
-                  ? "text-danger bg-danger/10 border-danger/25"
-                  : isDueSoon
-                    ? "text-amber-500 bg-amber-500/10 border-amber-500/25"
-                    : "text-success bg-success/10 border-success/25"
-              }`}
-            >
-              {isOverdue ? (
-                <AlertTriangle
-                  size={10}
-                  className={prefersReducedMotion ? "" : "animate-pulse"}
-                />
-              ) : (
-                <Clock size={10} />
-              )}
-              {statusText}
-            </span>
+            <StatusBadge
+              status={isOverdue ? "overdue" : isDueSoon ? "pending" : "active"}
+              label={statusText}
+              size="sm"
+              showIcon
+            />
             <span className="text-xs font-semibold text-ink">
               Due: {dueDateStr}
             </span>

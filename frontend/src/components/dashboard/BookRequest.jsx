@@ -1,12 +1,7 @@
 import { useState } from "react";
 import { useBookRequest } from "../../hooks/useBookRequest";
-import {
-  BookPlus,
-  CheckCircle,
-  Clock,
-  XCircle,
-  AlertCircle,
-} from "lucide-react";
+import { StatusBadge } from "../common/StatusBadge";
+import { BookPlus, AlertCircle } from "lucide-react";
 
 export default function BookRequest() {
   const { requests, pendingCount, isLoading, createRequest, isSubmitting } =
@@ -39,35 +34,6 @@ export default function BookRequest() {
       setErrorMsg(
         err.response?.data?.message || "Failed to submit book request.",
       );
-    }
-  };
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "approved":
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400">
-            <CheckCircle className="w-3 h-3 mr-1" /> Approved
-          </span>
-        );
-      case "fulfilled":
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-400">
-            <CheckCircle className="w-3 h-3 mr-1" /> Available in Library
-          </span>
-        );
-      case "rejected":
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-400">
-            <XCircle className="w-3 h-3 mr-1" /> Declined
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400">
-            <Clock className="w-3 h-3 mr-1" /> Pending Review
-          </span>
-        );
     }
   };
 
@@ -214,7 +180,18 @@ export default function BookRequest() {
                       by {req.author} {req.isbn && `• ISBN: ${req.isbn}`}
                     </p>
                   </div>
-                  {getStatusBadge(req.status)}
+                  <StatusBadge
+                    status={req.status || "pending"}
+                    label={
+                      req.status === "fulfilled"
+                        ? "Available in Library"
+                        : req.status === "rejected"
+                          ? "Declined"
+                          : undefined
+                    }
+                    size="sm"
+                    showIcon
+                  />
                 </div>
 
                 {req.reason && (

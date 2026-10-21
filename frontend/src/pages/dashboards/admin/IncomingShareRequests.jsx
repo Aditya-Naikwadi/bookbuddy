@@ -5,13 +5,13 @@ import {
   XCircle,
   Truck,
   CheckCheck,
-  Clock,
   Building2,
   User,
   ShieldCheck,
   AlertCircle,
   RefreshCw,
 } from "lucide-react";
+import StatusBadge from "@/components/common/StatusBadge";
 
 export const IncomingShareRequests = () => {
   const [requests, setRequests] = useState([]);
@@ -82,43 +82,6 @@ export const IncomingShareRequests = () => {
       alert("Network error updating share request status.");
     } finally {
       setUpdatingId(null);
-    }
-  };
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "requested":
-        return (
-          <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5" /> Pending Review
-          </span>
-        );
-      case "approved":
-        return (
-          <span className="px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-semibold flex items-center gap-1">
-            <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" /> Approved
-          </span>
-        );
-      case "in_transit":
-        return (
-          <span className="px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold flex items-center gap-1">
-            <Truck className="w-3.5 h-3.5 text-cyan-400" /> In Transit
-          </span>
-        );
-      case "fulfilled":
-        return (
-          <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center gap-1">
-            <CheckCheck className="w-3.5 h-3.5 text-emerald-400" /> Fulfilled
-          </span>
-        );
-      case "rejected":
-        return (
-          <span className="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-1">
-            <XCircle className="w-3.5 h-3.5 text-rose-400" /> Rejected
-          </span>
-        );
-      default:
-        return null;
     }
   };
 
@@ -195,7 +158,7 @@ export const IncomingShareRequests = () => {
                 >
                   <div className="space-y-2">
                     <div className="flex items-center gap-3">
-                      {getStatusBadge(reqItem.status)}
+                      <StatusBadge status={reqItem.status} size="sm" showIcon />
                       <span className="text-xs text-slate-500 font-mono">
                         ID: {reqItem._id.substring(0, 10)}...
                       </span>

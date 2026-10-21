@@ -12,9 +12,8 @@ import {
   Send,
   UserX,
   MailCheck,
-  MailWarning,
-  FileText,
 } from "lucide-react";
+import { StatusBadge } from "../../../components/common/StatusBadge";
 
 export default function StudentUploadPage() {
   const [_file, setFile] = useState(null);
@@ -895,41 +894,12 @@ export default function StudentUploadPage() {
                       )}
                     </td>
                     <td className="p-3">
-                      {row.deliveryStatus === "sent" && (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 text-[10px]">
-                          <MailCheck className="w-3 h-3" />
-                          <span>Sent</span>
-                        </span>
-                      )}
-                      {row.deliveryStatus === "sms_queued" && (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 text-[10px]">
-                          <CheckCircle2 className="w-3 h-3" />
-                          <span>SMS Sent</span>
-                        </span>
-                      )}
-                      {row.deliveryStatus === "bounced" && (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/30 text-[10px]">
-                          <MailWarning className="w-3 h-3" />
-                          <span>Bounced</span>
-                        </span>
-                      )}
-                      {row.deliveryStatus === "no_contact_info" && (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px]">
-                          <FileText className="w-3 h-3" />
-                          <span>Handout Slip</span>
-                        </span>
-                      )}
-                      {row.deliveryStatus === "active_preserved" && (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 text-[10px]">
-                          <CheckCircle2 className="w-3 h-3" />
-                          <span>Password Preserved</span>
-                        </span>
-                      )}
-                      {row.deliveryStatus === "inactive" && (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/30 text-[10px]">
-                          <UserX className="w-3 h-3" />
-                          <span>Inactive</span>
-                        </span>
+                      {row.deliveryStatus && (
+                        <StatusBadge
+                          status={row.deliveryStatus}
+                          size="sm"
+                          showIcon
+                        />
                       )}
                     </td>
                     <td className="p-3 text-slate-400 max-w-xs truncate text-[11px]">

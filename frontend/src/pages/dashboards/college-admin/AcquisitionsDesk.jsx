@@ -20,6 +20,7 @@ import {
 } from "../../../api/acquisitionApi";
 import socket from "../../../lib/socketClient";
 import { useDebounce } from "../../../hooks/useDebounce";
+import { StatusBadge } from "../../../components/common/StatusBadge";
 
 export default function AcquisitionsDesk() {
   const queryClient = useQueryClient();
@@ -177,23 +178,6 @@ export default function AcquisitionsDesk() {
     totalSpent: 0,
     activeVendorsCount: 0,
     byStatus: {},
-  };
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "approved":
-        return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-      case "ordered":
-        return "bg-blue-500/10 text-blue-400 border-blue-500/20";
-      case "received":
-        return "bg-purple-500/10 text-purple-400 border-purple-500/20";
-      case "submitted":
-        return "bg-amber-500/10 text-amber-400 border-amber-500/20";
-      case "cancelled":
-        return "bg-rose-500/10 text-rose-400 border-rose-500/20";
-      default:
-        return "bg-slate-500/10 text-slate-400 border-slate-500/20";
-    }
   };
 
   return (
@@ -398,13 +382,11 @@ export default function AcquisitionsDesk() {
                           <h3 className="font-bold text-base text-white">
                             {order.vendorName}
                           </h3>
-                          <span
-                            className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border uppercase ${getStatusBadge(
-                              order.status,
-                            )}`}
-                          >
-                            {order.status}
-                          </span>
+                          <StatusBadge
+                            status={order.status}
+                            size="sm"
+                            showIcon
+                          />
                           <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">
                             {order.priority} priority
                           </span>

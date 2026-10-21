@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Sliders,
+  BookOpen,
 } from "lucide-react";
 import OpsHeader from "../../../components/ops/OpsHeader";
 import OpsSeverityBadge from "../../../components/ops/OpsSeverityBadge";
@@ -283,8 +284,8 @@ export default function AdminDashboardHome() {
                 <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-ink mt-1 tracking-tight">
                   {totalColleges}
                 </div>
-                <div className="text-xs font-medium text-indigo-500 dark:text-indigo-400 mt-1 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                <div className="text-xs font-medium text-indigo-500 dark:text-indigo-400 mt-1 flex items-center gap-1.5">
+                  <Building className="w-3.5 h-3.5" />
                   <span>Active Institutions</span>
                 </div>
               </div>
@@ -296,8 +297,8 @@ export default function AdminDashboardHome() {
                 <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-ink mt-1 tracking-tight">
                   {totalUsers.toLocaleString()}
                 </div>
-                <div className="text-xs font-medium text-emerald-500 dark:text-emerald-400 mt-1 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5" />
                   <span>Cross-Tenant Directory</span>
                 </div>
               </div>
@@ -309,8 +310,8 @@ export default function AdminDashboardHome() {
                 <div className="text-2xl sm:text-3xl font-extrabold text-amber-500 dark:text-amber-400 mt-1 tracking-tight">
                   {totalPendingActionItems}
                 </div>
-                <div className="text-xs font-medium text-amber-600 dark:text-amber-300 mt-1 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <div className="text-xs font-medium text-amber-600 dark:text-amber-300 mt-1 flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5" />
                   <span>Tasks Awaiting Review</span>
                 </div>
               </div>
@@ -322,8 +323,8 @@ export default function AdminDashboardHome() {
                 <div className="text-2xl sm:text-3xl font-extrabold text-cyan-500 dark:text-cyan-400 mt-1 tracking-tight">
                   {activeLoans}
                 </div>
-                <div className="text-xs font-medium text-cyan-600 dark:text-cyan-300 mt-1 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
+                <div className="text-xs font-medium text-cyan-600 dark:text-cyan-300 mt-1 flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5" />
                   <span>Monitored Circulation</span>
                 </div>
               </div>

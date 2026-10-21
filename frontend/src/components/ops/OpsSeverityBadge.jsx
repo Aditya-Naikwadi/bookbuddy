@@ -1,93 +1,30 @@
 /**
- * OpsSeverityBadge
- * Clean enterprise status badge system for BookBuddy Super Admin Console.
- * Supports: 'healthy' | 'info' | 'warning' | 'critical' | 'pending' | 'active' | 'suspended'
+ * OpsSeverityBadge.jsx
+ * BookBuddy Super Admin Console Adapter.
+ *
+ * Re-exports the unified StatusBadge from the design system
+ * ensuring 100% backward compatibility for all admin portal modules.
  */
+
+import { StatusBadge } from "../common/StatusBadge";
+
 export function OpsSeverityBadge({
   status = "info",
   label = "",
   size = "md",
   showDot = true,
+  showIcon = false,
   className = "",
 }) {
-  const normalized = String(status).toLowerCase();
-
-  const getStyle = () => {
-    switch (normalized) {
-      case "healthy":
-      case "ok":
-      case "active":
-      case "approved":
-      case "success":
-        return {
-          bg: "bg-emerald-50 dark:bg-emerald-950/40",
-          border: "border-emerald-200/80 dark:border-emerald-800",
-          text: "text-emerald-700 dark:text-emerald-300 font-semibold",
-          dot: "bg-emerald-500",
-          code: "Active",
-        };
-      case "warning":
-      case "warn":
-      case "suspended":
-        return {
-          bg: "bg-amber-50 dark:bg-amber-950/40",
-          border: "border-amber-200/80 dark:border-amber-800",
-          text: "text-amber-800 dark:text-amber-300 font-semibold",
-          dot: "bg-amber-500",
-          code: "Warning",
-        };
-      case "critical":
-      case "crit":
-      case "error":
-      case "failed":
-      case "rejected":
-        return {
-          bg: "bg-rose-50 dark:bg-rose-950/40",
-          border: "border-rose-200/80 dark:border-rose-800",
-          text: "text-rose-700 dark:text-rose-300 font-semibold",
-          dot: "bg-rose-500",
-          code: "Critical",
-        };
-      case "pending":
-      case "review":
-        return {
-          bg: "bg-blue-50 dark:bg-blue-950/40",
-          border: "border-blue-200/80 dark:border-blue-800",
-          text: "text-blue-700 dark:text-blue-300 font-semibold",
-          dot: "bg-blue-500",
-          code: "Pending",
-        };
-      case "info":
-      default:
-        return {
-          bg: "bg-slate-100 dark:bg-slate-800/60",
-          border: "border-slate-200 dark:border-slate-700",
-          text: "text-slate-700 dark:text-slate-300 font-medium",
-          dot: "bg-slate-400 dark:bg-slate-500",
-          code: "Info",
-        };
-    }
-  };
-
-  const style = getStyle();
-  const displayText = label || style.code;
-
-  const sizeClasses =
-    size === "sm"
-      ? "px-2 py-0.5 text-[11px]"
-      : size === "lg"
-        ? "px-3.5 py-1 text-xs"
-        : "px-2.5 py-0.5 text-xs";
-
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 border rounded-full font-sans tracking-tight ${style.bg} ${style.border} ${style.text} ${sizeClasses} ${className}`}
-    >
-      {showDot && (
-        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dot}`} />
-      )}
-      <span>{displayText}</span>
-    </span>
+    <StatusBadge
+      status={status}
+      label={label}
+      size={size}
+      showDot={showDot}
+      showIcon={showIcon}
+      className={className}
+    />
   );
 }
 

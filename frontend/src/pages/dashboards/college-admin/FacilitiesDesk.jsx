@@ -16,6 +16,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
 import { useSocket } from "../../../hooks/useSocket";
+import { StatusBadge } from "../../../components/common/StatusBadge";
 
 export default function FacilitiesDesk() {
   const queryClient = useQueryClient();
@@ -335,22 +336,11 @@ export default function FacilitiesDesk() {
                       </div>
 
                       <div className="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                        <span
-                          className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider ${
-                            isMaintenance
-                              ? "text-amber-400"
-                              : isRetired
-                                ? "text-rose-400"
-                                : "text-emerald-400"
-                          }`}
-                        >
-                          {isMaintenance ? (
-                            <Wrench size={10} />
-                          ) : (
-                            <CheckCircle size={10} />
-                          )}
-                          {seat.maintenanceStatus || "operational"}
-                        </span>
+                        <StatusBadge
+                          status={seat.maintenanceStatus || "operational"}
+                          size="sm"
+                          showIcon
+                        />
 
                         <button
                           onClick={() => setSelectedSeatForMaintenance(seat)}

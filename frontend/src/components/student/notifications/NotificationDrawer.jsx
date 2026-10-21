@@ -284,7 +284,16 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
                     </div>
 
                     {!item.read && (
-                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 absolute top-4 right-3" />
+                      <span
+                        className="inline-flex items-center absolute top-4 right-3"
+                        title="Unread notification"
+                      >
+                        <span
+                          className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400 shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span className="sr-only">Unread</span>
+                      </span>
                     )}
                   </motion.div>
                 ))

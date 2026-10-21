@@ -10,6 +10,7 @@ import {
   Receipt,
 } from "lucide-react";
 import { io as ioClient } from "socket.io-client";
+import { StatusBadge } from "../components/common/StatusBadge";
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -306,7 +307,6 @@ export const Fines = () => {
           ) : (
             <div className="divide-y divide-slate-800/80">
               {fines.map((item) => {
-                const isPaid = item.status === "paid";
                 const bookTitle =
                   (item.loanId || {}).bookId?.title || "Library Resource";
 
@@ -329,15 +329,7 @@ export const Fines = () => {
                         ₹{(item.amount || 0).toFixed(2)}
                       </div>
 
-                      {isPaid ? (
-                        <span className="px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Paid
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" /> Unpaid
-                        </span>
-                      )}
+                      <StatusBadge status={item.status} size="sm" showIcon />
                     </div>
                   </div>
                 );

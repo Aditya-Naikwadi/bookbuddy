@@ -204,8 +204,8 @@ export default function SystemOverview() {
                 / {colleges.length || 1} Total
               </span>
             </div>
-            <div className="text-xs text-emerald-400 font-medium flex items-center gap-1.5 pt-2 border-t border-white/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5 pt-2 border-t border-white/10">
+              <Building2 className="w-3.5 h-3.5" />
               <span>Multi-Tenant Scoping Active</span>
             </div>
           </div>
@@ -222,8 +222,8 @@ export default function SystemOverview() {
                 0
               ).toLocaleString()}
             </div>
-            <div className="text-xs text-slate-400 dark:text-muted flex items-center gap-1.5 pt-2 border-t border-white/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            <div className="text-xs text-slate-500 dark:text-muted flex items-center gap-1.5 pt-2 border-t border-white/10">
+              <Users className="w-3.5 h-3.5" />
               <span>Across Onboarded Campus Tenants</span>
             </div>
           </div>
@@ -238,8 +238,8 @@ export default function SystemOverview() {
                 ? `${health.memoryUsage.heapUsedMB} MB`
                 : "48.2 MB"}
             </div>
-            <div className="text-xs text-slate-400 dark:text-muted flex items-center gap-1.5 pt-2 border-t border-white/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
+            <div className="text-xs text-slate-500 dark:text-muted flex items-center gap-1.5 pt-2 border-t border-white/10">
+              <Database className="w-3.5 h-3.5" />
               <span>
                 RSS: {health?.memoryUsage?.rssMB || "120"} MB // Node{" "}
                 {health?.nodeVersion || "v20"}
@@ -258,8 +258,8 @@ export default function SystemOverview() {
                 Applications
               </span>
             </div>
-            <div className="text-xs text-amber-400 font-medium flex items-center gap-1.5 pt-2 border-t border-white/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+            <div className="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1.5 pt-2 border-t border-white/10">
+              <Clock className="w-3.5 h-3.5" />
               <span>Requires Super Admin Sign-Off</span>
             </div>
           </div>

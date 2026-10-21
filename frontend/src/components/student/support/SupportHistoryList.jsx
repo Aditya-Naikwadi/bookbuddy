@@ -6,7 +6,7 @@ import {
   Calendar,
   Star,
 } from "lucide-react";
-import { Badge } from "../../ui/Badge";
+import { StatusBadge } from "../../common/StatusBadge";
 
 export const SupportHistoryList = ({
   suggestions = [],
@@ -22,36 +22,6 @@ export const SupportHistoryList = ({
       day: "numeric",
       year: "numeric",
     });
-  };
-
-  // Helper to get status pill styling for suggestions
-  const getSuggestionStatusBadge = (status) => {
-    switch (status) {
-      case "acquired":
-        return "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20";
-      case "approved":
-        return "bg-indigo-500/10 text-indigo-500 border border-indigo-500/20";
-      case "under_review":
-        return "bg-amber-500/10 text-amber-500 border border-amber-500/20";
-      case "rejected":
-        return "bg-red-500/10 text-red-500 border border-red-500/20";
-      default:
-        return "bg-slate-500/10 text-slate-500 border border-slate-500/20";
-    }
-  };
-
-  // Helper to get status pill styling for complaints
-  const getComplaintStatusBadge = (status) => {
-    switch (status) {
-      case "resolved":
-        return "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20";
-      case "in_progress":
-        return "bg-amber-500/10 text-amber-500 border border-amber-500/20";
-      case "closed":
-        return "bg-slate-500/10 text-slate-500 border border-slate-500/20";
-      default:
-        return "bg-red-500/10 text-red-500 border border-red-500/20"; // open
-    }
   };
 
   return (
@@ -135,11 +105,7 @@ export const SupportHistoryList = ({
                         Author: {item.author}
                       </p>
                     </div>
-                    <Badge
-                      className={`text-[9px] uppercase px-2 py-0.5 shrink-0 ${getSuggestionStatusBadge(item.status)}`}
-                    >
-                      {item.status.replace("_", " ")}
-                    </Badge>
+                    <StatusBadge status={item.status} size="sm" showIcon />
                   </div>
 
                   {item.reason && (
@@ -189,11 +155,7 @@ export const SupportHistoryList = ({
                     <h4 className="font-bold text-sm text-slate-800">
                       Category: {item.subject}
                     </h4>
-                    <Badge
-                      className={`text-[9px] uppercase px-2 py-0.5 shrink-0 ${getComplaintStatusBadge(item.status)}`}
-                    >
-                      {item.status.replace("_", " ")}
-                    </Badge>
+                    <StatusBadge status={item.status} size="sm" showIcon />
                   </div>
 
                   <p className="text-xs text-slate-600 leading-relaxed font-medium bg-white p-3 rounded-xl border border-slate-100">

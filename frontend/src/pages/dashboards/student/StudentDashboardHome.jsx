@@ -7,11 +7,11 @@ import confetti from "canvas-confetti";
 import { ReadingAnalyticsChart } from "../../../components/student/analytics/ReadingAnalyticsChart";
 import { NotificationDrawer } from "../../../components/student/notifications/NotificationDrawer";
 import { BadgeUnlockModal } from "../../../components/student/streak/BadgeUnlockModal";
+import { StatusBadge } from "../../../components/common/StatusBadge";
 
 import {
   Flame,
   Snowflake,
-  Clock,
   BookOpen,
   AlertCircle,
   CheckCircle2,
@@ -258,8 +258,9 @@ export const StudentDashboardHome = () => {
               >
                 <Bell size={16} />
                 {unreadNotificationsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center animate-pulse">
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-indigo-600 text-white text-[9px] font-black flex items-center justify-center shadow-sm">
                     {unreadNotificationsCount}
+                    <span className="sr-only"> unread</span>
                   </span>
                 )}
               </button>
@@ -503,22 +504,24 @@ export const StudentDashboardHome = () => {
                               {book.author || "Unknown Author"}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
-                              <span
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${
+                              <StatusBadge
+                                status={
                                   isOverdue
-                                    ? "bg-red-500/10 text-red-600 border border-red-500/20"
+                                    ? "overdue"
                                     : daysLeft <= 2
-                                      ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                                      : "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
-                                }`}
-                              >
-                                <Clock size={10} />
-                                {isOverdue
-                                  ? "Overdue!"
-                                  : daysLeft === 0
-                                    ? "Due Today!"
-                                    : `${daysLeft} days left`}
-                              </span>
+                                      ? "pending"
+                                      : "active"
+                                }
+                                label={
+                                  isOverdue
+                                    ? "Overdue!"
+                                    : daysLeft === 0
+                                      ? "Due Today!"
+                                      : `${daysLeft} days left`
+                                }
+                                size="sm"
+                                showIcon
+                              />
                               <span className="text-[10px] text-slate-400">
                                 Renewals: {loan.renewalCount || 0}/
                                 {loan.maxRenewals || 2}
@@ -628,17 +631,16 @@ export const StudentDashboardHome = () => {
                       </div>
 
                       <div className="flex items-center gap-3 flex-shrink-0">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                        <StatusBadge
+                          status={isReady ? "ready_for_pickup" : "queued"}
+                          label={
                             isReady
-                              ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 animate-pulse"
-                              : "bg-purple-500/10 text-purple-600 border border-purple-500/20"
-                          }`}
-                        >
-                          {isReady
-                            ? "Ready at Desk!"
-                            : `Queue #${res.queuePosition || 1}`}
-                        </span>
+                              ? "Ready at Desk!"
+                              : `Queue #${res.queuePosition || 1}`
+                          }
+                          size="sm"
+                          showIcon
+                        />
                         <button
                           onClick={() => handleCancelHold(res._id)}
                           disabled={

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { SectionLabel } from "../components/ui/SectionLabel";
 import { BookCoverImage } from "../components/common/BookCoverImage";
+import { StatusBadge } from "../components/common/StatusBadge";
 import useAuthStore from "../store/authStore";
 import apiClient from "../api/client";
 
@@ -540,10 +541,13 @@ export const CatalogSearch: React.FC = () => {
 
                   {/* Status Badge */}
                   <div className="absolute top-2.5 right-2.5">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 text-emerald-300 backdrop-blur-md border border-emerald-500/20 flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" />
-                      {book.availability || "Available"}
-                    </span>
+                    <StatusBadge
+                      status="available"
+                      label={book.availability || "Available"}
+                      size="sm"
+                      showIcon
+                      className="backdrop-blur-md shadow-xs"
+                    />
                   </div>
                 </div>
 

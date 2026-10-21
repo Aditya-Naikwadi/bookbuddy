@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { HelpCircle, Trash2, Loader2, Sparkles, Clock } from "lucide-react";
+import { StatusBadge } from "../../common/StatusBadge";
 
 export const QueueHoldsList = ({
   queue,
@@ -81,9 +82,12 @@ export const QueueHoldsList = ({
             <div className="flex items-center gap-4 shrink-0">
               <div className="text-right">
                 {isReady ? (
-                  <span className="block text-xs font-mono font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-1 rounded">
-                    PICKUP READY
-                  </span>
+                  <StatusBadge
+                    status="ready_for_pickup"
+                    label="Pickup Ready"
+                    size="sm"
+                    showIcon
+                  />
                 ) : (
                   <>
                     <span className="block text-2xl font-serif font-black text-ember leading-none">

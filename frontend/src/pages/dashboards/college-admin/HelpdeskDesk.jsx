@@ -1,6 +1,7 @@
 import { Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
+import { StatusBadge } from "../../../components/common/StatusBadge";
 
 export default function HelpdeskDesk() {
   const queryClient = useQueryClient();
@@ -63,15 +64,7 @@ export default function HelpdeskDesk() {
                     By {t.userId?.name || "Student"} ({t.userId?.email})
                   </p>
                 </div>
-                <span
-                  className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono border ${
-                    t.status === "resolved"
-                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                      : "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                  }`}
-                >
-                  {t.status}
-                </span>
+                <StatusBadge status={t.status} size="sm" showIcon />
               </div>
               <p className="text-xs text-slate-300 bg-slate-950 p-3 rounded-xl border border-slate-800">
                 {t.description || t.message || "No ticket text body provided."}

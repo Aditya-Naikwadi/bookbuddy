@@ -109,7 +109,13 @@ const NotificationCenter = () => {
       >
         <Bell size={20} />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-surface animate-pulse" />
+          <span className="absolute top-1 right-1 flex items-center justify-center">
+            <span
+              className="w-2.5 h-2.5 bg-indigo-600 dark:bg-indigo-400 rounded-full border-2 border-white dark:border-surface"
+              aria-hidden="true"
+            />
+            <span className="sr-only">({unreadCount} unread)</span>
+          </span>
         )}
       </motion.button>
 

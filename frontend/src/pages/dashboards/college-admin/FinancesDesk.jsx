@@ -1,6 +1,7 @@
 import { Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
+import { StatusBadge } from "../../../components/common/StatusBadge";
 
 export default function FinancesDesk() {
   const queryClient = useQueryClient();
@@ -72,15 +73,7 @@ export default function FinancesDesk() {
                     ₹{fine.amount}
                   </td>
                   <td className="p-3.5">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] ${
-                        fine.status === "paid"
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                          : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                      }`}
-                    >
-                      {fine.status}
-                    </span>
+                    <StatusBadge status={fine.status} size="sm" showIcon />
                   </td>
                   <td className="p-3.5">
                     {fine.status !== "paid" && (

@@ -13,7 +13,6 @@ import {
   UserCheck,
   CheckCircle2,
   XCircle,
-  Clock,
   RotateCw,
   FileText,
 } from "lucide-react";
@@ -28,6 +27,7 @@ import apiClient from "../../../api/client";
 import { toast } from "../../../store/toastStore";
 import { rejectStudentJoinRequestBodySchema } from "@shared/schemas/joinRequests";
 import { useDebounce } from "../../../hooks/useDebounce";
+import { StatusBadge } from "../../../components/common/StatusBadge";
 
 const EMPTY_ARRAY = [];
 
@@ -470,17 +470,18 @@ export default function PatronsDesk() {
                           {patron.department || patron.major || "General"}
                         </td>
                         <td className="p-3.5">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                          <StatusBadge
+                            status={
+                              patron.isActive !== false ? "active" : "suspended"
+                            }
+                            label={
                               patron.isActive !== false
-                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                                : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                            }`}
-                          >
-                            {patron.isActive !== false
-                              ? "Active Member"
-                              : "Suspended"}
-                          </span>
+                                ? "Active Member"
+                                : "Suspended"
+                            }
+                            size="sm"
+                            showIcon
+                          />
                         </td>
                         <td className="p-3.5 text-right">
                           <button
@@ -701,29 +702,10 @@ export default function PatronsDesk() {
                         </span>
                       </td>
                       <td className="p-3.5">
-                        {req.status === "pending" && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                            <Clock size={12} className="animate-spin" />
-                            Pending Review
-                          </span>
-                        )}
-                        {req.status === "approved" && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            <CheckCircle2 size={12} />
-                            Approved
-                          </span>
-                        )}
-                        {req.status === "rejected" && (
-                          <div className="space-y-1">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                              <XCircle size={12} />
-                              Rejected
-                            </span>
-                            {req.rejectionReason && (
-                              <div className="text-[10px] text-rose-300/80 italic max-w-xs truncate">
-                                Reason: {req.rejectionReason}
-                              </div>
-                            )}
+                        <StatusBadge status={req.status} size="sm" showIcon />
+                        {req.status === "rejected" && req.rejectionReason && (
+                          <div className="text-[10px] text-rose-300/80 italic max-w-xs truncate mt-1">
+                            Reason: {req.rejectionReason}
                           </div>
                         )}
                       </td>
