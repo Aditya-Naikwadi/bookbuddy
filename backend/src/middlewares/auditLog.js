@@ -51,7 +51,14 @@ const auditLog = (actionName) => {
             targetId,
             collegeId: collegeId || req.user.collegeId || undefined,
             metadata: cleanedMetadata,
-            ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+            ipAddress:
+              req.headers['cf-connecting-ip'] ||
+              req.ip ||
+              (req.headers['x-forwarded-for']
+                ? req.headers['x-forwarded-for'].split(',')[0].trim()
+                : null) ||
+              req.socket?.remoteAddress ||
+              '127.0.0.1',
           });
 
           // Optional SIEM Webhook Export (Opt-In Integration)

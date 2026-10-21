@@ -30,7 +30,7 @@ const MODULE_COMMANDS = [
     title: "College Tenant Manager",
     subtitle: "Provision, edit, and configure institutional tenant scopes",
     icon: Building2,
-    path: "/admin-portal/colleges",
+    path: "/admin-portal/college-admins",
     category: "Navigation",
   },
   {
@@ -42,19 +42,29 @@ const MODULE_COMMANDS = [
     category: "Navigation",
   },
   {
+    id: "nav-features",
+    title: "Feature Manager & Modules",
+    subtitle:
+      "Cross-tenant feature toggling and institutional service synchronization",
+    icon: Sliders,
+    path: "/admin-portal/features",
+    category: "Navigation",
+  },
+  {
     id: "nav-onboarding",
     title: "Tenant Onboarding Queue",
     subtitle: "Review and approve pending institutional registration requests",
     icon: Clock,
-    path: "/admin-portal/onboarding",
+    path: "/admin-portal/registration-queue",
     category: "Navigation",
   },
   {
     id: "nav-moderation",
     title: "Global Content Moderation",
-    subtitle: "Review flagged reviews, discussion comments, and reported media",
+    subtitle:
+      "Review uploaded digital e-books and study resources before publication",
     icon: ShieldAlert,
-    path: "/admin-portal/content-moderation",
+    path: "/admin-portal/moderation",
     category: "Navigation",
   },
   {
@@ -71,7 +81,7 @@ const MODULE_COMMANDS = [
     title: "Global Support Escalations",
     subtitle: "Cross-tenant helpdesk ticket queue and complaint responses",
     icon: HelpCircle,
-    path: "/admin-portal/support-queue",
+    path: "/admin-portal/support",
     category: "Navigation",
   },
   {
@@ -89,7 +99,7 @@ const MODULE_COMMANDS = [
     subtitle:
       "SMTP parameters, maintenance mode toggles, and database snapshots",
     icon: Sliders,
-    path: "/admin-portal/system-settings",
+    path: "/admin-portal/settings",
     category: "Navigation",
   },
   {

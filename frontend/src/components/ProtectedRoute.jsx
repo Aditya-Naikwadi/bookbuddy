@@ -2,6 +2,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { normalizeRole } from "@bookbuddy/shared";
 import useAuthStore from "../store/authStore";
 import { isUserAllowedForRoute } from "../config/roleRouteConfig";
+import { getSubdomainTenantSlug } from "../utils/tenantSubdomain";
 
 const ProtectedRoute = ({ allowedRoles }) => {
   const { isAuthenticated, user, isLoading } = useAuthStore();
@@ -18,6 +19,13 @@ const ProtectedRoute = ({ allowedRoles }) => {
   if (!isAuthenticated) {
     // Redirect to login page but save the location they were trying to access
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
+  }
+
+  // Strictly forbid Super Admin command center from being served on tenant subdomains
+  if (location.pathname.startsWith("/admin-portal")) {
+    if (getSubdomainTenantSlug()) {
+      return <Navigate to="/unauthorized" replace />;
+    }
   }
 
   // Verify explicit allowedRoles prop or role-route configuration using canonical role normalization

@@ -13,6 +13,21 @@ const escapeRegExp = (string) => {
   return string ? String(string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
 };
 
+const { isSlugReserved } = require('../../constants/reservedSlugs');
+const { revokeAllSessionsForUser } = require('../../services/sessionService');
+
+const getClientIp = (req) => {
+  return (
+    req?.headers?.['cf-connecting-ip'] ||
+    req?.ip ||
+    (req?.headers?.['x-forwarded-for']
+      ? req.headers['x-forwarded-for'].split(',')[0].trim()
+      : null) ||
+    req?.socket?.remoteAddress ||
+    '127.0.0.1'
+  );
+};
+
 const getActorId = (req) => {
   return req && req.user && req.user.isImpersonated && req.user.originalSuperAdminId
     ? req.user.originalSuperAdminId
@@ -314,6 +329,29 @@ const createCollege = async (req, res, next) => {
     ).toLowerCase();
     const collegeCode = (code || collegeSlug || 'TENANT').toUpperCase();
 
+    if (isSlugReserved(collegeSlug)) {
+      return next(
+        new AppError(
+          `The subdomain slug "${collegeSlug}" is reserved and cannot be assigned to an institution.`,
+          400
+        )
+      );
+    }
+
+    const existingCollege = await College.findOne({
+      $or: [{ slug: collegeSlug }, { code: collegeCode }],
+    });
+    if (existingCollege) {
+      return next(
+        new AppError(
+          existingCollege.slug === collegeSlug
+            ? `An institution with slug "${collegeSlug}" already exists.`
+            : `An institution with code "${collegeCode}" already exists.`,
+          409
+        )
+      );
+    }
+
     const { runInTransaction } = require('../../utils/transactionHelper');
     const { college, adminUser, generatedPassword } = await runInTransaction(async (session) => {
       const newCollegeDocs = await College.create(
@@ -339,10 +377,11 @@ const createCollege = async (req, res, next) => {
       let tempPass = null;
       if (adminEmail && adminName) {
         tempPass = password || `Pass@${Math.random().toString(36).substring(2, 10)}`;
+        const uniqueAdminId = `ADMIN-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 900 + 100)}`;
         const newAdminDocs = await User.create(
           [
             {
-              studentId: `ADMIN-${Date.now().toString().slice(-4)}`,
+              studentId: uniqueAdminId,
               name: adminName,
               email: normalizeEmail(adminEmail),
               password: tempPass,
@@ -351,6 +390,7 @@ const createCollege = async (req, res, next) => {
               isEmailVerified: true,
               membershipStatus: 'active',
               status: 'active',
+              mustChangePasswordOnNextLogin: true,
             },
           ],
           { session }
@@ -654,6 +694,12 @@ const patchCollegeStatus = async (req, res, next) => {
           { $unset: { refreshTokenHash: 1 } },
           { session }
         );
+        const RefreshToken = require('../../models/RefreshToken');
+        await RefreshToken.updateMany(
+          { collegeId: college._id, revokedAt: null },
+          { $set: { revokedAt: new Date() } },
+          { session }
+        );
         if (status === 'archived') {
           await User.updateMany({ collegeId: college._id }, { isActive: false }, { session });
         }
@@ -682,7 +728,7 @@ const patchCollegeStatus = async (req, res, next) => {
       targetId: college._id,
       collegeId: college._id,
       metadata: { oldStatus, newStatus: status },
-      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+      ipAddress: getClientIp(req),
     });
 
     res.json({
@@ -757,8 +803,14 @@ const moderateEResourceGlobal = async (req, res, next) => {
     }
 
     const oldStatus = resource.moderationStatus;
-    resource.moderationStatus = status;
-    resource.isPublished = false;
+    if (status === 'approved') {
+      resource.moderationStatus = 'published';
+      resource.isPublished = true;
+      resource.publishedAt = new Date();
+    } else {
+      resource.moderationStatus = status;
+      resource.isPublished = false;
+    }
     resource.moderationNote = note || '';
     resource.moderatedBy = req.user.id;
     resource.moderatedAt = new Date();
@@ -954,10 +1006,11 @@ const approveTenantOnboarding = async (req, res, next) => {
         const createdCollege = newCollegeDocs[0];
 
         // 2. Create initial College Admin User
+        const uniqueAdminId = `ADMIN-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 900 + 100)}`;
         const newAdminDocs = await User.create(
           [
             {
-              studentId: 'ADMIN-001',
+              studentId: uniqueAdminId,
               name: adminName,
               email: adminEmail,
               password: passwordHash,
@@ -965,6 +1018,8 @@ const approveTenantOnboarding = async (req, res, next) => {
               collegeId: createdCollege._id,
               isEmailVerified: true,
               membershipStatus: 'active',
+              status: 'active',
+              mustChangePasswordOnNextLogin: true,
             },
           ],
           { session }
@@ -985,11 +1040,18 @@ const approveTenantOnboarding = async (req, res, next) => {
           { session }
         );
 
-        // 4. Mark RegistrationRequest as approved
-        regRequest.status = 'approved';
-        regRequest.reviewedAt = new Date();
-        regRequest.reviewedBy = req.user.id;
-        await regRequest.save({ session });
+        // 4. Mark RegistrationRequest as approved atomically
+        const updatedReq = await RegistrationRequest.findOneAndUpdate(
+          { _id: req.params.requestId, type: 'tenant_onboarding', status: 'pending_review' },
+          { $set: { status: 'approved', reviewedAt: new Date(), reviewedBy: req.user.id } },
+          { session, new: true }
+        );
+        if (!updatedReq) {
+          throw new AppError(
+            'Application has already been processed or is no longer pending review.',
+            409
+          );
+        }
 
         return { college: createdCollege, adminUser: createdAdmin };
       },
@@ -1025,7 +1087,7 @@ const approveTenantOnboarding = async (req, res, next) => {
             targetId: college._id,
             collegeId: college._id,
             metadata: { legalName, domain, adminEmail },
-            ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+            ipAddress: getClientIp(req),
           });
         } catch (auditErr) {
           logger.error(`Post-commit tenant approval audit log failed: ${auditErr.message}`);
@@ -1064,21 +1126,28 @@ const rejectTenantOnboarding = async (req, res, next) => {
       return next(new AppError('Rejection reason is required.', 400));
     }
 
-    const regRequest = await RegistrationRequest.findOne({
-      _id: req.params.requestId,
-      type: 'tenant_onboarding',
-      status: 'pending_review',
-    });
+    const regRequest = await RegistrationRequest.findOneAndUpdate(
+      {
+        _id: req.params.requestId,
+        type: 'tenant_onboarding',
+        status: 'pending_review',
+      },
+      {
+        $set: {
+          status: 'rejected',
+          'tenantData.rejectionReason': reason.trim(),
+          reviewedAt: new Date(),
+          reviewedBy: req.user.id,
+        },
+      },
+      { new: true }
+    );
 
     if (!regRequest) {
-      return next(new AppError('Pending tenant onboarding application not found.', 404));
+      return next(
+        new AppError('Pending tenant onboarding application not found or already processed.', 404)
+      );
     }
-
-    regRequest.status = 'rejected';
-    regRequest.tenantData.rejectionReason = reason.trim();
-    regRequest.reviewedAt = new Date();
-    regRequest.reviewedBy = req.user.id;
-    await regRequest.save();
 
     // Send rejection email notification asynchronously in background job (Item 14)
     setImmediate(() => {
@@ -1170,6 +1239,38 @@ const updateUserStatus = async (req, res, next) => {
     const user = await User.findById(req.params.id);
     if (!user) return next(new AppError('User not found.', 404));
 
+    const isSelf = user._id.toString() === req.user.id.toString();
+    const isDisabling =
+      status === 'disabled' || isActive === false || membershipStatus === 'suspended';
+
+    // Prevent self-lockout
+    if (isSelf && isDisabling) {
+      return next(
+        new AppError(
+          'Self-lockout prevented: You cannot disable or suspend your own Super Admin account.',
+          400
+        )
+      );
+    }
+
+    // Prevent disabling the last remaining active Super Admin
+    if (user.role === 'super-admin' && isDisabling) {
+      const activeSuperAdmins = await User.countDocuments({
+        role: 'super-admin',
+        status: 'active',
+        isActive: { $ne: false },
+        _id: { $ne: user._id },
+      });
+      if (activeSuperAdmins === 0) {
+        return next(
+          new AppError(
+            "Operation denied: Cannot disable or suspend the platform's last remaining active Super Admin.",
+            400
+          )
+        );
+      }
+    }
+
     const oldStatus = user.status;
     const oldMembership = user.membershipStatus;
 
@@ -1178,6 +1279,12 @@ const updateUserStatus = async (req, res, next) => {
     if (typeof isActive === 'boolean') user.isActive = isActive;
 
     await user.save();
+
+    // Revoke active sessions immediately on suspension/deactivation
+    if (isDisabling) {
+      await revokeAllSessionsForUser(user._id);
+    }
+
     await clearGlobalMetricsCache();
 
     await AuditLog.create({
@@ -1195,7 +1302,7 @@ const updateUserStatus = async (req, res, next) => {
         isImpersonated: req.user.isImpersonated || false,
         impersonatedUserId: req.user.isImpersonated ? req.user.id : undefined,
       },
-      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+      ipAddress: getClientIp(req),
     });
 
     res.json({
@@ -1221,9 +1328,42 @@ const updateUserRole = async (req, res, next) => {
     const user = await User.findById(req.params.id);
     if (!user) return next(new AppError('User not found.', 404));
 
+    const isSelf = user._id.toString() === req.user.id.toString();
+
+    // Prevent self-demotion
+    if (isSelf && role !== 'super-admin') {
+      return next(
+        new AppError('Self-lockout prevented: You cannot demote your own Super Admin role.', 400)
+      );
+    }
+
+    // Prevent demoting the last remaining active Super Admin
+    if (user.role === 'super-admin' && role !== 'super-admin') {
+      const activeSuperAdmins = await User.countDocuments({
+        role: 'super-admin',
+        status: 'active',
+        isActive: { $ne: false },
+        _id: { $ne: user._id },
+      });
+      if (activeSuperAdmins === 0) {
+        return next(
+          new AppError(
+            "Operation denied: Cannot demote the platform's last remaining Super Admin.",
+            400
+          )
+        );
+      }
+    }
+
     const oldRole = user.role;
     user.role = role;
     await user.save();
+
+    // Revoke all active sessions on role transition
+    if (oldRole !== role) {
+      await revokeAllSessionsForUser(user._id);
+    }
+
     await clearGlobalMetricsCache();
 
     await AuditLog.create({
@@ -1234,7 +1374,7 @@ const updateUserRole = async (req, res, next) => {
       targetId: user._id,
       collegeId: user.collegeId || null,
       metadata: { oldRole, newRole: role },
-      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+      ipAddress: getClientIp(req),
     });
 
     res.json({
@@ -1411,7 +1551,7 @@ const getSystemHealth = async (req, res, next) => {
       success: true,
       data: {
         uptimeSeconds: Math.floor(process.uptime()),
-        nodeVersion: process.version,
+        nodeVersion: process.version ? `${process.version.split('.')[0]}.x` : 'v24.x',
         pid: '[REDACTED]',
         cpuUsage: {
           userMs: Math.round(cpuUsage.user / 1000),
@@ -1479,7 +1619,10 @@ const getGlobalLoans = async (req, res, next) => {
     if (status) filter.status = status;
     if (collegeId) filter.collegeId = collegeId;
 
-    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const safePage = Math.max(1, parseInt(page, 10) || 1);
+    const safeLimit = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+    const skip = (safePage - 1) * safeLimit;
+
     const total = await Loan.countDocuments(filter);
     const loans = await Loan.find(filter)
       .populate('userId', 'name email studentId')
@@ -1487,15 +1630,15 @@ const getGlobalLoans = async (req, res, next) => {
       .populate('collegeId', 'name code')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit, 10));
+      .limit(safeLimit);
 
     res.json({
       success: true,
       data: loans,
       pagination: {
         total,
-        page: parseInt(page, 10),
-        pages: Math.ceil(total / parseInt(limit, 10)),
+        page: safePage,
+        pages: Math.ceil(total / safeLimit),
       },
     });
   } catch (error) {
@@ -1513,7 +1656,10 @@ const getGlobalFines = async (req, res, next) => {
     if (status) filter.status = status;
     if (collegeId) filter.collegeId = collegeId;
 
-    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const safePage = Math.max(1, parseInt(page, 10) || 1);
+    const safeLimit = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+    const skip = (safePage - 1) * safeLimit;
+
     const total = await Fine.countDocuments(filter);
     const fines = await Fine.find(filter)
       .populate('userId', 'name email studentId')
@@ -1521,15 +1667,15 @@ const getGlobalFines = async (req, res, next) => {
       .populate('collegeId', 'name code')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit, 10));
+      .limit(safeLimit);
 
     res.json({
       success: true,
       data: fines,
       pagination: {
         total,
-        page: parseInt(page, 10),
-        pages: Math.ceil(total / parseInt(limit, 10)),
+        page: safePage,
+        pages: Math.ceil(total / safeLimit),
       },
     });
   } catch (error) {
@@ -1552,21 +1698,24 @@ const getGlobalCatalog = async (req, res, next) => {
 
     if (collegeId) filter.collegeId = collegeId;
 
-    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const safePage = Math.max(1, parseInt(page, 10) || 1);
+    const safeLimit = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+    const skip = (safePage - 1) * safeLimit;
+
     const total = await Book.countDocuments(filter);
     const books = await Book.find(filter)
       .populate('collegeId', 'name code')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit, 10));
+      .limit(safeLimit);
 
     res.json({
       success: true,
       data: books,
       pagination: {
         total,
-        page: parseInt(page, 10),
-        pages: Math.ceil(total / parseInt(limit, 10)),
+        page: safePage,
+        pages: Math.ceil(total / safeLimit),
       },
     });
   } catch (error) {
@@ -1622,9 +1771,35 @@ const updateComplaintStatus = async (req, res, next) => {
 
     const complaint = await Complaint.findById(req.params.id);
     if (!complaint) return next(new AppError('Complaint not found.', 404));
+
+    if (
+      status === 'resolved' &&
+      (!adminResponse || !adminResponse.trim()) &&
+      !complaint.adminResponse
+    ) {
+      return next(
+        new AppError('Resolution message is required when resolving a support ticket.', 400)
+      );
+    }
+
+    if (
+      complaint.status === 'resolved' &&
+      status === 'open' &&
+      (!adminResponse || !adminResponse.trim())
+    ) {
+      return next(new AppError('Reason is required to reopen a resolved support ticket.', 400));
+    }
+
     if (status) complaint.status = status;
-    if (adminResponse !== undefined) complaint.adminResponse = adminResponse;
+    const responseMsg = adminResponse !== undefined ? adminResponse : req.body.resolutionMessage;
+    if (responseMsg !== undefined) {
+      complaint.adminResponse = responseMsg;
+      complaint.resolutionMessage = responseMsg;
+    }
     complaint.resolvedAt = status === 'resolved' ? new Date() : complaint.resolvedAt;
+    if (status === 'resolved') {
+      complaint.resolvedBy = req.user._id;
+    }
 
     await complaint.save();
     await clearGlobalMetricsCache();
@@ -1646,7 +1821,8 @@ const updateComplaintStatus = async (req, res, next) => {
               'complaint_resolved',
               `Your support ticket #${complaint._id.toString().slice(-6)} has been resolved.`,
               complaint._id,
-              'Complaint'
+              'Complaint',
+              complaint.collegeId
             );
             if (patron.email) {
               await sendSupportTicketResolutionEmail(
@@ -1701,6 +1877,8 @@ const getSystemSettings = async (req, res, next) => {
       smtpPort: settingsMap.smtpPort || 587,
       smtpSecurity: settingsMap.smtpSecurity || 'TLS',
       smtpUser: settingsMap.smtpUser || 'apikey',
+      smtpPassword: settingsMap.smtpPassword ? '••••••••••••' : '',
+      smtpConfigured: Boolean(settingsMap.smtpPassword),
       autoBackupEnabled:
         settingsMap.autoBackupEnabled !== undefined ? settingsMap.autoBackupEnabled : true,
       autoBackupSchedule: settingsMap.autoBackupSchedule || 'Daily at 03:00 AM UTC',
@@ -1730,6 +1908,19 @@ const updateSystemSettings = async (req, res, next) => {
         { key, value, updatedBy: req.user.id },
         { upsert: true, returnDocument: 'after' }
       );
+
+      // Instant synchronization with Redis maintenanceMode cache for live auth gate
+      if (key === 'maintenanceMode') {
+        const isRedisReady =
+          redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect');
+        if (isRedisReady) {
+          try {
+            await redisClient.set('system:setting:maintenanceMode', String(value), 'EX', 86400);
+          } catch {
+            // ignore
+          }
+        }
+      }
     }
 
     await AuditLog.create({
@@ -1739,7 +1930,7 @@ const updateSystemSettings = async (req, res, next) => {
       targetType: 'SystemSetting',
       targetId: req.user.id,
       metadata: { keysUpdated: Object.keys(updates) },
-      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+      ipAddress: getClientIp(req),
     });
 
     res.json({
@@ -1962,6 +2153,49 @@ const getPredictiveDemandForecast = async (req, res, next) => {
 // @access  Private/SuperAdmin
 const triggerDatabaseRestore = async (req, res, next) => {
   try {
+    const { confirmationPhrase, totpCode } = req.body || {};
+
+    // 1. Explicit safety confirmation string check
+    if (confirmationPhrase !== 'CONFIRM_RESTORE') {
+      return next(
+        new AppError(
+          'Safety check failed: Exact confirmation phrase "CONFIRM_RESTORE" is required to restore database snapshot.',
+          400
+        )
+      );
+    }
+
+    // 2. Platform maintenance mode requirement
+    const SystemSetting = require('../../models/SystemSetting');
+    const mSetting = await SystemSetting.findOne({ key: 'maintenanceMode' });
+    const isMaintenance = mSetting && (mSetting.value === true || mSetting.value === 'true');
+    if (!isMaintenance) {
+      return next(
+        new AppError(
+          'Safety check failed: The platform must be placed into Maintenance Mode before executing a database restoration.',
+          400
+        )
+      );
+    }
+
+    // 3. MFA step-up verification if Super Admin has MFA enabled
+    const superAdminUser = await User.findById(req.user.id).select('+mfaSecret isMfaEnabled');
+    if (superAdminUser && superAdminUser.isMfaEnabled) {
+      if (!totpCode) {
+        return next(
+          new AppError(
+            'MFA verification (totpCode) is required to trigger a production database restore.',
+            403
+          )
+        );
+      }
+      const { authenticator } = require('otplib');
+      const isValid = authenticator.verify({ token: totpCode, secret: superAdminUser.mfaSecret });
+      if (!isValid) {
+        return next(new AppError('Invalid MFA verification code provided.', 403));
+      }
+    }
+
     const fs = require('fs');
     const path = require('path');
     const { execFile } = require('child_process');
@@ -1988,6 +2222,16 @@ const triggerDatabaseRestore = async (req, res, next) => {
       } else {
         logger.info(`Database successfully restored from ${targetPath}`);
       }
+    });
+
+    await AuditLog.create({
+      actorId: getActorId(req),
+      actorRole: req.user.role,
+      action: 'system_restore.trigger',
+      targetType: 'SystemSetting',
+      targetId: req.user.id,
+      metadata: { targetSnapshot: latestBackup, confirmationPhrase },
+      ipAddress: getClientIp(req),
     });
 
     res.json({

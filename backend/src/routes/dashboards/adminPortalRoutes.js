@@ -51,7 +51,26 @@ const { rejectOnboardingSchema } = require('@bookbuddy/shared/schemas/auth');
 const { paramIdSchema, paramRequestIdSchema } = require('@bookbuddy/shared/schemas/common');
 const { moderateEResourceRouteSchema } = require('@bookbuddy/shared/schemas/moderation');
 
-const { userLimiter } = require('../../middlewares/rateLimiters');
+const { userLimiter, expensiveRouteLimiter } = require('../../middlewares/rateLimiters');
+const AppError = require('../../utils/AppError');
+
+// Strictly block Super Admin portal access from any college tenant subdomain
+router.use((req, res, next) => {
+  if (
+    req.subdomainTenant ||
+    req.headers['x-tenant-subdomain'] ||
+    req.headers['x-college-subdomain'] ||
+    req.headers['x-college-slug']
+  ) {
+    return next(
+      new AppError(
+        'Super Admin command center is strictly restricted to the root platform domain and cannot be accessed from tenant subdomains.',
+        403
+      )
+    );
+  }
+  next();
+});
 
 // Require authentication and super_admin privileges globally for these endpoints.
 // Note: super_admin operates globally and does not scope to a specific tenantFilter.
@@ -66,7 +85,7 @@ router
 
 router
   .route('/colleges')
-  .get(listColleges)
+  .get(expensiveRouteLimiter, listColleges)
   .post(validate(createCollegeSchema), auditLog('college.create'), createCollege);
 
 router
@@ -82,7 +101,7 @@ router
   .route('/colleges/:id/status')
   .patch(validate(paramIdSchema), auditLog('college.status_patch'), patchCollegeStatus);
 
-router.route('/audit-logs').get(getAuditLogs);
+router.route('/audit-logs').get(expensiveRouteLimiter, getAuditLogs);
 
 // Global content moderation routes
 router.route('/moderation/pending').get(getGlobalPendingEResources);
@@ -147,14 +166,14 @@ router
 router.route('/users/revoke-impersonation').post(revokeImpersonationToken);
 
 // Infrastructure Telemetry & Cron Job routes
-router.route('/system/health').get(getSystemHealth);
-router.route('/system/cron-logs').get(getCronLogs);
-router.route('/predictive-forecasting').get(getPredictiveDemandForecast);
+router.route('/system/health').get(expensiveRouteLimiter, getSystemHealth);
+router.route('/system/cron-logs').get(expensiveRouteLimiter, getCronLogs);
+router.route('/predictive-forecasting').get(expensiveRouteLimiter, getPredictiveDemandForecast);
 
 // Data Oversight routes
-router.route('/data/loans').get(getGlobalLoans);
-router.route('/data/fines').get(getGlobalFines);
-router.route('/data/catalog').get(getGlobalCatalog);
+router.route('/data/loans').get(expensiveRouteLimiter, getGlobalLoans);
+router.route('/data/fines').get(expensiveRouteLimiter, getGlobalFines);
+router.route('/data/catalog').get(expensiveRouteLimiter, getGlobalCatalog);
 
 // Support & Complaints routes
 router.route('/support/complaints').get(getGlobalComplaints);

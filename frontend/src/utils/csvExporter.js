@@ -20,10 +20,14 @@ export function exportToCSV(data, filename = "export.csv") {
     const values = headers.map((header) => {
       const val = row[header];
       if (val === null || val === undefined) return '""';
-      if (typeof val === "object") {
-        return `"${JSON.stringify(val).replace(/"/g, '""')}"`;
+      let rawStr = typeof val === "object" ? JSON.stringify(val) : String(val);
+
+      // P0 Anti-Formula Injection Defense: Neutralize dangerous spreadsheet execution prefixes (=, +, -, @, \t, \r)
+      if (/^[=+\-@\t\r]/.test(rawStr)) {
+        rawStr = `'` + rawStr;
       }
-      return `"${String(val).replace(/"/g, '""')}"`;
+
+      return `"${rawStr.replace(/"/g, '""')}"`;
     });
     csvRows.push(values.join(","));
   }

@@ -209,9 +209,11 @@ eResourceSchema.pre(['save', 'validate'], function (next) {
     this.moderationNote = this.rejectionReason;
   }
 
-  if (this.moderationStatus === 'published' && !this.isPublished) {
+  if (this.moderationStatus === 'published') {
     this.isPublished = true;
     if (!this.publishedAt) this.publishedAt = new Date();
+  } else if (this.moderationStatus === 'rejected' || this.moderationStatus === 'pending') {
+    this.isPublished = false;
   } else if (this.isPublished && !this.publishedAt) {
     this.publishedAt = new Date();
   }
@@ -219,6 +221,24 @@ eResourceSchema.pre(['save', 'validate'], function (next) {
   if (typeof next === 'function') {
     next();
   }
+});
+
+// Query-level synchronization hook for findOneAndUpdate / updateOne / updateMany
+eResourceSchema.pre(['findOneAndUpdate', 'updateOne', 'updateMany'], function (next) {
+  const update = this.getUpdate();
+  if (update) {
+    const $set = update.$set || update;
+    if ($set.moderationStatus === 'published') {
+      $set.isPublished = true;
+      if (!$set.publishedAt) $set.publishedAt = new Date();
+    } else if ($set.moderationStatus === 'rejected' || $set.moderationStatus === 'pending') {
+      $set.isPublished = false;
+    } else if ($set.isPublished === true && !$set.moderationStatus) {
+      $set.moderationStatus = 'published';
+      if (!$set.publishedAt) $set.publishedAt = new Date();
+    }
+  }
+  if (typeof next === 'function') next();
 });
 
 /* -------------------------------------------------------------------------- */

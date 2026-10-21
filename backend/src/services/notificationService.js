@@ -131,7 +131,14 @@ const sendPush = async (userId, type, message) => {
 /**
  * Creates and pushes a notification, triggers Email/Push drivers, and logs to NotificationLog
  */
-const notify = async (userId, type, message, relatedId = null, relatedType = null) => {
+const notify = async (
+  userId,
+  type,
+  message,
+  relatedId = null,
+  relatedType = null,
+  collegeId = null
+) => {
   const user = await User.findById(userId).select('email collegeId');
   if (!user) {
     throw new AppError('User not found.', 404);
@@ -156,9 +163,10 @@ const notify = async (userId, type, message, relatedId = null, relatedType = nul
     return null;
   }
 
+  const resolvedCollegeId = user.collegeId || collegeId;
   const notification = await Notification.create({
     userId,
-    collegeId: user.collegeId,
+    collegeId: resolvedCollegeId,
     type,
     message,
     relatedId: relatedId || undefined,

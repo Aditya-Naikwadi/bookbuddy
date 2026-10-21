@@ -113,9 +113,19 @@ export function OpsHeader({ title, subtitle, onRefresh, isRefreshing }) {
         icon: LayoutDashboard,
       },
       {
+        path: "/admin-portal/registration-queue",
+        label: "Onboarding Review",
+        icon: FileCheck,
+      },
+      {
         path: "/admin-portal/audit-logs",
         label: "Audit Trail",
         icon: ShieldCheck,
+      },
+      {
+        path: "/admin-portal/settings",
+        label: "System Settings",
+        icon: RefreshCw,
       },
     ],
     [],

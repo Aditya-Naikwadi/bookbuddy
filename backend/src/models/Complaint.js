@@ -35,6 +35,11 @@ const complaintSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    adminResponse: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     resolvedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
