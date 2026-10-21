@@ -85,10 +85,10 @@ export const ForColleges = () => {
           <SectionLabel className="mx-auto">
             CAMPUS & INSTITUTIONAL PARTNERSHIPS
           </SectionLabel>
-          <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-ink mt-4 mb-6 leading-tight">
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-5xl lg:text-6xl text-ink mt-4 mb-6 leading-tight hover:brightness-110 transition-all duration-300 cursor-default select-text">
             Empower your campus library with BookBuddy.
           </h2>
-          <p className="text-muted text-base md:text-lg leading-relaxed">
+          <p className="text-muted text-sm sm:text-base md:text-lg leading-relaxed select-text">
             Modernize circulation, catalog course reserves, and provide students
             with instant mobile access to physical volumes and 70,000+ digital
             titles — all in one multi-tenant institutional platform.
@@ -107,15 +107,15 @@ export const ForColleges = () => {
             <motion.div
               key={idx}
               variants={itemVariants}
-              className={`p-8 rounded-3xl border ${feat.accent} bg-surface/50 backdrop-blur-md hover:border-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group flex flex-col`}
+              className={`p-6 sm:p-8 rounded-3xl border ${feat.accent} bg-surface/50 backdrop-blur-md hover:border-white/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group flex flex-col cursor-pointer`}
             >
-              <div className="w-12 h-12 rounded-2xl bg-surface border border-edge flex items-center justify-center mb-6 shadow-sm group-hover:scale-105 transition-transform duration-300">
+              <div className="w-12 h-12 rounded-2xl bg-surface border border-edge flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-300">
                 {feat.icon}
               </div>
-              <h3 className="font-serif text-2xl text-ink font-semibold mb-3">
+              <h3 className="font-serif text-xl sm:text-2xl text-ink font-semibold mb-3 group-hover:text-ember transition-colors duration-300">
                 {feat.title}
               </h3>
-              <p className="text-muted leading-relaxed text-sm md:text-base">
+              <p className="text-muted leading-relaxed text-sm md:text-base group-hover:text-slate-200 transition-colors duration-300">
                 {feat.desc}
               </p>
             </motion.div>
@@ -127,12 +127,12 @@ export const ForColleges = () => {
           {institutionalStats.map((stat, i) => (
             <div
               key={i}
-              className="glass-panel p-6 rounded-2xl border border-edge text-center bg-surface/30"
+              className="glass-panel p-5 sm:p-6 rounded-2xl border border-edge text-center bg-surface/30 hover:border-ember/40 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group cursor-pointer"
             >
-              <div className="text-3xl md:text-4xl font-bold text-ink mb-1 font-serif">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-ink mb-1 font-serif group-hover:text-ember transition-colors duration-300 select-text">
                 {stat.value}
               </div>
-              <div className="text-xs md:text-sm text-muted font-medium">
+              <div className="text-xs md:text-sm text-muted font-medium group-hover:text-ink transition-colors duration-300 select-text">
                 {stat.label}
               </div>
             </div>

@@ -373,30 +373,30 @@ export const EResources = () => {
             className="w-full md:w-1/2"
           >
             <SectionLabel>70,000+ FREE BOOKS</SectionLabel>
-            <h2 className="font-serif text-4xl md:text-5xl text-ink mb-6">
+            <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl text-ink mb-6 hover:brightness-110 transition-all duration-300 cursor-default select-text">
               Read anything. Anywhere.
               <br />
               No subscription needed.
             </h2>
-            <p className="text-muted leading-relaxed text-lg mb-8">
+            <p className="text-muted leading-relaxed text-sm sm:text-base md:text-lg mb-8 select-text">
               Powered by Project Gutenberg's public-domain catalog, filtered,
               searched, and read entirely inside BookBuddy — with your reading
               progress always saved.
             </p>
             <ul className="space-y-4 mb-8 text-ink font-medium">
-              <li className="flex items-center gap-3">
+              <li className="flex items-center gap-3 hover:translate-x-1.5 hover:text-white transition-all duration-200 cursor-default select-text">
                 <span className="text-success text-xl">✓</span> Full in-app PDF
                 & EPUB reader
               </li>
-              <li className="flex items-center gap-3">
+              <li className="flex items-center gap-3 hover:translate-x-1.5 hover:text-white transition-all duration-200 cursor-default select-text">
                 <span className="text-success text-xl">✓</span> Pick up where
                 you left off
               </li>
-              <li className="flex items-center gap-3">
+              <li className="flex items-center gap-3 hover:translate-x-1.5 hover:text-white transition-all duration-200 cursor-default select-text">
                 <span className="text-success text-xl">✓</span> Download for
                 offline reading
               </li>
-              <li className="flex items-center gap-3">
+              <li className="flex items-center gap-3 hover:translate-x-1.5 hover:text-white transition-all duration-200 cursor-default select-text">
                 <span className="text-success text-xl">✓</span> Search by
                 language, genre, author
               </li>

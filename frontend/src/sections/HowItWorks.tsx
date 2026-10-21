@@ -32,10 +32,10 @@ export const HowItWorks = () => {
           viewport={{ once: true }}
           className="text-center mb-20"
         >
-          <h2 className="font-serif text-4xl md:text-5xl text-ink mb-4">
+          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-ink mb-4 hover:brightness-110 transition-all duration-300 cursor-default select-text">
             How it works
           </h2>
-          <p className="text-muted text-lg max-w-xl mx-auto">
+          <p className="text-muted text-base sm:text-lg max-w-xl mx-auto select-text">
             Get started in seconds, not hours.
           </p>
         </motion.div>
@@ -78,18 +78,18 @@ export const HowItWorks = () => {
             <motion.div
               key={i}
               variants={itemVariants}
-              className="flex-1 relative bg-surface p-6 rounded-2xl border border-edge z-10 text-center shadow-lg hover:border-ember/50 transition-colors"
+              className="flex-1 relative bg-surface p-6 rounded-2xl border border-edge z-10 text-center shadow-lg hover:border-ember/50 hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 group cursor-pointer"
             >
-              <div className="absolute -top-12 left-1/2 -translate-x-1/2 text-[120px] font-serif text-ember opacity-10 leading-none select-none">
+              <div className="absolute -top-12 left-1/2 -translate-x-1/2 text-[120px] font-serif text-ember opacity-10 leading-none select-none group-hover:opacity-20 transition-opacity duration-300">
                 {step.num}
               </div>
-              <div className="w-12 h-12 bg-ember text-white rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-6 relative z-20 shadow-[0_0_20px_rgba(217,119,6,0.4)]">
+              <div className="w-12 h-12 bg-ember text-white rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-6 relative z-20 shadow-[0_0_20px_rgba(217,119,6,0.4)] group-hover:scale-110 group-hover:shadow-[0_0_25px_rgba(230,101,37,0.7)] transition-all duration-300">
                 {step.num}
               </div>
-              <h3 className="text-xl font-semibold text-ink mb-3">
+              <h3 className="text-lg sm:text-xl font-semibold text-ink mb-3 group-hover:text-ember transition-colors duration-300">
                 {step.title}
               </h3>
-              <p className="text-muted text-sm leading-relaxed">{step.desc}</p>
+              <p className="text-muted text-sm leading-relaxed group-hover:text-slate-200 transition-colors duration-300">{step.desc}</p>
             </motion.div>
           ))}
         </motion.div>

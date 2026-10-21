@@ -121,7 +121,7 @@ export const Features = () => {
       <div className="relative max-w-7xl mx-auto px-6 md:px-12 xl:px-24">
         <div className="text-center mb-12 md:mb-16 reveal-fade-up">
           <SectionLabel className="mx-auto">Everything you need</SectionLabel>
-          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-ink mt-4">
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-ink mt-4 hover:brightness-110 transition-all duration-300 cursor-default select-text">
             The complete library experience.
           </h2>
         </div>
@@ -131,7 +131,7 @@ export const Features = () => {
           {bentoBlocks.map((block, i) => (
             <div
               key={i}
-              className={`reveal-fade-up break-inside-avoid glass-panel glass-panel-hover rounded-3xl p-6 md:p-8 flex flex-col group ${block.bgGradient} ${block.borderColor} relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 mb-4 md:mb-6 h-auto min-h-[220px]`}
+              className={`reveal-fade-up break-inside-avoid glass-panel glass-panel-hover rounded-3xl p-6 md:p-8 flex flex-col group ${block.bgGradient} ${block.borderColor} relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 mb-4 md:mb-6 h-auto min-h-[220px] cursor-pointer`}
               style={{ transitionDelay: `${i * 0.05}s` }}
             >
               {/* Colored radial gradient on hover */}
@@ -141,7 +141,7 @@ export const Features = () => {
 
               <div className="flex items-center gap-3 mb-6 relative z-10">
                 <div
-                  className={`flex items-center gap-2 p-3 rounded-2xl border ${block.accent} ${block.centerIcon ? "mx-auto mt-4" : ""}`}
+                  className={`flex items-center gap-2 p-3 rounded-2xl border ${block.accent} ${block.centerIcon ? "mx-auto mt-4" : ""} transition-transform duration-300 group-hover:scale-105`}
                 >
                   {block.icons}
                 </div>
@@ -150,13 +150,13 @@ export const Features = () => {
               <div
                 className={`mt-auto relative z-10 ${block.centerIcon ? "text-center" : ""}`}
               >
-                <span className="text-[11px] font-bold tracking-widest text-muted uppercase mb-2 block">
+                <span className="text-[11px] font-bold tracking-widest text-muted uppercase mb-2 block group-hover:text-ember-glow transition-colors duration-300 select-none">
                   {block.group}
                 </span>
-                <h3 className="text-xl md:text-2xl font-semibold text-ink mb-3 transition-colors">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-ink mb-3 group-hover:text-ember group-hover:translate-x-0.5 transition-all duration-300">
                   {block.title}
                 </h3>
-                <p className="text-muted leading-relaxed text-sm md:text-base">
+                <p className="text-muted leading-relaxed text-sm md:text-base group-hover:text-slate-200 transition-colors duration-300">
                   {block.desc}
                 </p>
               </div>

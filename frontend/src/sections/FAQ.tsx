@@ -50,7 +50,7 @@ export const FAQ = () => {
       <div className="relative max-w-4xl mx-auto px-6 md:px-12 xl:px-24">
         <div className="text-center mb-12 md:mb-16">
           <SectionLabel className="mx-auto">Got Questions?</SectionLabel>
-          <h2 className="font-serif text-3xl md:text-4xl text-ink mt-4">
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-ink mt-4 hover:brightness-110 transition-all duration-300 cursor-default select-text">
             Frequently Asked Questions
           </h2>
         </div>
@@ -62,16 +62,16 @@ export const FAQ = () => {
               <div
                 key={index}
                 className={cn(
-                  "border border-edge rounded-2xl overflow-hidden transition-colors duration-300",
-                  isOpen ? "bg-void/50" : "bg-transparent hover:bg-void/30",
+                  "border border-edge rounded-2xl overflow-hidden transition-colors duration-300 group",
+                  isOpen ? "bg-void/50 border-ember/30" : "bg-transparent hover:bg-void/30 hover:border-edge/90",
                 )}
               >
                 <button
                   onClick={() => toggleAccordion(index)}
-                  className="w-full text-left px-6 py-5 flex items-center justify-between focus:outline-none"
+                  className="w-full text-left px-5 sm:px-6 py-4 sm:py-5 flex items-center justify-between focus:outline-none cursor-pointer"
                   aria-expanded={isOpen}
                 >
-                  <span className="font-semibold text-lg text-ink pr-8">
+                  <span className="font-semibold text-base sm:text-lg text-ink pr-6 sm:pr-8 group-hover:text-ember transition-colors duration-200">
                     {faq.question}
                   </span>
                   <motion.div
@@ -79,7 +79,7 @@ export const FAQ = () => {
                     transition={{ duration: 0.3, ease: "easeInOut" }}
                     className="flex-shrink-0"
                   >
-                    <ChevronDown className="w-5 h-5 text-muted" />
+                    <ChevronDown className="w-5 h-5 text-muted group-hover:text-ember transition-colors" />
                   </motion.div>
                 </button>
                 <AnimatePresence initial={false}>
@@ -90,7 +90,7 @@ export const FAQ = () => {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
-                      <div className="px-6 pb-5 text-muted leading-relaxed">
+                      <div className="px-5 sm:px-6 pb-5 text-muted leading-relaxed text-sm sm:text-base select-text">
                         {faq.answer}
                       </div>
                     </motion.div>

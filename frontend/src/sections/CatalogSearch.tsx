@@ -343,10 +343,10 @@ export const CatalogSearch: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
             <SectionLabel>CAMPUS COLLECTION</SectionLabel>
-            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-ink mt-2 mb-4">
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-ink mt-2 mb-4 hover:brightness-110 transition-all duration-300 cursor-default select-text">
               Catalog Search
             </h2>
-            <p className="text-muted text-base md:text-lg max-w-2xl leading-relaxed">
+            <p className="text-muted text-sm sm:text-base md:text-lg max-w-2xl leading-relaxed select-text">
               Explore 15,000+ course reserves and physical volumes across campus
               library branches. Sign in to reserve physical copies, track loans,
               or join waitlists.

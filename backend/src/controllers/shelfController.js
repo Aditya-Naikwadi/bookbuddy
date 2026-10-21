@@ -3,8 +3,9 @@ const Shelf = require('../models/Shelf');
 // GET /api/v1/shelves - Get student's custom shelves
 const getUserShelves = async (req, res, next) => {
   try {
+    const collegeId = req.user.collegeId || null;
     const shelves = await Shelf.find({
-      collegeId: req.user.collegeId,
+      collegeId,
       userId: req.user._id,
     })
       .populate('books', 'title author coverImage isbn genre availabilityStatus')
@@ -29,8 +30,9 @@ const createShelf = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Shelf name is required.' });
     }
 
+    const collegeId = req.user.collegeId || null;
     const existing = await Shelf.findOne({
-      collegeId: req.user.collegeId,
+      collegeId,
       userId: req.user._id,
       name: name.trim(),
     });
@@ -42,7 +44,7 @@ const createShelf = async (req, res, next) => {
     }
 
     const shelf = await Shelf.create({
-      collegeId: req.user.collegeId,
+      collegeId,
       userId: req.user._id,
       name: name.trim(),
       description: description || '',
@@ -62,9 +64,10 @@ const createShelf = async (req, res, next) => {
 // GET /api/v1/shelves/:id - Get shelf by ID
 const getShelfById = async (req, res, next) => {
   try {
+    const collegeId = req.user.collegeId || null;
     const shelf = await Shelf.findOne({
       _id: req.params.id,
-      collegeId: req.user.collegeId,
+      collegeId,
       $or: [{ userId: req.user._id }, { isPublic: true }],
     }).populate('books');
 
@@ -85,10 +88,11 @@ const getShelfById = async (req, res, next) => {
 const updateShelf = async (req, res, next) => {
   try {
     const { name, description, isPublic } = req.body;
+    const collegeId = req.user.collegeId || null;
     const shelf = await Shelf.findOne({
       _id: req.params.id,
       userId: req.user._id,
-      collegeId: req.user.collegeId,
+      collegeId,
     });
 
     if (!shelf) {
@@ -113,10 +117,11 @@ const updateShelf = async (req, res, next) => {
 // DELETE /api/v1/shelves/:id - Delete shelf
 const deleteShelf = async (req, res, next) => {
   try {
+    const collegeId = req.user.collegeId || null;
     const shelf = await Shelf.findOneAndDelete({
       _id: req.params.id,
       userId: req.user._id,
-      collegeId: req.user.collegeId,
+      collegeId,
     });
 
     if (!shelf) {
@@ -140,10 +145,11 @@ const addBookToShelf = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'bookId is required.' });
     }
 
+    const collegeId = req.user.collegeId || null;
     const shelf = await Shelf.findOne({
       _id: req.params.id,
       userId: req.user._id,
-      collegeId: req.user.collegeId,
+      collegeId,
     });
 
     if (!shelf) {
@@ -171,10 +177,11 @@ const removeBookFromShelf = async (req, res, next) => {
   try {
     const { id, bookId } = req.params;
 
+    const collegeId = req.user.collegeId || null;
     const shelf = await Shelf.findOne({
       _id: id,
       userId: req.user._id,
-      collegeId: req.user.collegeId,
+      collegeId,
     });
 
     if (!shelf) {

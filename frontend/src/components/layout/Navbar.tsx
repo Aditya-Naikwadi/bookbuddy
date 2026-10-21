@@ -3,8 +3,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "../ui/Button";
 import { cn } from "../../utils/cn";
 import useAuthStore from "../../store/authStore";
-import { LogOut, LayoutDashboard, Globe } from "lucide-react";
+import { LogOut, LayoutDashboard, Globe, Sun, Moon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "../../context/ThemeContext";
 
 export const NAV_ITEMS = [
   { label: "Catalog Search", target: "#catalog-search" },
@@ -59,6 +60,27 @@ const NavbarComponent = () => {
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
 
   const dashboardRoute = getRoleDashboardRoute(user?.role);
+
+  const { theme, toggleTheme } = useTheme();
+
+  const ThemeToggle = ({ className }: { className?: string }) => (
+    <button
+      onClick={toggleTheme}
+      className={cn(
+        "p-2 rounded-xl border border-edge/60 bg-surface/40 hover:bg-surface/70 text-ink transition-all duration-200 cursor-pointer hover:border-ember/40 hover:scale-105 active:scale-95 flex items-center justify-center shrink-0",
+        className,
+      )}
+      aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+      title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+      type="button"
+    >
+      {theme === "dark" ? (
+        <Sun className="w-4 h-4 text-amber-400 transition-transform duration-300 hover:rotate-45" />
+      ) : (
+        <Moon className="w-4 h-4 text-indigo-400 transition-transform duration-300 hover:-rotate-12" />
+      )}
+    </button>
+  );
 
   const LanguageSwitcher = ({ idPrefix }: { idPrefix: string }) => (
     <div className="relative flex items-center">
@@ -273,17 +295,17 @@ const NavbarComponent = () => {
         {/* Brand Logo */}
         <div
           onClick={() => handleNavClick("#")}
-          className="flex items-center gap-2.5 cursor-pointer select-none"
+          className="flex items-center gap-2.5 cursor-pointer select-none group"
         >
-          <div className="w-9 h-9 rounded-full overflow-hidden bg-[#FAF6EC] border border-ember/20 flex items-center justify-center relative shadow-sm">
+          <div className="w-9 h-9 rounded-full overflow-hidden bg-[#FAF6EC] border border-ember/20 flex items-center justify-center relative shadow-sm group-hover:scale-105 transition-transform duration-300">
             <img
               src="/favicon.png"
               alt="BookBuddy Mascot"
               className="w-full h-full object-cover"
             />
           </div>
-          <span className="font-serif text-2xl font-bold text-ink">
-            Book<span className="text-ember">Buddy</span>
+          <span className="font-serif text-2xl font-bold text-ink group-hover:text-white transition-colors duration-200">
+            Book<span className="text-ember group-hover:text-ember-glow transition-colors duration-200">Buddy</span>
           </span>
         </div>
 
@@ -296,7 +318,7 @@ const NavbarComponent = () => {
                 key={target}
                 onClick={() => handleNavClick(target)}
                 className={cn(
-                  "text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5",
+                  "text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer active:scale-95",
                   isActive
                     ? "text-ember font-bold drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]"
                     : "text-muted hover:text-ember",
@@ -312,6 +334,7 @@ const NavbarComponent = () => {
         {/* Desktop Actions (Visible on >= 1024px) */}
         <div className="hidden lg:flex items-center gap-3">
           <LanguageSwitcher idPrefix="desktop" />
+          <ThemeToggle />
           {isLoading && !user ? (
             <div className="h-9 w-36 rounded-xl bg-surface/50 border border-edge/60 animate-pulse" />
           ) : isAuthenticated && user ? (
@@ -353,6 +376,7 @@ const NavbarComponent = () => {
         {/* Mobile & Tablet Controls (Visible on < 1024px) */}
         <div className="flex lg:hidden items-center gap-2 sm:gap-3">
           <LanguageSwitcher idPrefix="mobile-bar" />
+          <ThemeToggle />
           {/* CSS-Animated Hamburger Toggle Button */}
           <button
             ref={hamburgerButtonRef}
@@ -392,7 +416,10 @@ const NavbarComponent = () => {
             <span className="text-xs font-bold uppercase tracking-widest text-ember">
               {t("landing.navMenu", "Navigation Menu")}
             </span>
-            <LanguageSwitcher idPrefix="mobile-drawer" />
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher idPrefix="mobile-drawer" />
+              <ThemeToggle />
+            </div>
           </div>
           {navItems.map(({ label, target }) => {
             const isActive = activeSection === target;
@@ -401,7 +428,7 @@ const NavbarComponent = () => {
                 key={target}
                 onClick={() => handleNavClick(target)}
                 className={cn(
-                  "text-left text-lg font-serif transition-colors py-2 border-b border-white/5",
+                  "text-left text-lg font-serif transition-all duration-200 py-2 border-b border-white/5 cursor-pointer hover:translate-x-1",
                   isActive
                     ? "text-ember font-bold"
                     : "text-ink hover:text-ember",

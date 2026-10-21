@@ -52,10 +52,10 @@ export const PatronCardSection = () => {
       <div className="max-w-7xl mx-auto px-6 md:px-12 xl:px-24 flex flex-col md:flex-row items-center gap-16">
         <div className="w-full md:w-1/2">
           <SectionLabel>YOUR LIBRARY IDENTITY</SectionLabel>
-          <h2 className="font-serif text-4xl md:text-5xl text-ink mb-6">
+          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-ink mb-6 hover:brightness-110 transition-all duration-300 cursor-default select-text">
             One card. Every access point.
           </h2>
-          <p className="text-muted text-lg leading-relaxed mb-8">
+          <p className="text-muted text-base sm:text-lg leading-relaxed mb-8 select-text">
             Your digital patron card is always in your pocket. Show it at the
             desk, scan the QR at self-checkout, or download it for offline
             access.

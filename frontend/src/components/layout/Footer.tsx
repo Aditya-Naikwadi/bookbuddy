@@ -30,7 +30,7 @@ export const Footer = () => {
             <li>
               <a
                 href="#catalog-search"
-                className="hover:text-ember transition-colors"
+                className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
                 Catalog Search
               </a>
@@ -38,7 +38,7 @@ export const Footer = () => {
             <li>
               <a
                 href="#e-resources"
-                className="hover:text-ember transition-colors"
+                className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
                 E-Resources
               </a>
@@ -46,7 +46,7 @@ export const Footer = () => {
             <li>
               <a
                 href="#features"
-                className="hover:text-ember transition-colors"
+                className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
                 Features
               </a>
@@ -54,13 +54,13 @@ export const Footer = () => {
             <li>
               <a
                 href="#how-it-works"
-                className="hover:text-ember transition-colors"
+                className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
                 How It Works
               </a>
             </li>
             <li>
-              <a href="#streaks" className="hover:text-ember transition-colors">
+              <a href="#streaks" className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200">
                 Streaks & Rewards
               </a>
             </li>
@@ -73,7 +73,7 @@ export const Footer = () => {
             <li>
               <a
                 href="#for-colleges"
-                className="hover:text-ember transition-colors"
+                className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
                 For Colleges
               </a>
@@ -81,7 +81,7 @@ export const Footer = () => {
             <li>
               <Link
                 to="/auth/register"
-                className="hover:text-ember transition-colors"
+                className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
                 College Admin Onboarding
               </Link>
@@ -89,7 +89,7 @@ export const Footer = () => {
             <li>
               <Link
                 to="/support"
-                className="hover:text-ember transition-colors"
+                className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
                 Institutional Support
               </Link>
@@ -103,20 +103,20 @@ export const Footer = () => {
             <li>
               <Link
                 to="/privacy"
-                className="hover:text-ember transition-colors"
+                className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
                 Privacy Policy
               </Link>
             </li>
             <li>
-              <Link to="/terms" className="hover:text-ember transition-colors">
+              <Link to="/terms" className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200">
                 Terms
               </Link>
             </li>
             <li>
               <Link
                 to="/support"
-                className="hover:text-ember transition-colors"
+                className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
                 Contact/Support
               </Link>

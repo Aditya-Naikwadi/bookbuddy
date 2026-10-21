@@ -66,4 +66,8 @@ notificationSchema.pre('save', function () {
   if (this.message) this.message = sanitizeHtmlString(this.message);
 });
 
+// Compound index for user notification feed and unread badge queries
+notificationSchema.index({ userId: 1, createdAt: -1 });
+notificationSchema.index({ userId: 1, read: 1, createdAt: -1 });
+
 module.exports = mongoose.model('Notification', notificationSchema);

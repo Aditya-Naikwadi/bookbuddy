@@ -542,7 +542,7 @@ const getAnalyticsSummary = async (req, res, next) => {
         $group: {
           _id: { $ifNull: ['$category', '$subject'] },
           count: { $sum: 1 },
-          totalCopies: { $sum: '$totalCopies' },
+          totalCopies: { $sum: { $ifNull: ['$copiesTotal', '$totalCopies'] } },
         },
       },
       {
@@ -551,12 +551,27 @@ const getAnalyticsSummary = async (req, res, next) => {
     ]);
 
     // Stock Alerts (Low stock or high demand copies <= 2)
-    const stockAlerts = await Book.find({
-      availableCopies: { $lte: 2 },
+    const rawStockAlerts = await Book.find({
+      $or: [{ copiesAvailable: { $lte: 2 } }, { availableCopies: { $lte: 2 } }],
       ...req.tenantFilter,
     })
-      .select('title author isbn totalCopies availableCopies category')
+      .select(
+        'title author isbn copiesTotal totalCopies copiesAvailable availableCopies category shelfLocation'
+      )
       .limit(10);
+
+    const stockAlerts = rawStockAlerts.map((b) => ({
+      _id: b._id,
+      title: b.title,
+      author: b.author,
+      isbn: b.isbn,
+      availableCopies: b.copiesAvailable !== undefined ? b.copiesAvailable : b.availableCopies || 0,
+      copiesAvailable: b.copiesAvailable !== undefined ? b.copiesAvailable : b.availableCopies || 0,
+      totalCopies: b.copiesTotal !== undefined ? b.copiesTotal : b.totalCopies || 0,
+      copiesTotal: b.copiesTotal !== undefined ? b.copiesTotal : b.totalCopies || 0,
+      category: b.category,
+      shelfLocation: b.shelfLocation,
+    }));
 
     // Circulation Trends (Monthly breakdown of loans)
     const circulationTrends = await Loan.aggregate([

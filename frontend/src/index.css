@@ -51,6 +51,15 @@
     scroll-padding-top: 5rem;
   }
 
+  /* Universal Responsive & Interactive Typography Defaults */
+  h1, h2, h3, h4, h5, h6 {
+    overflow-wrap: break-word;
+  }
+
+  p, li, blockquote {
+    overflow-wrap: break-word;
+  }
+
   body {
     @apply text-ink antialiased selection:bg-ember/30 selection:text-ember-100;
     background-color: var(--bg-void);
@@ -87,6 +96,54 @@
   *::before,
   *::after {
     box-sizing: inherit;
+  }
+}
+
+@layer utilities {
+  /* Interactive text micro-interactions across the application */
+  .text-interactive {
+    transition: color 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .text-interactive:hover {
+    color: var(--color-ember-glow, #f59e0b);
+  }
+
+  .heading-interactive {
+    transition: filter 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
+  }
+  .heading-interactive:hover {
+    filter: brightness(1.15);
+  }
+
+  .link-interactive {
+    position: relative;
+    display: inline-block;
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+  .link-interactive::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    transform: scaleX(0);
+    height: 1.5px;
+    bottom: -2px;
+    left: 0;
+    background-color: var(--color-ember, #e66525);
+    transform-origin: bottom right;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .link-interactive:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+  }
+
+  .interactive-badge {
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: default;
+  }
+  .interactive-badge:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 16px rgba(230, 101, 37, 0.3);
   }
 }
 

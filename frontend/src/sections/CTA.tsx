@@ -42,10 +42,10 @@ export const CTA = () => {
   return (
     <section
       ref={containerRef}
-      className="relative overflow-hidden py-32 md:py-48 lg:py-56 bg-void flex items-center justify-center min-h-[80vh]"
+      className="relative overflow-hidden py-24 sm:py-32 md:py-44 lg:py-52 bg-[#06080d] text-white border-y border-white/10 flex items-center justify-center min-h-[70vh] sm:min-h-[80vh]"
     >
       {/* 1. Dynamic Background Layer */}
-      <div className="absolute inset-0 bg-ember/10 mix-blend-screen" />
+      <div className="absolute inset-0 bg-ember/15 mix-blend-screen pointer-events-none" />
 
       {/* Interactive Glowing Orb 1 */}
       <motion.div
@@ -88,13 +88,13 @@ export const CTA = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="font-serif text-6xl md:text-8xl lg:text-[7rem] text-white tracking-tight leading-[1.1] mb-8 flex flex-wrap justify-center gap-x-4 md:gap-x-6 drop-shadow-xl"
+          className="font-serif text-4xl sm:text-6xl md:text-8xl lg:text-[7rem] text-white tracking-tight leading-[1.1] mb-8 flex flex-wrap justify-center gap-x-3 sm:gap-x-4 md:gap-x-6 drop-shadow-xl select-text"
         >
           {"Your library. Upgraded.".split(" ").map((word, i) => (
             <motion.span
               key={i}
               variants={wordVariants}
-              className="inline-block"
+              className="inline-block hover:scale-105 hover:text-amber-200 transition-all duration-300 cursor-default"
             >
               {word}
             </motion.span>
@@ -107,7 +107,7 @@ export const CTA = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
-          className="text-white/80 text-xl md:text-3xl mb-14 font-medium max-w-2xl mx-auto drop-shadow-md leading-relaxed"
+          className="text-white/80 text-lg sm:text-xl md:text-3xl mb-14 font-medium max-w-2xl mx-auto drop-shadow-md leading-relaxed select-text hover:text-white transition-colors duration-300"
         >
           Join thousands of students managing their resources smarter.
         </motion.p>
