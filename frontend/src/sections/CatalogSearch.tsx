@@ -423,10 +423,10 @@ export const CatalogSearch: React.FC = () => {
             {[1, 2, 3, 4].map((n) => (
               <div
                 key={n}
-                className="flex-shrink-0 w-64 md:w-72 bg-surface/40 border border-edge/60 rounded-2xl p-4 flex flex-col justify-between h-[420px] animate-pulse"
+                className="flex-shrink-0 w-64 md:w-72 bg-surface/40 border border-edge/60 rounded-2xl p-4 flex flex-col justify-between h-[490px] animate-pulse"
               >
                 <div>
-                  <div className="w-full aspect-[3/4] bg-edge/40 rounded-xl mb-4" />
+                  <div className="w-full h-60 bg-edge/40 rounded-xl mb-3.5" />
                   <div className="w-16 h-3 bg-edge/40 rounded mb-2" />
                   <div className="w-3/4 h-5 bg-edge/50 rounded mb-2" />
                   <div className="w-1/2 h-3.5 bg-edge/30 rounded" />
@@ -499,7 +499,7 @@ export const CatalogSearch: React.FC = () => {
             onMouseLeave={handleMouseUpOrLeave}
             onWheel={handleWheel}
             style={{ WebkitOverflowScrolling: "touch" }}
-            className="flex gap-6 overflow-x-auto scrollbar-none snap-x snap-mandatory py-2 scroll-smooth focus:outline-none cursor-grab active:cursor-grabbing select-none touch-pan-x"
+            className="flex gap-6 overflow-x-auto scrollbar-none snap-x snap-mandatory py-6 px-1 -mx-1 scroll-smooth focus:outline-none cursor-grab active:cursor-grabbing select-none touch-pan-x"
             tabIndex={0}
             role="region"
             aria-label="Catalog Books Carousel"
@@ -518,14 +518,14 @@ export const CatalogSearch: React.FC = () => {
                     handleBookClick(book);
                   }
                 }}
-                className="flex-shrink-0 w-64 md:w-72 bg-surface/70 hover:bg-surface border border-edge hover:border-ember/40 rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl group snap-start flex flex-col justify-between h-[420px]"
+                className="flex-shrink-0 w-64 md:w-72 bg-surface/70 hover:bg-surface border border-edge hover:border-ember/40 rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl group snap-start flex flex-col justify-between h-[490px]"
               >
                 {/* Cover Image Container */}
-                <div className="relative mb-4 overflow-hidden rounded-xl bg-deep aspect-[3/4] shadow-md flex-shrink-0">
+                <div className="relative mb-3.5 overflow-hidden rounded-xl bg-deep h-60 w-full shadow-md flex-shrink-0">
                   <BookCoverImage
                     src={book.coverImage}
                     alt={book.title}
-                    aspectRatio="aspect-[3/4]"
+                    aspectRatio="h-full"
                     fallbackTitle={book.title}
                     fallbackCategory={book.category}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -554,7 +554,7 @@ export const CatalogSearch: React.FC = () => {
                       {book.category}
                     </span>
                     <h3
-                      className="font-serif text-lg font-semibold text-ink line-clamp-2 leading-snug group-hover:text-ember transition-colors"
+                      className="font-serif text-base md:text-lg font-semibold text-ink line-clamp-2 leading-snug group-hover:text-ember transition-colors min-h-[2.8rem]"
                       title={book.title}
                     >
                       {book.title}
@@ -567,7 +567,7 @@ export const CatalogSearch: React.FC = () => {
                     </p>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-edge flex items-center justify-between text-xs text-muted">
+                  <div className="mt-3 pt-3 border-t border-edge flex items-center justify-between text-xs text-muted">
                     <span className="flex items-center gap-1 truncate max-w-[65%]">
                       <MapPin className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
                       <span className="truncate">

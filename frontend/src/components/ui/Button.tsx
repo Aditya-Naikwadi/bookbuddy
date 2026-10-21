@@ -35,7 +35,7 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const base =
-    "inline-flex items-center justify-center rounded-lg font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember";
+    "inline-flex items-center justify-center rounded-lg font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember whitespace-nowrap";
   const variants = {
     primary: "bg-ember text-white hover:bg-ember-glow shadow-md",
     secondary: "bg-indigo text-white hover:bg-indigo-600 shadow-md",

@@ -82,6 +82,7 @@ BookBuddy is a production-grade, multi-tenant Integrated Library System (ILS) an
 - [🛡️ Automated CI Quality Gates (10 Invariant Gates)](#️-automated-ci-quality-gates-10-invariant-gates)
 - [🚀 Production Deployment & Cloudflare Readiness (GCP + Vercel)](#-production-deployment--cloudflare-readiness-gcp--vercel)
 - [🎯 18-Point Landing Page Verification & Hardening Matrix](#-18-point-landing-page-verification--hardening-matrix)
+  - [Landing Page UI/UX Layout & Typography Hardening](#-landing-page-uiux-layout--typography-hardening)
 - [🛡️ Super Admin Dashboard 22-Module Production Checklist & Verification Matrix](#️-super-admin-dashboard-22-module-production-checklist--verification-matrix)
 - [📦 Shared Workspace \& Canonical Contract Layer (`@bookbuddy/shared`)](#-shared-workspace--canonical-contract-layer-bookbuddyshared)
 - [📂 Monorepo Repository Structure](#-monorepo-repository-structure)
@@ -1243,6 +1244,20 @@ The public landing page and multi-tenant entry points have been vetted against a
 | **17. Deployment Readiness** | GCP VM, Nginx & Cloudflare              | Production build verified (0 errors); environment variables validated; Nginx SPA rewrite configured; automated smoke tests.                                 | [`verify-deployment.js`](scripts/deployment/verify-deployment.js)                                     |
 | **18. Final Release Gate**   | Go / No-Go Verification                 | 100% P0 criteria met; all historical risk spots (redirect preservation, cache isolation, active-colleges filter) permanently mitigated.                     | [`regressionHardeningSuite.test.js`](backend/src/tests/regressionHardeningSuite.test.js)              |
 
+### 🎨 Landing Page UI/UX Layout & Typography Hardening
+
+The Landing Page navigation shell and discovery carousels have undergone rigorous UI/UX layout and typography hardening to eliminate text wrapping, soft-break hyphen splitting, card clipping, and hover-lift shadow truncation across all viewport scales (320px–1920px) and browser zoom levels (up to 200% per WCAG 1.4.4 & 1.4.10):
+
+| Component / Subsystem | Defect / Challenge | Architectural & Styling Solution | Verification & Invariants |
+| :--- | :--- | :--- | :--- |
+| **Desktop Navigation Links** | Multi-line text wrapping on intermediate viewports (1024px–1279px) | Added `whitespace-nowrap shrink-0` across all `<NavLinkItem>` elements. Standardized responsive typography (`text-xs 2xl:text-sm font-semibold`) and dynamic spacing (`gap-4 2xl:gap-7`). | Single line across English, Spanish, and multi-word locales. |
+| **Hyphen Soft-Breaks** | "E-Resources" splitting at the hyphen | Wrapped with `whitespace-nowrap shrink-0` preventing ASCII hyphen-minus line breaks. | Confirmed "E-Resources" / "Recursos electrónicos" never wrap. |
+| **Action & Control Cluster** | "Sign In" and "Start for Free" buttons wrapping text; height mismatch | Added `whitespace-nowrap` to base button utility; synchronized `LanguageSwitcher`, `ThemeToggle`, and CTAs to uniform `h-9` center baseline. | Unified height, equal vertical alignment, and zero button text wrapping. |
+| **Navigation Breakpoint** | Horizontal row collision at 1024px–1279px | Upgraded desktop navigation breakpoint from `lg` (1024px) to `xl` (1280px). Viewports $< 1280\text{px}$ cleanly collapse into the accessible mobile slide-over drawer. | Zero layout collisions or squeezed flex items at 1024px and 1100px. |
+| **Carousel Card Geometry** | Bottom shelf location, availability badges, and CTA links clipped | Increased card height from `h-[420px]` to `h-[490px] flex flex-col justify-between`. Replaced unbounded `aspect-[3/4]` with calibrated `h-60 w-full mb-3.5` (`object-cover`). | Category tag, 2-line title, author, shelf location, and "Details →" / "Read Now →" 100% visible. |
+| **Typography Clamping** | Long titles truncated mid-line; author lines pushed out | Clamped titles to two lines with `line-clamp-2 min-h-[2.8rem]`; authors clamped to one line with `truncate`. | Equal card heights across rows regardless of 1-line or 2-line title lengths. |
+| **Track Hover & Shadows** | Card hover lift (`-translate-y-1.5`) and dropshadows (`shadow-xl`) cut off | Expanded track container padding to `py-6 px-1 -mx-1`. | Full 20px blur shadow and hover lift visible without clipping by scroll container. |
+| **Skeleton Parity** | Pulse loaders mismatched with loaded cards | Updated skeleton containers to matching `h-[490px]` and `h-60` dimensions. | Zero cumulative layout shift (CLS < 0.05) when catalog data resolves. |
 
 ---
 

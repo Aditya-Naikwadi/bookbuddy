@@ -67,7 +67,7 @@ const NavbarComponent = () => {
     <button
       onClick={toggleTheme}
       className={cn(
-        "p-2 rounded-xl border border-edge/60 bg-surface/40 hover:bg-surface/70 text-ink transition-all duration-200 cursor-pointer hover:border-ember/40 hover:scale-105 active:scale-95 flex items-center justify-center shrink-0",
+        "h-9 w-9 rounded-xl border border-edge/60 bg-surface/40 hover:bg-surface/70 text-ink transition-all duration-200 cursor-pointer hover:border-ember/40 hover:scale-105 active:scale-95 flex items-center justify-center shrink-0",
         className,
       )}
       aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
@@ -83,11 +83,11 @@ const NavbarComponent = () => {
   );
 
   const LanguageSwitcher = ({ idPrefix }: { idPrefix: string }) => (
-    <div className="relative flex items-center">
+    <div className="relative flex items-center shrink-0">
       <label htmlFor={`${idPrefix}-language-select`} className="sr-only">
         {t("landing.selectLanguage", "Select language")}
       </label>
-      <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-edge/60 bg-surface/40 hover:bg-surface/70 text-ink text-xs font-medium transition-colors">
+      <div className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl border border-edge/60 bg-surface/40 hover:bg-surface/70 text-ink text-xs font-medium transition-colors whitespace-nowrap">
         <Globe className="w-3.5 h-3.5 text-ember shrink-0" aria-hidden="true" />
         <select
           id={`${idPrefix}-language-select`}
@@ -291,11 +291,11 @@ const NavbarComponent = () => {
       role="navigation"
       aria-label="Main navigation"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 xl:px-8 2xl:px-12 flex items-center justify-between">
         {/* Brand Logo */}
         <div
           onClick={() => handleNavClick("#")}
-          className="flex items-center gap-2.5 cursor-pointer select-none group"
+          className="flex items-center gap-2.5 cursor-pointer select-none group shrink-0"
         >
           <div className="w-9 h-9 rounded-full overflow-hidden bg-[#FAF6EC] border border-ember/20 flex items-center justify-center relative shadow-sm group-hover:scale-105 transition-transform duration-300">
             <img
@@ -304,13 +304,13 @@ const NavbarComponent = () => {
               className="w-full h-full object-cover"
             />
           </div>
-          <span className="font-serif text-2xl font-bold text-ink group-hover:text-white transition-colors duration-200">
+          <span className="font-serif text-2xl font-bold text-ink group-hover:text-white transition-colors duration-200 whitespace-nowrap">
             Book<span className="text-ember group-hover:text-ember-glow transition-colors duration-200">Buddy</span>
           </span>
         </div>
 
-        {/* Desktop Navigation Links (Visible on >= 1024px) */}
-        <nav className="hidden lg:flex items-center gap-7">
+        {/* Desktop Navigation Links (Visible on >= 1280px / xl) */}
+        <nav className="hidden xl:flex items-center gap-4 2xl:gap-7 shrink-0">
           {navItems.map(({ label, target }) => {
             const isActive = activeSection === target;
             return (
@@ -318,7 +318,7 @@ const NavbarComponent = () => {
                 key={target}
                 onClick={() => handleNavClick(target)}
                 className={cn(
-                  "text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer active:scale-95",
+                  "text-xs 2xl:text-sm font-semibold whitespace-nowrap transition-all duration-200 hover:-translate-y-0.5 cursor-pointer active:scale-95 shrink-0 py-1.5",
                   isActive
                     ? "text-ember font-bold drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]"
                     : "text-muted hover:text-ember",
@@ -331,8 +331,8 @@ const NavbarComponent = () => {
           })}
         </nav>
 
-        {/* Desktop Actions (Visible on >= 1024px) */}
-        <div className="hidden lg:flex items-center gap-3">
+        {/* Desktop Actions (Visible on >= 1280px / xl) */}
+        <div className="hidden xl:flex items-center gap-2.5 2xl:gap-3 shrink-0">
           <LanguageSwitcher idPrefix="desktop" />
           <ThemeToggle />
           {isLoading && !user ? (
@@ -341,40 +341,47 @@ const NavbarComponent = () => {
             <>
               <Button
                 variant="outline"
-                className="text-sm font-semibold border-ember/30 text-ink hover:text-ember"
+                size="sm"
+                className="text-xs 2xl:text-sm font-semibold border-ember/30 text-ink hover:text-ember whitespace-nowrap shrink-0 h-9 px-3 2xl:px-4"
                 onClick={() => navigate(dashboardRoute)}
               >
-                <LayoutDashboard className="w-4 h-4 mr-1.5" />
-                {t("landing.navDashboard", "Dashboard")}
+                <LayoutDashboard className="w-4 h-4 mr-1.5 shrink-0" />
+                <span className="whitespace-nowrap">{t("landing.navDashboard", "Dashboard")}</span>
               </Button>
               <Button
                 variant="ghost"
-                className="text-sm font-semibold text-muted hover:text-danger hover:bg-danger/10"
+                size="sm"
+                className="text-xs 2xl:text-sm font-semibold text-muted hover:text-danger hover:bg-danger/10 whitespace-nowrap shrink-0 h-9 px-3 2xl:px-4"
                 onClick={handleLogout}
                 aria-label={t("landing.navLogout", "Logout")}
               >
-                <LogOut className="w-4 h-4 mr-1" />
-                {t("landing.navLogout", "Logout")}
+                <LogOut className="w-4 h-4 mr-1 shrink-0" />
+                <span className="whitespace-nowrap">{t("landing.navLogout", "Logout")}</span>
               </Button>
             </>
           ) : (
             <>
               <Button
                 variant="ghost"
-                className="text-sm font-semibold text-muted hover:text-ink"
+                size="sm"
+                className="text-xs 2xl:text-sm font-semibold text-muted hover:text-ink whitespace-nowrap shrink-0 h-9 px-3 2xl:px-4"
                 onClick={() => navigate("/auth/login")}
               >
-                {t("landing.signIn", "Sign In")}
+                <span className="whitespace-nowrap">{t("landing.signIn", "Sign In")}</span>
               </Button>
-              <Button onClick={() => navigate("/auth/register")}>
-                {t("landing.startForFree", "Start for Free")}
+              <Button
+                size="sm"
+                className="text-xs 2xl:text-sm font-semibold whitespace-nowrap shrink-0 h-9 px-3.5 2xl:px-5"
+                onClick={() => navigate("/auth/register")}
+              >
+                <span className="whitespace-nowrap">{t("landing.startForFree", "Start for Free")}</span>
               </Button>
             </>
           )}
         </div>
 
-        {/* Mobile & Tablet Controls (Visible on < 1024px) */}
-        <div className="flex lg:hidden items-center gap-2 sm:gap-3">
+        {/* Mobile & Tablet Controls (Visible on < 1280px / xl) */}
+        <div className="flex xl:hidden items-center gap-2 sm:gap-3">
           <LanguageSwitcher idPrefix="mobile-bar" />
           <ThemeToggle />
           {/* CSS-Animated Hamburger Toggle Button */}
@@ -397,7 +404,7 @@ const NavbarComponent = () => {
 
       {/* Mobile/Tablet Backdrop Overlay */}
       <div
-        className={cn("nav-drawer-overlay lg:hidden", mobileOpen && "is-open")}
+        className={cn("nav-drawer-overlay xl:hidden", mobileOpen && "is-open")}
         onClick={closeMenu}
         aria-hidden="true"
       />
@@ -409,7 +416,7 @@ const NavbarComponent = () => {
         role="dialog"
         aria-modal="true"
         aria-label="Mobile and tablet navigation drawer"
-        className={cn("nav-drawer-panel lg:hidden", mobileOpen && "is-open")}
+        className={cn("nav-drawer-panel xl:hidden", mobileOpen && "is-open")}
       >
         <nav className="flex flex-col gap-5 mt-4">
           <div className="flex items-center justify-between pb-2 border-b border-white/5">
