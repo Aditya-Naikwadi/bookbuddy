@@ -37,7 +37,7 @@
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "epubjs": "^0.3.93",
-    "framer-motion": "^12.40.0",
+    "framer-motion": "^14.6.0",
     "i18next": "^26.4.0",
     "idb": "^8.0.3",
     "lenis": "^1.1.20",
