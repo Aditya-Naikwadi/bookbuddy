@@ -32,7 +32,7 @@ const GeneralSaved = () => {
   const navigate = useNavigate();
   const { bookmarks, removeBookmark, clearBookmarks } = useLocalBookmarks();
   const { user } = useAuthStore();
-  const collegeId = user?.collegeId || null;
+  const collegeId = user?.collegeId?._id || user?.collegeId || null;
 
   const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");

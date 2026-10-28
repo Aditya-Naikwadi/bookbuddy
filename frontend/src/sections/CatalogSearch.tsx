@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ChevronLeft,
   ChevronRight,
@@ -118,6 +119,7 @@ const CATEGORIES = [
 
 export const CatalogSearch: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { isAuthenticated, user } = useAuthStore();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -329,12 +331,26 @@ export const CatalogSearch: React.FC = () => {
   // Bounded list (limit=12)
   const displayBooks = books.slice(0, 12);
 
+  const getCategoryLabel = (cat: string) => {
+    const map: Record<string, string> = {
+      All: "landing.categories.all",
+      "Computer Science": "landing.categories.cs",
+      Algorithms: "landing.categories.algorithms",
+      "System Design": "landing.categories.systemDesign",
+      "AI & ML": "landing.categories.aiMl",
+      Systems: "landing.categories.systems",
+      Programming: "landing.categories.programming",
+      Networking: "landing.categories.networking",
+    };
+    return map[cat] ? t(map[cat], cat) : cat;
+  };
+
   return (
     <section
       id="catalog-search"
       data-section="catalog-search"
       className="bg-void py-24 md:py-32 border-b border-edge relative overflow-hidden"
-      aria-label="Catalog Search"
+      aria-label={t("landing.catalogTitle", "Catalog Search")}
     >
       {/* Background glow decoration */}
       <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-indigo-500/5 via-ember/5 to-transparent rounded-full blur-[120px] pointer-events-none" />
@@ -343,14 +359,12 @@ export const CatalogSearch: React.FC = () => {
         {/* Section Header & Navigation Controls */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
-            <SectionLabel>CAMPUS COLLECTION</SectionLabel>
+            <SectionLabel>{t("landing.catalogSearch.label", "CAMPUS COLLECTION")}</SectionLabel>
             <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-ink mt-2 mb-4 hover:brightness-110 transition-all duration-300 cursor-default select-text">
-              Catalog Search
+              {t("landing.catalogTitle", "Catalog Search")}
             </h2>
             <p className="text-muted text-sm sm:text-base md:text-lg max-w-2xl leading-relaxed select-text">
-              Explore 15,000+ course reserves and physical volumes across campus
-              library branches. Sign in to reserve physical copies, track loans,
-              or join waitlists.
+              {t("landing.catalogSearch.subheading", "Explore 15,000+ course reserves and physical volumes across campus library branches. Sign in to reserve physical copies, track loans, or join waitlists.")}
             </p>
           </div>
 
@@ -358,14 +372,14 @@ export const CatalogSearch: React.FC = () => {
           <div className="flex items-center gap-3 self-start md:self-end">
             <button
               onClick={() => scroll("left")}
-              aria-label="Scroll catalog left"
+              aria-label={t("landing.catalogSearch.scrollLeft", "Scroll catalog left")}
               className="w-11 h-11 rounded-xl bg-surface border border-edge hover:border-ember/40 hover:bg-surface/80 flex items-center justify-center text-ink transition-all duration-200 active:scale-95 shadow-sm cursor-pointer"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={() => scroll("right")}
-              aria-label="Scroll catalog right"
+              aria-label={t("landing.catalogSearch.scrollRight", "Scroll catalog right")}
               className="w-11 h-11 rounded-xl bg-surface border border-edge hover:border-ember/40 hover:bg-surface/80 flex items-center justify-center text-ink transition-all duration-200 active:scale-95 shadow-sm cursor-pointer"
             >
               <ChevronRight className="w-5 h-5" />
@@ -381,14 +395,14 @@ export const CatalogSearch: React.FC = () => {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by title, author, or keyword..."
-              aria-label="Search catalog"
+              placeholder={t("landing.catalogSearch.inputPlaceholder", "Search by title, author, or keyword...")}
+              aria-label={t("landing.catalogSearch.searchCatalogAria", "Search catalog")}
               className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-surface/70 border border-edge hover:border-ember/40 focus:border-ember focus:ring-1 focus:ring-ember text-ink text-sm outline-none transition-all placeholder:text-muted/70"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                aria-label="Clear search"
+                aria-label={t("landing.catalogSearch.clearSearch", "Clear search")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink p-1 rounded-full transition-colors"
               >
                 <X className="w-3.5 h-3.5" />
@@ -409,7 +423,7 @@ export const CatalogSearch: React.FC = () => {
                   : "bg-surface/60 text-muted border-edge hover:border-white/20 hover:text-ink"
               }`}
             >
-              {cat}
+              {getCategoryLabel(cat)}
             </button>
           ))}
         </div>
@@ -419,7 +433,7 @@ export const CatalogSearch: React.FC = () => {
           <div
             data-testid="catalog-skeleton"
             className="flex gap-6 overflow-hidden py-2"
-            aria-label="Loading catalog items"
+            aria-label={t("landing.catalogSearch.loadingAria", "Loading catalog items")}
           >
             {[1, 2, 3, 4].map((n) => (
               <div
@@ -450,8 +464,8 @@ export const CatalogSearch: React.FC = () => {
             <AlertCircle className="w-10 h-10 text-amber-500 mb-3" />
             <h3 className="text-lg font-serif font-bold text-ink mb-1">
               {error.toLowerCase().includes("maintenance")
-                ? "Platform Maintenance"
-                : "Unable to load campus collection"}
+                ? t("common.maintenance", "Platform Maintenance")
+                : t("landing.catalogSearch.errorTitle", "Unable to load campus collection")}
             </h3>
             <p className="text-sm text-muted max-w-md mb-4">{error}</p>
             <button
@@ -459,7 +473,7 @@ export const CatalogSearch: React.FC = () => {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-ember hover:bg-ember/90 text-white text-xs font-semibold shadow transition-all cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              Try Again
+              {t("landing.tryAgain", "Try Again")}
             </button>
           </div>
         )}
@@ -472,18 +486,18 @@ export const CatalogSearch: React.FC = () => {
           >
             <BookOpen className="w-12 h-12 text-muted mb-3 opacity-60" />
             <h3 className="text-lg font-serif font-bold text-ink mb-1">
-              No Catalog Items Found
+              {t("landing.catalogSearch.emptyTitle", "No Catalog Items Found")}
             </h3>
             <p className="text-sm text-muted max-w-md mb-4">
               {debouncedSearch
                 ? `No books match "${debouncedSearch}". Try checking your spelling or clear active filters.`
-                : "There are currently no items available in this category."}
+                : t("landing.catalogSearch.emptyNotice", "There are currently no items available in this category.")}
             </p>
             <button
               onClick={resetFilters}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface border border-edge hover:border-ember text-ink text-xs font-semibold transition-all cursor-pointer"
             >
-              Reset Filters
+              {t("landing.catalogSearch.resetFilters", "Reset Filters")}
             </button>
           </div>
         )}
@@ -535,7 +549,7 @@ export const CatalogSearch: React.FC = () => {
                   {/* Subtle Hover Action Pill */}
                   <div className="absolute inset-0 bg-void/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4 text-center backdrop-blur-xs">
                     <span className="text-xs font-bold text-white bg-ember px-3.5 py-1.5 rounded-full shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                      Sign In to Reserve →
+                      {t("landing.catalogSearch.reserve", "Sign In to Reserve →")}
                     </span>
                   </div>
 
@@ -543,7 +557,7 @@ export const CatalogSearch: React.FC = () => {
                   <div className="absolute top-2.5 right-2.5">
                     <StatusBadge
                       status="available"
-                      label={book.availability || "Available"}
+                      label={book.availability || t("landing.available", "Available")}
                       size="sm"
                       showIcon
                       className="backdrop-blur-md shadow-xs"
@@ -579,7 +593,7 @@ export const CatalogSearch: React.FC = () => {
                       </span>
                     </span>
                     <span className="font-medium text-ember hover:underline flex-shrink-0">
-                      Details →
+                      {t("landing.catalogSearch.viewDetails", "Details →")}
                     </span>
                   </div>
                 </div>

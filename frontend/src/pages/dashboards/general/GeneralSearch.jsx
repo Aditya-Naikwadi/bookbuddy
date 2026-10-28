@@ -60,7 +60,7 @@ const SORT_OPTIONS = [
 const GeneralSearch = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuthStore();
-  const collegeId = user?.collegeId || null;
+  const collegeId = user?.collegeId?._id || user?.collegeId || null;
 
   const { toggleBookmark, isBookmarked } = useLocalBookmarks();
 

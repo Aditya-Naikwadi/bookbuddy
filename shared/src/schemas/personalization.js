@@ -127,7 +127,22 @@ const toggleAlertsRouteSchema = z.object({
   body: toggleAlertsBodySchema,
 });
 
+const updateAccessibilityBodySchema = z.object({
+  dyslexiaFont: z.boolean().optional(),
+  highContrast: z.boolean().optional(),
+  textToSpeech: z.boolean().optional(),
+  ttsRate: z.number().min(0.5).max(2.0).optional(),
+  ttsPitch: z.number().min(0.5).max(1.5).optional(),
+});
+
+const updateAccessibilityRouteSchema = z.object({
+  body: updateAccessibilityBodySchema,
+});
+
 module.exports = {
+  updateAccessibilityBodySchema,
+  updateAccessibilityRouteSchema,
+  updateAccessibilitySchema: updateAccessibilityRouteSchema,
   createEResourceBodySchema,
   createEResourceRouteSchema,
   createEResourceSchema: createEResourceRouteSchema,

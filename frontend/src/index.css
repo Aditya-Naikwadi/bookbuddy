@@ -403,3 +403,92 @@
     font-size: 80%;
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* ACCESSIBILITY MODE TOKENS (Dyslexia-Friendly Font & High-Contrast Mode)    */
+/* -------------------------------------------------------------------------- */
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: local('OpenDyslexic'), local('OpenDyslexic-Regular'),
+       url('https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/woff/OpenDyslexic-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Dyslexia-Friendly Typography */
+body.dyslexia-font,
+.dyslexia-font,
+.dyslexia-font * {
+  font-family: 'OpenDyslexic', 'Comic Sans MS', 'Arial Rounded MT Bold', sans-serif !important;
+  letter-spacing: 0.04em !important;
+  word-spacing: 0.08em !important;
+  line-height: 1.65 !important;
+}
+
+/* High Contrast Mode Tokens (WCAG 2.1 AAA Compliant) */
+html.high-contrast,
+body.high-contrast,
+.high-contrast {
+  --bg-void: #000000 !important;
+  --bg-deep: #0a0a0a !important;
+  --bg-surface: #000000 !important;
+  --bg-edge: #ffffff !important;
+  --text-ink: #ffffff !important;
+  --text-muted: #ffff00 !important;
+  --color-indigo: #00ffff !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.high-contrast a {
+  color: #00ffff !important;
+  text-decoration: underline !important;
+  font-weight: 700 !important;
+}
+
+.high-contrast a:hover {
+  color: #ffff00 !important;
+}
+
+.high-contrast button {
+  border: 2px solid #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+}
+
+.high-contrast input::placeholder,
+.high-contrast textarea::placeholder {
+  color: #ffff00 !important;
+  opacity: 1 !important;
+}
+
+/* Enhanced Focus Rings for High Contrast */
+.high-contrast *:focus-visible {
+  outline: 3px solid #ffff00 !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 5px #000000 !important;
+}
+
+/* High-Contrast Card Overrides */
+.high-contrast [class*="bg-white"],
+.high-contrast [class*="bg-slate-"],
+.high-contrast [class*="bg-indigo-"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+}
+
+.high-contrast [class*="text-slate-"],
+.high-contrast [class*="text-gray-"],
+.high-contrast [class*="text-neutral-"] {
+  color: #ffffff !important;
+}

@@ -146,6 +146,20 @@ export const STUDENT_NAV_ITEMS = [
     feature: "support",
   },
   {
+    key: "offline-sync",
+    label: "Offline Sync",
+    icon: HardDrive,
+    route: "/student/offline-sync",
+    feature: "offline-sync",
+  },
+  {
+    key: "ask-this-book",
+    label: "Ask This Book",
+    icon: Sparkles,
+    route: "/student/ask-this-book",
+    feature: "rag-ask-this-book",
+  },
+  {
     key: "profile",
     label: "Profile & Settings",
     icon: User,
@@ -252,6 +266,41 @@ export const COLLEGE_ADMIN_NAV_ITEMS = [
     icon: Share2,
     route: "/college-admin/share-requests",
     feature: "crossCollegeILL",
+  },
+  {
+    key: "predictive-alerts",
+    label: "Predictive Stock Alerts",
+    icon: Sparkles,
+    route: "/college-admin/predictive-alerts",
+    feature: "predictive-alerts",
+  },
+  {
+    key: "analytics-expansion",
+    label: "Advanced Analytics",
+    icon: BarChart3,
+    route: "/college-admin/analytics-expansion",
+    feature: "analytics-expansion",
+  },
+  {
+    key: "anomaly-detection",
+    label: "Security & Anomaly Alerts",
+    icon: Shield,
+    route: "/college-admin/anomaly-detection",
+    feature: "anomaly-detection",
+  },
+  {
+    key: "syllabus-scanner",
+    label: "Syllabus Scanner",
+    icon: FileSearch,
+    route: "/college-admin/syllabus-scanner",
+    feature: "syllabus-scanner",
+  },
+  {
+    key: "qr-shelf-nav",
+    label: "QR Shelf Navigation",
+    icon: Layers,
+    route: "/college-admin/qr-shelf-nav",
+    feature: "qr-shelf-nav",
   },
 ];
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ChevronLeft,
   ChevronRight,
@@ -114,6 +115,7 @@ const GENRES = [
 
 export const EResources = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { isAuthenticated, user } = useAuthStore();
   const [inView, setInView] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -372,33 +374,25 @@ export const EResources = () => {
             transition={{ duration: 0.6 }}
             className="w-full md:w-1/2"
           >
-            <SectionLabel>70,000+ FREE BOOKS</SectionLabel>
+            <SectionLabel>{t("landing.eresourcesSection.label", "70,000+ FREE BOOKS")}</SectionLabel>
             <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl text-ink mb-6 hover:brightness-110 transition-all duration-300 cursor-default select-text">
-              Read anything. Anywhere.
-              <br />
-              No subscription needed.
+              {t("landing.eresourcesTitle", "Read anything. Anywhere.")}
             </h2>
             <p className="text-muted leading-relaxed text-sm sm:text-base md:text-lg mb-8 select-text">
-              Powered by Project Gutenberg's public-domain catalog, filtered,
-              searched, and read entirely inside BookBuddy — with your reading
-              progress always saved.
+              {t("landing.eresourcesSubtitle", "Powered by Project Gutenberg's public-domain catalog, filtered, searched, and read entirely inside BookBuddy — with your reading progress always saved.")}
             </p>
             <ul className="space-y-4 mb-8 text-ink font-medium">
               <li className="flex items-center gap-3 hover:translate-x-1.5 hover:text-white transition-all duration-200 cursor-default select-text">
-                <span className="text-success text-xl">✓</span> Full in-app PDF
-                & EPUB reader
+                <span className="text-success text-xl">✓</span> {t("landing.eresourcesSection.readOnline", "Full in-app PDF & EPUB reader")}
               </li>
               <li className="flex items-center gap-3 hover:translate-x-1.5 hover:text-white transition-all duration-200 cursor-default select-text">
-                <span className="text-success text-xl">✓</span> Pick up where
-                you left off
+                <span className="text-success text-xl">✓</span> {t("landing.eresourcesSection.offlineReady", "Pick up where you left off")}
               </li>
               <li className="flex items-center gap-3 hover:translate-x-1.5 hover:text-white transition-all duration-200 cursor-default select-text">
-                <span className="text-success text-xl">✓</span> Download for
-                offline reading
+                <span className="text-success text-xl">✓</span> {t("app.downloadForOffline", "Download for offline reading")}
               </li>
               <li className="flex items-center gap-3 hover:translate-x-1.5 hover:text-white transition-all duration-200 cursor-default select-text">
-                <span className="text-success text-xl">✓</span> Search by
-                language, genre, author
+                <span className="text-success text-xl">✓</span> {t("landing.catalogSearch.inputPlaceholder", "Search by language, genre, author")}
               </li>
             </ul>
             {/* Requirement 1: "Browse the Library" CTA redirects to the Library / Catalog Search section */}
@@ -406,9 +400,9 @@ export const EResources = () => {
               variant="secondary"
               size="lg"
               onClick={handleBrowseLibrary}
-              aria-label="Browse the Library"
+              aria-label={t("landing.browseLibrary", "Browse the Library →")}
             >
-              Browse the Library →
+              {t("landing.browseLibrary", "Browse the Library →")}
             </Button>
           </motion.div>
 
@@ -456,14 +450,13 @@ export const EResources = () => {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1 block">
-                FREE IN-APP READING
+                {t("landing.eresourcesSection.freeBadge", "FREE IN-APP READING")}
               </span>
               <h3 className="font-serif text-2xl md:text-3xl lg:text-4xl text-ink font-semibold">
-                Popular E-Resources & Classics
+                {t("landing.eresourcesSection.heading", "Popular E-Resources & Classics")}
               </h3>
               <p className="text-muted text-sm md:text-base mt-2 max-w-2xl">
-                Free, unrestricted access to timeless books and literature.
-                Click any title to sign in and start reading.
+                {t("landing.eresourcesSection.subheading", "Free, unrestricted access to timeless books and literature. Click any title to sign in and start reading.")}
               </p>
             </div>
 
@@ -471,14 +464,14 @@ export const EResources = () => {
             <div className="flex items-center gap-3 self-start md:self-end">
               <button
                 onClick={() => scrollCarousel("left")}
-                aria-label="Scroll e-resources left"
+                aria-label={t("landing.eresourcesSection.scrollLeft", "Scroll e-resources left")}
                 className="w-11 h-11 rounded-xl bg-surface border border-edge hover:border-ember/40 hover:bg-surface/80 flex items-center justify-center text-ink transition-all duration-200 active:scale-95 shadow-sm cursor-pointer"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={() => scrollCarousel("right")}
-                aria-label="Scroll e-resources right"
+                aria-label={t("landing.eresourcesSection.scrollRight", "Scroll e-resources right")}
                 className="w-11 h-11 rounded-xl bg-surface border border-edge hover:border-ember/40 hover:bg-surface/80 flex items-center justify-center text-ink transition-all duration-200 active:scale-95 shadow-sm cursor-pointer"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -494,14 +487,14 @@ export const EResources = () => {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search e-books, classics, or authors..."
-                aria-label="Search e-resources"
+                placeholder={t("landing.eresourcesSection.inputPlaceholder", "Search e-books, classics, or authors...")}
+                aria-label={t("landing.eresourcesSection.searchEResourcesAria", "Search e-resources")}
                 className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-surface/70 border border-edge hover:border-indigo-400/40 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-ink text-sm outline-none transition-all placeholder:text-muted/70"
               />
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm("")}
-                  aria-label="Clear search"
+                  aria-label={t("landing.catalogSearch.clearSearch", "Clear search")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink p-1 rounded-full transition-colors"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -522,7 +515,7 @@ export const EResources = () => {
                     : "bg-surface/60 text-muted border-edge hover:border-white/20 hover:text-ink"
                 }`}
               >
-                {g}
+                {g === "All" ? t("landing.all", "All") : g}
               </button>
             ))}
           </div>
@@ -532,7 +525,7 @@ export const EResources = () => {
             <div
               data-testid="eresources-skeleton"
               className="flex gap-6 overflow-hidden py-2"
-              aria-label="Loading e-resources"
+              aria-label={t("landing.catalogSearch.loadingAria", "Loading e-resources")}
             >
               {[1, 2, 3, 4].map((n) => (
                 <div
@@ -563,8 +556,8 @@ export const EResources = () => {
               <AlertCircle className="w-10 h-10 text-amber-500 mb-3" />
               <h3 className="text-lg font-serif font-bold text-ink mb-1">
                 {error.toLowerCase().includes("maintenance")
-                  ? "Platform Maintenance"
-                  : "Unable to load e-resources"}
+                  ? t("common.maintenance", "Platform Maintenance")
+                  : t("landing.eresourcesSection.errorTitle", "Unable to load e-resources")}
               </h3>
               <p className="text-sm text-muted max-w-md mb-4">{error}</p>
               <button
@@ -572,7 +565,7 @@ export const EResources = () => {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow transition-all cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                Try Again
+                {t("landing.tryAgain", "Try Again")}
               </button>
             </div>
           )}
@@ -585,18 +578,18 @@ export const EResources = () => {
             >
               <BookOpen className="w-12 h-12 text-muted mb-3 opacity-60" />
               <h3 className="text-lg font-serif font-bold text-ink mb-1">
-                No E-Resources Found
+                {t("landing.eresourcesSection.emptyTitle", "No E-Resources Found")}
               </h3>
               <p className="text-sm text-muted max-w-md mb-4">
                 {debouncedSearch
                   ? `No digital resources match "${debouncedSearch}". Try checking your spelling or clear active filters.`
-                  : "There are currently no items available in this category."}
+                  : t("landing.catalogSearch.emptyNotice", "There are currently no items available in this category.")}
               </p>
               <button
                 onClick={resetFilters}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface border border-edge hover:border-indigo-400 text-ink text-xs font-semibold transition-all cursor-pointer"
               >
-                Reset Filters
+                {t("landing.eresourcesSection.resetFilters", "Reset Filters")}
               </button>
             </div>
           )}
@@ -616,7 +609,7 @@ export const EResources = () => {
               className="flex gap-6 overflow-x-auto scrollbar-none snap-x snap-mandatory py-6 px-1 -mx-1 scroll-smooth focus:outline-none cursor-grab active:cursor-grabbing select-none touch-pan-x"
               tabIndex={0}
               role="region"
-              aria-label="E-Resources Books Carousel"
+              aria-label={t("landing.eresourcesTitle", "E-Resources Books Carousel")}
             >
               {displayResources.map((book) => (
                 <div
@@ -648,7 +641,7 @@ export const EResources = () => {
                     {/* Hover Sign-in Callout */}
                     <div className="absolute inset-0 bg-void/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4 text-center backdrop-blur-xs">
                       <span className="text-xs font-bold text-white bg-indigo-600 px-3.5 py-1.5 rounded-full shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                        Sign In to Read →
+                        {t("landing.eresourcesSection.readOnline", "Sign In to Read →")}
                       </span>
                     </div>
 
@@ -684,10 +677,10 @@ export const EResources = () => {
                     <div className="mt-3 pt-3 border-t border-edge flex items-center justify-between text-xs text-muted">
                       <span className="flex items-center gap-1 text-emerald-400 flex-shrink-0">
                         <BookOpen className="w-3.5 h-3.5" />
-                        Free E-Book
+                        {t("landing.eresourcesSection.freeBadge", "Free E-Book")}
                       </span>
                       <span className="font-medium text-indigo-400 group-hover:underline flex-shrink-0">
-                        Read Now →
+                        {t("landing.eresourcesSection.readOnline", "Read Now →")}
                       </span>
                     </div>
                   </div>

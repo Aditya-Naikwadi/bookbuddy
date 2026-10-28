@@ -1,4 +1,5 @@
 import { useState, memo } from "react";
+import { useTranslation } from "react-i18next";
 import { useStudentOverview } from "../../../hooks/useStudentOverview";
 import useAuthStore from "../../../store/authStore";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -37,6 +38,7 @@ import {
 export const StudentDashboardHome = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const { user: authUser } = useAuthStore();
   const mismatchNotice = location.state?.mismatchNotice;
   const {
@@ -101,9 +103,9 @@ export const StudentDashboardHome = () => {
   // Greeting based on time of day
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 18) return "Good Afternoon";
-    return "Good Evening";
+    if (hour < 12) return t("student.greetingMorning", "Good Morning");
+    if (hour < 18) return t("student.greetingAfternoon", "Good Afternoon");
+    return t("student.greetingEvening", "Good Evening");
   };
 
   // Check in handler with confetti celebration & Badge unlock modal trigger
@@ -134,13 +136,17 @@ export const StudentDashboardHome = () => {
       const res = await renewLoan(loanId);
       setRenewalMessage({
         type: "success",
-        text: res?.message || "Loan successfully renewed for 14 days!",
+        text:
+          res?.message ||
+          t("student.renewSuccess", "Loan successfully renewed for 14 days!"),
       });
       setTimeout(() => setRenewalMessage(null), 5000);
     } catch (err) {
       setRenewalMessage({
         type: "error",
-        text: err?.response?.data?.message || "Failed to renew loan.",
+        text:
+          err?.response?.data?.message ||
+          t("student.renewFailed", "Failed to renew loan."),
       });
       setTimeout(() => setRenewalMessage(null), 5000);
     }
@@ -164,16 +170,19 @@ export const StudentDashboardHome = () => {
       <div className="p-8 max-w-4xl mx-auto text-center bg-red-500/10 border border-red-500/20 rounded-3xl my-12">
         <ShieldAlert className="w-12 h-12 text-red-500 mx-auto mb-3" />
         <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-          Unable to Load Student Dashboard
+          {t("student.errorTitle", "Unable to Load Student Dashboard")}
         </h3>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">
-          Please check your backend connection or try refreshing the dashboard.
+          {t(
+            "student.errorSubtitle",
+            "Please check your backend connection or try refreshing the dashboard.",
+          )}
         </p>
         <button
           onClick={() => refetch()}
-          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md"
+          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
         >
-          Try Again
+          {t("student.tryAgainBtn", "Try Again")}
         </button>
       </div>
     );
@@ -247,20 +256,29 @@ export const StudentDashboardHome = () => {
             <div className="flex items-center gap-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-xs text-indigo-200 font-medium">
                 <GraduationCap size={14} className="text-indigo-400" />
-                <span>Student Academic Library Portal</span>
+                <span>
+                  {t("student.portalBadge", "Student Academic Library Portal")}
+                </span>
               </div>
 
               {/* Notification Bell Icon in Header */}
               <button
                 onClick={() => setIsNotificationOpen(true)}
                 className="relative p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white transition-all border border-white/10"
-                title="Open Notifications"
+                title={t("student.openNotifications", "Open Notifications")}
+                aria-label={t(
+                  "student.openNotifications",
+                  "Open Notifications",
+                )}
               >
                 <Bell size={16} />
                 {unreadNotificationsCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-indigo-600 text-white text-[9px] font-black flex items-center justify-center shadow-sm">
                     {unreadNotificationsCount}
-                    <span className="sr-only"> unread</span>
+                    <span className="sr-only">
+                      {" "}
+                      {t("student.unreadLabel", "unread")}
+                    </span>
                   </span>
                 )}
               </button>
@@ -270,15 +288,11 @@ export const StudentDashboardHome = () => {
               {getGreeting()}, {firstName}! 👋
             </h1>
             <p className="text-sm text-slate-300 leading-relaxed">
-              Your personalized reading hub is up to date. You have{" "}
-              <strong className="text-indigo-300 font-semibold">
-                {activeLoans.length} active checkouts
-              </strong>{" "}
-              and{" "}
-              <strong className="text-orange-300 font-semibold">
-                {currentStreak} day streak
-              </strong>{" "}
-              active today.
+              {t("student.greetingSubtitle", {
+                activeLoans: activeLoans.length,
+                streak: currentStreak,
+                defaultValue: `Your personalized reading hub is up to date. You have ${activeLoans.length} active checkouts and ${currentStreak} day streak active today.`,
+              })}
             </p>
 
             {/* Quick Action Badges */}
@@ -288,21 +302,21 @@ export const StudentDashboardHome = () => {
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all shadow-md flex items-center gap-1.5"
               >
                 <Search size={14} />
-                <span>Browse Catalog</span>
+                <span>{t("student.browseCatalogBtn", "Browse Catalog")}</span>
               </Link>
               <Link
                 to="/student/card"
                 className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold backdrop-blur-md transition-all flex items-center gap-1.5"
               >
                 <QrCode size={14} className="text-indigo-300" />
-                <span>Digital ID Pass</span>
+                <span>{t("student.digitalIdPassBtn", "Digital ID Pass")}</span>
               </Link>
               <Link
                 to="/student/facilities"
                 className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold backdrop-blur-md transition-all flex items-center gap-1.5"
               >
                 <Laptop size={14} className="text-purple-300" />
-                <span>Book Lab Seat</span>
+                <span>{t("student.bookLabSeatBtn", "Book Lab Seat")}</span>
               </Link>
             </div>
           </div>
@@ -314,7 +328,10 @@ export const StudentDashboardHome = () => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">
-                Pass ID #{studentUser?.studentId || "STU-1001"}
+                {t(
+                  "student.passIdLabel",
+                  `Pass ID #${studentUser?.studentId || "STU-1001"}`,
+                )}
               </p>
               <p className="text-sm font-bold text-white truncate">
                 {studentName}
@@ -322,7 +339,7 @@ export const StudentDashboardHome = () => {
               <div className="flex items-center gap-2 mt-1">
                 <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="text-[11px] text-slate-300 font-medium">
-                  Active Patron
+                  {t("student.activePatronBadge", "Active Patron")}
                 </span>
               </div>
             </div>
@@ -336,13 +353,13 @@ export const StudentDashboardHome = () => {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Active Loans
+              {t("student.metricActiveLoans", "Active Loans")}
             </p>
             <p className="text-2xl font-black text-slate-900 dark:text-white mt-1 font-mono">
               {activeLoans.length}
             </p>
             <p className="text-[10px] text-slate-500 mt-0.5">
-              Max limit: 5 books
+              {t("student.metricMaxLimit", "Max limit: 5 books")}
             </p>
           </div>
           <div className="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
@@ -354,13 +371,15 @@ export const StudentDashboardHome = () => {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Reading Streak
+              {t("student.metricReadingStreak", "Reading Streak")}
             </p>
             <p className="text-2xl font-black text-orange-500 mt-1 font-mono">
-              {currentStreak} Days
+              {t("student.metricStreakDays", `${currentStreak} Days`)}
             </p>
             <p className="text-[10px] text-slate-500 mt-0.5">
-              {todayComplete ? "Checked in today ✓" : "Check-in pending"}
+              {todayComplete
+                ? t("student.metricCheckedInToday", "Checked in today ✓")
+                : t("student.metricCheckInPending", "Check-in pending")}
             </p>
           </div>
           <div className="w-11 h-11 rounded-xl bg-orange-50 dark:bg-orange-950/50 text-orange-500 flex items-center justify-center">
@@ -372,12 +391,14 @@ export const StudentDashboardHome = () => {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Active Holds
+              {t("student.metricActiveHolds", "Active Holds")}
             </p>
             <p className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-1 font-mono">
               {reservations.length}
             </p>
-            <p className="text-[10px] text-slate-500 mt-0.5">In pickup queue</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">
+              {t("student.metricInPickupQueue", "In pickup queue")}
+            </p>
           </div>
           <div className="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center">
             <BookMarked size={22} />
@@ -388,7 +409,7 @@ export const StudentDashboardHome = () => {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Unpaid Fines
+              {t("student.metricUnpaidFines", "Unpaid Fines")}
             </p>
             <p
               className={`text-2xl font-black mt-1 font-mono ${totalFine > 0 ? "text-red-600" : "text-emerald-600"}`}
@@ -396,7 +417,9 @@ export const StudentDashboardHome = () => {
               ₹{(isNaN(totalFine) ? 0 : totalFine).toFixed(2)}
             </p>
             <p className="text-[10px] text-slate-500 mt-0.5">
-              {totalFine > 0 ? "Payment required" : "Clear balance"}
+              {totalFine > 0
+                ? t("student.metricPaymentRequired", "Payment required")
+                : t("student.metricClearBalance", "Clear balance")}
             </p>
           </div>
           <div
@@ -423,10 +446,13 @@ export const StudentDashboardHome = () => {
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                    Currently Borrowed Books
+                    {t("student.borrowedTitle", "Currently Borrowed Books")}
                   </h2>
                   <p className="text-xs text-slate-500">
-                    Track return due dates and renew eligible checkouts
+                    {t(
+                      "student.borrowedSubtitle",
+                      "Track return due dates and renew eligible checkouts",
+                    )}
                   </p>
                 </div>
               </div>
@@ -434,7 +460,8 @@ export const StudentDashboardHome = () => {
                 to="/student/loans"
                 className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
               >
-                View All Loans <ArrowRight size={12} />
+                {t("student.viewAllLoansLink", "View All Loans")}{" "}
+                <ArrowRight size={12} />
               </Link>
             </div>
 
@@ -445,13 +472,16 @@ export const StudentDashboardHome = () => {
                   className="mx-auto text-slate-300 dark:text-slate-700"
                 />
                 <p className="font-medium">
-                  You have no books currently checked out.
+                  {t(
+                    "student.noBorrowedBooks",
+                    "You have no books currently checked out.",
+                  )}
                 </p>
                 <Link
                   to="/student/catalog"
                   className="inline-flex items-center gap-1 px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700 transition-all shadow"
                 >
-                  Explore Library Catalog
+                  {t("student.exploreCatalogLink", "Explore Library Catalog")}
                 </Link>
               </div>
             ) : (
@@ -514,17 +544,25 @@ export const StudentDashboardHome = () => {
                                 }
                                 label={
                                   isOverdue
-                                    ? "Overdue!"
+                                    ? t("student.statusOverdue", "Overdue!")
                                     : daysLeft === 0
-                                      ? "Due Today!"
-                                      : `${daysLeft} days left`
+                                      ? t(
+                                          "student.statusDueToday",
+                                          "Due Today!",
+                                        )
+                                      : t(
+                                          "student.statusDaysLeft",
+                                          `${daysLeft} days left`,
+                                        )
                                 }
                                 size="sm"
                                 showIcon
                               />
                               <span className="text-[10px] text-slate-400">
-                                Renewals: {loan.renewalCount || 0}/
-                                {loan.maxRenewals || 2}
+                                {t(
+                                  "student.renewalsCount",
+                                  `Renewals: ${loan.renewalCount || 0}/${loan.maxRenewals || 2}`,
+                                )}
                               </span>
                             </div>
                           </div>
@@ -537,7 +575,7 @@ export const StudentDashboardHome = () => {
                             disabled={!eligibility.eligible || isRenewing}
                             className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm ${
                               eligibility.eligible
-                                ? "bg-indigo-600 hover:bg-indigo-700 text-white"
+                                ? "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
                                 : "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
                             }`}
                           >
@@ -551,16 +589,22 @@ export const StudentDashboardHome = () => {
                             />
                             <span>
                               {isRenewing && renewingLoanId === loan._id
-                                ? "Renewing..."
-                                : "Renew Loan"}
+                                ? t("student.renewingBtn", "Renewing...")
+                                : t("student.renewLoanBtn", "Renew Loan")}
                             </span>
                           </button>
                           {!eligibility.eligible && (
                             <p className="text-[10px] text-red-500 font-medium text-right max-w-[140px] truncate">
                               {eligibility.reason === "on_hold"
-                                ? "Blocked: Reserved by student"
+                                ? t(
+                                    "student.blockedReserved",
+                                    "Blocked: Reserved by student",
+                                  )
                                 : eligibility.reason === "limit_reached"
-                                  ? "Max renewals reached"
+                                  ? t(
+                                      "student.blockedMaxRenewals",
+                                      "Max renewals reached",
+                                    )
                                   : eligibility.reason}
                             </p>
                           )}
@@ -598,11 +642,14 @@ export const StudentDashboardHome = () => {
                     <BookMarked size={18} />
                   </div>
                   <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                    Active Reservation Holds
+                    {t("student.holdsTitle", "Active Reservation Holds")}
                   </h2>
                 </div>
                 <span className="text-xs text-purple-600 font-bold bg-purple-50 dark:bg-purple-950/50 px-2.5 py-1 rounded-full">
-                  {reservations.length} Queue Items
+                  {t(
+                    "student.holdsQueueCount",
+                    `${reservations.length} Queue Items`,
+                  )}
                 </span>
               </div>
 
@@ -635,8 +682,11 @@ export const StudentDashboardHome = () => {
                           status={isReady ? "ready_for_pickup" : "queued"}
                           label={
                             isReady
-                              ? "Ready at Desk!"
-                              : `Queue #${res.queuePosition || 1}`
+                              ? t("student.holdReadyAtDesk", "Ready at Desk!")
+                              : t(
+                                  "student.holdQueuePosition",
+                                  `Queue #${res.queuePosition || 1}`,
+                                )
                           }
                           size="sm"
                           showIcon
@@ -646,8 +696,9 @@ export const StudentDashboardHome = () => {
                           disabled={
                             isCancellingHold && cancellingHoldId === res._id
                           }
-                          className="text-xs text-slate-400 hover:text-red-500 p-1 font-bold transition-colors"
-                          title="Cancel Hold"
+                          className="text-xs text-slate-400 hover:text-red-500 p-1 font-bold transition-colors cursor-pointer"
+                          title={t("student.cancelHoldBtn", "Cancel Hold")}
+                          aria-label={t("student.cancelHoldBtn", "Cancel Hold")}
                         >
                           <XCircle size={16} />
                         </button>
@@ -668,13 +719,16 @@ export const StudentDashboardHome = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-300">
-                    Resume Digital Reading
+                    {t("student.resumeReadingBadge", "Resume Digital Reading")}
                   </p>
                   <h4 className="font-bold text-sm text-white truncate">
                     {eresource.title || "Digital Resource"}
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Page {recentProgress?.currentPage || 1} • Last read recently
+                    {t(
+                      "student.lastReadPage",
+                      `Page ${recentProgress?.currentPage || 1} • Last read recently`,
+                    )}
                   </p>
                 </div>
               </div>
@@ -682,9 +736,11 @@ export const StudentDashboardHome = () => {
                 onClick={() =>
                   navigate(`/student/reader/${eresource._id || eresource.id}`)
                 }
-                className="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-400 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 flex-shrink-0"
+                className="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-400 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 flex-shrink-0 cursor-pointer"
               >
-                <span>Continue Reading</span>
+                <span>
+                  {t("student.continueReadingBtn", "Continue Reading")}
+                </span>
                 <ChevronRight size={14} />
               </button>
             </div>
@@ -708,18 +764,24 @@ export const StudentDashboardHome = () => {
                     fill="currentColor"
                   />
                   <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                    Reading Streak
+                    {t("student.streakTitle", "Reading Streak")}
                   </h2>
                 </div>
                 <span className="text-xl font-black text-orange-500 font-mono">
-                  {currentStreak} Days
+                  {t("student.metricStreakDays", `${currentStreak} Days`)}
                 </span>
               </div>
 
               <p className="text-xs text-slate-500 leading-relaxed">
                 {todayComplete
-                  ? "Awesome job! You've logged your check-in today. Your daily streak is safe."
-                  : "Check in today to keep your reading streak alive and earn achievements!"}
+                  ? t(
+                      "student.streakSafeMsg",
+                      "Awesome job! You've logged your check-in today. Your daily streak is safe.",
+                    )
+                  : t(
+                      "student.streakPendingMsg",
+                      "Check in today to keep your reading streak alive and earn achievements!",
+                    )}
               </p>
 
               <button
@@ -728,27 +790,33 @@ export const StudentDashboardHome = () => {
                 className={`w-full h-11 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md ${
                   todayComplete
                     ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 cursor-default"
-                    : "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
+                    : "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white cursor-pointer"
                 }`}
               >
                 {isCheckInPending ? (
-                  <span>Checking in...</span>
+                  <span>{t("student.checkingInBtn", "Checking in...")}</span>
                 ) : todayComplete ? (
                   <>
                     <CheckCircle2 size={16} />
-                    <span>Checked In Today ✓</span>
+                    <span>
+                      {t("student.checkedInTodayBtn", "Checked In Today ✓")}
+                    </span>
                   </>
                 ) : (
                   <>
                     <Flame size={16} fill="currentColor" />
-                    <span>Check In Today</span>
+                    <span>
+                      {t("student.checkInTodayBtn", "Check In Today")}
+                    </span>
                   </>
                 )}
               </button>
 
               {/* Ice Freezes Indicator */}
               <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-wider pt-2">
-                <span>Freezes Available:</span>
+                <span>
+                  {t("student.freezesAvailableLabel", "Freezes Available:")}
+                </span>
                 <div className="flex items-center gap-1">
                   {Array.from({ length: 3 }).map((_, i) => (
                     <Snowflake
@@ -771,7 +839,7 @@ export const StudentDashboardHome = () => {
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
             <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Layers size={18} className="text-indigo-600" />
-              Quick Services
+              {t("student.quickServicesTitle", "Quick Services")}
             </h2>
 
             <div className="grid grid-cols-2 gap-3 text-xs">
@@ -780,28 +848,28 @@ export const StudentDashboardHome = () => {
                 className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 transition-all border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center gap-2 font-bold"
               >
                 <Bookmark size={20} className="text-indigo-600" />
-                <span>Reading Lists</span>
+                <span>{t("student.serviceReadingLists", "Reading Lists")}</span>
               </Link>
               <Link
                 to="/student/e-resources"
                 className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-purple-50 dark:hover:bg-purple-950/50 hover:text-purple-600 transition-all border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center gap-2 font-bold"
               >
                 <Sparkles size={20} className="text-purple-600" />
-                <span>E-Resources</span>
+                <span>{t("student.serviceEResources", "E-Resources")}</span>
               </Link>
               <Link
                 to="/student/fines"
                 className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-600 transition-all border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center gap-2 font-bold"
               >
                 <CreditCard size={20} className="text-emerald-600" />
-                <span>Pay Fines</span>
+                <span>{t("student.servicePayFines", "Pay Fines")}</span>
               </Link>
               <Link
                 to="/student/engagement"
                 className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-600 transition-all border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center gap-2 font-bold"
               >
                 <Award size={20} className="text-amber-500" />
-                <span>Badges</span>
+                <span>{t("student.serviceBadges", "Badges")}</span>
               </Link>
             </div>
           </div>
@@ -811,13 +879,13 @@ export const StudentDashboardHome = () => {
             <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                 <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                  Recommended for You
+                  {t("student.recommendedTitle", "Recommended for You")}
                 </h2>
                 <Link
                   to="/student/recommendations"
                   className="text-xs text-indigo-600 font-bold hover:underline"
                 >
-                  More
+                  {t("student.moreLink", "More")}
                 </Link>
               </div>
 
@@ -846,7 +914,8 @@ export const StudentDashboardHome = () => {
                         {book.author}
                       </p>
                       <span className="inline-block mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300">
-                        {book.category || "General"}
+                        {book.category ||
+                          t("student.generalCategory", "General")}
                       </span>
                     </div>
                   </div>

@@ -12,12 +12,15 @@ import {
   Globe,
   FileCheck,
   HardDrive,
+  Sliders,
 } from "lucide-react";
 
 import NotificationCenter from "../components/student/NotificationCenter";
 import ThemeToggle from "../components/common/ThemeToggle";
 import useAuthStore from "../store/authStore";
+import { useAccessibilityStore } from "../store/accessibilityStore";
 import { useFeatureFlags } from "../hooks/useFeatureFlags";
+import { useTranslation } from "react-i18next";
 import { ROLES, normalizeRole } from "@bookbuddy/shared";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -28,6 +31,83 @@ import {
 } from "../config/navigation";
 import { cn } from "../utils/cn";
 import { ForcedPasswordChangeModal } from "../components/student/auth/ForcedPasswordChangeModal";
+
+const DashboardLanguageSwitcher = () => {
+  const { t, i18n } = useTranslation();
+  const { isFeatureEnabled } = useFeatureFlags();
+  const isVernacularEnabled = isFeatureEnabled("vernacular-i18n");
+
+  return (
+    <div className="relative flex items-center shrink-0">
+      <label htmlFor="dashboard-topbar-language-select" className="sr-only">
+        {t("landing.selectLanguage", "Select language")}
+      </label>
+      <div className="flex items-center gap-1.5 h-8 px-2 rounded-lg border border-slate-200 dark:border-edge bg-slate-50 dark:bg-deep text-slate-800 dark:text-ink text-xs font-medium transition-colors">
+        <Globe
+          className="w-3.5 h-3.5 text-indigo-500 dark:text-ember shrink-0"
+          aria-hidden="true"
+        />
+        <select
+          id="dashboard-topbar-language-select"
+          value={i18n.language || "en"}
+          onChange={(e) => i18n.changeLanguage(e.target.value)}
+          className="bg-transparent text-slate-800 dark:text-ink text-xs font-semibold focus:outline-none cursor-pointer pr-1"
+          aria-label={t("landing.selectLanguage", "Select language")}
+        >
+          <option
+            value="en"
+            className="bg-white dark:bg-surface text-slate-900 dark:text-white"
+          >
+            EN
+          </option>
+          {isVernacularEnabled && (
+            <>
+              <option
+                value="hi"
+                className="bg-white dark:bg-surface text-slate-900 dark:text-white"
+              >
+                HI
+              </option>
+              <option
+                value="mr"
+                className="bg-white dark:bg-surface text-slate-900 dark:text-white"
+              >
+                MR
+              </option>
+            </>
+          )}
+          <option
+            value="es"
+            className="bg-white dark:bg-surface text-slate-900 dark:text-white"
+          >
+            ES
+          </option>
+        </select>
+      </div>
+    </div>
+  );
+};
+
+const DashboardAccessibilityToggle = () => {
+  const { t } = useTranslation();
+  const { isFeatureEnabled } = useFeatureFlags();
+  const { toggleToolbar } = useAccessibilityStore();
+  const isLicensed = isFeatureEnabled("accessibility-mode");
+
+  if (!isLicensed) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={toggleToolbar}
+      className="h-8 w-8 rounded-lg border border-slate-200 dark:border-edge bg-slate-50 dark:bg-deep text-slate-700 dark:text-ink hover:text-indigo-600 dark:hover:text-ember flex items-center justify-center transition-colors cursor-pointer"
+      aria-label={t("accessibility.toggleMenu", "Accessibility Options")}
+      title={t("accessibility.toggleMenu", "Accessibility Options")}
+    >
+      <Sliders className="w-3.5 h-3.5" aria-hidden="true" />
+    </button>
+  );
+};
 
 export default function DashboardLayout() {
   const { user, logout } = useAuthStore();
@@ -273,6 +353,8 @@ export default function DashboardLayout() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+            <DashboardLanguageSwitcher />
+            <DashboardAccessibilityToggle />
             <ThemeToggle />
             <NotificationCenter />
             <div className="flex items-center gap-2">

@@ -41,6 +41,7 @@ BookBuddy is a production-grade, multi-tenant Integrated Library System (ILS) an
 | 🎯 **Resume & Technical Accomplishments** | [`docs/RESUME_POINTS.md`](docs/RESUME_POINTS.md)                                                         | High-impact technical metrics, throughput stats, and architectural milestones      |
 | 🤝 **Contribution & Verification Guide**  | [`CONTRIBUTING.md`](CONTRIBUTING.md)                                                                     | Local contribution standards, Git commit conventions, and pre-push verification    |
 | 🤖 **AI Agent Guidelines**                | [`AGENTS.md`](AGENTS.md)                                                                                 | Single source of truth for AI pairing assistants and system constraints            |
+| 📊 **Phase 1 Baseline & Triage Report**   | [`reports/phase1_route_audit_report.json`](reports/phase1_route_audit_report.json)                        | 63-route real browser crawl telemetry, console errors, and severity triage register |
 
 ---
 
@@ -507,14 +508,21 @@ Platform-wide command center for managing tenants, platform health, security com
 
 ### 10. Suggested Features & Future Innovation Roadmap
 
-#### 🟡 Build Now (Zero/Low Blockers)
+#### ✅ Completed & Verified (Phases 0 & 1 Slices)
 
-| Feature                                | One-Liner                                                                | Architectural Notes                                            |
-| -------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------- |
-| **Vernacular Language Support**        | UI in Hindi, Marathi, etc. via existing i18next scaffolding              | Frontend translation bundles, tenant default language fallback |
-| **Accessibility Mode**                 | Screen reader support, dyslexia font toggle, Web Speech text-to-speech   | High-contrast CSS tokens, WCAG 2.1 AAA aria landmarks          |
-| **Offline-First Sync**                 | Extends existing IndexedDB/PWA downloads into queued offline-action sync | Background sync worker with optimistic local state replay      |
-| **Reading-Debt Nudges & Skill Badges** | Constructive fine reminders + completion-based certificates              | Built directly on existing loan and badge schemas              |
+| Feature / Milestone | Implementation & Architecture Details | Verification Evidence |
+| :--- | :--- | :--- |
+| **Phase 0: Prerequisites & Architectural Groundwork** | - Compound Index `Loan {collegeId, bookId, createdAt:-1}` for instant borrowing history queries.<br>- Time-series schema `DailyMetricSnapshot {collegeId, date, metrics}` with 730-day (2-year) automated TTL index.<br>- Per-college feature-flag infrastructure (`CollegeFeatureConfig`, `FeatureGate`) enforcing permissions in navigation, routes, and backend API (HTTP 403). | Verified via `node backend/src/scripts/verifyStep0Proof.js`: `explain()` reports `IXSCAN` usage, and disabled flag queries return 403. |
+| **Feature 1: Vernacular i18n (`hi`, `mr`)** | - Added Hindi (`hi`) and Marathi (`mr`) alongside existing English (`en`) and Spanish (`es`).<br>- 100% key parity across all 4 locales (370 keys enforced by `check-i18n-keys.cjs`).<br>- Devanagari font fallbacks (`Noto Sans Devanagari`, `system-ui`) and dynamic `<html lang="...">` updates.<br>- Persistent language choice saved in `localStorage` and user preferences. Zero hardcoded English strings. | Verified via `node backend/src/scripts/verifyFeature1Proof.js` and Vitest layout resilience suites (375px mobile and 1280px desktop). |
+| **Feature 2: Accessibility Mode (WCAG 2.1 AA)** | - Per-user accessibility controls: Dyslexia-friendly font toggle (`OpenDyslexic`), High-contrast color tokens (`hc-theme`), and Web Speech API Text-to-Speech (TTS) with graceful fallback notifications.<br>- Full screen-reader landmarks (`role="main"`, `role="navigation"`, `role="banner"`, `aria-live`, skip-to-content links). | Verified via `accessibilityAxe.test.jsx` (9/9 passed, 0 serious/critical axe violations) and `keyboardNavigation.test.jsx`. |
+| **Phase 1: Production Baseline & Triage Register** | - Automated headless Chromium audit crawling all 63 routes across all 5 roles (`Visitor`, `General`, `Student`, `College Admin`, `Super Admin`).<br>- Monitored network requests, console messages, and DOM trees. Zero unhandled JavaScript exceptions or ErrorBoundary crashes.<br>- Severity-graded triage register classifying findings (Critical, High, Medium, Low) with root causes and remediation pathways. | Full JSON telemetry saved to `reports/phase1_route_audit_report.json` and [Triage Register Report](phase1_baseline_triage_report.md). |
+
+#### 🟡 Remaining Build Now (Zero/Low Blockers)
+
+| Feature | One-Liner | Architectural Notes |
+| :--- | :--- | :--- |
+| **Offline-First Sync** | Extends existing IndexedDB/PWA downloads into queued offline-action sync | Client-generated IDs, latest-timestamp conflict resolution, namespaced by `userId`, cleared on logout. |
+| **Reading-Debt Nudges & Skill Badges** | Constructive fine reminders + completion-based certificates | Built directly on existing `Fine`, `Loan`, and `Badge` models; transactional side effects execute in `afterCommitFn`. |
 
 #### 🟠 Build With Modification (Requires Architecture Adjustment First)
 
@@ -1147,7 +1155,7 @@ npm test -- src/tests/patronsDeskTruncation.test.js  # Patron roster pagination 
 
 ### Frontend Vitest & React Testing Library Suite
 
-Runs 20 test suites testing Zustand stores, custom hooks, and React 19 UI components:
+Runs 29 test suites containing 272 automated unit, integration, and accessibility tests covering Zustand stores, i18n key parity, WCAG 2.1 AA axe-core compliance, keyboard navigation, custom hooks, and React 19 UI components:
 
 ```bash
 cd frontend

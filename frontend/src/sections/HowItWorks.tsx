@@ -1,8 +1,10 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "../utils/cn";
 import { motion, Variants } from "framer-motion";
 
 export const HowItWorks = () => {
+  const { t } = useTranslation();
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
@@ -33,10 +35,10 @@ export const HowItWorks = () => {
           className="text-center mb-20"
         >
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-ink mb-4 hover:brightness-110 transition-all duration-300 cursor-default select-text">
-            How it works
+            {t("landing.howItWorksTitle", "How it works")}
           </h2>
           <p className="text-muted text-base sm:text-lg max-w-xl mx-auto select-text">
-            Get started in seconds, not hours.
+            {t("landing.howItWorksSection.subheading", "Get started in seconds, not hours.")}
           </p>
         </motion.div>
 
@@ -61,18 +63,18 @@ export const HowItWorks = () => {
           {[
             {
               num: "1",
-              title: "Register with your student ID",
-              desc: "Takes 60 seconds. Your institution's book catalog appears immediately — no setup, no waiting.",
+              title: t("landing.howItWorksSection.step1Title", "Register with your student ID"),
+              desc: t("landing.howItWorksSection.step1Desc", "Takes 60 seconds. Your institution's book catalog appears immediately — no setup, no waiting."),
             },
             {
               num: "2",
-              title: "Search, borrow, and read",
-              desc: "Physical books reserved with one tap. 70,000+ e-books readable right in the app — PDF or EPUB.",
+              title: t("landing.howItWorksSection.step2Title", "Search, borrow, and read"),
+              desc: t("landing.howItWorksSection.step2Desc", "Physical books reserved with one tap. 70,000+ e-books readable right in the app — PDF or EPUB."),
             },
             {
               num: "3",
-              title: "Build your streak",
-              desc: "Come back daily to read, borrow, or return. Earn stickers, unlock rewards, and hit milestones that actually mean something.",
+              title: t("landing.howItWorksSection.step3Title", "Build your streak"),
+              desc: t("landing.howItWorksSection.step3Desc", "Come back daily to read, borrow, or return. Earn stickers, unlock rewards, and hit milestones that actually mean something."),
             },
           ].map((step, i) => (
             <motion.div

@@ -223,4 +223,75 @@ describe("College Admin Navigation & Feature Pages Suite", () => {
     expect(screen.queryByText("Facilities Desk")).toBeNull();
     expect(screen.queryByText("Finances Desk")).toBeNull();
   });
+
+  it("6. hides all phased feature modules by default and only shows them when explicitly enabled", () => {
+    // Default context: phased features are NOT enabled
+    const mockDefaultContext = {
+      enabledFeatures: ["catalog", "patrons", "loans"],
+      limits: {},
+      isLoading: false,
+      isError: false,
+      isFeatureEnabled: (key) => ["catalog", "patrons", "loans"].includes(key),
+      refetchFeatures: vi.fn(),
+    };
+
+    const { unmount } = render(
+      <QueryClientProvider client={queryClient}>
+        <FeatureFlagContext.Provider value={mockDefaultContext}>
+          <MemoryRouter initialEntries={["/college-admin"]}>
+            <DashboardLayout />
+          </MemoryRouter>
+        </FeatureFlagContext.Provider>
+      </QueryClientProvider>,
+    );
+
+    // Phased modules MUST be hidden
+    expect(screen.queryByText("Predictive Stock Alerts")).toBeNull();
+    expect(screen.queryByText("Advanced Analytics")).toBeNull();
+    expect(screen.queryByText("Security & Anomaly Alerts")).toBeNull();
+    expect(screen.queryByText("Syllabus Scanner")).toBeNull();
+    expect(screen.queryByText("QR Shelf Navigation")).toBeNull();
+    unmount();
+
+    // Now enable predictive-alerts and qr-shelf-nav
+    const mockEnabledContext = {
+      enabledFeatures: [
+        "catalog",
+        "patrons",
+        "loans",
+        "predictive-alerts",
+        "qr-shelf-nav",
+      ],
+      limits: {},
+      isLoading: false,
+      isError: false,
+      isFeatureEnabled: (key) =>
+        [
+          "catalog",
+          "patrons",
+          "loans",
+          "predictive-alerts",
+          "qr-shelf-nav",
+        ].includes(key),
+      refetchFeatures: vi.fn(),
+    };
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <FeatureFlagContext.Provider value={mockEnabledContext}>
+          <MemoryRouter initialEntries={["/college-admin"]}>
+            <DashboardLayout />
+          </MemoryRouter>
+        </FeatureFlagContext.Provider>
+      </QueryClientProvider>,
+    );
+
+    // Enabled modules must now be rendered
+    expect(screen.getAllByText("Predictive Stock Alerts")[0]).toBeDefined();
+    expect(screen.getAllByText("QR Shelf Navigation")[0]).toBeDefined();
+
+    // Other phased modules remain hidden
+    expect(screen.queryByText("Security & Anomaly Alerts")).toBeNull();
+    expect(screen.queryByText("Syllabus Scanner")).toBeNull();
+  });
 });

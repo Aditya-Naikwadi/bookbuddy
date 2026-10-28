@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   Search,
   Sparkles,
@@ -110,6 +111,57 @@ const bentoBlocks = [
 ];
 
 export const Features = () => {
+  const { t } = useTranslation();
+
+  const getTranslatedBlock = (block: (typeof bentoBlocks)[0], index: number) => {
+    switch (index) {
+      case 0:
+        return {
+          group: t("landing.featuresSection.discoverGroup", block.group),
+          title: t("landing.featuresSection.discoverTitle", block.title),
+          desc: t("landing.featuresSection.discoverDesc", block.desc),
+        };
+      case 1:
+        return {
+          group: t("landing.featuresSection.borrowingGroup", block.group),
+          title: t("landing.featuresSection.trackingTitle", block.title),
+          desc: t("landing.featuresSection.trackingDesc", block.desc),
+        };
+      case 2:
+        return {
+          group: t("landing.featuresSection.borrowingGroup", block.group),
+          title: t("landing.featuresSection.renewTitle", block.title),
+          desc: t("landing.featuresSection.renewDesc", block.desc),
+        };
+      case 3:
+        return {
+          group: t("landing.featuresSection.accountGroup", block.group),
+          title: t("landing.featuresSection.finesTitle", block.title),
+          desc: t("landing.featuresSection.finesDesc", block.desc),
+        };
+      case 4:
+        return {
+          group: t("landing.featuresSection.facilitiesGroup", block.group),
+          title: t("landing.featuresSection.facilitiesTitle", block.title),
+          desc: t("landing.featuresSection.facilitiesDesc", block.desc),
+        };
+      case 5:
+        return {
+          group: t("landing.featuresSection.accountGroup", block.group),
+          title: t("landing.featuresSection.cardTitle", block.title),
+          desc: t("landing.featuresSection.cardDesc", block.desc),
+        };
+      case 6:
+        return {
+          group: t("landing.featuresSection.supportGroup", block.group),
+          title: t("landing.featuresSection.supportTitle", block.title),
+          desc: t("landing.featuresSection.supportDesc", block.desc),
+        };
+      default:
+        return block;
+    }
+  };
+
   return (
     <section
       id="features"
@@ -120,15 +172,17 @@ export const Features = () => {
 
       <div className="relative max-w-7xl mx-auto px-6 md:px-12 xl:px-24">
         <div className="text-center mb-12 md:mb-16 reveal-fade-up">
-          <SectionLabel className="mx-auto">Everything you need</SectionLabel>
+          <SectionLabel className="mx-auto">{t("landing.featuresSection.label", "Everything you need")}</SectionLabel>
           <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-ink mt-4 hover:brightness-110 transition-all duration-300 cursor-default select-text">
-            The complete library experience.
+            {t("landing.featuresTitle", "The complete library experience.")}
           </h2>
         </div>
 
         {/* Masonry Layout */}
         <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-4 md:gap-6 space-y-4 md:space-y-6">
-          {bentoBlocks.map((block, i) => (
+          {bentoBlocks.map((block, i) => {
+            const translated = getTranslatedBlock(block, i);
+            return (
             <div
               key={i}
               className={`reveal-fade-up break-inside-avoid glass-panel glass-panel-hover rounded-3xl p-6 md:p-8 flex flex-col group ${block.bgGradient} ${block.borderColor} relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 mb-4 md:mb-6 h-auto min-h-[220px] cursor-pointer`}
@@ -151,17 +205,18 @@ export const Features = () => {
                 className={`mt-auto relative z-10 ${block.centerIcon ? "text-center" : ""}`}
               >
                 <span className="text-[11px] font-bold tracking-widest text-muted uppercase mb-2 block group-hover:text-ember-glow transition-colors duration-300 select-none">
-                  {block.group}
+                  {translated.group}
                 </span>
                 <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-ink mb-3 group-hover:text-ember group-hover:translate-x-0.5 transition-all duration-300">
-                  {block.title}
+                  {translated.title}
                 </h3>
                 <p className="text-muted leading-relaxed text-sm md:text-base group-hover:text-slate-200 transition-colors duration-300">
-                  {block.desc}
+                  {translated.desc}
                 </p>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       </div>
     </section>

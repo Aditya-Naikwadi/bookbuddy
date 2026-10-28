@@ -1,42 +1,45 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { SectionLabel } from "../components/ui/SectionLabel";
 import { Flame, Trophy, Award, Zap } from "lucide-react";
 
-const streakData = [
-  {
-    id: 1,
-    label: "Early Bird",
-    icon: <Zap className="text-yellow-400" />,
-    unlocked: true,
-  },
-  {
-    id: 2,
-    label: "7 Day Streak",
-    icon: <Flame className="text-ember" />,
-    unlocked: true,
-  },
-  {
-    id: 3,
-    label: "Bookworm",
-    icon: <Award className="text-indigo-400" />,
-    unlocked: true,
-  },
-  {
-    id: 4,
-    label: "14 Day Streak",
-    icon: <Flame className="text-ember" />,
-    unlocked: false,
-  },
-  {
-    id: 5,
-    label: "Scholar",
-    icon: <Trophy className="text-yellow-500" />,
-    unlocked: false,
-  },
-];
-
 export const StreakShowcase = () => {
+  const { t } = useTranslation();
+
+  const streakData = [
+    {
+      id: 1,
+      label: t("landing.streaksSection.earlyBird", "Early Bird"),
+      icon: <Zap className="text-yellow-400" />,
+      unlocked: true,
+    },
+    {
+      id: 2,
+      label: t("landing.streaksSection.sevenDay", "7 Day Streak"),
+      icon: <Flame className="text-ember" />,
+      unlocked: true,
+    },
+    {
+      id: 3,
+      label: t("landing.streaksSection.bookworm", "Bookworm"),
+      icon: <Award className="text-indigo-400" />,
+      unlocked: true,
+    },
+    {
+      id: 4,
+      label: t("landing.streaksSection.fourteenDay", "14 Day Streak"),
+      icon: <Flame className="text-ember" />,
+      unlocked: false,
+    },
+    {
+      id: 5,
+      label: t("landing.streaksSection.scholar", "Scholar"),
+      icon: <Trophy className="text-yellow-500" />,
+      unlocked: false,
+    },
+  ];
+
   return (
     <section
       id="streaks"
@@ -47,13 +50,12 @@ export const StreakShowcase = () => {
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 xl:px-24">
         <div className="text-center mb-16 md:mb-24">
-          <SectionLabel className="mx-auto">Build Habits</SectionLabel>
+          <SectionLabel className="mx-auto">{t("landing.streaksSection.label", "Build Habits")}</SectionLabel>
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-ink mt-6 hover:brightness-110 transition-all duration-300 cursor-default select-text">
-            Consistency rewarded.
+            {t("landing.streaksSection.heading", "Consistency rewarded.")}
           </h2>
           <p className="text-muted text-base sm:text-lg mt-4 max-w-2xl mx-auto select-text">
-            Track your daily reading, earn exclusive stickers, and build a
-            lasting reading habit.
+            {t("landing.streaksSection.subheading", "Track your daily reading, earn exclusive stickers, and build a lasting reading habit.")}
           </p>
         </div>
 
@@ -75,18 +77,18 @@ export const StreakShowcase = () => {
           <div className="text-center mb-12 relative z-10">
             <h3 className="text-4xl sm:text-5xl font-bold text-ink mb-2 tracking-tight select-text hover:text-ember transition-colors duration-300 cursor-default">
               12{" "}
-              <span className="text-2xl sm:text-3xl text-indigo-500 dark:text-indigo-300 font-medium">Days</span>
+              <span className="text-2xl sm:text-3xl text-indigo-500 dark:text-indigo-300 font-medium">{t("landing.streaksSection.daysUnit", "Days")}</span>
             </h3>
             <p className="text-muted tracking-wide uppercase text-xs sm:text-sm font-semibold select-text">
-              Current Reading Streak
+              {t("landing.streaksSection.currentStreakLabel", "Current Reading Streak")}
             </p>
           </div>
 
           {/* Progress Bar */}
           <div className="mb-12 relative z-10">
             <div className="flex justify-between text-xs sm:text-sm text-indigo-500 dark:text-indigo-300 font-medium mb-3 px-1">
-              <span>Day 1</span>
-              <span>Day 14</span>
+              <span>{t("landing.streaksSection.day1", "Day 1")}</span>
+              <span>{t("landing.streaksSection.day14", "Day 14")}</span>
             </div>
             <div className="h-4 bg-black/10 dark:bg-black/40 rounded-full overflow-hidden border border-edge shadow-inner">
               <motion.div

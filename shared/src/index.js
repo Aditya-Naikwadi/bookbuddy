@@ -7,7 +7,9 @@ const payments = require('./schemas/payments');
 const admin = require('./schemas/admin');
 const library = require('./schemas/library');
 const personalization = require('./schemas/personalization');
+const featureFlagSchemas = require('./schemas/featureFlags');
 const roles = require('./constants/roles');
+const featureFlags = require('./constants/featureFlags');
 const normalization = require('./utils/normalization');
 const url = require('./utils/url');
 
@@ -21,7 +23,9 @@ module.exports = {
   ...admin,
   ...library,
   ...personalization,
+  ...featureFlagSchemas,
   ...roles,
+  ...featureFlags,
   ...normalization,
   ...url,
 };

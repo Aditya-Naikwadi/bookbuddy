@@ -14,6 +14,7 @@ import { SplashScreen } from "./components/ui/SplashScreen";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ImpersonationBanner from "./components/ImpersonationBanner";
 import ToastContainer from "./components/common/ToastContainer";
+import { AccessibilityToolbar } from "./components/accessibility/AccessibilityToolbar";
 import { ROLES, CANONICAL_ROLES } from "@bookbuddy/shared";
 
 // Lazy loaded public pages
@@ -205,6 +206,7 @@ import { QueryProvider } from "./providers/QueryProvider";
 import { ThemeProvider } from "./context/ThemeContext";
 import { FeatureFlagProvider } from "./context/FeatureFlagContext";
 import FeatureGate from "./components/common/FeatureGate";
+import PhasedFeaturePlaceholder from "./pages/common/PhasedFeaturePlaceholder";
 
 function App() {
   const [showSplash, setShowSplash] = useState(() => {
@@ -409,6 +411,71 @@ function App() {
                         path="college-admin/acquisitions"
                         element={<AcquisitionsDesk />}
                       />
+                      <Route
+                        path="college-admin/predictive-alerts"
+                        element={
+                          <FeatureGate feature="predictive-alerts" isPageGate>
+                            <PhasedFeaturePlaceholder
+                              title="Predictive Stock-Out Alerts"
+                              description="Nightly velocity analysis predicting stock-out dates before reservations spike."
+                              phase="Phase 2"
+                              flagKey="predictive-alerts"
+                            />
+                          </FeatureGate>
+                        }
+                      />
+                      <Route
+                        path="college-admin/analytics-expansion"
+                        element={
+                          <FeatureGate feature="analytics-expansion" isPageGate>
+                            <PhasedFeaturePlaceholder
+                              title="Advanced Campus Analytics"
+                              description="Daily metric snapshots, circulation heatmaps, fine velocity, and streamed reports."
+                              phase="Phase 2"
+                              flagKey="analytics-expansion"
+                            />
+                          </FeatureGate>
+                        }
+                      />
+                      <Route
+                        path="college-admin/anomaly-detection"
+                        element={
+                          <FeatureGate feature="anomaly-detection" isPageGate>
+                            <PhasedFeaturePlaceholder
+                              title="Security Anomaly Detection"
+                              description="Audit logs and automated security monitors for off-hours actions, fee waivers, and rate spikes."
+                              phase="Phase 2"
+                              flagKey="anomaly-detection"
+                            />
+                          </FeatureGate>
+                        }
+                      />
+                      <Route
+                        path="college-admin/syllabus-scanner"
+                        element={
+                          <FeatureGate feature="syllabus-scanner" isPageGate>
+                            <PhasedFeaturePlaceholder
+                              title="Syllabus Course Scanner"
+                              description="Client-side OCR scanning of course syllabi for book adoption and inventory reconciliation."
+                              phase="Phase 2"
+                              flagKey="syllabus-scanner"
+                            />
+                          </FeatureGate>
+                        }
+                      />
+                      <Route
+                        path="college-admin/qr-shelf-nav"
+                        element={
+                          <FeatureGate feature="qr-shelf-nav" isPageGate>
+                            <PhasedFeaturePlaceholder
+                              title="QR Physical Shelf Navigation"
+                              description="Generate printable QR codes linking library stacks directly to campus catalog search."
+                              phase="Phase 2"
+                              flagKey="qr-shelf-nav"
+                            />
+                          </FeatureGate>
+                        }
+                      />
                     </Route>
 
                     {/* General Dashboard Routes */}
@@ -574,6 +641,45 @@ function App() {
                         }
                       />
                       <Route
+                        path="student/offline-sync"
+                        element={
+                          <FeatureGate feature="offline-sync" isPageGate>
+                            <PhasedFeaturePlaceholder
+                              title="Offline-First Sync Engine"
+                              description="Local client-side actions queued in IndexedDB and synchronized with the campus server."
+                              phase="Phase 1"
+                              flagKey="offline-sync"
+                            />
+                          </FeatureGate>
+                        }
+                      />
+                      <Route
+                        path="student/reading-nudges"
+                        element={
+                          <FeatureGate feature="reading-debt-nudges" isPageGate>
+                            <PhasedFeaturePlaceholder
+                              title="Reading Debt Nudges & Badges"
+                              description="Constructive habit feedback, streak recovery, and milestone reading badges."
+                              phase="Phase 1"
+                              flagKey="reading-debt-nudges"
+                            />
+                          </FeatureGate>
+                        }
+                      />
+                      <Route
+                        path="student/ask-this-book"
+                        element={
+                          <FeatureGate feature="rag-ask-this-book" isPageGate>
+                            <PhasedFeaturePlaceholder
+                              title="Ask This Book RAG Gateway"
+                              description="Grounded AI question answering for public-domain books with exact citation spans."
+                              phase="Phase 3"
+                              flagKey="rag-ask-this-book"
+                            />
+                          </FeatureGate>
+                        }
+                      />
+                      <Route
                         path="student/profile"
                         element={<StudentProfileSettings />}
                       />
@@ -701,6 +807,7 @@ function App() {
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
+              <AccessibilityToolbar />
             </ErrorBoundary>
           </Router>
         </FeatureFlagProvider>

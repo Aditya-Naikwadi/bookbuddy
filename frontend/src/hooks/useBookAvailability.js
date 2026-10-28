@@ -44,25 +44,28 @@ export const useBookAvailability = (collegeId, refetchCallback) => {
         },
       );
 
-      // 2. Update general dashboard payload query cache matching query key ['generalDashboard', collegeId]
-      queryClient.setQueryData(["generalDashboard", collegeId], (oldData) => {
-        if (!oldData) return oldData;
+      // 2. Update general dashboard payload query cache matching query key ['generalDashboard']
+      queryClient.setQueriesData(
+        { queryKey: ["generalDashboard"] },
+        (oldData) => {
+          if (!oldData) return oldData;
 
-        const updatedPopular = (oldData.popularBooks || []).map((book) => {
-          const bId = (book._id || book.id)?.toString();
-          if (bId === targetId) {
-            return {
-              ...book,
-              availableCopies: newAvailableCopies,
-              availabilityStatus:
-                newAvailableCopies > 0 ? "available" : "checked_out",
-            };
-          }
-          return book;
-        });
+          const updatedPopular = (oldData.popularBooks || []).map((book) => {
+            const bId = (book._id || book.id)?.toString();
+            if (bId === targetId) {
+              return {
+                ...book,
+                availableCopies: newAvailableCopies,
+                availabilityStatus:
+                  newAvailableCopies > 0 ? "available" : "checked_out",
+              };
+            }
+            return book;
+          });
 
-        return { ...oldData, popularBooks: updatedPopular };
-      });
+          return { ...oldData, popularBooks: updatedPopular };
+        },
+      );
     };
 
     socket.on("book:availability_updated", handleAvailabilityUpdate);

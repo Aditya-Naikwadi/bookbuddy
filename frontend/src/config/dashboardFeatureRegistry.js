@@ -130,6 +130,51 @@ export const FEATURE_REGISTRY = {
   recommendations: { type: "embedded" },
   notifyMe: { type: "embedded" },
   eReaderSync: { type: "embedded" },
+  "vernacular-i18n": { type: "embedded" },
+  "accessibility-mode": { type: "embedded" },
+  "reading-debt-nudges": { type: "embedded" },
+  "offline-sync": {
+    type: "page",
+    label: "Offline Sync",
+    icon: "HardDrive",
+    route: "/student/offline-sync",
+  },
+  "predictive-alerts": {
+    type: "page",
+    label: "Predictive Alerts",
+    icon: "TrendingUp",
+    route: "/college-admin/predictive-alerts",
+  },
+  "analytics-expansion": {
+    type: "page",
+    label: "Advanced Analytics",
+    icon: "BarChart3",
+    route: "/college-admin/analytics-expansion",
+  },
+  "anomaly-detection": {
+    type: "page",
+    label: "Anomaly Detection",
+    icon: "ShieldAlert",
+    route: "/college-admin/anomaly-detection",
+  },
+  "syllabus-scanner": {
+    type: "page",
+    label: "Syllabus Scanner",
+    icon: "FileSearch",
+    route: "/college-admin/syllabus-scanner",
+  },
+  "qr-shelf-nav": {
+    type: "page",
+    label: "QR Shelf Navigation",
+    icon: "QrCode",
+    route: "/college-admin/qr-shelf-nav",
+  },
+  "rag-ask-this-book": {
+    type: "page",
+    label: "Ask This Book",
+    icon: "Bot",
+    route: "/student/ask-this-book",
+  },
 };
 
 export const getPageTypeFeatures = () => {

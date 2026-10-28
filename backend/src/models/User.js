@@ -240,6 +240,13 @@ const userSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    accessibilityPreferences: {
+      dyslexiaFont: { type: Boolean, default: false },
+      highContrast: { type: Boolean, default: false },
+      textToSpeech: { type: Boolean, default: false },
+      ttsRate: { type: Number, default: 1.0, min: 0.5, max: 2.0 },
+      ttsPitch: { type: Number, default: 1.0, min: 0.5, max: 1.5 },
+    },
   },
   {
     timestamps: true,

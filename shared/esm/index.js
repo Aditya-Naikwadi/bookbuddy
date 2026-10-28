@@ -7,6 +7,8 @@ export * from './schemas/payments.js';
 export * from './schemas/admin.js';
 export * from './schemas/library.js';
 export * from './schemas/personalization.js';
+export * from './schemas/featureFlags.js';
 export * from './constants/roles.js';
+export * from './constants/featureFlags.js';
 export * from './utils/normalization.js';
 export * from './utils/url.js';

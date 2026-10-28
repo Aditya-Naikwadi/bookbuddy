@@ -16,6 +16,11 @@ const path = require("path");
 
 // Ensure correct environment
 process.env.NODE_ENV = "test";
+try {
+  require("dotenv").config({ path: path.join(__dirname, "../../backend/.env") });
+} catch {
+  // Ignore
+}
 
 // Resolve mongoose instance from backend workspace to match models' singleton
 const mongoose = require(
@@ -316,6 +321,17 @@ async function runIndexAudit(options = {}) {
           moderationStatus: "published",
           isPublished: true,
         }).explain("executionStats"),
+    },
+    {
+      name: "10. Loan History: Scoped Book Checkouts by Creation Date",
+      model: Loan,
+      run: () =>
+        Loan.find({
+          collegeId: targetCollegeId,
+          bookId: seededBooks[0]._id,
+        })
+          .sort({ createdAt: -1 })
+          .explain("executionStats"),
     },
   ];
 

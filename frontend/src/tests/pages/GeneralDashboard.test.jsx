@@ -345,6 +345,29 @@ describe("General Dashboard Consolidated Suite", () => {
       });
     });
 
+    it("6b. extracts string ID when user.collegeId is a populated object", () => {
+      useAuthStore.setState({
+        user: {
+          _id: "user-stu-object",
+          name: "Student",
+          role: "student",
+          collegeId: { _id: "col-object-id-123", name: "Engineering College" },
+        },
+      });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter>
+            <GeneralDashboardHome />
+          </MemoryRouter>
+        </QueryClientProvider>,
+      );
+
+      expect(bookDataHooks.useGeneralDashboard).toHaveBeenCalledWith(
+        "col-object-id-123",
+      );
+    });
+
     it("7. opens Book Details Modal when clicking a New Arrival item", async () => {
       render(
         <QueryClientProvider client={queryClient}>

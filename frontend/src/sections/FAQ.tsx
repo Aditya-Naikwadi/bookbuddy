@@ -1,40 +1,33 @@
 /* eslint-disable jsx-a11y/aria-proptypes */
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { SectionLabel } from "../components/ui/SectionLabel";
 import { cn } from "../utils/cn";
 
-const faqs = [
-  {
-    question: "How many books can I borrow at once?",
-    answer:
-      "You can borrow up to 5 physical books and 10 e-books simultaneously. The standard borrowing period is 14 days, with the option to renew twice if there are no pending reservations.",
-  },
-  {
-    question: "Are there any late fees?",
-    answer:
-      "We believe in transparent policies. Overdue physical books incur a small fee of $0.50 per day, capped at the replacement cost of the book. E-books automatically return at the end of your period, so there are never late fees for digital content!",
-  },
-  {
-    question: "Can I reserve a book that's currently checked out?",
-    answer:
-      "Yes! Simply search for the book and click 'Join Queue'. You'll see your exact position in the line, and we'll send you an email or push notification the moment it's returned and ready for you.",
-  },
-  {
-    question: "Do I need a physical library card?",
-    answer:
-      "No. Your digital library card is accessible right from the BookBuddy app. You can use it to scan at self-checkout kiosks or present it to our librarians.",
-  },
-  {
-    question: "How do reading streaks work?",
-    answer:
-      "Every day you spend at least 15 minutes reading an e-book through the app, or every time you borrow/return a physical book on time, you build your streak. Maintain your streak to unlock special badges and extended borrowing privileges.",
-  },
-];
-
 export const FAQ = () => {
+  const { t } = useTranslation();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  const faqs = [
+    {
+      question: t("landing.faqSection.q1", "How do I borrow physical books from my campus library?"),
+      answer: t("landing.faqSection.a1", "Browse the catalog, click Reserve on any available volume, and show your digital patron pass at the circulation desk."),
+    },
+    {
+      question: t("landing.faqSection.q2", "Are the e-resources completely free to read?"),
+      answer: t("landing.faqSection.a2", "Yes! All 70,000+ e-resources in BookBuddy are open-access, public domain, or licensed for campus students at zero cost."),
+    },
+    {
+      question: t("landing.faqSection.q3", "How do reading streaks work?"),
+      answer: t("landing.faqSection.a3", "Check in daily on your student dashboard or read an e-book for at least 5 minutes to keep your streak alive."),
+    },
+    {
+      question: t("landing.faqSection.q4", "What happens if I have an overdue fine?"),
+      answer: t("landing.faqSection.a4", "You can view your fine breakdown in the student portal and settle dues online or at the library circulation counter."),
+    },
+  ];
 
   const toggleAccordion = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -49,9 +42,9 @@ export const FAQ = () => {
 
       <div className="relative max-w-4xl mx-auto px-6 md:px-12 xl:px-24">
         <div className="text-center mb-12 md:mb-16">
-          <SectionLabel className="mx-auto">Got Questions?</SectionLabel>
+          <SectionLabel className="mx-auto">{t("landing.faqSection.label", "Got Questions?")}</SectionLabel>
           <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-ink mt-4 hover:brightness-110 transition-all duration-300 cursor-default select-text">
-            Frequently Asked Questions
+            {t("landing.faqSection.heading", "Frequently Asked Questions")}
           </h2>
         </div>
 

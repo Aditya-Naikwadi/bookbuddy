@@ -1,11 +1,13 @@
 import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import useAuthStore from "../store/authStore";
 import { SectionLabel } from "../components/ui/SectionLabel";
 import { Button } from "../components/ui/Button";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 
 export const PatronCardSection = () => {
+  const { t } = useTranslation();
   const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthStore();
@@ -51,14 +53,12 @@ export const PatronCardSection = () => {
     <section className="bg-deep py-24 md:py-32 xl:py-40">
       <div className="max-w-7xl mx-auto px-6 md:px-12 xl:px-24 flex flex-col md:flex-row items-center gap-16">
         <div className="w-full md:w-1/2">
-          <SectionLabel>YOUR LIBRARY IDENTITY</SectionLabel>
+          <SectionLabel>{t("landing.patronCardSection.label", "YOUR LIBRARY IDENTITY")}</SectionLabel>
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-ink mb-6 hover:brightness-110 transition-all duration-300 cursor-default select-text">
-            One card. Every access point.
+            {t("landing.patronCardSection.heading", "One card. Every access point.")}
           </h2>
           <p className="text-muted text-base sm:text-lg leading-relaxed mb-8 select-text">
-            Your digital patron card is always in your pocket. Show it at the
-            desk, scan the QR at self-checkout, or download it for offline
-            access.
+            {t("landing.patronCardSection.subheading", "Your digital patron card is always in your pocket. Show it at the desk, scan the QR at self-checkout, or download it for offline access.")}
           </p>
           <Button
             variant="secondary"
@@ -75,7 +75,7 @@ export const PatronCardSection = () => {
               }
             }}
           >
-            Get Your Card →
+            {t("landing.startForFree", "Get Your Card →")}
           </Button>
         </div>
 
@@ -116,17 +116,17 @@ export const PatronCardSection = () => {
               >
                 <div>
                   <p className="text-indigo-200 text-xs mb-1 font-semibold tracking-widest">
-                    PATRON
+                    {t("landing.patronCardSection.activePatron", "PATRON")}
                   </p>
                   <p className="text-white text-lg font-bold tracking-wider">
                     {isAuthenticated && user?.name
                       ? user.name.toUpperCase()
-                      : "CAMPUS PATRON"}
+                      : t("landing.patronCardSection.activePatron", "CAMPUS PATRON")}
                   </p>
                   <p className="text-indigo-200 text-sm font-mono mt-1 opacity-80">
                     {isAuthenticated && (user?.studentId || user?.email)
                       ? `ID: ${user?.studentId || user?.email}`
-                      : "DIGITAL PASS ACTIVE"}
+                      : t("landing.patronCardSection.academicPass", "DIGITAL PASS ACTIVE")}
                   </p>
                 </div>
                 <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center p-1 shadow-lg">

@@ -4,7 +4,21 @@ const app = require('../app');
 const College = require('../models/College');
 const Book = require('../models/Book');
 
+const env = require('../config/env');
+const User = require('../models/User');
+const CollegeFeatureConfig = require('../models/CollegeFeatureConfig');
+const { generateTokenPair } = require('../utils/token');
+const { deleteCache } = require('../utils/redisCache');
+const { FEATURE_FLAGS } = require('@bookbuddy/shared');
+
+jest.setTimeout(30000);
+
 describe('Permanent Landing Page Regression Hardening Test Suite', () => {
+  beforeAll(async () => {
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(env.MONGO_URI);
+    }
+  });
   /* -------------------------------------------------------------------------- */
   /* REGRESSION TEST 1: CTA Routing Verification                                */
   /* -------------------------------------------------------------------------- */
@@ -136,6 +150,226 @@ describe('Permanent Landing Page Regression Hardening Test Suite', () => {
       if (res.headers['cache-control']) {
         expect(res.headers['cache-control']).not.toContain('public');
       }
+    });
+  });
+
+  /* -------------------------------------------------------------------------- */
+  /* REGRESSION TEST 5: Feature 1 - Vernacular i18n & Multi-Tenant Isolation    */
+  /* -------------------------------------------------------------------------- */
+  describe('Regression: Feature 1 Vernacular i18n Tenant Gating', () => {
+    let collegeA, collegeB, userA, userB;
+    let tokenA, tokenB;
+
+    beforeAll(async () => {
+      collegeA = await College.create({
+        name: 'i18n Test College A',
+        code: `I18NA_${Date.now()}`,
+      });
+      collegeB = await College.create({
+        name: 'i18n Test College B',
+        code: `I18NB_${Date.now()}`,
+      });
+
+      userA = await User.create({
+        collegeId: collegeA._id,
+        name: 'Student i18n A',
+        email: `student_i18na_${Date.now()}@test.edu`,
+        password: 'HashedPassword123!',
+        studentId: `ID_A_${Date.now()}`,
+        role: 'student',
+      });
+      userB = await User.create({
+        collegeId: collegeB._id,
+        name: 'Student i18n B',
+        email: `student_i18nb_${Date.now()}@test.edu`,
+        password: 'HashedPassword123!',
+        studentId: `ID_B_${Date.now()}`,
+        role: 'student',
+      });
+
+      tokenA = generateTokenPair(userA).accessToken;
+      tokenB = generateTokenPair(userB).accessToken;
+    });
+
+    afterAll(async () => {
+      await CollegeFeatureConfig.deleteMany({ collegeId: { $in: [collegeA._id, collegeB._id] } });
+      await User.deleteMany({ collegeId: { $in: [collegeA._id, collegeB._id] } });
+      await College.deleteMany({ _id: { $in: [collegeA._id, collegeB._id] } });
+      await deleteCache(`college:features:${collegeA._id}`);
+      await deleteCache(`college:features:${collegeB._id}`);
+    });
+
+    test('vernacular-i18n flag defaults to off and returns 403 Forbidden', async () => {
+      const res = await request(app)
+        .get(`/api/v1/features/phased/${FEATURE_FLAGS.VERNACULAR_I18N}`)
+        .set('Authorization', `Bearer ${tokenA}`);
+
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+    });
+
+    test('enabling vernacular-i18n for college A returns 200 for user A but keeps 403 for user B', async () => {
+      // Enable for College A
+      await CollegeFeatureConfig.findOneAndUpdate(
+        { collegeId: collegeA._id },
+        { enabledFeatures: ['catalog', 'loans', FEATURE_FLAGS.VERNACULAR_I18N] },
+        { upsert: true }
+      );
+      await deleteCache(`college:features:${collegeA._id}`);
+
+      // User A gets 200
+      const resA = await request(app)
+        .get(`/api/v1/features/phased/${FEATURE_FLAGS.VERNACULAR_I18N}`)
+        .set('Authorization', `Bearer ${tokenA}`);
+
+      expect(resA.status).toBe(200);
+      expect(resA.body.success).toBe(true);
+      expect(resA.body.feature).toBe(FEATURE_FLAGS.VERNACULAR_I18N);
+
+      // User B in College B must still get 403
+      const resB = await request(app)
+        .get(`/api/v1/features/phased/${FEATURE_FLAGS.VERNACULAR_I18N}`)
+        .set('Authorization', `Bearer ${tokenB}`);
+
+      expect(resB.status).toBe(403);
+      expect(resB.body.success).toBe(false);
+    });
+  });
+
+  /* -------------------------------------------------------------------------- */
+  /* REGRESSION TEST 6: Feature 2: Accessibility Mode Gating & User Preferences  */
+  /* -------------------------------------------------------------------------- */
+  describe('Feature 2: Accessibility Mode Gating and Per-User Isolation', () => {
+    let collegeA, collegeB, userA1, userA2, userB, tokenA1, tokenA2, tokenB;
+
+    beforeAll(async () => {
+      collegeA = await College.create({
+        name: 'Accessibility College A',
+        slug: `a11y-col-a-${Date.now()}`,
+        code: `A11YA_${Date.now()}`,
+        status: 'active',
+      });
+      collegeB = await College.create({
+        name: 'Accessibility College B',
+        slug: `a11y-col-b-${Date.now()}`,
+        code: `A11YB_${Date.now()}`,
+        status: 'active',
+      });
+
+      userA1 = await User.create({
+        name: 'A11y Student 1',
+        email: `student1.${Date.now()}@a11ycol-a.edu`,
+        password: 'Password123!',
+        studentId: `A11Y_STD1_${Date.now()}`,
+        role: 'student',
+        collegeId: collegeA._id,
+        isEmailVerified: true,
+      });
+
+      userA2 = await User.create({
+        name: 'A11y Student 2',
+        email: `student2.${Date.now()}@a11ycol-a.edu`,
+        password: 'Password123!',
+        studentId: `A11Y_STD2_${Date.now()}`,
+        role: 'student',
+        collegeId: collegeA._id,
+        isEmailVerified: true,
+      });
+
+      userB = await User.create({
+        name: 'A11y Student B',
+        email: `studentb.${Date.now()}@a11ycol-b.edu`,
+        password: 'Password123!',
+        studentId: `A11Y_STDB_${Date.now()}`,
+        role: 'student',
+        collegeId: collegeB._id,
+        isEmailVerified: true,
+      });
+
+      tokenA1 = generateTokenPair(userA1).accessToken;
+      tokenA2 = generateTokenPair(userA2).accessToken;
+      tokenB = generateTokenPair(userB).accessToken;
+    });
+
+    afterAll(async () => {
+      if (collegeA && collegeB) {
+        await CollegeFeatureConfig.deleteMany({ collegeId: { $in: [collegeA._id, collegeB._id] } });
+        await User.deleteMany({ collegeId: { $in: [collegeA._id, collegeB._id] } });
+        await College.deleteMany({ _id: { $in: [collegeA._id, collegeB._id] } });
+        await deleteCache(`college:features:${collegeA._id}`);
+        await deleteCache(`college:features:${collegeB._id}`);
+      }
+    });
+
+    test('accessibility-mode flag defaults to off and returns 403 Forbidden', async () => {
+      const getRes = await request(app)
+        .get('/api/v1/users/me/accessibility')
+        .set('Authorization', `Bearer ${tokenA1}`);
+
+      expect(getRes.status).toBe(403);
+      expect(getRes.body.success).toBe(false);
+
+      const patchRes = await request(app)
+        .patch('/api/v1/users/me/accessibility')
+        .set('Authorization', `Bearer ${tokenA1}`)
+        .send({ dyslexiaFont: true, highContrast: true });
+
+      expect(patchRes.status).toBe(403);
+      expect(patchRes.body.success).toBe(false);
+    });
+
+    test('enabling accessibility-mode allows User A1 to get & patch preferences, while User B remains 403', async () => {
+      // Enable for College A
+      await CollegeFeatureConfig.findOneAndUpdate(
+        { collegeId: collegeA._id },
+        { enabledFeatures: ['catalog', 'loans', FEATURE_FLAGS.ACCESSIBILITY_MODE] },
+        { upsert: true }
+      );
+      await deleteCache(`college:features:${collegeA._id}`);
+
+      // User A1 updates accessibility settings
+      const patchRes = await request(app)
+        .patch('/api/v1/users/me/accessibility')
+        .set('Authorization', `Bearer ${tokenA1}`)
+        .send({
+          dyslexiaFont: true,
+          highContrast: true,
+          textToSpeech: true,
+          ttsRate: 1.25,
+        });
+
+      expect(patchRes.status).toBe(200);
+      expect(patchRes.body.success).toBe(true);
+      expect(patchRes.body.data.dyslexiaFont).toBe(true);
+      expect(patchRes.body.data.highContrast).toBe(true);
+      expect(patchRes.body.data.textToSpeech).toBe(true);
+      expect(patchRes.body.data.ttsRate).toBe(1.25);
+
+      // User A1 fetches updated accessibility settings
+      const getResA1 = await request(app)
+        .get('/api/v1/users/me/accessibility')
+        .set('Authorization', `Bearer ${tokenA1}`);
+
+      expect(getResA1.status).toBe(200);
+      expect(getResA1.body.data.dyslexiaFont).toBe(true);
+      expect(getResA1.body.data.highContrast).toBe(true);
+
+      // Per-user isolation within College A: User A2 still has default settings (false)
+      const getResA2 = await request(app)
+        .get('/api/v1/users/me/accessibility')
+        .set('Authorization', `Bearer ${tokenA2}`);
+
+      expect(getResA2.status).toBe(200);
+      expect(getResA2.body.data.dyslexiaFont).toBe(false);
+      expect(getResA2.body.data.highContrast).toBe(false);
+
+      // Cross-tenant isolation: User B in College B receives 403 Forbidden
+      const resB = await request(app)
+        .get('/api/v1/users/me/accessibility')
+        .set('Authorization', `Bearer ${tokenB}`);
+
+      expect(resB.status).toBe(403);
+      expect(resB.body.success).toBe(false);
     });
   });
 

@@ -8,9 +8,16 @@ import useSocket from "./useSocket";
  * Gets effective collegeId (from parameter or auth user or selected fallback)
  */
 const getEffectiveCollegeId = (collegeIdParam) => {
-  if (collegeIdParam) return collegeIdParam;
+  if (collegeIdParam) {
+    const id =
+      typeof collegeIdParam === "object"
+        ? collegeIdParam._id || collegeIdParam.id
+        : collegeIdParam;
+    if (id && id !== "default") return String(id);
+  }
   const user = useAuthStore.getState().user;
-  return user?.collegeId || "default";
+  const userCollegeId = user?.collegeId?._id || user?.collegeId;
+  return userCollegeId ? String(userCollegeId) : "default";
 };
 
 /**

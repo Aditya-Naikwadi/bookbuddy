@@ -1,7 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export const Footer = () => {
+  const { t } = useTranslation();
+
   return (
     <footer className="bg-void border-t border-edge py-16" aria-label="Footer">
       <div className="max-w-7xl mx-auto px-6 md:px-12 xl:px-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
@@ -19,20 +22,19 @@ export const Footer = () => {
             </span>
           </div>
           <p className="text-muted text-sm leading-relaxed">
-            The Library in Your Pocket. Manage course reserves, read free
-            e-books, track your streaks, and connect with your campus library.
+            {t("landing.footerSection.tagline", "The Library in Your Pocket. Manage course reserves, read free e-books, track your streaks, and connect with your campus library.")}
           </p>
         </div>
 
         <div>
-          <h4 className="font-semibold text-ink mb-4">Product</h4>
+          <h4 className="font-semibold text-ink mb-4">{t("landing.footerSection.productHeading", "Product")}</h4>
           <ul className="space-y-3 text-sm text-muted">
             <li>
               <a
                 href="#catalog-search"
                 className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
-                Catalog Search
+                {t("landing.footerSection.catalogSearchLink", "Catalog Search")}
               </a>
             </li>
             <li>
@@ -40,7 +42,7 @@ export const Footer = () => {
                 href="#e-resources"
                 className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
-                E-Resources
+                {t("landing.footerSection.eresourcesLink", "E-Resources")}
               </a>
             </li>
             <li>
@@ -48,7 +50,7 @@ export const Footer = () => {
                 href="#features"
                 className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
-                Features
+                {t("landing.footerSection.featuresLink", "Features")}
               </a>
             </li>
             <li>
@@ -56,26 +58,26 @@ export const Footer = () => {
                 href="#how-it-works"
                 className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
-                How It Works
+                {t("landing.footerSection.howItWorksLink", "How It Works")}
               </a>
             </li>
             <li>
               <a href="#streaks" className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200">
-                Streaks & Rewards
+                {t("landing.footerSection.streaksLink", "Streaks & Rewards")}
               </a>
             </li>
           </ul>
         </div>
 
         <div>
-          <h4 className="font-semibold text-ink mb-4">Institutions</h4>
+          <h4 className="font-semibold text-ink mb-4">{t("landing.footerSection.institutionsHeading", "Institutions")}</h4>
           <ul className="space-y-3 text-sm text-muted">
             <li>
               <a
                 href="#for-colleges"
                 className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
-                For Colleges
+                {t("landing.footerSection.forCollegesLink", "For Colleges")}
               </a>
             </li>
             <li>
@@ -83,7 +85,7 @@ export const Footer = () => {
                 to="/auth/register"
                 className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
-                College Admin Onboarding
+                {t("landing.footerSection.onboardingLink", "College Admin Onboarding")}
               </Link>
             </li>
             <li>
@@ -91,26 +93,26 @@ export const Footer = () => {
                 to="/support"
                 className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
-                Institutional Support
+                {t("landing.footerSection.supportLink", "Institutional Support")}
               </Link>
             </li>
           </ul>
         </div>
 
         <div>
-          <h4 className="font-semibold text-ink mb-4">Legal & Support</h4>
+          <h4 className="font-semibold text-ink mb-4">{t("landing.footerSection.legalHeading", "Legal & Support")}</h4>
           <ul className="space-y-3 text-sm text-muted">
             <li>
               <Link
                 to="/privacy"
                 className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
-                Privacy Policy
+                {t("landing.footerSection.privacyLink", "Privacy Policy")}
               </Link>
             </li>
             <li>
               <Link to="/terms" className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200">
-                Terms
+                {t("landing.footerSection.termsLink", "Terms")}
               </Link>
             </li>
             <li>
@@ -118,7 +120,7 @@ export const Footer = () => {
                 to="/support"
                 className="hover:text-ember hover:translate-x-1 inline-block transition-all duration-200"
               >
-                Contact/Support
+                {t("landing.footerSection.contactLink", "Contact/Support")}
               </Link>
             </li>
           </ul>
@@ -126,16 +128,16 @@ export const Footer = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 xl:px-24 mt-16 pt-8 border-t border-edge text-xs text-muted flex flex-col md:flex-row items-center justify-between gap-4">
-        <p>&copy; {new Date().getFullYear()} BookBuddy. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} BookBuddy. {t("common.allRightsReserved", "All rights reserved.")}</p>
         <div className="flex items-center gap-6">
           <Link to="/privacy" className="hover:text-ember transition-colors">
-            Privacy Policy
+            {t("landing.footerSection.privacyLink", "Privacy Policy")}
           </Link>
           <Link to="/terms" className="hover:text-ember transition-colors">
-            Terms
+            {t("landing.footerSection.termsLink", "Terms")}
           </Link>
           <Link to="/support" className="hover:text-ember transition-colors">
-            Contact/Support
+            {t("landing.footerSection.contactLink", "Contact/Support")}
           </Link>
         </div>
       </div>

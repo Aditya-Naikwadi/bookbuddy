@@ -1,0 +1,1856 @@
+[
+  {
+    "role": "Visitor",
+    "route": "/",
+    "url": "http://localhost:5173/",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1532012164546-f432f2e3777a?w=400&q=80",
+        "errorText": "net::ERR_BLOCKED_BY_ORB"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Visitor__.png"
+  },
+  {
+    "role": "Visitor",
+    "route": "/auth/login",
+    "url": "http://localhost:5173/auth/login",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Visitor__auth_login.png"
+  },
+  {
+    "role": "Visitor",
+    "route": "/auth/register",
+    "url": "http://localhost:5173/auth/register",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Visitor__auth_register.png"
+  },
+  {
+    "role": "Visitor",
+    "route": "/privacy",
+    "url": "http://localhost:5173/privacy",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Visitor__privacy.png"
+  },
+  {
+    "role": "Visitor",
+    "route": "/terms",
+    "url": "http://localhost:5173/terms",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Visitor__terms.png"
+  },
+  {
+    "role": "Visitor",
+    "route": "/support",
+    "url": "http://localhost:5173/support",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Visitor__support.png"
+  },
+  {
+    "role": "Visitor",
+    "route": "/c/standford",
+    "url": "http://localhost:5173/c/standford",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Visitor__c_standford.png"
+  },
+  {
+    "role": "Visitor",
+    "route": "/register/standford",
+    "url": "http://localhost:5173/register/standford",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Visitor__register_standford.png"
+  },
+  {
+    "role": "Visitor",
+    "route": "/c/standford/activate",
+    "url": "http://localhost:5173/c/standford/activate",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Visitor__c_standford_activate.png"
+  },
+  {
+    "role": "General",
+    "route": "/general-dashboard",
+    "url": "http://localhost:5173/general-dashboard",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "consoleWarns": [
+      "Backend /colleges/my-config unavailable: AxiosError: Request failed with status code 403"
+    ],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/colleges/my-config",
+        "status": 403,
+        "statusText": "Forbidden"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_General__general_dashboard.png"
+  },
+  {
+    "role": "General",
+    "route": "/general-dashboard/search",
+    "url": "http://localhost:5173/general-dashboard/search",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "consoleWarns": [
+      "Backend /colleges/my-config unavailable: AxiosError: Request failed with status code 403"
+    ],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/colleges/my-config",
+        "status": 403,
+        "statusText": "Forbidden"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_General__general_dashboard_search.png"
+  },
+  {
+    "role": "General",
+    "route": "/general-dashboard/e-resources",
+    "url": "http://localhost:5173/general-dashboard/e-resources",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "consoleWarns": [
+      "Backend /colleges/my-config unavailable: AxiosError: Request failed with status code 403"
+    ],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/colleges/my-config",
+        "status": 403,
+        "statusText": "Forbidden"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_General__general_dashboard_e_resources.png"
+  },
+  {
+    "role": "General",
+    "route": "/general-dashboard/saved",
+    "url": "http://localhost:5173/general-dashboard/saved",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "consoleWarns": [
+      "Backend /colleges/my-config unavailable: AxiosError: Request failed with status code 403"
+    ],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/colleges/my-config",
+        "status": 403,
+        "statusText": "Forbidden"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_General__general_dashboard_saved.png"
+  },
+  {
+    "role": "Student",
+    "route": "/student",
+    "url": "http://localhost:5173/student",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "Student",
+    "route": "/student/catalog",
+    "url": "http://localhost:5173/student/catalog",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "Student",
+    "route": "/student/loans",
+    "url": "http://localhost:5173/student/loans",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "Student",
+    "route": "/student/fines",
+    "url": "http://localhost:5173/student/fines",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "Student",
+    "route": "/student/card",
+    "url": "http://localhost:5173/student/card",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "Student",
+    "route": "/student/e-resources",
+    "url": "http://localhost:5173/student/e-resources",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "Student",
+    "route": "/student/reader/sample-1",
+    "url": "http://localhost:5173/student/reader/sample-1",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "Student",
+    "route": "/student/reading-lists",
+    "url": "http://localhost:5173/student/reading-lists",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/profile",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/profile",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Student__student_reading_lists.png"
+  },
+  {
+    "role": "Student",
+    "route": "/student/shelves",
+    "url": "http://localhost:5173/student/shelves",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Student__student_shelves.png"
+  },
+  {
+    "role": "Student",
+    "route": "/student/recommendations",
+    "url": "http://localhost:5173/student/recommendations",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Student__student_recommendations.png"
+  },
+  {
+    "role": "Student",
+    "route": "/student/saved",
+    "url": "http://localhost:5173/student/saved",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Student__student_saved.png"
+  },
+  {
+    "role": "Student",
+    "route": "/student/facilities",
+    "url": "http://localhost:5173/student/facilities",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Student__student_facilities.png"
+  },
+  {
+    "role": "Student",
+    "route": "/student/support",
+    "url": "http://localhost:5173/student/support",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Student__student_support.png"
+  },
+  {
+    "role": "Student",
+    "route": "/student/engagement",
+    "url": "http://localhost:5173/student/engagement",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Student__student_engagement.png"
+  },
+  {
+    "role": "Student",
+    "route": "/student/feed",
+    "url": "http://localhost:5173/student/feed",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Student__student_feed.png"
+  },
+  {
+    "role": "Student",
+    "route": "/student/cross-college",
+    "url": "http://localhost:5173/student/cross-college",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Student__student_cross_college.png"
+  },
+  {
+    "role": "Student",
+    "route": "/student/downloads",
+    "url": "http://localhost:5173/student/downloads",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Student__student_downloads.png"
+  },
+  {
+    "role": "Student",
+    "route": "/student/offline-sync",
+    "url": "http://localhost:5173/student/offline-sync",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Student__student_offline_sync.png"
+  },
+  {
+    "role": "Student",
+    "route": "/student/reading-nudges",
+    "url": "http://localhost:5173/student/reading-nudges",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Student__student_reading_nudges.png"
+  },
+  {
+    "role": "Student",
+    "route": "/student/ask-this-book",
+    "url": "http://localhost:5173/student/ask-this-book",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Student__student_ask_this_book.png"
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin",
+    "url": "http://localhost:5173/college-admin",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/features",
+    "url": "http://localhost:5173/college-admin/features",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/bulk-upload",
+    "url": "http://localhost:5173/college-admin/bulk-upload",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/circulation",
+    "url": "http://localhost:5173/college-admin/circulation",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/patrons",
+    "url": "http://localhost:5173/college-admin/patrons",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/cataloging",
+    "url": "http://localhost:5173/college-admin/cataloging",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/inventory",
+    "url": "http://localhost:5173/college-admin/inventory",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_College_Admin__college_admin_inventory.png"
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/finances",
+    "url": "http://localhost:5173/college-admin/finances",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load active colleges for login picker: AxiosError: Request failed with status code 429",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load active colleges for login picker: AxiosError: Request failed with status code 429",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    ],
+    "consoleWarns": [
+      "Backend /colleges/my-config unavailable: AxiosError: Request failed with status code 429",
+      "Could not fetch public config from backend: Request failed with status code 429",
+      "Could not fetch public config from backend: Request failed with status code 429"
+    ],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/colleges/my-config?collegeId%5B_id%5D=6ad2044e6ea22b7cbf57daf9&collegeId%5Bname%5D=Standford+university&collegeId%5Bcode%5D=STANDFORD&collegeId%5BisActive%5D=true&collegeId%5Bstatus%5D=active&collegeId%5Bid%5D=6ad2044e6ea22b7cbf57daf9",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/csrf-token",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/config/public",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/config/public",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/profile",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/profile",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/registration/colleges",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/registration/colleges",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_College_Admin__college_admin_finances.png"
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/facilities",
+    "url": "http://localhost:5173/college-admin/facilities",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_College_Admin__college_admin_facilities.png"
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/digital-assets",
+    "url": "http://localhost:5173/college-admin/digital-assets",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_College_Admin__college_admin_digital_assets.png"
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/helpdesk",
+    "url": "http://localhost:5173/college-admin/helpdesk",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_College_Admin__college_admin_helpdesk.png"
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/share-requests",
+    "url": "http://localhost:5173/college-admin/share-requests",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_College_Admin__college_admin_share_requests.png"
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/analytics",
+    "url": "http://localhost:5173/college-admin/analytics",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_College_Admin__college_admin_analytics.png"
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/acquisitions",
+    "url": "http://localhost:5173/college-admin/acquisitions",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_College_Admin__college_admin_acquisitions.png"
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/predictive-alerts",
+    "url": "http://localhost:5173/college-admin/predictive-alerts",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_College_Admin__college_admin_predictive_alerts.png"
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/analytics-expansion",
+    "url": "http://localhost:5173/college-admin/analytics-expansion",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_College_Admin__college_admin_analytics_expansion.png"
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/anomaly-detection",
+    "url": "http://localhost:5173/college-admin/anomaly-detection",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_College_Admin__college_admin_anomaly_detection.png"
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/syllabus-scanner",
+    "url": "http://localhost:5173/college-admin/syllabus-scanner",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_College_Admin__college_admin_syllabus_scanner.png"
+  },
+  {
+    "role": "College Admin",
+    "route": "/college-admin/qr-shelf-nav",
+    "url": "http://localhost:5173/college-admin/qr-shelf-nav",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_College_Admin__college_admin_qr_shelf_nav.png"
+  },
+  {
+    "role": "Super Admin",
+    "route": "/admin-portal",
+    "url": "http://localhost:5173/admin-portal",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "Super Admin",
+    "route": "/admin-portal/overview",
+    "url": "http://localhost:5173/admin-portal/overview",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "Super Admin",
+    "route": "/admin-portal/college-admins",
+    "url": "http://localhost:5173/admin-portal/college-admins",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "Super Admin",
+    "route": "/admin-portal/features",
+    "url": "http://localhost:5173/admin-portal/features",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "Super Admin",
+    "route": "/admin-portal/registration-queue",
+    "url": "http://localhost:5173/admin-portal/registration-queue",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "Super Admin",
+    "route": "/admin-portal/moderation",
+    "url": "http://localhost:5173/admin-portal/moderation",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarns": [],
+    "failedRequests": []
+  },
+  {
+    "role": "Super Admin",
+    "route": "/admin-portal/audit-logs",
+    "url": "http://localhost:5173/admin-portal/audit-logs",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "AxiosError: Request failed with status code 429",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "AxiosError: Request failed with status code 429"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/dashboards/admin-portal/audit-logs?page=1&limit=10",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/dashboards/admin-portal/audit-logs?page=1&limit=10",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Super_Admin__admin_portal_audit_logs.png"
+  },
+  {
+    "role": "Super Admin",
+    "route": "/admin-portal/settings",
+    "url": "http://localhost:5173/admin-portal/settings",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [
+      "Backend /colleges/my-config unavailable: AxiosError: Request failed with status code 429",
+      "Could not fetch public config from backend: Request failed with status code 429",
+      "Could not fetch public config from backend: Request failed with status code 429"
+    ],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/colleges/my-config",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/csrf-token",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/config/public",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/config/public",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/profile",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/profile",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Super_Admin__admin_portal_settings.png"
+  },
+  {
+    "role": "Super Admin",
+    "route": "/admin-portal/users",
+    "url": "http://localhost:5173/admin-portal/users",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    ],
+    "consoleWarns": [],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Super_Admin__admin_portal_users.png"
+  },
+  {
+    "role": "Super Admin",
+    "route": "/admin-portal/data-oversight",
+    "url": "http://localhost:5173/admin-portal/data-oversight",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    ],
+    "consoleWarns": [
+      "Could not fetch public config from backend: Request failed with status code 429",
+      "Could not fetch public config from backend: Request failed with status code 429"
+    ],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/csrf-token",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/config/public",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/config/public",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Super_Admin__admin_portal_data_oversight.png"
+  },
+  {
+    "role": "Super Admin",
+    "route": "/admin-portal/support",
+    "url": "http://localhost:5173/admin-portal/support",
+    "navigationSuccess": true,
+    "navError": null,
+    "domStatus": "OK",
+    "pageErrors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "consoleWarns": [
+      "Could not fetch public config from backend: Request failed with status code 429",
+      "Could not fetch public config from backend: Request failed with status code 429"
+    ],
+    "failedRequests": [
+      {
+        "url": "http://localhost:5173/api/v1/auth/csrf-token",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/config/public",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/config/public",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 429,
+        "statusText": "Too Many Requests"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/notifications",
+        "status": 401,
+        "statusText": "Unauthorized"
+      },
+      {
+        "url": "http://localhost:5173/api/v1/auth/refresh",
+        "status": 401,
+        "statusText": "Unauthorized"
+      }
+    ],
+    "screenshot": "C:\\Users\\naikw\\OneDrive\\Desktop\\Earth\\project\\BookBuddy\\reports\\screenshots\\error_Super_Admin__admin_portal_support.png"
+  }
+]

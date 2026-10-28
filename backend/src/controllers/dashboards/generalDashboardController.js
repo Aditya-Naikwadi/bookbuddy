@@ -42,9 +42,14 @@ const getCollegeDashboard = async (req, res, next) => {
 
     if (targetId && mongoose.Types.ObjectId.isValid(String(targetId))) {
       collegeId = String(targetId);
+    } else if (req.user?.collegeId && mongoose.Types.ObjectId.isValid(String(req.user.collegeId))) {
+      collegeId = String(req.user.collegeId);
     } else {
-      const defaultCollege = await retryRead(() =>
-        College.findOne({ status: 'active' }).select('_id').lean()
+      const defaultCollege = await retryRead(
+        async () =>
+          (await College.findOne({ status: 'active' }).select('_id').lean()) ||
+          (await College.findOne({ isActive: true }).select('_id').lean()) ||
+          (await College.findOne({}).select('_id').lean())
       );
       if (defaultCollege) {
         collegeId = defaultCollege._id.toString();
@@ -149,7 +154,7 @@ const getCollegeDashboard = async (req, res, next) => {
       totalCopies: Number(b.copiesTotal !== undefined ? b.copiesTotal : 0),
       shelfLocation: b.shelfLocation || 'Main Stacks',
       description: b.description || 'Catalog item.',
-      coverUrl: b.coverImageUrl || b.coverUrl || null,
+      coverUrl: b.coverImageUrl || b.coverUrl || b.coverImage || null,
       createdAt: b.createdAt ? new Date(b.createdAt).toISOString() : null,
     }));
 
@@ -170,7 +175,7 @@ const getCollegeDashboard = async (req, res, next) => {
       totalCopies: Number(b.copiesTotal !== undefined ? b.copiesTotal : 0),
       shelfLocation: b.shelfLocation || 'Main Stacks',
       description: b.description || 'Catalog item.',
-      coverUrl: b.coverImageUrl || b.coverUrl || null,
+      coverUrl: b.coverImageUrl || b.coverUrl || b.coverImage || null,
       createdAt: b.createdAt ? new Date(b.createdAt).toISOString() : null,
     }));
 

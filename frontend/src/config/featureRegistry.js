@@ -11,6 +11,14 @@ import {
   BarChart3,
   HelpCircle,
   ShoppingBag,
+  Globe,
+  Eye,
+  HardDrive,
+  TrendingUp,
+  ShieldAlert,
+  FileSearch,
+  QrCode,
+  Bot,
 } from "lucide-react";
 
 export const FEATURE_CATEGORIES = {
@@ -244,6 +252,106 @@ export const FEATURE_REGISTRY = {
     isCore: false,
     requires: [],
   },
+  "vernacular-i18n": {
+    id: "vernacular-i18n",
+    name: "Vernacular i18n Localization",
+    category: FEATURE_CATEGORIES.COMMUNICATION.key,
+    description:
+      "Multilingual interface supporting Hindi (hi) and Marathi (mr) alongside English and Spanish.",
+    icon: Globe,
+    isCore: false,
+    requires: [],
+  },
+  "accessibility-mode": {
+    id: "accessibility-mode",
+    name: "Accessibility & Assistive Mode",
+    category: FEATURE_CATEGORIES.CORE.key,
+    description:
+      "High-contrast tokens, dyslexia-friendly typography, and Web Speech text-to-speech audio reader.",
+    icon: Eye,
+    isCore: false,
+    requires: [],
+  },
+  "offline-sync": {
+    id: "offline-sync",
+    name: "Offline-First Queue & Sync",
+    category: FEATURE_CATEGORIES.CONTENT.key,
+    description:
+      "IndexedDB client action queuing with automatic idempotent replay and conflict resolution.",
+    icon: HardDrive,
+    isCore: false,
+    requires: [],
+  },
+  "reading-debt-nudges": {
+    id: "reading-debt-nudges",
+    name: "Reading Debt Nudges & Skill Badges",
+    category: FEATURE_CATEGORIES.ENGAGEMENT.key,
+    description:
+      "Constructive non-punitive nudges and milestone skill badges built on loans, fines, and reading streaks.",
+    icon: Award,
+    isCore: false,
+    requires: ["loans"],
+  },
+  "predictive-alerts": {
+    id: "predictive-alerts",
+    name: "Predictive Stock-Out Alerts",
+    category: FEATURE_CATEGORIES.CONTENT.key,
+    description:
+      "Automated stock-out warnings powered by borrowing velocity from daily metric snapshots.",
+    icon: TrendingUp,
+    isCore: false,
+    requires: ["catalog", "loans"],
+  },
+  "analytics-expansion": {
+    id: "analytics-expansion",
+    name: "Advanced Analytics & Daily Snapshots",
+    category: FEATURE_CATEGORIES.COMMUNICATION.key,
+    description:
+      "Circulation velocity, fine collection, and campus utilization metrics with streamed CSV exports.",
+    icon: BarChart3,
+    isCore: false,
+    requires: ["loans"],
+  },
+  "anomaly-detection": {
+    id: "anomaly-detection",
+    name: "Security Anomaly Detection",
+    category: FEATURE_CATEGORIES.CORE.key,
+    description:
+      "Automated threshold audits for impersonation bursts, off-hours admin actions, and fee waivers.",
+    icon: ShieldAlert,
+    isCore: false,
+    requires: [],
+  },
+  "syllabus-scanner": {
+    id: "syllabus-scanner",
+    name: "Syllabus Course Scanner",
+    category: FEATURE_CATEGORIES.FINANCIALS.key,
+    description:
+      "Client-side Web Worker OCR scanner for course syllabus ISBN extraction and acquisitions reconciliation.",
+    icon: FileSearch,
+    isCore: false,
+    requires: ["acquisitions"],
+  },
+  "qr-shelf-nav": {
+    id: "qr-shelf-nav",
+    name: "QR Physical Shelf Navigation",
+    category: FEATURE_CATEGORIES.CONTENT.key,
+    description:
+      "Printable QR codes deep-linking physical library stacks to tenant catalog shelf locations.",
+    icon: QrCode,
+    isCore: false,
+    requires: ["catalog"],
+  },
+  "rag-ask-this-book": {
+    id: "rag-ask-this-book",
+    name: "Ask This Book RAG Gateway",
+    category: FEATURE_CATEGORIES.CONTENT.key,
+    description:
+      "Retrieval-augmented grounding architecture for public-domain books with exact citation spans.",
+    icon: Bot,
+    isCore: false,
+    requires: ["e-resources"],
+  },
 };
 
 export const getEnabledFeaturesList = (userEnabledIds) => {
@@ -252,7 +360,9 @@ export const getEnabledFeaturesList = (userEnabledIds) => {
     !Array.isArray(userEnabledIds) ||
     userEnabledIds.length === 0
   ) {
-    return Object.keys(FEATURE_REGISTRY);
+    return Object.values(FEATURE_REGISTRY)
+      .filter((feat) => feat.isCore)
+      .map((feat) => feat.id);
   }
   const enabledSet = new Set(userEnabledIds);
   // Ensure core features are always included

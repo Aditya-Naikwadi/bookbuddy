@@ -570,6 +570,7 @@ app.use('/api/v1/feed', require('./routes/feedRoutes'));
 app.use('/api/v1/recommendations', require('./routes/recommendationRoutes'));
 app.use('/api/v1/catalog/cross-college', require('./routes/crossCollegeCatalogRoutes'));
 app.use('/api/v1/share-requests', require('./routes/shareRequestRoutes'));
+app.use('/api/v1/features/phased', require('./routes/phasedFeatureRoutes'));
 
 // Deprecated Legacy Unversioned Routes (Supported with 90-day deprecation headers)
 app.use(

@@ -3,9 +3,11 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "../ui/Button";
 import { cn } from "../../utils/cn";
 import useAuthStore from "../../store/authStore";
-import { LogOut, LayoutDashboard, Globe, Sun, Moon } from "lucide-react";
+import { LogOut, LayoutDashboard, Globe, Sun, Moon, Sliders } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../context/ThemeContext";
+import { useFeatureFlags } from "../../hooks/useFeatureFlags";
+import { useAccessibilityStore } from "../../store/accessibilityStore";
 
 export const NAV_ITEMS = [
   { label: "Catalog Search", target: "#catalog-search" },
@@ -62,6 +64,10 @@ const NavbarComponent = () => {
   const dashboardRoute = getRoleDashboardRoute(user?.role);
 
   const { theme, toggleTheme } = useTheme();
+  const { isFeatureEnabled } = useFeatureFlags();
+  const isVernacularEnabled = !isAuthenticated || isFeatureEnabled("vernacular-i18n");
+  const { toggleToolbar } = useAccessibilityStore();
+  const isA11yEnabled = isFeatureEnabled("accessibility-mode");
 
   const ThemeToggle = ({ className }: { className?: string }) => (
     <button
@@ -82,6 +88,24 @@ const NavbarComponent = () => {
     </button>
   );
 
+  const AccessibilityButton = ({ className }: { className?: string }) => {
+    if (!isA11yEnabled) return null;
+    return (
+      <button
+        onClick={toggleToolbar}
+        className={cn(
+          "h-9 w-9 rounded-xl border border-edge/60 bg-surface/40 hover:bg-surface/70 text-ink transition-all duration-200 cursor-pointer hover:border-ember/40 hover:scale-105 active:scale-95 flex items-center justify-center shrink-0",
+          className,
+        )}
+        aria-label={t("accessibility.toggleMenu", "Accessibility Options")}
+        title={t("accessibility.toggleMenu", "Accessibility Options")}
+        type="button"
+      >
+        <Sliders className="w-4 h-4 text-indigo-400" aria-hidden="true" />
+      </button>
+    );
+  };
+
   const LanguageSwitcher = ({ idPrefix }: { idPrefix: string }) => (
     <div className="relative flex items-center shrink-0">
       <label htmlFor={`${idPrefix}-language-select`} className="sr-only">
@@ -99,12 +123,16 @@ const NavbarComponent = () => {
           <option value="en" className="bg-[#12141D] text-white">
             EN
           </option>
-          <option value="hi" className="bg-[#12141D] text-white">
-            HI - हिन्दी
-          </option>
-          <option value="mr" className="bg-[#12141D] text-white">
-            MR - मराठी
-          </option>
+          {isVernacularEnabled && (
+            <>
+              <option value="hi" className="bg-[#12141D] text-white">
+                HI - हिन्दी
+              </option>
+              <option value="mr" className="bg-[#12141D] text-white">
+                MR - मराठी
+              </option>
+            </>
+          )}
           <option value="es" className="bg-[#12141D] text-white">
             ES - Español
           </option>
@@ -334,6 +362,7 @@ const NavbarComponent = () => {
         {/* Desktop Actions (Visible on >= 1280px / xl) */}
         <div className="hidden xl:flex items-center gap-2.5 2xl:gap-3 shrink-0">
           <LanguageSwitcher idPrefix="desktop" />
+          <AccessibilityButton />
           <ThemeToggle />
           {isLoading && !user ? (
             <div className="h-9 w-36 rounded-xl bg-surface/50 border border-edge/60 animate-pulse" />
@@ -425,6 +454,7 @@ const NavbarComponent = () => {
             </span>
             <div className="flex items-center gap-2">
               <LanguageSwitcher idPrefix="mobile-drawer" />
+              <AccessibilityButton />
               <ThemeToggle />
             </div>
           </div>

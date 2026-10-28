@@ -25,6 +25,6 @@ router.get(
 );
 
 // Public / General route to fetch aggregated home dashboard data (protected by rate limiter)
-router.get('/home-data', generalDashboardLimiter, getGeneralDashboardData);
+router.get('/home-data', generalDashboardLimiter, optionalAuth, getGeneralDashboardData);
 
 module.exports = router;

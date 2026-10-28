@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Building2,
   ShieldCheck,
@@ -51,6 +52,33 @@ const institutionalStats = [
 
 export const ForColleges = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const getFeatTranslation = (feat: (typeof collegeFeatures)[0], idx: number) => {
+    switch (idx) {
+      case 0:
+        return {
+          title: t("landing.forCollegesSection.feature1Title", feat.title),
+          desc: t("landing.forCollegesSection.feature1Desc", feat.desc),
+        };
+      case 1:
+        return {
+          title: t("landing.forCollegesSection.feature2Title", feat.title),
+          desc: t("landing.forCollegesSection.feature2Desc", feat.desc),
+        };
+      case 2:
+        return {
+          title: t("landing.forCollegesSection.feature3Title", feat.title),
+          desc: t("landing.forCollegesSection.feature3Desc", feat.desc),
+        };
+      case 3:
+      default:
+        return {
+          title: t("landing.forCollegesSection.feature4Title", feat.title),
+          desc: t("landing.forCollegesSection.feature4Desc", feat.desc),
+        };
+    }
+  };
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -74,7 +102,7 @@ export const ForColleges = () => {
       id="for-colleges"
       data-section="for-colleges"
       className="bg-void py-24 md:py-32 xl:py-40 relative overflow-hidden border-t border-edge"
-      aria-label="For Colleges"
+      aria-label={t("landing.forCollegesTitle", "For Colleges")}
     >
       {/* Background Ambient Glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-tr from-indigo-500/10 via-ember/10 to-transparent rounded-full blur-[140px] pointer-events-none" />
@@ -83,15 +111,13 @@ export const ForColleges = () => {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 md:mb-20">
           <SectionLabel className="mx-auto">
-            CAMPUS & INSTITUTIONAL PARTNERSHIPS
+            {t("landing.forCollegesSection.label", "CAMPUS & INSTITUTIONAL PARTNERSHIPS")}
           </SectionLabel>
           <h2 className="font-serif text-2xl sm:text-3xl md:text-5xl lg:text-6xl text-ink mt-4 mb-6 leading-tight hover:brightness-110 transition-all duration-300 cursor-default select-text">
-            Empower your campus library with BookBuddy.
+            {t("landing.forCollegesTitle", "Empower your campus library with BookBuddy.")}
           </h2>
           <p className="text-muted text-sm sm:text-base md:text-lg leading-relaxed select-text">
-            Modernize circulation, catalog course reserves, and provide students
-            with instant mobile access to physical volumes and 70,000+ digital
-            titles — all in one multi-tenant institutional platform.
+            {t("landing.forCollegesSection.subheading", "Modernize circulation, catalog course reserves, and provide students with instant mobile access to physical volumes and 70,000+ digital titles — all in one multi-tenant institutional platform.")}
           </p>
         </div>
 
@@ -103,7 +129,9 @@ export const ForColleges = () => {
           viewport={{ once: true, margin: "-80px" }}
           className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-20"
         >
-          {collegeFeatures.map((feat, idx) => (
+          {collegeFeatures.map((feat, idx) => {
+            const translated = getFeatTranslation(feat, idx);
+            return (
             <motion.div
               key={idx}
               variants={itemVariants}
@@ -113,13 +141,14 @@ export const ForColleges = () => {
                 {feat.icon}
               </div>
               <h3 className="font-serif text-xl sm:text-2xl text-ink font-semibold mb-3 group-hover:text-ember transition-colors duration-300">
-                {feat.title}
+                {translated.title}
               </h3>
               <p className="text-muted leading-relaxed text-sm md:text-base group-hover:text-slate-200 transition-colors duration-300">
-                {feat.desc}
+                {translated.desc}
               </p>
             </motion.div>
-          ))}
+          );
+          })}
         </motion.div>
 
         {/* Stats Strip */}
@@ -147,12 +176,10 @@ export const ForColleges = () => {
               For Deans, Librarians & IT Directors
             </div>
             <h3 className="font-serif text-2xl md:text-3xl text-ink font-semibold mb-3">
-              Ready to onboard your college?
+              {t("landing.forCollegesSection.heading", "Ready to onboard your college?")}
             </h3>
             <p className="text-muted text-sm md:text-base leading-relaxed">
-              Register your institution today or speak with our institutional
-              onboarding team for automated SIS integration and dedicated
-              migration support.
+              {t("landing.forCollegesSection.subheading", "Register your institution today or speak with our institutional onboarding team for automated SIS integration and dedicated migration support.")}
             </p>
           </div>
 
@@ -162,7 +189,7 @@ export const ForColleges = () => {
               className="w-full sm:w-auto shadow-lg shadow-indigo-500/20"
               onClick={() => navigate("/auth/register")}
             >
-              Register Your College <ArrowRight className="w-4 h-4 ml-1.5" />
+              {t("landing.forCollegesSection.onboardBtn", "Register Your College")} <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
             <Button
               variant="outline"
@@ -170,7 +197,7 @@ export const ForColleges = () => {
               className="w-full sm:w-auto"
               onClick={() => navigate("/support")}
             >
-              Contact Support
+              {t("landing.footerSection.contactLink", "Contact Support")}
             </Button>
           </div>
         </div>

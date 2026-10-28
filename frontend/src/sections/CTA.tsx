@@ -1,10 +1,12 @@
 import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import useAuthStore from "../store/authStore";
 import { motion, useScroll, useTransform, Variants } from "framer-motion";
 import { Button } from "../components/ui/Button";
 
 export const CTA = () => {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthStore();
@@ -88,17 +90,19 @@ export const CTA = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="font-serif text-4xl sm:text-6xl md:text-8xl lg:text-[7rem] text-white tracking-tight leading-[1.1] mb-8 flex flex-wrap justify-center gap-x-3 sm:gap-x-4 md:gap-x-6 drop-shadow-xl select-text"
+          className="font-serif text-3xl sm:text-5xl md:text-7xl lg:text-[5.5rem] text-white tracking-tight leading-[1.1] mb-8 flex flex-wrap justify-center gap-x-3 sm:gap-x-4 md:gap-x-6 drop-shadow-xl select-text text-center"
         >
-          {"Your library. Upgraded.".split(" ").map((word, i) => (
-            <motion.span
-              key={i}
-              variants={wordVariants}
-              className="inline-block hover:scale-105 hover:text-amber-200 transition-all duration-300 cursor-default"
-            >
-              {word}
-            </motion.span>
-          ))}
+          {t("landing.ctaSection.heading", "Ready to transform your reading experience?")
+            .split(" ")
+            .map((word, i) => (
+              <motion.span
+                key={i}
+                variants={wordVariants}
+                className="inline-block hover:scale-105 hover:text-amber-200 transition-all duration-300 cursor-default"
+              >
+                {word}
+              </motion.span>
+            ))}
         </motion.h2>
 
         {/* Animated Subtitle */}
@@ -107,9 +111,9 @@ export const CTA = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
-          className="text-white/80 text-lg sm:text-xl md:text-3xl mb-14 font-medium max-w-2xl mx-auto drop-shadow-md leading-relaxed select-text hover:text-white transition-colors duration-300"
+          className="text-white/80 text-lg sm:text-xl md:text-2xl mb-14 font-medium max-w-2xl mx-auto drop-shadow-md leading-relaxed select-text hover:text-white transition-colors duration-300"
         >
-          Join thousands of students managing their resources smarter.
+          {t("landing.ctaSection.subheading", "Join thousands of students and faculty already using BookBuddy to explore books and level up reading habits.")}
         </motion.p>
 
         {/* Animated Buttons */}
@@ -128,6 +132,7 @@ export const CTA = () => {
         >
           <Button
             size="lg"
+            aria-label={t("landing.ctaSection.createFreeAccount", "Create Free Account")}
             className="w-full sm:w-auto bg-white text-void hover:bg-white/90 hover:scale-[1.02] transition-transform duration-300 shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:shadow-[0_0_60px_rgba(255,255,255,0.4)] px-10 h-16 text-lg rounded-xl"
             onClick={() => {
               if (isAuthenticated && user) {
@@ -147,11 +152,12 @@ export const CTA = () => {
               }
             }}
           >
-            Create Free Account
+            {t("landing.ctaSection.getStartedBtn", "Get Started for Free →")}
           </Button>
           <Button
             variant="ghost"
             size="lg"
+            aria-label={t("landing.ctaSection.contactSales", "Contact Sales")}
             className="w-full sm:w-auto text-white hover:bg-white/10 border border-white/20 hover:border-white/50 px-10 h-16 text-lg rounded-xl transition-all duration-300 backdrop-blur-md"
             onClick={() => {
               const collegesEl =
@@ -164,7 +170,7 @@ export const CTA = () => {
               }
             }}
           >
-            Contact Sales
+            {t("landing.ctaSection.exploreCatalogBtn", "Explore Campus Catalog")}
           </Button>
         </motion.div>
       </motion.div>

@@ -4,9 +4,14 @@ import { FeatureFlagContext } from "../context/featureFlagContextObject";
 export function useFeatureFlags() {
   const context = useContext(FeatureFlagContext);
   if (!context) {
-    throw new Error(
-      "useFeatureFlags must be used within a FeatureFlagProvider",
-    );
+    return {
+      enabledFeatures: [],
+      limits: {},
+      isLoading: false,
+      isError: false,
+      isFeatureEnabled: () => true,
+      refetchFeatures: () => {},
+    };
   }
   return context;
 }

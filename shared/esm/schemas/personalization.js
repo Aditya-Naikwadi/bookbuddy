@@ -82,9 +82,19 @@ const updateProgressRouteSchema = z.object({
 });
 
 const createBookmarkBodySchema = z.object({
-  eresourceId: objectIdSchema,
-  locationRef: z.string().min(1, 'Location reference is required'),
+  eresourceId: z.union([objectIdSchema, z.string()]).optional(),
+  resourceId: z.union([objectIdSchema, z.string()]).optional(),
+  bookId: z.union([objectIdSchema, z.string()]).optional(),
+  bookTitle: z.string().optional(),
+  locationRef: z.string().optional(),
+  cfi: z.string().optional(),
+  page: z.number().optional(),
+  highlightText: z.string().optional(),
+  noteText: z.string().optional(),
   note: z.string().optional(),
+  color: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  label: z.string().optional(),
 });
 
 const createBookmarkRouteSchema = z.object({
@@ -117,7 +127,22 @@ const toggleAlertsRouteSchema = z.object({
   body: toggleAlertsBodySchema,
 });
 
+const updateAccessibilityBodySchema = z.object({
+  dyslexiaFont: z.boolean().optional(),
+  highContrast: z.boolean().optional(),
+  textToSpeech: z.boolean().optional(),
+  ttsRate: z.number().min(0.5).max(2.0).optional(),
+  ttsPitch: z.number().min(0.5).max(1.5).optional(),
+});
+
+const updateAccessibilityRouteSchema = z.object({
+  body: updateAccessibilityBodySchema,
+});
+
 export {
+  updateAccessibilityBodySchema,
+  updateAccessibilityRouteSchema,
+  updateAccessibilityRouteSchema as updateAccessibilitySchema,
   createEResourceBodySchema,
   createEResourceRouteSchema,
   createEResourceRouteSchema as createEResourceSchema,
@@ -144,6 +169,9 @@ export {
   toggleAlertsRouteSchema as toggleAlertsSchema,
 };
 export default {
+  updateAccessibilityBodySchema,
+  updateAccessibilityRouteSchema,
+  updateAccessibilitySchema: updateAccessibilityRouteSchema,
   createEResourceBodySchema,
   createEResourceRouteSchema,
   createEResourceSchema: createEResourceRouteSchema,
