@@ -1627,6 +1627,9 @@ const approveStudentJoinRequest = async (req, res, next) => {
         req?.ip || req?.headers?.['x-forwarded-for'] || req?.socket?.remoteAddress || '127.0.0.1',
     });
 
+    joinRequest.status = 'approved';
+    joinRequest.reviewedBy = req.user._id || req.user.id;
+    joinRequest.reviewedAt = new Date();
     const sanitizedRequest = joinRequest.toObject();
     delete sanitizedRequest.password;
 
@@ -1733,6 +1736,10 @@ const rejectStudentJoinRequest = async (req, res, next) => {
         req?.ip || req?.headers?.['x-forwarded-for'] || req?.socket?.remoteAddress || '127.0.0.1',
     });
 
+    joinRequest.status = 'rejected';
+    joinRequest.rejectionReason = reason;
+    joinRequest.reviewedBy = req.user._id || req.user.id;
+    joinRequest.reviewedAt = new Date();
     const sanitizedRequest = joinRequest.toObject();
     delete sanitizedRequest.password;
 

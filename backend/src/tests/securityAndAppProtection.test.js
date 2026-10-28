@@ -644,7 +644,7 @@ describe('security And App Protection Consolidated Suite', () => {
         delete process.env.VERCEL;
         delete process.env.RENDER;
         process.env.PORT = '5000';
-        process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/prod_test';
+        process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/prod_test';
         process.env.JWT_SECRET = 'a_very_strong_prod_jwt_secret_key_12345';
         process.env.JWT_REFRESH_SECRET = 'a_very_strong_prod_refresh_secret_key_12345';
         process.env.JWT_ACCESS_EXPIRY = '15m';

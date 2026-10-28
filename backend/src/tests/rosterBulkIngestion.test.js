@@ -30,7 +30,7 @@ describe('roster Bulk Ingestion Consolidated Suite', () => {
     const mongoose = require('mongoose');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_test';
+    process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_test';
 
     jest.setTimeout(30000);
 
@@ -119,7 +119,7 @@ describe('roster Bulk Ingestion Consolidated Suite', () => {
     const crypto = require('crypto');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_test';
+    process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_test';
 
     jest.setTimeout(30000);
 

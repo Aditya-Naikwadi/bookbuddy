@@ -27,7 +27,8 @@ describe('gamification And Streaks Consolidated Suite', () => {
     const mongoose = require('mongoose');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_streak_test';
+    process.env.MONGO_URI =
+      process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_streak_test';
     process.env.JWT_SECRET = 'testjwtsecretstreakkey999';
     process.env.JWT_REFRESH_SECRET = 'testjwtrefreshsecretstreakkey999';
     process.env.JWT_ACCESS_EXPIRY = '10m';
@@ -258,7 +259,8 @@ describe('gamification And Streaks Consolidated Suite', () => {
     const mongoose = require('mongoose');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_badge_test';
+    process.env.MONGO_URI =
+      process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_badge_test';
 
     const Badge = require('../models/Badge');
     const UserBadge = require('../models/UserBadge');

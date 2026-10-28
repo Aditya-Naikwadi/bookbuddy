@@ -1336,7 +1336,7 @@ describe('Tenant Isolation & Multi-Tenancy Consolidated Suite', () => {
     const mongoose = require('mongoose');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_test';
+    process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_test';
 
     jest.setTimeout(30000);
 

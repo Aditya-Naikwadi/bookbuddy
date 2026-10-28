@@ -1,12 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import React from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import axe from "axe-core";
 import { AccessibilityToolbar } from "../components/accessibility/AccessibilityToolbar";
 import { useAccessibilityStore } from "../store/accessibilityStore";
-import Landing from "../pages/public/Landing";
 import Login from "../pages/Login";
 import GeneralDashboardHome from "../pages/dashboards/general/GeneralDashboardHome";
 import StudentDashboardHome from "../pages/dashboards/student/StudentDashboardHome";
@@ -53,7 +51,7 @@ vi.mock("../store/authStore", () => ({
 
 vi.mock("../hooks/useFeatureFlags", () => ({
   useFeatureFlags: () => ({
-    isFeatureEnabled: (flag) => {
+    isFeatureEnabled: (_flag) => {
       // By default accessibility-mode is active in tests
       return true;
     },

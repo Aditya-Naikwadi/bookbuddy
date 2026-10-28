@@ -30,7 +30,8 @@ describe('realtime And Web Sockets Consolidated Suite', () => {
     const path = require('path');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_realtime_test';
+    process.env.MONGO_URI =
+      process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_realtime_test';
     process.env.JWT_SECRET = 'testjwtrealtimesecretkey999';
     process.env.JWT_REFRESH_SECRET = 'testjwtrealtimerefreshsecretkey999';
     process.env.JWT_ACCESS_EXPIRY = '10m';

@@ -141,7 +141,7 @@ async function seedProofData() {
   );
 
   // General Public User
-  const generalUser = await User.findOneAndUpdate(
+  const _generalUser = await User.findOneAndUpdate(
     { email: 'general@bookbuddy.com' },
     {
       name: 'BookBuddy General User',

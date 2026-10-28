@@ -111,12 +111,16 @@ export const featureApi = {
   },
 
   // GET /api/colleges/my-config
-  getCollegeFeatures: async (collegeId = null) => {
+  getCollegeFeatures: async (targetTenantId = null) => {
     try {
       const config = {};
-      if (collegeId && collegeId !== "current" && collegeId !== "all") {
-        config.params = { collegeId };
-        config.headers = { "x-target-tenant-id": collegeId };
+      if (
+        targetTenantId &&
+        typeof targetTenantId === "string" &&
+        targetTenantId !== "current" &&
+        targetTenantId !== "all"
+      ) {
+        config.headers = { "x-target-tenant-id": targetTenantId };
       }
       const { data } = await apiClient.get("/colleges/my-config", config);
       return data.data || data;

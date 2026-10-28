@@ -32,7 +32,7 @@ describe('auth Lifecycle Consolidated Suite', () => {
 
     // Point environment variables to test database before requiring app
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_test';
+    process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_test';
     process.env.JWT_SECRET = 'testjwtsecretkey999';
     process.env.JWT_REFRESH_SECRET = 'testjwtrefreshsecretkey999';
     process.env.JWT_ACCESS_EXPIRY = '5s';
@@ -1527,7 +1527,7 @@ describe('auth Lifecycle Consolidated Suite', () => {
           status: 'unverified',
         });
         expect(regReqDoc).not.toBeNull();
-        expect(regReqDoc.studentData.studentId).toBe('STU-1001');
+        expect(regReqDoc.studentData.studentId).toBe('stu-1001');
         expect(regReqDoc.studentData.verificationOTP).toBeDefined();
 
         const devOtp = regRes.body.data.devOtp || regReqDoc.studentData.verificationOTP;

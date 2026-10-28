@@ -9,7 +9,11 @@ import {
 
 export function FeatureFlagProvider({ children }) {
   const { user } = useAuthStore();
-  const collegeId = user?.collegeId || "current";
+  const hasCollegeScope = Boolean(
+    user &&
+    (user.collegeId || user.role === "super-admin") &&
+    user.role !== "general",
+  );
 
   const {
     data,
@@ -17,9 +21,9 @@ export function FeatureFlagProvider({ children }) {
     isError,
     refetch: refetchFeatures,
   } = useQuery({
-    queryKey: ["collegeFeatures", collegeId, user?.role],
-    queryFn: () => featureApi.getCollegeFeatures(collegeId),
-    enabled: !!user,
+    queryKey: ["collegeFeatures", user?.collegeId, user?.role],
+    queryFn: () => featureApi.getCollegeFeatures(),
+    enabled: hasCollegeScope,
     staleTime: 1000 * 60 * 15,
     cacheTime: 1000 * 60 * 30,
   });

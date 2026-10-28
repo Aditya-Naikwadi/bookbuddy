@@ -368,7 +368,38 @@ const useAuthStore = create((set) => {
         if (storedToken && !isNearExpiry) {
           setInMemoryToken(storedToken);
         } else {
-          // Silent single-flight token refresh if missing or near expiration
+          // If there is no storedToken and user is on a public page, they are an unauthenticated visitor.
+          // Skip refresh request to avoid spamming 401 Unauthorized console errors.
+          if (!storedToken && typeof window !== "undefined") {
+            const path = window.location.pathname;
+            const isPublicPage =
+              path === "/" ||
+              path === "/login" ||
+              path === "/register" ||
+              path === "/privacy" ||
+              path === "/terms" ||
+              path === "/contact" ||
+              path === "/unauthorized" ||
+              path.startsWith("/auth/") ||
+              path.startsWith("/c/");
+
+            if (isPublicPage) {
+              setInMemoryToken(null);
+              setCsrfToken(null);
+              localStorage.removeItem("token");
+              set({
+                user: null,
+                token: null,
+                isAuthenticated: false,
+                isLoading: false,
+                isImpersonated: false,
+                originalSuperAdminToken: null,
+              });
+              return false;
+            }
+          }
+
+          // Silent single-flight token refresh if missing on protected route or near expiration
           try {
             const data = await refreshTokenSingleFlight();
             const newToken = data?.accessToken;

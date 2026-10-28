@@ -10,19 +10,7 @@ if (atlasUri && atlasUri.includes('/bookbuddy?')) {
 }
 
 if (atlasUri && (atlasUri.startsWith('mongodb+srv://') || atlasUri.includes('@'))) {
-  let currentUri = atlasUri;
-  Object.defineProperty(process.env, 'MONGO_URI', {
-    get() {
-      return currentUri;
-    },
-    set(val) {
-      // If test file attempts to overwrite with an unreachable local MongoDB URL, preserve the working Atlas test URI
-      if (!val || val.includes('localhost') || val.includes('127.0.0.1')) {
-        return;
-      }
-      currentUri = val;
-    },
-    configurable: true,
-    enumerable: true,
-  });
+  process.env.MONGO_URI = atlasUri;
+  process.env.MONGODB_URI = atlasUri;
+  global.__ORIGINAL_ATLAS_TEST_URI__ = atlasUri;
 }

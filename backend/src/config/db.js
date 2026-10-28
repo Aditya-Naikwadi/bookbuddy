@@ -66,7 +66,14 @@ const connectDB = async () => {
   };
 
   const isProd = config.nodeEnv === 'production' || !!env.RENDER;
-  const primaryUri = mongoUri || config.mongoUri;
+  let primaryUri = mongoUri || config.mongoUri;
+  if (
+    process.env.NODE_ENV === 'test' &&
+    global.__ORIGINAL_ATLAS_TEST_URI__ &&
+    (!primaryUri || primaryUri.includes('localhost') || primaryUri.includes('127.0.0.1'))
+  ) {
+    primaryUri = global.__ORIGINAL_ATLAS_TEST_URI__;
+  }
   // Fall back to local MongoDB ONLY if no explicit MONGO_URI was specified in environment variables
   const allowLocalFallback = !mongoUri && !isProd;
   const fallbackUris = allowLocalFallback ? ['mongodb://localhost:27017/bookbuddy'] : [];

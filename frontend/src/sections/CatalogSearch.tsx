@@ -41,8 +41,6 @@ const DEFAULT_CATALOG_BOOKS: CatalogBook[] = [
     category: "Computer Science",
     shelf: "Shelf CS-204",
     availability: "Available",
-    coverImage:
-      "https://images.unsplash.com/photo-1532012164546-f432f2e3777a?w=400&q=80",
   },
   {
     id: "cat-2",
@@ -51,8 +49,6 @@ const DEFAULT_CATALOG_BOOKS: CatalogBook[] = [
     category: "Algorithms",
     shelf: "Shelf AL-101",
     availability: "Available",
-    coverImage:
-      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80",
   },
   {
     id: "cat-3",
@@ -61,8 +57,6 @@ const DEFAULT_CATALOG_BOOKS: CatalogBook[] = [
     category: "System Design",
     shelf: "Shelf SD-305",
     availability: "Available",
-    coverImage:
-      "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=400&q=80",
   },
   {
     id: "cat-4",
@@ -71,8 +65,6 @@ const DEFAULT_CATALOG_BOOKS: CatalogBook[] = [
     category: "AI & ML",
     shelf: "Shelf AI-402",
     availability: "3 Copies Left",
-    coverImage:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80",
   },
   {
     id: "cat-5",
@@ -81,8 +73,6 @@ const DEFAULT_CATALOG_BOOKS: CatalogBook[] = [
     category: "Systems",
     shelf: "Shelf OS-110",
     availability: "Available",
-    coverImage:
-      "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&q=80",
   },
   {
     id: "cat-6",
@@ -91,8 +81,6 @@ const DEFAULT_CATALOG_BOOKS: CatalogBook[] = [
     category: "Programming",
     shelf: "Shelf CS-118",
     availability: "Available",
-    coverImage:
-      "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400&q=80",
   },
   {
     id: "cat-7",
@@ -101,8 +89,6 @@ const DEFAULT_CATALOG_BOOKS: CatalogBook[] = [
     category: "Networking",
     shelf: "Shelf NW-220",
     availability: "Available",
-    coverImage:
-      "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&q=80",
   },
 ];
 

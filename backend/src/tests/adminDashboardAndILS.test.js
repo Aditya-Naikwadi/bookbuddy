@@ -28,7 +28,8 @@ describe('admin Dashboard And I L S Consolidated Suite', () => {
     const jwt = require('jsonwebtoken');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_admin_test';
+    process.env.MONGO_URI =
+      process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_admin_test';
     process.env.JWT_SECRET = 'testjwtadminsecretkey999';
     process.env.JWT_REFRESH_SECRET = 'testjwtadminrefreshsecretkey999';
     process.env.JWT_ACCESS_EXPIRY = '10m';

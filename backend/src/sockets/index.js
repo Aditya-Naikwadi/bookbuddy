@@ -339,6 +339,19 @@ const emitCollegeBroadcast = (collegeId, eventName, data) => {
   }
 };
 
+const emitAnnotationUpsert = (userId, annotation) => {
+  if (io && userId && annotation) {
+    const annData = typeof annotation.toObject === 'function' ? annotation.toObject() : annotation;
+    io.to(`user:${userId}`).emit('annotation:upserted', annData);
+  }
+};
+
+const emitAnnotationDelete = (userId, annotationId, bookId) => {
+  if (io && userId) {
+    io.to(`user:${userId}`).emit('annotation:deleted', { annotationId, bookId });
+  }
+};
+
 const isUserConnected = (userId) => {
   if (!io || !io.sockets || !io.sockets.adapter || !io.sockets.adapter.rooms) return false;
   const room = io.sockets.adapter.rooms.get(`user:${userId}`);
@@ -356,5 +369,7 @@ module.exports = {
   emitLoanCheckout,
   emitLoanReturn,
   emitReservationReady,
+  emitAnnotationUpsert,
+  emitAnnotationDelete,
   events,
 };

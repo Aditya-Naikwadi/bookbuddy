@@ -7,6 +7,12 @@ const mongoose = require('mongoose');
 if (process.env.MONGO_URI && process.env.MONGO_URI.includes('/bookbuddy?')) {
   process.env.MONGO_URI = process.env.MONGO_URI.replace('/bookbuddy?', '/bookbuddy_test?');
 }
+if (
+  process.env.MONGO_URI &&
+  (process.env.MONGO_URI.startsWith('mongodb+srv://') || process.env.MONGO_URI.includes('@'))
+) {
+  global.__ORIGINAL_ATLAS_TEST_URI__ = process.env.MONGO_URI;
+}
 
 jest.setTimeout(30000);
 
@@ -49,9 +55,17 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+  if (
+    global.__ORIGINAL_ATLAS_TEST_URI__ &&
+    (!process.env.MONGO_URI ||
+      process.env.MONGO_URI.includes('localhost') ||
+      process.env.MONGO_URI.includes('127.0.0.1'))
+  ) {
+    process.env.MONGO_URI = global.__ORIGINAL_ATLAS_TEST_URI__;
+  }
   await connectToDb();
   const { resetAllLimiters } = require('../middlewares/rateLimiters');
-  resetAllLimiters();
+  await resetAllLimiters();
 });
 
 // Wrap mongoose connection closing functions to introduce a 500ms grace period.

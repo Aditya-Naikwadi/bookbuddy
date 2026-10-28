@@ -17,6 +17,8 @@ const events = {
   BADGE_UNLOCKED: 'badge:unlocked',
   NOTIFICATION_NEW: 'notification:new',
   DASHBOARD_STATS: 'dashboard:stats',
+  ANNOTATION_UPSERTED: 'annotation:upserted',
+  ANNOTATION_DELETED: 'annotation:deleted',
 
   // === Backward-Compatible Aliases ===
   LOAN_CHECKOUT: 'loan:checkout',

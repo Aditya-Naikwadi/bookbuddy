@@ -39,30 +39,34 @@ const registerUser = async (req, res, next) => {
   try {
     let { studentId, name, email, password, role, collegeId } = req.body;
 
+    const isCollegeStudent = role === 'college-student'; // Backwards compatibility
     const effectiveRole = normalizeRole(role || ROLES.STUDENT);
 
     if ([ROLES.COLLEGE_ADMIN, ROLES.SUPER_ADMIN].includes(effectiveRole)) {
       return next(new AppError('Public registration of administrative roles is forbidden.', 403));
     }
 
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedStudentId = normalizeStudentId(studentId);
+
     if (effectiveRole === ROLES.STUDENT && (collegeId || normalizedStudentId)) {
-      if (!collegeId) {
+      if (!collegeId && isCollegeStudent) {
         return next(
           new AppError('College selection is required. Please select your institution.', 400)
         );
       }
-      const college = await College.findById(collegeId);
-      if (!college || !college.isActive) {
-        return next(new AppError('The specified college is inactive or does not exist.', 400));
+      if (collegeId) {
+        const college = await College.findById(collegeId);
+        if (!college || !college.isActive) {
+          return next(new AppError('The specified college is inactive or does not exist.', 400));
+        }
       }
     } else {
       collegeId = null;
     }
 
-    const normalizedEmail = normalizeEmail(email);
-    const normalizedStudentId = normalizeStudentId(studentId);
     const targetCollegeId = effectiveRole === ROLES.STUDENT && collegeId ? collegeId : null;
-    const isInstitutionalStudent = Boolean(targetCollegeId && effectiveRole === ROLES.STUDENT);
+    const _isInstitutionalStudent = Boolean(targetCollegeId && effectiveRole === ROLES.STUDENT);
 
     // Roster reconciliation: If college student, check for pre-uploaded roster record
     // matching BOTH studentId and email exactly (no fuzzy/name-only matching) with unactivated status
@@ -140,7 +144,7 @@ const registerUser = async (req, res, next) => {
 
     // Task 7: If no roster match is found for a College Student, create a StudentJoinRequest (pending)
     // instead of an active account. Zero tenant dashboard access until approved by college admin.
-    if (isInstitutionalStudent) {
+    if (isCollegeStudent && targetCollegeId) {
       const pendingRequest = await StudentJoinRequest.findOne({
         collegeId: targetCollegeId,
         $or: [{ email: normalizedEmail }, { studentId: normalizedStudentId }],

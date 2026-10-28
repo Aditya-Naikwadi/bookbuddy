@@ -250,7 +250,8 @@ describe('recommendations And Personalization Consolidated Suite', () => {
     const mongoose = require('mongoose');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_personalization_test';
+    process.env.MONGO_URI =
+      process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_personalization_test';
     process.env.JWT_SECRET = 'testjwtpersonalizationsecretkey999';
     process.env.JWT_REFRESH_SECRET = 'testjwtpersonalizationrefreshsecretkey999';
     process.env.JWT_ACCESS_EXPIRY = '10m';

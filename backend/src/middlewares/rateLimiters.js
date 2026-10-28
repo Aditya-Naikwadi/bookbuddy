@@ -370,7 +370,17 @@ const handleRejection = (key, tierName, req, res, next, rej, userId = null) => {
   });
 };
 
-const resetAllLimiters = () => {
+const resetAllLimiters = async () => {
+  if (redisClient && process.env.NODE_ENV === 'test') {
+    try {
+      const keys = await redisClient.keys('rlflx:*');
+      if (keys && keys.length > 0) {
+        await redisClient.del(...keys);
+      }
+    } catch {
+      // Squelch redis rate limiter flush errors in tests
+    }
+  }
   limiters.global = getLimiter(
     'global',
     config.rateLimits.globalMax,

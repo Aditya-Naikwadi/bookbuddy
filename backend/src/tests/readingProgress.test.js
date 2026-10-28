@@ -54,7 +54,8 @@ describe('reading Progress Consolidated Suite', () => {
         const mongoose = require('mongoose');
 
         process.env.NODE_ENV = 'test';
-        process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/bookbuddy_progress_controller_test';
+        process.env.MONGO_URI =
+          process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_progress_controller_test';
         process.env.JWT_SECRET = 'testjwtsecretreadingprogresstestkey123';
         process.env.JWT_REFRESH_SECRET = 'testjwtrefreshreadingprogresstestkey123';
         process.env.JWT_ACCESS_EXPIRY = '10m';

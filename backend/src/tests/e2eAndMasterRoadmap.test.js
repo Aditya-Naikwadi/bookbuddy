@@ -29,7 +29,7 @@ describe('e2e And Master Roadmap Consolidated Suite', () => {
     const mongoose = require('mongoose');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_e2e_test';
+    process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_e2e_test';
     process.env.JWT_SECRET = 'testjwtsecretkey999';
     process.env.JWT_REFRESH_SECRET = 'testjwtrefreshsecretkey999';
     process.env.JWT_ACCESS_EXPIRY = '15m';
@@ -681,7 +681,8 @@ describe('e2e And Master Roadmap Consolidated Suite', () => {
     const mongoose = require('mongoose');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_rest_endpoints_test';
+    process.env.MONGO_URI =
+      process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_rest_endpoints_test';
     process.env.JWT_SECRET = 'testjwtsecretrestkey999';
     process.env.JWT_REFRESH_SECRET = 'testjwtrefreshsecretrestkey999';
     process.env.JWT_ACCESS_EXPIRY = '10m';

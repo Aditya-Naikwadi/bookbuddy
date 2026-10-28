@@ -28,7 +28,8 @@ describe('facility Booking Consolidated Suite', () => {
     const mongoose = require('mongoose');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_facilities_test';
+    process.env.MONGO_URI =
+      process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_facilities_test';
     process.env.JWT_SECRET = 'testjwtfacilitiessecretkey999';
     process.env.JWT_REFRESH_SECRET = 'testjwtfacilitiesrefreshsecretkey999';
     process.env.JWT_ACCESS_EXPIRY = '10m';
@@ -675,7 +676,8 @@ describe('facility Booking Consolidated Suite', () => {
     const mongoose = require('mongoose');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_facility_concurrency_test';
+    process.env.MONGO_URI =
+      process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_facility_concurrency_test';
     process.env.JWT_SECRET = 'testjwtfacilityconcurrencysecretkey123';
     process.env.JWT_REFRESH_SECRET = 'testjwtfacilityconcurrencyrefreshsecretkey123';
     process.env.JWT_ACCESS_EXPIRY = '10m';
@@ -863,7 +865,8 @@ describe('facility Booking Consolidated Suite', () => {
     const mongoose = require('mongoose');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_facility_engine_test';
+    process.env.MONGO_URI =
+      process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_facility_engine_test';
     process.env.JWT_SECRET = 'testjwtfacilityenginesecretkey123';
     process.env.JWT_REFRESH_SECRET = 'testjwtfacilityenginerefreshsecretkey123';
     process.env.JWT_ACCESS_EXPIRY = '10m';
@@ -1812,7 +1815,8 @@ describe('facility Booking Consolidated Suite', () => {
     const mongoose = require('mongoose');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_facility_queue_test';
+    process.env.MONGO_URI =
+      process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_facility_queue_test';
     process.env.JWT_SECRET = 'testjwtfacilityqueuesecretkey123';
     process.env.JWT_REFRESH_SECRET = 'testjwtfacilityqueuerefreshsecretkey123';
     process.env.JWT_ACCESS_EXPIRY = '10m';

@@ -28,7 +28,8 @@ describe('onboarding Lifecycle Consolidated Suite', () => {
 
   describe('[Source: phase0Onboarding.test.js]', () => {
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/bookbuddy_phase0_test';
+    process.env.MONGO_URI =
+      process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_phase0_test';
     process.env.JWT_SECRET = 'testjwtsecretkey999';
     process.env.JWT_REFRESH_SECRET = 'testjwtrefreshsecretkey999';
 
@@ -789,7 +790,8 @@ describe('onboarding Lifecycle Consolidated Suite', () => {
 
   describe('[Source: phase2Optimizations.test.js]', () => {
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_phase2_opt_test';
+    process.env.MONGO_URI =
+      process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_phase2_opt_test';
     process.env.JWT_SECRET = 'test_jwt_secret_phase2_opt';
     process.env.JWT_REFRESH_SECRET = 'test_jwt_refresh_secret_phase2_opt';
     jest.setTimeout(60000);

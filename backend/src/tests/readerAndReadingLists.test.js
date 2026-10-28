@@ -29,7 +29,8 @@ describe('reader And Reading Lists Consolidated Suite', () => {
     const AdmZip = require('adm-zip');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_reader_test';
+    process.env.MONGO_URI =
+      process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_reader_test';
     process.env.JWT_SECRET = 'testjwtsecretreaderkey999';
     process.env.JWT_REFRESH_SECRET = 'testjwtrefreshsecretreaderkey999';
     process.env.JWT_ACCESS_EXPIRY = '10m';
