@@ -15,17 +15,10 @@ const escapeRegExp = (string) => {
 
 const { isSlugReserved } = require('../../constants/reservedSlugs');
 const { revokeAllSessionsForUser } = require('../../services/sessionService');
+const { resolveClientIp } = require('../../utils/clientIpHelper');
 
 const getClientIp = (req) => {
-  return (
-    req?.headers?.['cf-connecting-ip'] ||
-    req?.ip ||
-    (req?.headers?.['x-forwarded-for']
-      ? req.headers['x-forwarded-for'].split(',')[0].trim()
-      : null) ||
-    req?.socket?.remoteAddress ||
-    '127.0.0.1'
-  );
+  return resolveClientIp(req);
 };
 
 const getActorId = (req) => {
@@ -1545,13 +1538,32 @@ const getSystemHealth = async (req, res, next) => {
     const isRedisReady =
       redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect');
 
+    let redisMemory = null;
+    let redisEvictedKeys = 0;
+    if (isRedisReady) {
+      try {
+        const memInfo = await redisClient.info('memory');
+        const statsInfo = await redisClient.info('stats');
+        const usedMemMatch = memInfo && memInfo.match(/used_memory_human:([^\r\n]+)/);
+        const maxMemMatch = memInfo && memInfo.match(/maxmemory_human:([^\r\n]+)/);
+        const evictedMatch = statsInfo && statsInfo.match(/evicted_keys:([^\r\n]+)/);
+        redisMemory = {
+          used: usedMemMatch ? usedMemMatch[1].trim() : undefined,
+          max: maxMemMatch ? maxMemMatch[1].trim() : undefined,
+        };
+        redisEvictedKeys = evictedMatch ? parseInt(evictedMatch[1].trim(), 10) : 0;
+      } catch (_e) {
+        // Non-blocking fallback
+      }
+    }
+
     const cpuUsage = process.cpuUsage();
 
     res.json({
       success: true,
       data: {
         uptimeSeconds: Math.floor(process.uptime()),
-        nodeVersion: process.version ? `${process.version.split('.')[0]}.x` : 'v24.x',
+        nodeVersion: process.version ? `${process.version.split('.')[0]}.x` : 'v22.x',
         pid: '[REDACTED]',
         cpuUsage: {
           userMs: Math.round(cpuUsage.user / 1000),
@@ -1569,6 +1581,9 @@ const getSystemHealth = async (req, res, next) => {
         },
         redis: {
           status: isRedisReady ? 'connected' : 'disabled_fallback',
+          connected: isRedisReady,
+          memory: redisMemory,
+          evictedKeys: redisEvictedKeys,
         },
         timestamp: new Date(),
       },

@@ -2,6 +2,7 @@ const College = require('../models/College');
 const { isSlugReserved } = require('../constants/reservedSlugs');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
+const { isTrustedProxy, cleanIp } = require('../utils/clientIpHelper');
 
 /**
  * Extract candidate tenant subdomain slug from HTTP request
@@ -35,21 +36,31 @@ function extractSubdomain(req) {
     }
   }
 
-  // 2. Check explicit test / proxy / client header
-  const headerSubdomain =
+  // 2. Check explicit proxy/client header ONLY if request is from trusted local proxy
+  const peerIp = cleanIp(
+    req?.socket?.remoteAddress ||
+      req?.connection?.remoteAddress ||
+      req?.rawSocket?.remoteAddress ||
+      ''
+  );
+  // In unit test stubs without socket or behind local Nginx (127.0.0.1 / ::1), trust is true
+  const isLocalProxy = !peerIp || isTrustedProxy(peerIp);
+
+  const rawHeader =
     req?.headers?.['x-tenant-subdomain'] ||
     req?.headers?.['x-college-subdomain'] ||
     req?.headers?.['x-college-slug'];
 
   const cleanHeader =
-    headerSubdomain && typeof headerSubdomain === 'string'
-      ? headerSubdomain.trim().toLowerCase()
+    isLocalProxy && rawHeader && typeof rawHeader === 'string'
+      ? rawHeader.trim().toLowerCase()
       : null;
 
   // 3. Spoofed header detection: If the request arrived on an explicit host subdomain
-  // (e.g. mit.bookbuddy.com), but passed a conflicting tenant header (e.g. x-college-subdomain: stanford),
-  // flag spoofing!
-  if (hostSubdomain && cleanHeader && hostSubdomain !== cleanHeader) {
+  // but passed a conflicting tenant header, flag spoofing!
+  const candidateHeader =
+    rawHeader && typeof rawHeader === 'string' ? rawHeader.trim().toLowerCase() : null;
+  if (hostSubdomain && candidateHeader && hostSubdomain !== candidateHeader) {
     if (req) req.subdomainSpoofDetected = true;
     return '__spoofed_subdomain__';
   }
@@ -88,23 +99,17 @@ const subdomainTenantResolver = async (req, res, next) => {
 
     // Resolve tenant from database
     const college = await College.findOne({ slug: candidateSlug });
-    if (!college) {
-      return next(new AppError(`Institution library portal "${candidateSlug}" not found.`, 404));
-    }
-
-    if (college.status === 'suspended') {
-      return next(
-        new AppError(
-          `The library portal for "${college.name}" is currently suspended. Please contact institutional support.`,
-          403
-        )
-      );
-    }
-
-    if (college.status !== 'active' || college.isActive === false) {
-      return next(
-        new AppError(`The library portal for "${college.name}" is currently inactive.`, 403)
-      );
+    if (
+      !college ||
+      college.status === 'suspended' ||
+      college.status !== 'active' ||
+      college.isActive === false
+    ) {
+      return res.status(404).json({
+        success: false,
+        message: 'Unknown college or institution',
+        code: 'UNKNOWN_COLLEGE',
+      });
     }
 
     // Attach verified subdomain tenant context to request

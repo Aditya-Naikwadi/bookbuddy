@@ -36,7 +36,8 @@ describe('scheduled Tasks And Workers Consolidated Suite', () => {
     const config = require('../config');
 
     process.env.NODE_ENV = 'test';
-    process.env.MONGO_URI = 'mongodb://localhost:27017/bookbuddy_cron_test';
+    process.env.MONGO_URI =
+      process.env.MONGO_URI || 'mongodb://localhost:27017/bookbuddy_cron_test';
     jest.setTimeout(30000);
 
     const {
@@ -104,8 +105,9 @@ describe('scheduled Tasks And Workers Consolidated Suite', () => {
       });
 
       afterAll(async () => {
-        await mongoose.connection.db.dropDatabase();
-        // await // mongoose.connection.close();
+        if (mongoose.connection && mongoose.connection.db) {
+          await mongoose.connection.db.dropDatabase();
+        }
       });
 
       // 1. Fine accrual creates exactly one Fine for a newly-overdue loan, and doesn't duplicate

@@ -5,6 +5,10 @@ const { z } = require('zod');
 // Load environment variables from backend/.env
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
+// Load bundled secrets (SECRETS_JSON or /etc/bookbuddy/secrets.json) if present
+const { loadSecrets } = require('./secretsLoader');
+loadSecrets();
+
 // Support MONGODB_URI alias (Vercel / Mongo Atlas standard)
 if (!process.env.MONGO_URI && process.env.MONGODB_URI) {
   process.env.MONGO_URI = process.env.MONGODB_URI;
@@ -46,6 +50,31 @@ const KNOWN_DEFAULT_SECRETS = [
   'rzp_test_placeholder_id',
   'default_jwt_secret',
   'default_secret',
+  // README & Documentation Sample Placeholders
+  'super_secure_jwt_access_secret_passphrase_min_32_chars',
+  'super_secure_jwt_refresh_secret_passphrase_min_32_chars',
+  'super_secure_cookie_signing_secret_min_32_chars',
+  'replace_with_strong_32_char_jwt_secret_in_production',
+  'replace_with_strong_32_char_jwt_refresh_secret_in_production',
+  'replace_with_strong_32_char_cookie_secret_in_production',
+  'replace_with_strong_16_char_scanner_key',
+  'your_google_oauth_client_id',
+  'your_google_oauth_client_secret',
+  'your_github_oauth_client_id',
+  'your_github_oauth_client_secret',
+  'rzp_test_your_razorpay_key_id',
+  'your_razorpay_secret_key',
+  'your_razorpay_webhook_secret',
+  'your_cloudinary_name',
+  'your_cloudinary_api_key',
+  'your_cloudinary_api_secret',
+  'vercel_blob_token_if_deployed_on_vercel',
+  'app_specific_smtp_password',
+  'ac_your_twilio_account_sid',
+  'your_twilio_auth_token',
+  'your_algolia_app_id',
+  'your_algolia_admin_key',
+  'your_google_books_api_key',
 ];
 
 const envSchema = z.object({
@@ -107,7 +136,15 @@ const envSchema = z.object({
 
   // Mailer
   SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.coerce.number().optional(),
+  SMTP_PORT: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
+    z
+      .number()
+      .refine((val) => val !== 25, {
+        message: 'SMTP port 25 is insecure; use 587 or 465',
+      })
+      .optional()
+  ),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().optional(),
@@ -166,9 +203,32 @@ const envSchema = z.object({
   LOGIN_LOCKOUT_DURATION_S: z.coerce.number().default(900),
   LOGIN_LOCKOUT_WINDOW_S: z.coerce.number().default(900),
   TRUST_PROXY: z.union([z.boolean(), z.number(), z.string()]).default(false),
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).default(1),
+  SOCKET_IO_REDIS_ADAPTER_ENABLED: z
+    .preprocess((val) => {
+      if (val === 'false' || val === false || val === '0') return false;
+      if (val === 'true' || val === true || val === '1') return true;
+      return val;
+    }, z.boolean())
+    .default(true),
+  ENABLE_CRON: z
+    .preprocess((val) => {
+      if (val === 'false' || val === false || val === '0') return false;
+      if (val === 'true' || val === true || val === '1') return true;
+      return val;
+    }, z.boolean())
+    .default(true),
+  TIMEZONE_AWARE_CRON_ENABLED: z
+    .preprocess((val) => {
+      if (val === 'false' || val === false || val === '0') return false;
+      if (val === 'true' || val === true || val === '1') return true;
+      return val;
+    }, z.boolean())
+    .default(true),
 
   // Scanner Gate Verification Security
   SCANNER_API_KEY: z.string().default('bookbuddy_scanner_secret_2026'),
+  COOKIE_SECRET: z.string().optional(),
 
   // Deployment / Platform flags
   VERCEL: z.string().optional(),
@@ -178,6 +238,11 @@ const envSchema = z.object({
   SLACK_WEBHOOK_URL: z.string().optional(),
   SIEM_WEBHOOK_URL: z.string().optional(),
   BLOB_READ_WRITE_TOKEN: z.string().optional(),
+  STORAGE_PROVIDER: z.enum(['local', 'gcs', 's3', 'vercel-blob']).optional(),
+  STORAGE_SIGNING_SECRET: z.string().optional(),
+  STORAGE_LOCAL_DIR: z.string().optional(),
+  MAX_EBOOK_UPLOAD_SIZE_BYTES: z.coerce.number().default(50 * 1024 * 1024),
+  MAX_ROSTER_UPLOAD_SIZE_BYTES: z.coerce.number().default(20 * 1024 * 1024),
   ENABLE_MEMORY_LOGGING: z.string().optional(),
   APP_VERSION: z.string().optional(),
   RENDER_GIT_COMMIT: z.string().optional(),
@@ -196,11 +261,35 @@ const envSchema = z.object({
   TEST_AUDIT_IMMUTABLE: z.string().optional(),
   INSTANCE_ID: z.string().optional(),
   PM2_ID: z.string().optional(),
+  HEALTH_CHECK_TOKEN: z.string().optional(),
+  TRUSTED_PROXIES: z.string().optional(),
+  ADDITIONAL_CORS_ORIGINS: z.string().optional(),
 
-  // Twilio / SMS Integration
+  // Twilio / SMS Integration & Indian DLT
   TWILIO_SID: z.string().optional(),
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_FROM_NUMBER: z.string().optional(),
+  SMS_PROVIDER: z.string().optional(),
+  DLT_ENTITY_ID: z.string().optional(),
+  DLT_DEFAULT_SENDER_HEADER: z.string().optional(),
+  DLT_TEMPLATE_ONBOARDING: z.string().optional(),
+  DLT_TEMPLATE_OVERDUE: z.string().optional(),
+  DLT_TEMPLATE_RESERVATION: z.string().optional(),
+  DLT_TEMPLATE_OTP: z.string().optional(),
+
+  // OAuth Unification
+  OAUTH_STATE_SECRET: z.string().optional(),
+  OAUTH_STATE_SECRET_PREVIOUS: z.string().optional(),
+  AUTH_DOMAIN: z.string().optional(),
+
+  // Cloudflare Origin Isolation & Firewall Enforcement (Step 37)
+  CLOUDFLARE_ENFORCE: z.string().optional(),
+  CLOUDFLARE_ORIGIN_SECRET: z.string().optional(),
+
+  // Zero-Downtime Secret Rotation Readiness (Step 38)
+  JWT_SECRET_PREVIOUS: z.string().optional(),
+  JWT_REFRESH_SECRET_PREVIOUS: z.string().optional(),
+  STORAGE_SIGNING_SECRET_PREVIOUS: z.string().optional(),
 });
 
 function checkDefaultCredentials(envData) {
@@ -232,8 +321,18 @@ function checkDefaultCredentials(envData) {
     errors.push('JWT_REFRESH_SECRET must be different from JWT_SECRET in production');
   }
 
-  if (envData.SCANNER_API_KEY === 'bookbuddy_scanner_secret_2026') {
+  if (isKnownDefault(envData.COOKIE_SECRET)) {
+    errors.push('COOKIE_SECRET cannot be a default or known weak secret in production');
+  }
+
+  if (envData.COOKIE_SECRET && envData.COOKIE_SECRET.length < 32) {
+    errors.push('COOKIE_SECRET must be at least 32 characters (256 bits) in production');
+  }
+
+  if (isKnownDefault(envData.SCANNER_API_KEY)) {
     errors.push('SCANNER_API_KEY must not use the default fallback key in production');
+  } else if (envData.SCANNER_API_KEY && envData.SCANNER_API_KEY.length < 16) {
+    errors.push('SCANNER_API_KEY must be at least 16 characters in production');
   }
 
   if (envData.MONGO_URI) {

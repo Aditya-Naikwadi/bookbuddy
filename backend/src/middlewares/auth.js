@@ -2,6 +2,8 @@ const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const { verifyAccessToken, isTokenBlacklisted } = require('../utils/token');
 
+let maintenanceCache = { isMaintenance: false, expiresAt: 0 };
+
 const protect = async (req, res, next) => {
   // Strictly enforce private no-cache on all protected per-user routes
   res.set({
@@ -60,20 +62,30 @@ const protect = async (req, res, next) => {
 
     // Check global system maintenance mode for non-super-admins
     if (user.role !== 'super-admin') {
+      const now = Date.now();
+      const cacheWindowMs = process.env.NODE_ENV === 'test' ? 0 : 5000;
       let isMaintenance = false;
-      if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {
-        try {
-          const cachedm = await redisClient.get('system:setting:maintenanceMode');
-          if (cachedm === 'true') isMaintenance = true;
-        } catch {
-          // ignore
+
+      if (cacheWindowMs > 0 && now < maintenanceCache.expiresAt) {
+        isMaintenance = maintenanceCache.isMaintenance;
+      } else {
+        if (redisClient && (redisClient.status === 'ready' || redisClient.status === 'connect')) {
+          try {
+            const cachedm = await redisClient.get('system:setting:maintenanceMode');
+            if (cachedm === 'true') isMaintenance = true;
+          } catch {
+            // ignore
+          }
         }
-      }
-      if (!isMaintenance) {
-        const SystemSetting = require('../models/SystemSetting');
-        const mSetting = await SystemSetting.findOne({ key: 'maintenanceMode' });
-        if (mSetting && (mSetting.value === true || mSetting.value === 'true')) {
-          isMaintenance = true;
+        if (!isMaintenance) {
+          const SystemSetting = require('../models/SystemSetting');
+          const mSetting = await SystemSetting.findOne({ key: 'maintenanceMode' });
+          if (mSetting && (mSetting.value === true || mSetting.value === 'true')) {
+            isMaintenance = true;
+          }
+        }
+        if (cacheWindowMs > 0) {
+          maintenanceCache = { isMaintenance, expiresAt: now + cacheWindowMs };
         }
       }
       if (isMaintenance) {

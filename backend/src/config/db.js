@@ -59,7 +59,7 @@ const connectDB = async () => {
     }
   }
 
-  const defaultPoolSize = env.VERCEL ? 5 : 25;
+  const defaultPoolSize = env.VERCEL ? 5 : 10;
   const options = {
     maxPoolSize: env.MONGO_MAX_POOL_SIZE || defaultPoolSize,
     serverSelectionTimeoutMS: 15000,

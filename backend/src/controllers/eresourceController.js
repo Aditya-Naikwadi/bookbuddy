@@ -90,18 +90,27 @@ const listInternalResources = asyncHandler(async (req, res) => {
 // @access  Private (Student)
 const submitEResource = asyncHandler(async (req, res) => {
   const userId = req.user.id || req.user._id;
-  const { title, category, description } = req.body;
+  const {
+    title,
+    category,
+    description,
+    fileKey,
+    fileUrl: customFileUrl,
+    fileSizeBytes: customSizeBytes,
+    type: customType,
+  } = req.body;
 
   if (!title) {
     throw new AppError('Title is required for material submission.', 400);
   }
+
+  const incomingBytes = customSizeBytes || (req.file ? req.file.size : 1048576);
 
   // Storage Quota Enforcement
   if (req.user.collegeId) {
     const College = require('../models/College');
     const college = await College.findById(req.user.collegeId).select('tierLimits');
     if (college && college.tierLimits && college.tierLimits.maxStorageBytes) {
-      const incomingBytes = req.file ? req.file.size || 1048576 : 1048576;
       const currentAggregate = await EResource.aggregate([
         { $match: { collegeId: req.user.collegeId } },
         { $group: { _id: null, totalBytes: { $sum: '$fileSizeBytes' } } },
@@ -116,21 +125,36 @@ const submitEResource = asyncHandler(async (req, res) => {
     }
   }
 
-  const fileUrl = req.file
-    ? `/uploads/ebooks/${req.file.filename}`
-    : `/uploads/ebooks/student-${Date.now()}.pdf`;
+  const fileUrl = customFileUrl
+    ? customFileUrl
+    : req.file
+      ? `/uploads/ebooks/${req.file.filename}`
+      : fileKey
+        ? `/uploads/${fileKey}`
+        : `/uploads/ebooks/student-${Date.now()}.pdf`;
+
+  const resourceType =
+    customType ||
+    (req.file && req.file.originalname?.endsWith('.epub')
+      ? 'epub'
+      : fileKey && fileKey.endsWith('.epub')
+        ? 'epub'
+        : 'pdf');
 
   const resource = await EResource.create({
     collegeId: req.user.collegeId,
     title,
+    author: req.body.author || req.user.name || 'Student Contributor',
     category: category || 'General Academic',
     description: description || '',
-    type: req.file && req.file.originalname?.endsWith('.epub') ? 'epub' : 'pdf',
+    type: resourceType,
     fileUrl,
     uploadedBy: userId,
     moderationStatus: 'pending',
     source: 'internal',
-    sourceType: 'student-upload',
+    sourceType: 'internal-upload',
+    storageKey: fileKey || (req.file ? `uploads/ebooks/${req.file.filename}` : null),
+    fileSizeBytes: incomingBytes,
     uploadStatus: 'available',
   });
 
@@ -229,25 +253,39 @@ const getSignedDownloadUrl = asyncHandler(async (req, res) => {
   }
 
   // Create audit record in DownloadLog on every signed URL issuance
+  const { getClientIp } = require('../utils/clientIpHelper');
   await DownloadLog.create({
     userId: req.user.id || req.user._id,
     resourceId: resource._id,
+    collegeId: resource.collegeId || req.user.collegeId,
+    ipAddress: getClientIp(req),
     downloadedAt: new Date(),
   });
 
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 min TTL
-  const token = jwt.sign(
-    {
-      userId: req.user.id || req.user._id,
-      collegeId: req.user.collegeId,
-      resourceId: resource._id,
-      isDownloadable: true,
-    },
-    process.env.JWT_SECRET || (process.env.NODE_ENV === 'test' ? 'testjwtsecretkey999' : ''),
-    { expiresIn: '15m' }
-  );
+  let downloadUrl;
 
-  const downloadUrl = `${resource.fileUrl}?token=${token}&expires=${expiresAt.getTime()}`;
+  if (resource.storageKey) {
+    const storage = require('../utils/storage');
+    const signed = await storage.generatePresignedDownloadUrl({
+      fileKey: resource.storageKey,
+      fileName: resource.title,
+      expiresInSeconds: 900,
+    });
+    downloadUrl = signed.downloadUrl;
+  } else {
+    const token = jwt.sign(
+      {
+        userId: req.user.id || req.user._id,
+        collegeId: req.user.collegeId,
+        resourceId: resource._id,
+        isDownloadable: true,
+      },
+      process.env.JWT_SECRET || (process.env.NODE_ENV === 'test' ? 'testjwtsecretkey999' : ''),
+      { expiresIn: '15m' }
+    );
+    downloadUrl = `${resource.fileUrl}?token=${token}&expires=${expiresAt.getTime()}`;
+  }
 
   res.json({
     success: true,

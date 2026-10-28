@@ -46,8 +46,8 @@ const isAllowedOrigin = (origin, host) => {
     return true;
   }
 
-  // Tenant subdomain wildcard matching (e.g., https://mit.bookbuddy.com)
-  if (/^https:\/\/(?:[a-z0-9-]+\.)?bookbuddy\.com(?::\d+)?$/i.test(trimmed)) {
+  // Tenant subdomain wildcard matching (e.g., https://mit.bookbuddy.app or https://mit.bookbuddy.com)
+  if (/^https:\/\/(?:[a-z0-9-]+\.)?bookbuddy\.(?:app|com)(?::\d+)?$/i.test(trimmed)) {
     return true;
   }
 
@@ -143,6 +143,8 @@ const validateCsrf = (req, res, next) => {
     '/api/v1/auth/google',
     '/api/v1/registration',
     '/api/v1/auth/refresh',
+    '/api/v1/uploads/direct',
+    '/api/uploads/direct',
   ];
   const isExempt = exemptPaths.some(
     (path) => req.originalUrl?.startsWith(path) || req.url?.startsWith(path)
@@ -152,6 +154,13 @@ const validateCsrf = (req, res, next) => {
   const csrfHeader = req.headers['x-csrf-token'] || req.body?._csrf;
 
   if (isExempt && (!csrfCookie || !csrfHeader)) {
+    return next();
+  }
+
+  // Stateless API client exemption: requests sending explicit Bearer token authorization
+  // without ambient browser cookies are not susceptible to browser ambient-credential CSRF
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ') && !csrfCookie) {
     return next();
   }
 

@@ -40,6 +40,9 @@ router.post(
   uploadEbook
 );
 
+// Direct-to-storage upload registration endpoint
+router.post('/register-upload', expensiveRouteLimiter, uploadEbook);
+
 // Ebook streaming (with range requests support and rate limits)
 router.get('/:resourceId/content', expensiveRouteLimiter, streamEbookContent);
 

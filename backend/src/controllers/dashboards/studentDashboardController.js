@@ -444,17 +444,48 @@ const getStudentEResourceDetails = async (req, res, next) => {
 // @access  Private/Student
 const uploadStudentEResource = async (req, res, next) => {
   try {
-    const { title, author, type, fileUrl, category } = req.body;
+    const { title, author, type, fileUrl, category, fileKey, fileSizeBytes } = req.body;
+
+    const incomingBytes = fileSizeBytes || 1048576;
+
+    // Institutional storage quota enforcement
+    if (req.user.collegeId) {
+      const College = require('../../models/College');
+      const college = await College.findById(req.user.collegeId).select('tierLimits');
+      if (college && college.tierLimits && college.tierLimits.maxStorageBytes) {
+        const currentAggregate = await EResource.aggregate([
+          { $match: { collegeId: req.user.collegeId } },
+          { $group: { _id: null, totalBytes: { $sum: '$fileSizeBytes' } } },
+        ]);
+        const currentBytes = currentAggregate[0]?.totalBytes || 0;
+        if (currentBytes + incomingBytes > college.tierLimits.maxStorageBytes) {
+          throw new AppError(
+            'Institutional storage quota exceeded. Upload rejected until capacity is upgraded.',
+            400
+          );
+        }
+      }
+    }
+
+    const effectiveFileUrl = fileUrl || (fileKey ? `/uploads/${fileKey}` : null);
+    if (!effectiveFileUrl) {
+      throw new AppError('A valid fileUrl or fileKey is required.', 400);
+    }
 
     const resource = await EResource.create({
       collegeId: req.user.collegeId,
       title,
-      author,
-      type,
-      fileUrl,
+      author: author || 'Unknown Author',
+      type: type || (fileKey && fileKey.endsWith('.epub') ? 'epub' : 'pdf'),
+      fileUrl: effectiveFileUrl,
+      storageKey: fileKey || null,
+      fileSizeBytes: incomingBytes,
       uploadedBy: req.user.id,
       moderationStatus: 'pending',
-      category,
+      category: category || 'General Academic',
+      source: 'internal',
+      sourceType: 'student-upload',
+      uploadStatus: 'available',
     });
 
     res.status(201).json({

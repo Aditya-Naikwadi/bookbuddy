@@ -4,6 +4,16 @@ const prettierConfig = require('eslint-config-prettier');
 const globals = require('globals');
 
 module.exports = [
+  {
+    ignores: [
+      '**/node_modules/**',
+      '**/coverage/**',
+      '**/dist/**',
+      '**/public/**',
+      '**/uploads/**',
+      '**/backups/**',
+    ],
+  },
   js.configs.recommended,
   prettierConfig,
   {
@@ -39,8 +49,5 @@ module.exports = [
     rules: {
       'no-unused-vars': 'off',
     },
-  },
-  {
-    ignores: ['node_modules/', 'coverage/', 'dist/'],
   },
 ];

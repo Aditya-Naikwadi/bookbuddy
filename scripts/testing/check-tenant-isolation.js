@@ -35,6 +35,7 @@ const GLOBAL_MODELS = new Set([
   "Tag",
   "StreakReward",
   "CronRunLog",
+  "CronJobLock",
   "Service",
   "Badge",
   "ILLRequest", // Cross-college interlibrary loan transfer
@@ -51,6 +52,7 @@ const USER_SCOPED_MODELS = new Set([
   "NotificationPreference",
   "Payment",
   "ReadingProgress",
+  "SMSDeliveryLog",
   "UserBadge",
   "UserSticker",
 ]);

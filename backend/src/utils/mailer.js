@@ -15,6 +15,16 @@ const getTransporter = async () => {
   const smtpUser = process.env.SMTP_USER || config.smtpUser;
   const smtpPass = process.env.SMTP_PASS || config.smtpPass;
 
+  if (smtpPort === 25) {
+    throw new Error(
+      'Insecure SMTP port 25 is prohibited. Use port 587 (STARTTLS) or port 465 (TLS/SSL).'
+    );
+  }
+
+  const connectionTimeout = parseInt(process.env.SMTP_CONNECTION_TIMEOUT_MS || '10000', 10);
+  const greetingTimeout = parseInt(process.env.SMTP_GREETING_TIMEOUT_MS || '10000', 10);
+  const socketTimeout = parseInt(process.env.SMTP_SOCKET_TIMEOUT_MS || '15000', 10);
+
   if (smtpHost && smtpUser) {
     logger.info(`[Mailer] Initializing production SMTP transporter for ${smtpHost}:${smtpPort}`);
     transporter = nodemailer.createTransport({
@@ -25,6 +35,9 @@ const getTransporter = async () => {
         user: smtpUser,
         pass: smtpPass,
       },
+      connectionTimeout,
+      greetingTimeout,
+      socketTimeout,
     });
   } else {
     logger.info('[Mailer] No production SMTP configured. Creating Ethereal test account...');
@@ -38,6 +51,9 @@ const getTransporter = async () => {
           user: testAccount.user,
           pass: testAccount.pass,
         },
+        connectionTimeout,
+        greetingTimeout,
+        socketTimeout,
       });
       logger.info(`[Mailer] Ethereal test account created: ${testAccount.user}`);
     } catch (err) {
@@ -54,14 +70,42 @@ const getTransporter = async () => {
 };
 
 /**
- * Async Non-Blocking Dispatch Queue
+ * Determines whether an SMTP or network error is transient and eligible for retry.
  */
-const queueEmail = (mailOptions) => {
-  if (process.env.NODE_ENV === 'test') {
-    logger.info(`[Mailer Test Mock] Synchronous email stubbed for ${mailOptions.to}`);
-    return Promise.resolve({ success: true, messageId: 'test-mock-id' });
+const isTransientError = (err) => {
+  if (!err) return false;
+  const networkCodes = ['ETIMEDOUT', 'ECONNRESET', 'ESOCKET', 'EPIPE', 'ECONNREFUSED', 'EAI_AGAIN'];
+  if (err.code && networkCodes.includes(err.code)) {
+    return true;
   }
-  setImmediate(async () => {
+  if (err.responseCode && err.responseCode >= 400 && err.responseCode < 500) {
+    return true;
+  }
+  const msg = (err.message || '').toLowerCase();
+  if (
+    msg.includes('timeout') ||
+    msg.includes('greeting never received') ||
+    msg.includes('rate limit')
+  ) {
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Dispatches email with exponential backoff retry for transient failures.
+ *
+ * @param {Object} mailOptions
+ * @param {number} [maxAttempts=3]
+ * @param {number} [initialDelayMs=500]
+ * @returns {Promise<{ success: boolean, messageId?: string, error?: string, attempts: number }>}
+ */
+const sendEmailWithRetry = async (mailOptions, maxAttempts = 3, initialDelayMs = 500) => {
+  let attempt = 0;
+  let lastError = null;
+
+  while (attempt < maxAttempts) {
+    attempt++;
     try {
       const activeTransporter = await getTransporter();
       const info = await activeTransporter.sendMail({
@@ -77,14 +121,48 @@ const queueEmail = (mailOptions) => {
 
       const previewUrl = nodemailer.getTestMessageUrl(info);
       logger.info(
-        `[Mailer Async] Email sent successfully to ${mailOptions.to} (MessageId: ${info.messageId})${
+        `[Mailer Async] Email sent successfully to ${mailOptions.to} (MessageId: ${info.messageId}, attempt: ${attempt})${
           previewUrl ? ` - Preview URL: ${previewUrl}` : ''
         }`
       );
-      return { success: true, messageId: info.messageId, previewUrl };
+      return { success: true, messageId: info.messageId, previewUrl, attempts: attempt };
     } catch (err) {
-      logger.error(`[Mailer Async] Failed to deliver email to ${mailOptions.to}: ${err.message}`);
-      return { success: false, error: err.message };
+      lastError = err;
+      const transient = isTransientError(err);
+      logger.warn(
+        `[Mailer Async] Delivery attempt ${attempt}/${maxAttempts} failed for ${mailOptions.to}: ${err.message} (transient: ${transient})`
+      );
+
+      if (!transient || attempt >= maxAttempts) {
+        break;
+      }
+
+      // Exponential backoff with jitter
+      const delay = initialDelayMs * Math.pow(2, attempt - 1) + Math.floor(Math.random() * 100);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  logger.error(
+    `[Mailer Async] Permanent failure delivering email to ${mailOptions.to} after ${attempt} attempts: ${lastError?.message}`
+  );
+  return { success: false, error: lastError?.message || 'Unknown SMTP error', attempts: attempt };
+};
+
+/**
+ * Async Non-Blocking Dispatch Queue (wraps sendEmailWithRetry in setImmediate)
+ */
+const queueEmail = (mailOptions) => {
+  if (process.env.NODE_ENV === 'test' && !mailOptions.forceSendInTest) {
+    logger.info(`[Mailer Test Mock] Synchronous email stubbed for ${mailOptions.to}`);
+    return Promise.resolve({ success: true, messageId: 'test-mock-id', attempts: 1 });
+  }
+
+  setImmediate(async () => {
+    try {
+      await sendEmailWithRetry(mailOptions);
+    } catch (err) {
+      logger.error(`[Mailer Async Queue] Uncaught error in email dispatch: ${err.message}`);
     }
   });
 };
@@ -162,6 +240,8 @@ module.exports = {
   getTransporter,
   queueEmail,
   sendMail: queueEmail,
+  sendEmailWithRetry,
+  isTransientError,
   sendOverdueFineEmail,
   sendReservationReadyEmail,
   sendPasswordResetEmail,

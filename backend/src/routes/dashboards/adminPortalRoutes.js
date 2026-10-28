@@ -54,13 +54,20 @@ const { moderateEResourceRouteSchema } = require('@bookbuddy/shared/schemas/mode
 const { userLimiter, expensiveRouteLimiter } = require('../../middlewares/rateLimiters');
 const AppError = require('../../utils/AppError');
 
+const { extractSubdomain } = require('../../middlewares/subdomainTenantResolver');
+
 // Strictly block Super Admin portal access from any college tenant subdomain
 router.use((req, res, next) => {
+  const candidateSubdomain = extractSubdomain(req);
+  const isTenantSubdomain =
+    candidateSubdomain && !['admin', 'api', 'localhost'].includes(candidateSubdomain);
+
   if (
     req.subdomainTenant ||
     req.headers['x-tenant-subdomain'] ||
     req.headers['x-college-subdomain'] ||
-    req.headers['x-college-slug']
+    req.headers['x-college-slug'] ||
+    isTenantSubdomain
   ) {
     return next(
       new AppError(

@@ -30,8 +30,9 @@ const cacheHelper = {
   set: async (key, value, ttlSeconds = 300) => {
     try {
       if (redisClient && redisClient.status === 'ready') {
-        await redisClient.set(key, JSON.stringify(value), 'EX', ttlSeconds);
-        logger.info(`Cache Write: ${key} with TTL ${ttlSeconds}s`);
+        const ttl = ttlSeconds && Number(ttlSeconds) > 0 ? Number(ttlSeconds) : 300;
+        await redisClient.set(key, JSON.stringify(value), 'EX', ttl);
+        logger.info(`Cache Write: ${key} with TTL ${ttl}s`);
       }
     } catch (err) {
       logger.warn(`Redis SET cache failure for key ${key}: ${err.message}`);

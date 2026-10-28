@@ -232,6 +232,7 @@ const revokeAllSessionsForUser = async (userId) => {
 module.exports = {
   createSession,
   getSession,
+  getSessionByHash,
   rotateSession,
   revokeSession,
   revokeAllSessionsForUser,

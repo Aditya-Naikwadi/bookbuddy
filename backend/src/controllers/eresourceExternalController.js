@@ -134,7 +134,7 @@ const proxyContent = asyncHandler(async (req, res) => {
 
     // Pass along headers and apply browser sandboxing to prevent script execution on our origin
     res.setHeader('Content-Type', response.headers['content-type'] || 'text/html');
-    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache proxied content for 1 hour
+    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800'); // 1 day browser, 7 days Cloudflare edge
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
 

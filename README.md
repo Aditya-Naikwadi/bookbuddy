@@ -9,7 +9,7 @@ BookBuddy is a production-grade, multi-tenant Integrated Library System (ILS) an
 [![CI Pipeline](https://github.com/Aditya-Naikwadi/BookBuddy/actions/workflows/ci.yml/badge.svg)](https://github.com/Aditya-Naikwadi/BookBuddy/actions/workflows/ci.yml)
 [![Multi-Layer Verification](https://github.com/Aditya-Naikwadi/BookBuddy/actions/workflows/multi-layer-verification.yml/badge.svg)](https://github.com/Aditya-Naikwadi/BookBuddy/actions/workflows/multi-layer-verification.yml)
 [![Production Heartbeat](https://github.com/Aditya-Naikwadi/BookBuddy/actions/workflows/production-heartbeat.yml/badge.svg)](https://github.com/Aditya-Naikwadi/BookBuddy/actions/workflows/production-heartbeat.yml)
-![Node.js](https://img.shields.io/badge/Node.js-24.x-339933?logo=node.js&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-22.x_LTS-339933?logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-5.x-000000?logo=express&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-6.x-47A248?logo=mongodb&logoColor=white)
 ![Mongoose](https://img.shields.io/badge/Mongoose-9.x-880000?logo=mongoose&logoColor=white)
@@ -951,14 +951,14 @@ REDIS_URL=redis://127.0.0.1:6379
 # AUTHENTICATION, TOKENS & HARDWARE SECURITY
 # ==============================================================================
 # Minimum 32 characters each
-JWT_SECRET=super_secure_jwt_access_secret_passphrase_min_32_chars
-JWT_REFRESH_SECRET=super_secure_jwt_refresh_secret_passphrase_min_32_chars
+JWT_SECRET=REPLACE_WITH_STRONG_32_CHAR_JWT_SECRET_IN_PRODUCTION
+JWT_REFRESH_SECRET=REPLACE_WITH_STRONG_32_CHAR_JWT_REFRESH_SECRET_IN_PRODUCTION
 JWT_ACCESS_EXPIRY=15m
 JWT_REFRESH_EXPIRY=7d
-COOKIE_SECRET=super_secure_cookie_signing_secret_min_32_chars
+COOKIE_SECRET=REPLACE_WITH_STRONG_32_CHAR_COOKIE_SECRET_IN_PRODUCTION
 
 # Hardware Scanner Gate Secret (for library turnstiles and circulation kiosks)
-SCANNER_API_KEY=bookbuddy_scanner_secret_2026
+SCANNER_API_KEY=REPLACE_WITH_STRONG_16_CHAR_SCANNER_KEY
 
 # ==============================================================================
 # THIRD-PARTY OAUTH PROVIDERS (PASSPORT.JS)

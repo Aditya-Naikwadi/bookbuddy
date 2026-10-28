@@ -47,29 +47,78 @@ router.post('/login', loginRateLimiter, authLimiter, validate(loginSchema), logi
 // @access  Public
 router.post('/google', authLimiter, googleAuthHandler);
 
+const { generateOAuthState, verifyOAuthState } = require('../utils/oauthStateHelper');
+
+// Login redirect with signed state
+const initiateGoogleOAuth = (req, res, next) => {
+  const state = generateOAuthState({
+    collegeId: req.query.collegeId,
+    collegeSlug: req.query.collegeSlug,
+    returnUrl: req.query.returnUrl,
+    provider: 'google',
+  });
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    state,
+    session: false,
+  })(req, res, next);
+};
+
+const initiateGitHubOAuth = (req, res, next) => {
+  const state = generateOAuthState({
+    collegeId: req.query.collegeId,
+    collegeSlug: req.query.collegeSlug,
+    returnUrl: req.query.returnUrl,
+    provider: 'github',
+  });
+  passport.authenticate('github', {
+    scope: ['user:email'],
+    state,
+    session: false,
+  })(req, res, next);
+};
+
+// Callback state verification middleware
+const verifyOAuthStateMiddleware = (req, res, next) => {
+  if (req.query.state) {
+    const verified = verifyOAuthState(req.query.state);
+    if (!verified.valid) {
+      const acceptsHtml = req.headers.accept && req.headers.accept.includes('text/html');
+      if (acceptsHtml) {
+        return res.redirect('/login?error=invalid_oauth_state');
+      }
+      return res.status(400).json({
+        success: false,
+        message: verified.error || 'Invalid or expired OAuth state parameter',
+      });
+    }
+    req.verifiedOAuthState = verified.payload;
+  }
+  next();
+};
+
 // @desc    Passport Google OAuth 2.0 Login Redirect
 // @access  Public
-router.get(
-  '/google',
-  passport.authenticate('google', { scope: ['profile', 'email'], session: false })
-);
+router.get('/google', initiateGoogleOAuth);
 
 // @desc    Passport Google OAuth 2.0 Callback
 // @access  Public
 router.get(
   '/google/callback',
+  verifyOAuthStateMiddleware,
   passport.authenticate('google', { session: false, failureRedirect: '/login' }),
   handleOAuthCallback
 );
 
 // @desc    Passport GitHub OAuth Login Redirect
 // @access  Public
-router.get('/github', passport.authenticate('github', { scope: ['user:email'], session: false }));
+router.get('/github', initiateGitHubOAuth);
 
 // @desc    Passport GitHub OAuth Callback
 // @access  Public
 router.get(
   '/github/callback',
+  verifyOAuthStateMiddleware,
   passport.authenticate('github', { session: false, failureRedirect: '/login' }),
   handleOAuthCallback
 );

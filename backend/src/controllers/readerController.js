@@ -71,8 +71,55 @@ const validateEPUBStructure = (filePath) => {
  */
 const uploadEbook = async (req, res, next) => {
   try {
+    const { resolveStorageLocalPath } = require('../utils/storage');
+
+    // Case 1: Direct-to-storage presigned upload registration (Zero-Express payload)
+    if (req.body && req.body.fileKey) {
+      const fileKey = req.body.fileKey;
+      const targetPath = resolveStorageLocalPath(fileKey);
+
+      if (!fs.existsSync(targetPath)) {
+        throw new AppError('Uploaded resource file could not be located in storage.', 404);
+      }
+
+      const isEpub = fileKey.toLowerCase().endsWith('.epub');
+      if (isEpub) {
+        const check = validateEPUBStructure(targetPath);
+        if (!check.valid) {
+          if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
+          throw new AppError(`EPUB validation failed: ${check.reason}`, 400);
+        }
+      }
+
+      const stats = fs.statSync(targetPath);
+
+      const resource = await EResource.create({
+        collegeId: req.user.collegeId,
+        title: req.body.title || path.basename(fileKey).replace(/\.[^/.]+$/, ''),
+        author: req.body.author || 'Unknown Author',
+        category: req.body.category || 'Uploaded Textbooks',
+        type: isEpub ? 'epub' : 'pdf',
+        fileUrl: `/uploads/${fileKey}`,
+        uploadedBy: req.user.id,
+        moderationStatus: 'approved',
+        source: 'internal',
+        sourceType: 'internal-upload',
+        storageKey: fileKey,
+        fileSizeBytes: req.body.fileSizeBytes || stats.size,
+        mimeType: isEpub ? 'application/epub+zip' : 'application/pdf',
+        uploadStatus: 'available',
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Ebook registered and validated from storage successfully.',
+        data: resource,
+      });
+    }
+
+    // Case 2: Multipart form upload (Legacy fallback)
     if (!req.file) {
-      throw new AppError('No file was uploaded.', 400);
+      throw new AppError('No file was uploaded and no fileKey was provided.', 400);
     }
 
     const tempPath = req.file.path;
@@ -129,7 +176,7 @@ const uploadEbook = async (req, res, next) => {
 };
 
 /**
- * @desc    Stream EPUB/text content supporting Range requests
+ * @desc    Stream EPUB/text content supporting Range requests or redirect to signed URL
  * @route   GET /api/reader/:resourceId/content
  * @access  Private
  */
@@ -152,6 +199,21 @@ const streamEbookContent = async (req, res, next) => {
 
     if (!isAllowedStatus && req.user.role !== 'super-admin' && req.user.role !== 'college-admin') {
       throw new AppError('This e-resource is not published yet.', 403);
+    }
+
+    // Download audit logging
+    const DownloadLog = require('../models/DownloadLog');
+    const { getClientIp } = require('../utils/clientIpHelper');
+    try {
+      await DownloadLog.create({
+        userId: req.user.id || req.user._id,
+        resourceId: resource._id,
+        collegeId: resource.collegeId || req.user.collegeId,
+        ipAddress: getClientIp(req),
+        downloadedAt: new Date(),
+      });
+    } catch (_logErr) {
+      // Non-blocking log failure
     }
 
     if (resource.source === 'gutenberg') {
@@ -182,8 +244,9 @@ const streamEbookContent = async (req, res, next) => {
         responseType: 'stream',
       });
 
-      // Strictly backend-controlled headers to block scripting attacks
+      // Strictly backend-controlled headers and Cloudflare edge cache headers
       res.setHeader('Content-Type', format === 'epub' ? 'application/epub+zip' : 'text/plain');
+      res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800'); // 1 day browser, 7 days Cloudflare edge
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
 
@@ -198,17 +261,54 @@ const streamEbookContent = async (req, res, next) => {
 
       response.data.pipe(res);
     } else {
-      // Local uploads
+      // Internal resources
       if (!resource.storageKey) {
         throw new AppError('Internal storage key is missing for this resource.', 404);
       }
 
-      const absolutePath = path.join(__dirname, '../..', resource.storageKey);
+      // Check if client requested signed URL metadata instead of direct binary stream
+      if (req.query.format === 'json' || req.headers.accept?.includes('application/json')) {
+        const storage = require('../utils/storage');
+        const signed = await storage.generatePresignedDownloadUrl({
+          fileKey: resource.storageKey,
+          fileName: resource.title,
+          expiresInSeconds: 900,
+        });
+
+        return res.json({
+          success: true,
+          downloadUrl: signed.downloadUrl,
+          expiresInSeconds: signed.expiresInSeconds,
+          resourceId: resource._id,
+          title: resource.title,
+        });
+      }
+
+      // If client requests direct redirect to signed storage URL
+      if (req.query.redirect === 'true') {
+        const storage = require('../utils/storage');
+        const signed = await storage.generatePresignedDownloadUrl({
+          fileKey: resource.storageKey,
+          fileName: resource.title,
+          expiresInSeconds: 900,
+        });
+
+        return res.redirect(302, signed.downloadUrl);
+      }
+
+      // Proxied byte streaming with HTTP 206 partial content support
+      const { resolveStorageLocalPath } = require('../utils/storage');
+      let absolutePath;
+      try {
+        absolutePath = resolveStorageLocalPath(resource.storageKey);
+      } catch {
+        absolutePath = path.join(__dirname, '../..', resource.storageKey);
+      }
+
       if (!fs.existsSync(absolutePath)) {
         throw new AppError('Resource file could not be located in object storage.', 404);
       }
 
-      // Set backend-determined headers
       const isPdf =
         resource.type === 'pdf' ||
         resource.fileType === 'pdf' ||
@@ -217,7 +317,7 @@ const streamEbookContent = async (req, res, next) => {
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
 
-      // res.sendFile automatically handles HTTP Range requests and 206 status codes!
+      // res.sendFile automatically handles HTTP Range requests and 206 status codes
       res.sendFile(absolutePath);
     }
   } catch (err) {

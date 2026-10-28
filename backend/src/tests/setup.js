@@ -11,6 +11,15 @@ if (process.env.MONGO_URI && process.env.MONGO_URI.includes('/bookbuddy?')) {
 jest.setTimeout(30000);
 
 const connectToDb = async () => {
+  if (mongoose.connection.readyState === 1) return;
+  if (mongoose.connection.readyState === 2) {
+    try {
+      await mongoose.connection.asPromise();
+    } catch {
+      // Ignore
+    }
+    return;
+  }
   if (mongoose.connection.readyState === 0) {
     const primaryUri = process.env.MONGO_URI;
     const fallbackUris = [
@@ -60,3 +69,16 @@ mongoose.disconnect = async function (...args) {
   await new Promise((resolve) => setTimeout(resolve, 500));
   return originalDisconnect.apply(this, args);
 };
+
+afterAll(async () => {
+  try {
+    if (mongoose.connection.readyState === 2) {
+      await mongoose.connection.asPromise().catch(() => {});
+    }
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.disconnect();
+    }
+  } catch {
+    // Squelch teardown errors
+  }
+});

@@ -49,6 +49,12 @@ const config = {
     durationS: env.LOGIN_LOCKOUT_DURATION_S,
     windowS: env.LOGIN_LOCKOUT_WINDOW_S,
   },
+  trustProxyHops: env.TRUST_PROXY_HOPS !== undefined ? env.TRUST_PROXY_HOPS : 1,
+  socketIoRedisAdapterEnabled:
+    env.SOCKET_IO_REDIS_ADAPTER_ENABLED !== undefined ? env.SOCKET_IO_REDIS_ADAPTER_ENABLED : true,
+  enableCron: env.ENABLE_CRON !== undefined ? env.ENABLE_CRON : true,
+  timezoneAwareCronEnabled:
+    env.TIMEZONE_AWARE_CRON_ENABLED !== undefined ? env.TIMEZONE_AWARE_CRON_ENABLED : true,
   trustProxy: (() => {
     const val = env.TRUST_PROXY;
     if (val === true || val === 'true') return true;
@@ -60,6 +66,18 @@ const config = {
   scannerApiKey: env.SCANNER_API_KEY,
   razorpayKeyId: env.RAZORPAY_KEY_ID,
   razorpayKeySecret: env.RAZORPAY_KEY_SECRET,
+  healthCheckToken: env.HEALTH_CHECK_TOKEN || null,
+  trustedProxies: env.TRUSTED_PROXIES ? env.TRUSTED_PROXIES.split(',').map((p) => p.trim()) : [],
+  additionalCorsOrigins: env.ADDITIONAL_CORS_ORIGINS
+    ? env.ADDITIONAL_CORS_ORIGINS.split(',').map((o) => o.trim())
+    : [],
+  storage: {
+    provider: env.STORAGE_PROVIDER || (env.BLOB_READ_WRITE_TOKEN ? 'vercel-blob' : 'local'),
+    signingSecret: env.STORAGE_SIGNING_SECRET || env.JWT_SECRET || 'bookbuddy-storage-secret',
+    localDir: env.STORAGE_LOCAL_DIR || null,
+    maxEbookSizeBytes: env.MAX_EBOOK_UPLOAD_SIZE_BYTES || 50 * 1024 * 1024,
+    maxRosterSizeBytes: env.MAX_ROSTER_UPLOAD_SIZE_BYTES || 20 * 1024 * 1024,
+  },
 };
 
 module.exports = config;

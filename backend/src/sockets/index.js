@@ -4,6 +4,7 @@ const Redis = require('ioredis');
 const socketAuth = require('./socketAuth');
 const { events, createEventPayload } = require('./events');
 const logger = require('../utils/logger');
+const config = require('../config');
 
 let io;
 let redisPubClient = null;
@@ -47,7 +48,12 @@ const initSockets = (server) => {
 
   // Attach Redis Adapter for cross-instance pub/sub broadcasting in multi-node clusters
   const redisUrl = process.env.REDIS_URL;
-  if (redisUrl && process.env.NODE_ENV !== 'test') {
+  const enableRedisAdapter =
+    config.socketIoRedisAdapterEnabled !== undefined
+      ? config.socketIoRedisAdapterEnabled
+      : process.env.SOCKET_IO_REDIS_ADAPTER_ENABLED !== 'false';
+
+  if (enableRedisAdapter && redisUrl && process.env.NODE_ENV !== 'test') {
     try {
       redisPubClient = new Redis(redisUrl, { lazyConnect: false });
       const subClient = redisPubClient.duplicate();
@@ -59,6 +65,8 @@ const initSockets = (server) => {
         adapterErr
       );
     }
+  } else {
+    logger.info('Socket.io running with default in-memory adapter (single-instance mode).');
   }
 
   // Attach authentication middleware

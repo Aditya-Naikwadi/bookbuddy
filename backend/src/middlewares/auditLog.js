@@ -1,4 +1,5 @@
 const AuditLog = require('../models/AuditLog');
+const { resolveClientIp } = require('../utils/clientIpHelper');
 
 /**
  * Reusable middleware factory for admin action auditing.
@@ -51,14 +52,7 @@ const auditLog = (actionName) => {
             targetId,
             collegeId: collegeId || req.user.collegeId || undefined,
             metadata: cleanedMetadata,
-            ipAddress:
-              req.headers['cf-connecting-ip'] ||
-              req.ip ||
-              (req.headers['x-forwarded-for']
-                ? req.headers['x-forwarded-for'].split(',')[0].trim()
-                : null) ||
-              req.socket?.remoteAddress ||
-              '127.0.0.1',
+            ipAddress: resolveClientIp(req),
           });
 
           // Optional SIEM Webhook Export (Opt-In Integration)

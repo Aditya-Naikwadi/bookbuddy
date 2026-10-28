@@ -14,6 +14,15 @@ const downloadLogSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    collegeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'College',
+      index: true,
+    },
+    ipAddress: {
+      type: String,
+      default: null,
+    },
     downloadedAt: {
       type: Date,
       default: Date.now,
@@ -25,5 +34,6 @@ const downloadLogSchema = new mongoose.Schema(
 );
 
 downloadLogSchema.index({ userId: 1, resourceId: 1, downloadedAt: -1 });
+downloadLogSchema.index({ collegeId: 1, downloadedAt: -1 });
 
 module.exports = mongoose.model('DownloadLog', downloadLogSchema);

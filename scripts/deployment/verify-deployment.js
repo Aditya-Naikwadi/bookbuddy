@@ -15,11 +15,23 @@ const path = require("path");
 const RENDER_BACKEND_DEFAULT = "https://bookbuddy-kcwl.onrender.com";
 const VERCEL_FRONTEND_DEFAULT = "https://book-buddy-eight-rosy.vercel.app";
 
+// CLI Arguments Parser (supporting --url <url> and positional args)
+const cliArgs = process.argv.slice(2);
+let cliUrl = null;
+const urlFlagIdx = cliArgs.findIndex((a) => a === "--url" || a === "-u");
+if (urlFlagIdx !== -1 && cliArgs[urlFlagIdx + 1]) {
+  cliUrl = cliArgs[urlFlagIdx + 1];
+} else {
+  const urlEq = cliArgs.find((a) => a.startsWith("--url="));
+  if (urlEq) cliUrl = urlEq.split("=")[1];
+}
+
 let targetBackendUrl = (
+  cliUrl ||
   process.env.BACKEND_APP_URL ||
   process.env.RENDER_APP_URL ||
   process.env.APP_URL ||
-  process.argv[2] ||
+  (cliArgs[0] && !cliArgs[0].startsWith("-") ? cliArgs[0] : null) ||
   RENDER_BACKEND_DEFAULT
 ).replace(/\/$/, "");
 
@@ -40,6 +52,7 @@ if (targetBackendUrl.includes("vercel.app")) {
 
 const APP_URL = targetBackendUrl;
 const FRONTEND_URL = targetFrontendUrl;
+const HEALTH_CHECK_TOKEN = process.env.HEALTH_CHECK_TOKEN || "";
 const EXPECTED_COMMIT_SHA =
   process.env.EXPECTED_COMMIT_SHA ||
   process.argv[3] ||
@@ -292,7 +305,13 @@ const runVerification = async () => {
   while (Date.now() < endTime) {
     pollAttempts++;
     const versionUrl = `${APP_URL}/version?_cb=${Date.now()}`;
-    const res = await makeRequestWithRetry(versionUrl, {}, 3);
+    const res = await makeRequestWithRetry(
+      versionUrl,
+      {
+        headers: HEALTH_CHECK_TOKEN ? { "X-Health-Token": HEALTH_CHECK_TOKEN } : {},
+      },
+      3,
+    );
     lastVersionResponse = res;
 
     if (res.ok && res.json) {
@@ -342,16 +361,28 @@ const runVerification = async () => {
     "\n🏥 STEP 2: Running critical route health checks (with retry logic)...",
   );
 
+  const healthHeaders = HEALTH_CHECK_TOKEN
+    ? { "X-Health-Token": HEALTH_CHECK_TOKEN }
+    : {};
+
   const healthRoutes = [
+    {
+      url: `${APP_URL}/ping`,
+      path: "/ping",
+      expectedStatus: 200,
+      name: "Public Ping Minimal Check",
+    },
     {
       url: `${APP_URL}/health`,
       path: "/health",
+      headers: healthHeaders,
       expectedStatus: 200,
       name: "System Health Check",
     },
     {
       url: `${APP_URL}/version`,
       path: "/version",
+      headers: healthHeaders,
       expectedStatus: 200,
       name: "Version Metadata Check",
     },
@@ -398,7 +429,7 @@ const runVerification = async () => {
 
   for (const route of healthRoutes) {
     const fullUrl = route.url;
-    const res = await makeRequestWithRetry(fullUrl, {}, 2);
+    const res = await makeRequestWithRetry(fullUrl, { headers: route.headers || {} }, 2);
     const passed = res.status === route.expectedStatus;
 
     if (!passed) {

@@ -22,6 +22,20 @@ const getDefaultCollege = async () => {
   return defaultCollege;
 };
 
+// Helper to resolve college using tenant context from verified OAuth state
+const resolveCollegeFromState = async (req) => {
+  const state = req?.verifiedOAuthState;
+  if (state?.collegeId) {
+    const college = await College.findOne({ _id: state.collegeId, isActive: true });
+    if (college) return college;
+  }
+  if (state?.collegeSlug) {
+    const college = await College.findOne({ slug: state.collegeSlug, isActive: true });
+    if (college) return college;
+  }
+  return getDefaultCollege();
+};
+
 // ---------------------------------------------------------------------------
 // Google OAuth Strategy
 // ---------------------------------------------------------------------------
@@ -72,7 +86,7 @@ passport.use(
             await user.save();
           }
         } else {
-          const defaultCollege = await getDefaultCollege();
+          const targetCollege = await resolveCollegeFromState(req);
           const studentId = `G-${crypto.randomInt(100000, 999999)}`;
 
           user = await User.create({
@@ -82,7 +96,7 @@ passport.use(
             name,
             email,
             avatar,
-            collegeId: defaultCollege._id,
+            collegeId: targetCollege._id,
             role: 'student',
             isEmailVerified: true,
             membershipStatus: 'active',
@@ -147,7 +161,7 @@ passport.use(
             await user.save();
           }
         } else {
-          const defaultCollege = await getDefaultCollege();
+          const targetCollege = await resolveCollegeFromState(req);
           const studentId = `GH-${crypto.randomInt(100000, 999999)}`;
 
           user = await User.create({
@@ -157,7 +171,7 @@ passport.use(
             name,
             email,
             avatar,
-            collegeId: defaultCollege._id,
+            collegeId: targetCollege._id,
             role: 'student',
             isEmailVerified: true,
             membershipStatus: 'active',

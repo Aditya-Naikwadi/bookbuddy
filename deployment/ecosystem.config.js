@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'bookbuddy-server',
-      script: './server/src/server.js',
+      script: './backend/src/server.js',
       instances: 'max',
       exec_mode: 'cluster',
       watch: false,

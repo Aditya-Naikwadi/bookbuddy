@@ -107,6 +107,14 @@ export default function StudentUploadPage() {
     setCommitResult(null);
     setDeliveryStatusReport(null);
 
+    const MAX_ROSTER_SIZE = 20 * 1024 * 1024; // 20MB API limit
+    if (uploadFile.size > MAX_ROSTER_SIZE) {
+      setError(
+        `File size (${(uploadFile.size / (1024 * 1024)).toFixed(1)}MB) exceeds the maximum allowed roster size limit of 20MB. Please split the file into smaller batches.`,
+      );
+      return;
+    }
+
     // If file is CSV, run Web Worker parsing first
     if (uploadFile.name.endsWith(".csv")) {
       setIsParsingWorker(true);
@@ -545,7 +553,7 @@ export default function StudentUploadPage() {
               Drag and drop roster CSV/Excel here
             </h3>
             <p className="text-xs text-slate-400 mb-6">
-              Supports CSV, .XLSX, and .XLS files up to 5MB (max 5,000 rows)
+              Supports CSV, .XLSX, and .XLS files up to 20MB (max 25,000 rows)
             </p>
 
             <label className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/20 cursor-pointer transition">

@@ -8,7 +8,7 @@ This document is the **single source of truth** for all AI coding assistants (Ge
 
 1. **Monorepo Structure**:
    - `frontend/`: React 19 + Vite + Zustand + TanStack Query UI client.
-   - `backend/`: Node.js 24 + Express + MongoDB/Mongoose + Socket.io API server.
+   - `backend/`: Node.js 22 LTS + Express + MongoDB/Mongoose + Socket.io API server.
    - `database/`: Schema migrations (`database/migrations/`).
    - `api/`: Vercel serverless function entrypoint (`/api/index.js`).
    - `tests/`: Dedicated load tests and integration testing workspace.

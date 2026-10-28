@@ -1,4 +1,18 @@
 // Server entry point managing database connection, lifecycles, and graceful shutdowns.
+// Enforce Node.js runtime version (pinned to Node 22 LTS per ADR 0006)
+const nodeMajor = parseInt(process.versions.node.split('.')[0], 10);
+if (
+  nodeMajor !== 22 &&
+  process.env.NODE_ENV !== 'test' &&
+  process.env.ALLOW_UNSUPPORTED_NODE !== 'true'
+) {
+  // eslint-disable-next-line no-console
+  console.error(
+    `❌ Fatal Startup Error: Unsupported Node.js version ${process.versions.node}. BookBuddy requires Node.js 22 LTS (major version 22). Set ALLOW_UNSUPPORTED_NODE=true to override.`
+  );
+  process.exit(1);
+}
+
 require('./config/env');
 const http = require('http');
 const app = require('./app');
@@ -72,6 +86,12 @@ const startServer = async () => {
 
   // 1. Create HTTP Server & Setup Socket.io
   const server = http.createServer(app);
+
+  // Slowloris mitigation & Cloudflare reverse-proxy alignment (Step 39)
+  server.keepAliveTimeout = 65000; // Greater than Cloudflare 60s idle timeout
+  server.headersTimeout = 66000; // Greater than keepAliveTimeout per Node.js docs
+  server.requestTimeout = 30000; // 30s request timeout mitigates Slowloris attacks
+
   const io = initSockets(server);
   app.set('io', io);
 
@@ -84,7 +104,11 @@ const startServer = async () => {
   try {
     await connectDB();
     // 4. Initialize background Cron Tasks AFTER database connection is confirmed
-    initCronJobs();
+    if (config.enableCron) {
+      initCronJobs();
+    } else {
+      logger.info('Background Cron Tasks disabled on this instance (ENABLE_CRON=false).');
+    }
   } catch (err) {
     logger.error(`Database connection failed on startup: ${err.message}`, {
       stack: err.stack,

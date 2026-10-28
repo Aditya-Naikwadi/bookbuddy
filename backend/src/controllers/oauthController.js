@@ -37,6 +37,16 @@ const handleOAuthCallback = async (req, res, next) => {
 
     setRefreshTokenCookie(res, refreshToken, req);
 
+    // If verified returnUrl was provided in signed state, redirect safely to returnUrl with token
+    const { isSafeReturnUrl } = require('../utils/oauthStateHelper');
+    const returnUrl = req.verifiedOAuthState?.returnUrl;
+    if (returnUrl && isSafeReturnUrl(returnUrl)) {
+      const redirectUrl = `${returnUrl}${returnUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(
+        accessToken
+      )}`;
+      return res.redirect(redirectUrl);
+    }
+
     // If request comes from a standard browser redirect flow, redirect to client with token
     const acceptsHtml = req.headers.accept && req.headers.accept.includes('text/html');
     if (acceptsHtml && config.clientOrigin && config.clientOrigin !== '*') {

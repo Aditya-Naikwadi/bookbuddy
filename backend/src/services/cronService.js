@@ -14,6 +14,7 @@ const config = require('../config');
 const logger = require('../utils/logger');
 const { emitStreakUpdate } = require('../sockets');
 const { runInTransaction } = require('../utils/transactionHelper');
+const { acquireLock, releaseLock } = require('../utils/distributedLock');
 
 const { captureException } = require('../utils/sentry');
 
@@ -22,13 +23,20 @@ const runningJobs = new Set();
 /**
  * Single job runner wrapper for observability, failure isolation, and atomic execution concurrency locking.
  */
-const runJob = async (jobName, jobFn) => {
+const runJob = async (jobName, jobFn, customTtlSeconds = 300) => {
   if (mongoose.connection.readyState !== 1) {
     logger.warn(`Skipping cron job ${jobName}: Database is disconnected.`);
     return;
   }
   if (runningJobs.has(jobName)) {
     logger.warn(`Skipping cron job ${jobName}: Previous execution is still in progress.`);
+    return;
+  }
+
+  // Acquire distributed lock across processes/instances
+  const lock = await acquireLock(jobName, customTtlSeconds);
+  if (!lock.acquired) {
+    logger.info(`Skipping cron job ${jobName}: Distributed lock held by another worker.`);
     return;
   }
 
@@ -56,6 +64,11 @@ const runJob = async (jobName, jobFn) => {
     }).catch(() => {});
   } finally {
     runningJobs.delete(jobName);
+    if (lock.lockToken) {
+      await releaseLock(jobName, lock.lockToken, lock.provider, lock.lockKey).catch((relErr) => {
+        logger.warn(`Failed to release lock for ${jobName}: ${relErr.message}`);
+      });
+    }
   }
 };
 
@@ -74,6 +87,9 @@ const getOverdueDays = (dueDate, now, timezone = 'UTC') => {
  */
 const runOverdueFineAccrual = async () => {
   const now = new Date();
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+
   // Find all active or already overdue loans past their due date
   const loans = await Loan.find({
     status: { $in: ['active', 'overdue'] },
@@ -101,9 +117,8 @@ const runOverdueFineAccrual = async () => {
     if (fine) {
       fine.overdueDays = overdueDays;
       fine.amount = amount;
-      await fine.save();
     } else {
-      fine = await Fine.create({
+      fine = new Fine({
         collegeId: loan.collegeId,
         userId: loan.userId,
         loanId: loan._id,
@@ -113,13 +128,19 @@ const runOverdueFineAccrual = async () => {
       });
     }
 
-    await notificationService.notify(
-      loan.userId,
-      'fine_issued',
-      `You have an accumulated fine of ${amount} for an overdue book.`,
-      fine._id,
-      'Fine'
-    );
+    // Idempotent notifications: Avoid spamming notifications multiple times on the same day
+    const alreadyNotifiedToday = fine.lastNotifiedAt && fine.lastNotifiedAt >= todayStart;
+    if (!alreadyNotifiedToday) {
+      await notificationService.notify(
+        loan.userId,
+        'fine_issued',
+        `You have an accumulated fine of ${amount} for an overdue book.`,
+        fine._id,
+        'Fine'
+      );
+      fine.lastNotifiedAt = now;
+    }
+    await fine.save();
     affected++;
   }
   return affected;
@@ -173,9 +194,13 @@ const runDueReminders = async () => {
   targetDateEnd.setDate(now.getDate() + daysOut);
   targetDateEnd.setHours(23, 59, 59, 999);
 
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+
   const loans = await Loan.find({
     status: 'active',
     dueDate: { $gte: targetDateStart, $lte: targetDateEnd },
+    $or: [{ lastReminderSentAt: null }, { lastReminderSentAt: { $lt: todayStart } }],
   });
 
   let affected = 0;
@@ -187,6 +212,8 @@ const runDueReminders = async () => {
       loan.bookId,
       'Book'
     );
+    loan.lastReminderSentAt = now;
+    await loan.save();
     affected++;
   }
   return affected;
@@ -515,71 +542,168 @@ const runMetricsAggregation = async () => {
   return colleges.length + 1; // Number of snapshots created
 };
 
+const activeScheduledTasks = [];
+
+/**
+ * Stops all registered background cron tasks.
+ */
+const stopCronJobs = () => {
+  while (activeScheduledTasks.length > 0) {
+    const task = activeScheduledTasks.pop();
+    if (task && typeof task.stop === 'function') {
+      task.stop();
+    }
+  }
+};
+
 /**
  * Schedules all background cron jobs with node-cron.
  */
-const initCronJobs = () => {
+const initCronJobs = (force = false) => {
+  if (!config.enableCron && !force) {
+    logger.info('Cron jobs disabled by configuration (ENABLE_CRON=false).');
+    return false;
+  }
+
+  // Clear any existing registered cron tasks
+  stopCronJobs();
+
+  const cronOptions = config.timezoneAwareCronEnabled ? { timezone: 'UTC' } : undefined;
+
   // Overdue Fine Accrual: Daily at midnight
-  cron.schedule('0 0 * * *', () => {
-    runJob('Overdue Fine Accrual', runOverdueFineAccrual);
-  });
+  activeScheduledTasks.push(
+    cron.schedule(
+      '0 0 * * *',
+      () => {
+        runJob('Overdue Fine Accrual', runOverdueFineAccrual);
+      },
+      cronOptions
+    )
+  );
 
   // Queue Expiry Sweep: Hourly
-  cron.schedule('0 * * * *', () => {
-    runJob('Queue Expiry Sweep', runQueueExpirySweep);
-  });
+  activeScheduledTasks.push(
+    cron.schedule(
+      '0 * * * *',
+      () => {
+        runJob('Queue Expiry Sweep', runQueueExpirySweep);
+      },
+      cronOptions
+    )
+  );
 
   // Due Reminders: Daily at 9 AM
-  cron.schedule('0 9 * * *', () => {
-    runJob('Due Reminders', runDueReminders);
-  });
+  activeScheduledTasks.push(
+    cron.schedule(
+      '0 9 * * *',
+      () => {
+        runJob('Due Reminders', runDueReminders);
+      },
+      cronOptions
+    )
+  );
 
   // Streak Expiry Sweep: Hourly
-  cron.schedule('0 * * * *', () => {
-    runJob('Streak Expiry Sweep', () => runStreakExpirySweep());
-  });
+  activeScheduledTasks.push(
+    cron.schedule(
+      '0 * * * *',
+      () => {
+        runJob('Streak Expiry Sweep', () => runStreakExpirySweep());
+      },
+      cronOptions
+    )
+  );
 
   // Streak Reminders: Hourly
-  cron.schedule('0 * * * *', () => {
-    runJob('Streak Reminders', () => runStreakReminders());
-  });
+  activeScheduledTasks.push(
+    cron.schedule(
+      '0 * * * *',
+      () => {
+        runJob('Streak Reminders', () => runStreakReminders());
+      },
+      cronOptions
+    )
+  );
 
   // Platform Metrics Aggregation: Every 5 minutes
-  cron.schedule('*/5 * * * *', () => {
-    runJob('Platform Metrics Aggregation', runMetricsAggregation);
-  });
+  activeScheduledTasks.push(
+    cron.schedule(
+      '*/5 * * * *',
+      () => {
+        runJob('Platform Metrics Aggregation', runMetricsAggregation);
+      },
+      cronOptions
+    )
+  );
 
   // Weekly Leaderboard Snapshot: Every Sunday at midnight
-  cron.schedule('0 0 * * 0', () => {
-    runJob('Weekly Leaderboard Snapshot', runWeeklyLeaderboardSnapshot);
-  });
+  activeScheduledTasks.push(
+    cron.schedule(
+      '0 0 * * 0',
+      () => {
+        runJob('Weekly Leaderboard Snapshot', runWeeklyLeaderboardSnapshot);
+      },
+      cronOptions
+    )
+  );
 
   // Nightly Recommendation Recomputation: Daily at 2:00 AM
-  cron.schedule('0 2 * * *', () => {
-    runJob('Nightly Recommendation Recomputation', runNightlyRecommendations);
-  });
+  activeScheduledTasks.push(
+    cron.schedule(
+      '0 2 * * *',
+      () => {
+        runJob('Nightly Recommendation Recomputation', runNightlyRecommendations);
+      },
+      cronOptions
+    )
+  );
 
   // Daily Payment Reconciliation: Daily at 3:00 AM
-  cron.schedule('0 3 * * *', () => {
-    runJob('Daily Payment Reconciliation', runDailyPaymentReconciliation);
-  });
+  activeScheduledTasks.push(
+    cron.schedule(
+      '0 3 * * *',
+      () => {
+        runJob('Daily Payment Reconciliation', runDailyPaymentReconciliation);
+      },
+      cronOptions
+    )
+  );
 
   // Stale Registration Cleanup: Daily at 4:00 AM
-  cron.schedule('0 4 * * *', () => {
-    runJob('Stale Registration Cleanup', runRegistrationCleanup);
-  });
+  activeScheduledTasks.push(
+    cron.schedule(
+      '0 4 * * *',
+      () => {
+        runJob('Stale Registration Cleanup', runRegistrationCleanup);
+      },
+      cronOptions
+    )
+  );
 
   // Workstation & Seat No-Show Auto-Release Sweep: Every 2 minutes (10-min grace period)
-  cron.schedule('*/2 * * * *', () => {
-    runJob('Workstation No-Show Auto-Release Sweep', runFacilityNoShowSweep);
-  });
+  activeScheduledTasks.push(
+    cron.schedule(
+      '*/2 * * * *',
+      () => {
+        runJob('Workstation No-Show Auto-Release Sweep', runFacilityNoShowSweep);
+      },
+      cronOptions
+    )
+  );
 
   // Facility Queue Promotion Expiry Sweep: Every 1 minute (10-min confirmation window)
-  cron.schedule('* * * * *', () => {
-    runJob('Facility Queue Promotion Expiry Sweep', runFacilityQueueExpirySweep);
-  });
+  activeScheduledTasks.push(
+    cron.schedule(
+      '* * * * *',
+      () => {
+        runJob('Facility Queue Promotion Expiry Sweep', runFacilityQueueExpirySweep);
+      },
+      cronOptions
+    )
+  );
 
   logger.info('Cron jobs initialized successfully.');
+  return true;
 };
 
 /**
@@ -776,6 +900,7 @@ const runFacilityQueueExpirySweep = async () => {
 
 module.exports = {
   initCronJobs,
+  stopCronJobs,
   runJob,
   runOverdueFineAccrual,
   runQueueExpirySweep,

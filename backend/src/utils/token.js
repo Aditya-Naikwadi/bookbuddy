@@ -64,6 +64,30 @@ const hashToken = (token) => {
   return crypto.createHash('sha256').update(token).digest('hex');
 };
 
+/**
+ * Resolves active and fallback signing secrets to support zero-downtime rotation.
+ */
+const getSecretCandidates = (primarySecret, previousSecret) => {
+  const secrets = [];
+  if (primarySecret) {
+    String(primarySecret)
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .forEach((s) => secrets.push(s));
+  }
+  if (previousSecret) {
+    String(previousSecret)
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .forEach((s) => {
+        if (!secrets.includes(s)) secrets.push(s);
+      });
+  }
+  return secrets.length > 0 ? secrets : ['bookbuddy-default-secret'];
+};
+
 const verifyAccessToken = (token, options = {}) => {
   if (!token || typeof token !== 'string') {
     throw new Error('Token string must be provided');
@@ -72,10 +96,29 @@ const verifyAccessToken = (token, options = {}) => {
   const expectedIssuer = options.issuer || config.jwt.issuer || 'bookbuddy-api';
   const expectedAudience = options.audience || config.jwt.audience || 'bookbuddy-client';
 
-  // Strictly pin algorithm to HS256 (rejects 'none', algorithm-confusion attacks)
-  const decoded = jwt.verify(token, config.jwt.secret, {
-    algorithms: ['HS256'],
-  });
+  const candidateSecrets = getSecretCandidates(config.jwt.secret, process.env.JWT_SECRET_PREVIOUS);
+
+  let decoded;
+  let lastErr;
+
+  for (let i = 0; i < candidateSecrets.length; i++) {
+    const secret = candidateSecrets[i];
+    try {
+      decoded = jwt.verify(token, secret, {
+        algorithms: ['HS256'],
+      });
+      break;
+    } catch (err) {
+      lastErr = err;
+      if (err.name === 'TokenExpiredError') {
+        throw err;
+      }
+    }
+  }
+
+  if (!decoded) {
+    throw lastErr || new jwt.JsonWebTokenError('Invalid token signature');
+  }
 
   // Verify audience if present in token or required
   if (decoded.aud) {
@@ -107,9 +150,32 @@ const verifyRefreshToken = (token, options = {}) => {
   const expectedIssuer = options.issuer || config.jwt.issuer || 'bookbuddy-api';
   const expectedAudience = options.audience || config.jwt.audience || 'bookbuddy-client';
 
-  const decoded = jwt.verify(token, config.jwt.refreshSecret, {
-    algorithms: ['HS256'],
-  });
+  const candidateSecrets = getSecretCandidates(
+    config.jwt.refreshSecret,
+    process.env.JWT_REFRESH_SECRET_PREVIOUS
+  );
+
+  let decoded;
+  let lastErr;
+
+  for (let i = 0; i < candidateSecrets.length; i++) {
+    const secret = candidateSecrets[i];
+    try {
+      decoded = jwt.verify(token, secret, {
+        algorithms: ['HS256'],
+      });
+      break;
+    } catch (err) {
+      lastErr = err;
+      if (err.name === 'TokenExpiredError') {
+        throw err;
+      }
+    }
+  }
+
+  if (!decoded) {
+    throw lastErr || new jwt.JsonWebTokenError('Invalid token signature');
+  }
 
   if (decoded.aud) {
     const audList = Array.isArray(decoded.aud) ? decoded.aud : [decoded.aud];

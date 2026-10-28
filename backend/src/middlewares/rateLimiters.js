@@ -2,6 +2,7 @@ const { RateLimiterRedis, RateLimiterMemory } = require('rate-limiter-flexible')
 const Redis = require('ioredis');
 const config = require('../config');
 const logger = require('../utils/logger');
+const { resolveClientIp } = require('../utils/clientIpHelper');
 
 let redisClient = null;
 let redisReady = false;
@@ -19,7 +20,7 @@ const normalizeRedisUrl = (url) => {
   } else if (trimmed.startsWith('//')) {
     trimmed = `rediss:${trimmed}`;
   } else if (!trimmed.startsWith('redis://') && !trimmed.startsWith('rediss://')) {
-    trimmed = `rediss://${trimmed}`;
+    trimmed = `redis://${trimmed}`;
   }
   return trimmed;
 };
@@ -163,18 +164,9 @@ const limiters = {
   ),
 };
 
-// Helper to extract clean client IP safely behind reverse proxies
+// Helper to extract clean client IP safely behind reverse proxies & Cloudflare
 const getClientIp = (req) => {
-  // If req.ip is set (Express trust proxy resolved), use it
-  if (req?.ip) {
-    return req.ip;
-  }
-  // If trust proxy is explicitly configured and raw headers exist, extract trusted client IP
-  if (config.trustProxy && req?.headers?.['x-forwarded-for']) {
-    const list = String(req.headers['x-forwarded-for']).split(',');
-    return list[list.length - 1].trim();
-  }
-  return req?.socket?.remoteAddress || 'unknown-ip';
+  return resolveClientIp(req);
 };
 
 const isSystemProbeRoute = (path) => {

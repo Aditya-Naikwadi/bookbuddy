@@ -52,6 +52,10 @@ const fineSchema = new mongoose.Schema(
       enum: ['unpaid', 'pending', 'paid', 'failed'],
       default: 'unpaid',
     },
+    lastNotifiedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

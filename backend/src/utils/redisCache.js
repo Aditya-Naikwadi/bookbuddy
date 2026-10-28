@@ -15,7 +15,7 @@ const normalizeRedisUrl = (url) => {
   } else if (trimmed.startsWith('//')) {
     trimmed = `rediss:${trimmed}`;
   } else if (!trimmed.startsWith('redis://') && !trimmed.startsWith('rediss://')) {
-    trimmed = `rediss://${trimmed}`;
+    trimmed = `redis://${trimmed}`;
   }
   return trimmed;
 };
@@ -85,16 +85,17 @@ const getCache = async (key) => {
 
 const setCache = async (key, value, ttlSeconds = 300) => {
   if (!key) return false;
+  const ttl = ttlSeconds && Number(ttlSeconds) > 0 ? Number(ttlSeconds) : 300;
   if (isConnected && redisClient) {
     try {
-      await redisClient.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+      await redisClient.set(key, JSON.stringify(value), 'EX', ttl);
     } catch (err) {
       logger.warn(`⚠️ Redis setCache error for key "${key}": ${err.message}`);
     }
   }
   memoryStore.set(key, {
     value,
-    expiresAt: ttlSeconds ? Date.now() + ttlSeconds * 1000 : null,
+    expiresAt: Date.now() + ttl * 1000,
   });
   return true;
 };

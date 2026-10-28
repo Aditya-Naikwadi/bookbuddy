@@ -34,6 +34,16 @@
       "expiresAt": "2026-12-31"
     },
     {
+      "packageName": "vitest",
+      "advisoryId": "GHSA-qxg6-89mg-rqv8",
+      "severity": "moderate",
+      "environment": "development-only (frontend test runner)",
+      "rationale": "Transitive advisory via @vitest/mocker affecting test execution mocking; isolated to developer test suites and never bundled into production client artifacts.",
+      "acceptedBy": "@security-appsec-engineer",
+      "reviewDate": "2026-10-22",
+      "expiresAt": "2026-12-31"
+    },
+    {
       "packageName": "@sentry/node",
       "advisoryId": "GHSA-opentelemetry-instrumentation",
       "severity": "moderate",

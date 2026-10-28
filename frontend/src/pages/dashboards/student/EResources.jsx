@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../../../api/client";
 import { searchEbooks, openEbook } from "../../../api/eresourcesApi";
 import { useDebounce } from "../../../hooks/useDebounce";
+import { uploadLargeFileDirectly } from "../../../utils/directUpload";
 
 const fetchInternalResources = async () => {
   const { data } = await apiClient.get("/dashboards/student/eresources");
@@ -101,7 +102,7 @@ export const EResources = () => {
     }
   };
 
-  // Submit student uploaded material to moderation
+  // Submit student uploaded material to moderation via direct-to-storage presigned upload
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
     if (!uploadTitle || !selectedFile) {
@@ -109,18 +110,33 @@ export const EResources = () => {
       return;
     }
 
+    if (selectedFile.size > 50 * 1024 * 1024) {
+      setUploadMessage("File size exceeds maximum allowed limit of 50MB.");
+      return;
+    }
+
     setIsSubmitting(true);
-    setUploadMessage("");
+    setUploadMessage("Uploading file directly to secure storage...");
 
     try {
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      formData.append("title", uploadTitle);
-      formData.append("category", uploadCategory);
-      formData.append("description", uploadDescription);
+      // Direct-to-storage presigned upload (bypasses reverse proxy and API RAM limits)
+      const uploadResult = await uploadLargeFileDirectly(selectedFile, {
+        folder: "ebooks",
+        maxSizeBytes: 50 * 1024 * 1024,
+      });
 
-      await apiClient.post("/dashboards/student/eresources", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      setUploadMessage("Registering material with moderation queue...");
+
+      await apiClient.post("/dashboards/student/eresources", {
+        title: uploadTitle,
+        category: uploadCategory,
+        description: uploadDescription,
+        fileKey: uploadResult.fileKey,
+        fileUrl: uploadResult.publicUrl,
+        fileSizeBytes: uploadResult.sizeBytes,
+        type: selectedFile.name.toLowerCase().endsWith(".epub")
+          ? "epub"
+          : "pdf",
       });
 
       setUploadMessage(
@@ -137,7 +153,9 @@ export const EResources = () => {
       }, 1500);
     } catch (err) {
       setUploadMessage(
-        err?.response?.data?.message || "Failed to submit material.",
+        err?.message ||
+          err?.response?.data?.message ||
+          "Failed to submit material.",
       );
     } finally {
       setIsSubmitting(false);

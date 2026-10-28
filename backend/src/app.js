@@ -21,8 +21,9 @@ const crypto = require('crypto');
 // Remove technology-disclosing framework headers
 app.disable('x-powered-by');
 
-// Enable Trust Proxy for Render / Vercel reverse proxies (required for HTTPS secure cookies & client IP detection)
-app.set('trust proxy', 1);
+// Enable Trust Proxy for reverse proxies (Render / Vercel / Nginx + Cloudflare)
+const trustProxyHops = config.trustProxyHops !== undefined ? config.trustProxyHops : 1;
+app.set('trust proxy', trustProxyHops);
 
 // Block source maps (.map), dotfiles/hidden paths, and sensitive backup/temp files
 app.use((req, res, next) => {
@@ -60,6 +61,14 @@ app.use((req, res, next) => {
   res.setHeader('x-request-id', req.id);
   next();
 });
+
+// Resolves true visitor IP handling reverse proxy hops and Cloudflare headers
+const { clientIpMiddleware } = require('./utils/clientIpHelper');
+app.use(clientIpMiddleware);
+
+// Cloudflare Edge Firewall & Origin Isolation Enforcement (Step 37)
+const cloudflareOriginEnforcer = require('./middlewares/cloudflareOriginEnforcer');
+app.use(cloudflareOriginEnforcer);
 
 // Security Headers
 app.use(
@@ -124,6 +133,7 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',
   'http://localhost:3000',
   'http://127.0.0.1:3000',
+  ...(config.additionalCorsOrigins || []),
 ].filter(Boolean);
 
 const vercelDomainRegex = /^https:\/\/(?:[a-z0-9-]+\.)?book-buddy[a-z0-9-]*\.vercel\.app$/i;
@@ -150,6 +160,12 @@ app.use(
       'x-csrf-token',
       'x-request-id',
       'idempotency-key',
+      'x-tenant-subdomain',
+      'x-college-subdomain',
+      'x-college-slug',
+      'x-college-id',
+      'x-health-token',
+      'cf-connecting-ip',
     ],
   })
 );
@@ -389,14 +405,58 @@ const versionCheckController = (req, res) => {
   });
 };
 
-// Full Health Check & Lightweight Version Check Routes
-app.get('/health', healthCheckController);
-app.get('/api/health', healthCheckController);
-app.get('/api/v1/health', healthCheckController);
+// Public Minimal Ping Check
+const pingCheckController = (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+  });
+};
 
-app.get('/version', versionCheckController);
-app.get('/api/version', versionCheckController);
-app.get('/api/v1/version', versionCheckController);
+app.get(['/ping', '/api/ping', '/api/v1/ping'], pingCheckController);
+
+// Health & Version Probe Security Guard
+const { isTrustedProxy, cleanIp } = require('./utils/clientIpHelper');
+
+const healthAuthGuard = (req, res, next) => {
+  const peerIp = cleanIp(
+    req.socket?.remoteAddress || req.connection?.remoteAddress || req.rawSocket?.remoteAddress || ''
+  );
+  const isLocalOrTrusted = !peerIp || isTrustedProxy(peerIp);
+
+  // If request is from localhost / local Nginx reverse proxy / internal test runner, allow
+  if (isLocalOrTrusted) {
+    return next();
+  }
+
+  // If HEALTH_CHECK_TOKEN is configured, verify header, Authorization bearer, or query param
+  const expectedToken = config.healthCheckToken || process.env.HEALTH_CHECK_TOKEN;
+  if (expectedToken) {
+    const providedToken =
+      req.headers['x-health-token'] ||
+      (req.headers['authorization']?.startsWith('Bearer ')
+        ? req.headers['authorization'].substring(7).trim()
+        : null) ||
+      req.query?.token;
+    if (providedToken && providedToken === expectedToken) {
+      return next();
+    }
+  }
+
+  // In non-production development without a token configured, allow for local developer convenience
+  if (config.nodeEnv !== 'production' && !expectedToken) {
+    return next();
+  }
+
+  return res.status(401).json({
+    success: false,
+    message: 'Unauthorized health probe. Missing or invalid health check token.',
+  });
+};
+
+// Full Health Check & Lightweight Version Check Routes (Protected)
+app.get(['/health', '/api/health', '/api/v1/health'], healthAuthGuard, healthCheckController);
+app.get(['/version', '/api/version', '/api/v1/version'], healthAuthGuard, versionCheckController);
 
 // Apply custom global rate limiter to all routes except health checks
 const { globalLimiter } = require('./middlewares/rateLimiters');
@@ -569,6 +629,8 @@ app.use('/api/verify-payment', (req, res, next) => {
 });
 app.use('/api/v1/uploads', require('./routes/uploadRoutes'));
 app.use('/api/uploads', deprecationWarning, require('./routes/uploadRoutes'));
+app.use('/api/v1/storage', require('./routes/storageRoutes'));
+app.use('/api/storage', deprecationWarning, require('./routes/storageRoutes'));
 app.use('/api/annotations', deprecationWarning, require('./routes/annotationRoutes'));
 
 // Gamification v1 routes & legacy spec aliases
