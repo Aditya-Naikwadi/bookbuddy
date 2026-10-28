@@ -32,8 +32,15 @@ jobs:
           node-version: 22
           cache: 'npm'
 
+      - name: Configure NPM Network Resilience & Retries
+        run: |
+          npm config set fetch-retries 5
+          npm config set fetch-retry-mintimeout 20000
+          npm config set fetch-retry-maxtimeout 120000
+          npm config set fetch-timeout 300000
+
       - name: Install Monorepo Root & Workspace Dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 
       - name: "Gate 1: Dependency Vulnerability Scanning (npm audit)"
         run: npm run check:audit
@@ -95,7 +102,7 @@ jobs:
       - name: Install Client Dependencies
         run: |
           cd frontend
-          npm install --legacy-peer-deps --include=dev
+          npm ci --legacy-peer-deps --include=dev || npm install --legacy-peer-deps --include=dev
 
       - name: Run Client Linter & Tests
         run: |
@@ -232,8 +239,12 @@ jobs:
 
   verify-post-deploy:
     name: Verify Post-Push Live Production Deployment
-    needs: [deploy-vercel, deploy-docker, deploy-render]
-    if: always() && github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && !cancelled()
+    needs: [ci, deploy-vercel, deploy-docker, deploy-render]
+    if: |
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
+      !cancelled() &&
+      needs.ci.result == 'success'
     runs-on: ubuntu-latest
     environment: production
 
