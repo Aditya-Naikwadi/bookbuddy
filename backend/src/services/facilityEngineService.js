@@ -531,6 +531,177 @@ const checkInBooking = async ({ bookingId, studentId, referenceNow = new Date() 
 };
 
 /**
+ * Check-out booking & reconcile weekly usage (§10.3)
+ */
+const checkOutBooking = async ({ bookingId, studentId, collegeId, referenceNow = new Date() }) => {
+  const query = { _id: bookingId };
+  if (collegeId) query.collegeId = collegeId;
+  if (studentId) query.studentId = studentId;
+
+  const booking = await FacilityBooking.findOne(query);
+
+  if (!booking) {
+    throw new AppError('Facility booking not found.', 404);
+  }
+
+  if (booking.status !== 'checked-in') {
+    throw new AppError(
+      `Cannot check out booking with status "${booking.status}". Only checked-in bookings can be checked out.`,
+      400
+    );
+  }
+
+  const checkedOutTime = new Date(referenceNow);
+  booking.checkedOutAt = checkedOutTime;
+  booking.status = 'completed';
+  await booking.save();
+
+  // Reconcile actual usage minutes against booked minutes
+  if (booking.checkedInAt) {
+    const checkInMs = new Date(booking.checkedInAt).getTime();
+    const checkOutMs = checkedOutTime.getTime();
+    const actualMinutes = Math.max(1, Math.round((checkOutMs - checkInMs) / 60000));
+    const bookedMinutes = Math.round(
+      (new Date(booking.slotEnd).getTime() - new Date(booking.slotStart).getTime()) / 60000
+    );
+
+    if (actualMinutes < bookedMinutes) {
+      const unusedMinutes = bookedMinutes - actualMinutes;
+      const resource = await FacilityResource.findById(booking.resourceId).populate('groupId');
+      const resourceType = resource?.groupId?.type || 'workstation';
+      const college = await College.findById(booking.collegeId)
+        .select('timezone facilitySettings')
+        .lean();
+      const { monday: weekStart } = getCollegeTimezoneWeekRange(
+        college?.timezone || 'Asia/Kolkata',
+        booking.date
+      );
+
+      await FacilityUsageWeekly.findOneAndUpdate(
+        {
+          collegeId: booking.collegeId,
+          studentId: booking.studentId,
+          resourceType,
+          weekStart,
+        },
+        { $inc: { minutesUsed: -unusedMinutes } }
+      );
+    }
+  }
+
+  emitToCollege(booking.collegeId, 'facility:slot_checked_out', {
+    bookingId: booking._id,
+    resourceId: booking.resourceId,
+    checkedOutAt: checkedOutTime,
+    status: 'completed',
+  });
+
+  return {
+    success: true,
+    message: 'Checked out successfully.',
+    booking,
+  };
+};
+
+/**
+ * Get student weekly usage and queue status
+ */
+const getStudentUsage = async ({ collegeId, studentId, referenceNow = new Date() }) => {
+  const college = await College.findById(collegeId).select('timezone facilitySettings').lean();
+  const timezone = college?.timezone || 'Asia/Kolkata';
+  const { monday: weekStart, sunday: weekEnd } = getCollegeTimezoneWeekRange(
+    timezone,
+    referenceNow
+  );
+
+  const maxWeeklyWorkstationHours = college?.facilitySettings?.maxWeeklyWorkstationHours ?? 15;
+  const maxWeeklySeatHours = college?.facilitySettings?.maxWeeklySeatHours ?? 30;
+
+  const usageRecords = await FacilityUsageWeekly.find({
+    collegeId,
+    studentId,
+    weekStart,
+  }).lean();
+
+  const workstationUsage = usageRecords.find((r) => r.resourceType === 'workstation');
+  const seatUsage = usageRecords.find((r) => r.resourceType === 'seat');
+
+  const workstationMinutesUsed = workstationUsage?.minutesUsed || 0;
+  const seatMinutesUsed = seatUsage?.minutesUsed || 0;
+
+  const workstationHoursUsed = parseFloat((workstationMinutesUsed / 60).toFixed(1));
+  const workstationHoursRemaining = Math.max(
+    0,
+    parseFloat((maxWeeklyWorkstationHours - workstationHoursUsed).toFixed(1))
+  );
+
+  const activeBookings = await FacilityBooking.find({
+    collegeId,
+    studentId,
+    status: { $in: ['confirmed', 'checked-in'] },
+    slotEnd: { $gte: referenceNow },
+  })
+    .populate('resourceId', 'label')
+    .sort({ slotStart: 1 })
+    .lean();
+
+  const activeQueues = await FacilityBookingQueue.find({
+    collegeId,
+    studentId,
+    status: { $in: ['queued', 'ready_to_confirm'] },
+  })
+    .populate('resourceGroupId', 'name type')
+    .sort({ slotStart: 1 })
+    .lean();
+
+  return {
+    weekStart,
+    weekEnd,
+    timezone,
+    workstation: {
+      minutesUsed: workstationMinutesUsed,
+      hoursUsed: workstationHoursUsed,
+      maxWeeklyHours: maxWeeklyWorkstationHours,
+      remainingHours: workstationHoursRemaining,
+      capReached: workstationHoursUsed >= maxWeeklyWorkstationHours,
+    },
+    seat: {
+      minutesUsed: seatMinutesUsed,
+      hoursUsed: parseFloat((seatMinutesUsed / 60).toFixed(1)),
+      maxWeeklyHours: maxWeeklySeatHours,
+      remainingHours: Math.max(
+        0,
+        parseFloat((maxWeeklySeatHours - seatMinutesUsed / 60).toFixed(1))
+      ),
+    },
+    activeBookings,
+    activeQueues,
+  };
+};
+
+/**
+ * Admin view of facilities usage and reporting
+ */
+const getAdminFacilitiesUsage = async ({ collegeId, startDate, endDate, status, limit = 200 }) => {
+  const query = { collegeId };
+  if (status) query.status = status;
+  if (startDate || endDate) {
+    query.date = {};
+    if (startDate) query.date.$gte = new Date(startDate);
+    if (endDate) query.date.$lte = new Date(endDate);
+  }
+
+  const bookings = await FacilityBooking.find(query)
+    .populate('studentId', 'name studentId email program year')
+    .populate('resourceId', 'label')
+    .sort({ slotStart: -1 })
+    .limit(limit)
+    .lean();
+
+  return bookings;
+};
+
+/**
  * 4. Automated No-Show Sweep:
  * Finds un-checked-in slots past grace deadline -> marks no-show -> creates NoShowStrike -> frees slot
  */
@@ -1137,7 +1308,7 @@ const joinBookingQueue = async ({
   let nextPosition = 1;
   let attempts = 0;
 
-  while (!queueEntry && attempts < 10) {
+  while (!queueEntry && attempts < 30) {
     attempts++;
     const highestEntry = await FacilityBookingQueue.findOne({
       resourceGroupId,
@@ -1165,8 +1336,12 @@ const joinBookingQueue = async ({
         status: 'queued',
       });
     } catch (createErr) {
-      // If position collision occurred concurrently, retry with next position
-      if (createErr.code === 11000 && createErr.message?.includes('queuePosition')) {
+      // If position collision occurred concurrently, apply small jitter and retry with next position
+      if (
+        createErr.code === 11000 &&
+        (createErr.message?.includes('queuePosition') || createErr.keyPattern?.queuePosition)
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 20) + 5));
         continue;
       }
       throw createErr;
@@ -1279,15 +1454,56 @@ const promoteNextInQueue = async ({
   resourceId = null,
   date,
   slotStart,
-  slotEnd: _slotEnd,
+  _slotEnd,
   referenceNow = new Date(),
 }) => {
-  const nextTicket = await FacilityBookingQueue.findOne({
+  const candidateTickets = await FacilityBookingQueue.find({
     resourceGroupId,
     date: new Date(date),
     slotStart: new Date(slotStart),
     status: 'queued',
   }).sort({ queuePosition: 1 });
+
+  if (!candidateTickets || candidateTickets.length === 0) {
+    return { promoted: false };
+  }
+
+  const group = await FacilityResourceGroup.findById(resourceGroupId).lean();
+  const resourceType = group?.type || 'workstation';
+  const college = await College.findById(collegeId).select('timezone facilitySettings').lean();
+  const { monday: weekStart } = getCollegeTimezoneWeekRange(
+    college?.timezone || 'Asia/Kolkata',
+    new Date(date)
+  );
+  const maxWeeklyHours =
+    resourceType === 'workstation'
+      ? (college?.facilitySettings?.maxWeeklyWorkstationHours ?? 15)
+      : (college?.facilitySettings?.maxWeeklySeatHours ?? 30);
+  const maxWeeklyMinutes = maxWeeklyHours * 60;
+
+  let nextTicket = null;
+  for (const candidate of candidateTickets) {
+    const usage = await FacilityUsageWeekly.findOne({
+      collegeId,
+      studentId: candidate.studentId,
+      resourceType,
+      weekStart,
+    }).lean();
+
+    if (usage && usage.minutesUsed >= maxWeeklyMinutes) {
+      candidate.status = 'expired';
+      candidate.expiresAt = referenceNow;
+      await candidate.save();
+      emitToUser(candidate.studentId, 'facility:queue_skipped_cap', {
+        queueId: candidate._id,
+        reason: 'Weekly usage quota reached (15 hours).',
+      });
+      continue;
+    }
+
+    nextTicket = candidate;
+    break;
+  }
 
   if (!nextTicket) {
     return { promoted: false };
@@ -1448,6 +1664,29 @@ const autoExpireQueuePromotions = async (referenceNow = new Date()) => {
   });
 
   const expiredCount = expiredTickets.length;
+
+  // Auto-expire queued tickets whose slot started more than 15 minutes ago
+  const staleQueuedCutoff = new Date(referenceNow.getTime() - 15 * 60 * 1000);
+  const staleQueuedTickets = await FacilityBookingQueue.find({
+    status: 'queued',
+    slotStart: { $lt: staleQueuedCutoff },
+  });
+  for (const st of staleQueuedTickets) {
+    st.status = 'expired';
+    await st.save();
+    try {
+      await Notification.create({
+        userId: st.studentId,
+        collegeId: st.collegeId,
+        type: 'facility_queue_expired',
+        title: 'Facility Slot Waitlist Expired',
+        message: 'The slot you queued for has started. Please select an upcoming slot to reserve.',
+      });
+    } catch (_notifyErr) {
+      // Best-effort notification delivery
+    }
+  }
+
   for (const ticket of expiredTickets) {
     ticket.status = 'expired';
     await ticket.save();
@@ -1479,6 +1718,9 @@ module.exports = {
   holdSlot,
   confirmBooking,
   checkInBooking,
+  checkOutBooking,
+  getStudentUsage,
+  getAdminFacilitiesUsage,
   cancelBooking,
   autoReleaseNoShows,
   adminOverrideResource,

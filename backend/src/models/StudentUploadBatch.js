@@ -76,6 +76,7 @@ const studentUploadBatchSchema = new mongoose.Schema(
             'sms_queued',
             'active_preserved',
             'inactive',
+            'initial_password_student_id',
             'failed',
           ],
         },

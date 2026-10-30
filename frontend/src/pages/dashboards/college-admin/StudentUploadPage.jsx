@@ -12,8 +12,10 @@ import {
   Send,
   UserX,
   MailCheck,
+  KeyRound,
 } from "lucide-react";
 import { StatusBadge } from "../../../components/common/StatusBadge";
+import apiClient from "../../../api/client";
 
 export default function StudentUploadPage() {
   const [_file, setFile] = useState(null);
@@ -32,6 +34,10 @@ export default function StudentUploadPage() {
   const [deliveryStatusReport, setDeliveryStatusReport] = useState(null);
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [bulkDeactivateAbsent, setBulkDeactivateAbsent] = useState(false);
+  const [initialPasswordIsStudentId, setInitialPasswordIsStudentId] =
+    useState(false);
+  const [confirmStudentIdPasswordPolicy, setConfirmStudentIdPasswordPolicy] =
+    useState(false);
   const [error, setError] = useState(null);
   const [dragActive, setDragActive] = useState(false);
 
@@ -67,8 +73,22 @@ export default function StudentUploadPage() {
     document.body.removeChild(link);
   };
 
-  const handleExportRoster = () => {
-    window.location.href = "/api/admin/students/export";
+  const handleExportRoster = async () => {
+    try {
+      const res = await apiClient.get("/admin/students/export", {
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "student_roster.csv");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to export roster:", err);
+    }
   };
 
   const handleDrag = (e) => {
@@ -186,20 +206,29 @@ export default function StudentUploadPage() {
     formData.append("file", uploadFile);
 
     try {
-      const res = await fetch("/api/admin/students/upload/validate", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await apiClient.post(
+        "/admin/students/upload/validate",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
 
-      const data = await res.json();
+      const data = res.data;
 
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || "Failed to validate file.");
+      if (!data?.success) {
+        throw new Error(data?.message || "Failed to validate file.");
       }
 
       setValidationReport(data);
     } catch (err) {
-      setError(err.message || "An error occurred during file validation.");
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        "An error occurred during file validation.";
+      setError(msg);
     } finally {
       setIsValidating(false);
     }
@@ -216,20 +245,28 @@ export default function StudentUploadPage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/admin/students/upload/commit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          batchId: validationReport.batchId,
-          validRows: validationReport.validRowsPayload,
-          bulkDeactivateAbsent,
-        }),
+      if (initialPasswordIsStudentId && !confirmStudentIdPasswordPolicy) {
+        setError(
+          "Please check the confirmation box to proceed with the Student ID initial password policy.",
+        );
+        setIsCommitting(false);
+        return;
+      }
+
+      const res = await apiClient.post("/admin/students/upload/commit", {
+        batchId: validationReport.batchId,
+        validRows: validationReport.validRowsPayload,
+        bulkDeactivateAbsent,
+        initialPasswordPolicy: initialPasswordIsStudentId
+          ? "student_id"
+          : "random_temp",
+        confirmStudentIdPasswordPolicy,
       });
 
-      const data = await res.json();
+      const data = res.data;
 
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || "Failed to initiate roster commit.");
+      if (!data?.success) {
+        throw new Error(data?.message || "Failed to initiate roster commit.");
       }
 
       setBatchStatusPolling(true);
@@ -238,7 +275,11 @@ export default function StudentUploadPage() {
       // Start polling for background job completion
       startPollingBatchStatus(validationReport.batchId);
     } catch (err) {
-      setError(err.message || "An error occurred while committing roster.");
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        "An error occurred while committing roster.";
+      setError(msg);
       setIsCommitting(false);
     }
   };
@@ -250,10 +291,12 @@ export default function StudentUploadPage() {
 
     pollIntervalRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`/api/admin/students/upload/${batchId}/status`);
-        const data = await res.json();
+        const res = await apiClient.get(
+          `/admin/students/upload/${batchId}/status`,
+        );
+        const data = res.data;
 
-        if (res.ok && data.success && data.batch) {
+        if (data?.success && data.batch) {
           setPollingProgress(data.batch);
 
           if (data.batch.status === "committed") {
@@ -288,11 +331,11 @@ export default function StudentUploadPage() {
 
   const fetchDeliveryStatus = async (batchId) => {
     try {
-      const res = await fetch(
-        `/api/admin/students/upload/${batchId}/delivery-status`,
+      const res = await apiClient.get(
+        `/admin/students/upload/${batchId}/delivery-status`,
       );
-      const data = await res.json();
-      if (res.ok && data.success) {
+      const data = res.data;
+      if (data?.success) {
         setDeliveryStatusReport(data);
       }
     } catch {
@@ -300,10 +343,27 @@ export default function StudentUploadPage() {
     }
   };
 
-  const handleDownloadHandouts = () => {
+  const handleDownloadHandouts = async () => {
     if (!validationReport?.batchId && !deliveryStatusReport?.batchId) return;
     const batchId = deliveryStatusReport?.batchId || validationReport?.batchId;
-    window.location.href = `/api/admin/students/upload/${batchId}/handouts`;
+    try {
+      const res = await apiClient.get(
+        `/admin/students/upload/${batchId}/handouts`,
+        {
+          responseType: "blob",
+        },
+      );
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `credential_handouts_${batchId}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download handouts:", err);
+    }
   };
 
   // Filtered Delivery Status Rows
@@ -611,7 +671,9 @@ export default function StudentUploadPage() {
                   onClick={handleConfirmCommit}
                   disabled={
                     isCommitting ||
-                    validationReport.summary.validRowsCount === 0
+                    validationReport.summary.validRowsCount === 0 ||
+                    (initialPasswordIsStudentId &&
+                      !confirmStudentIdPasswordPolicy)
                   }
                   className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/20 transition flex items-center gap-2 disabled:opacity-50"
                 >
@@ -660,6 +722,64 @@ export default function StudentUploadPage() {
                 />
                 <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
               </label>
+            </div>
+
+            {/* Initial Password Policy Toggle (Off by default, College Admin only) */}
+            <div className="p-4 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-3">
+              <div className="flex items-start sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <KeyRound className="w-4 h-4 text-indigo-400" />
+                    <span className="text-sm font-bold text-slate-200">
+                      Initial Password = Student ID (Offline Roster Mode)
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Sets initial temporary passwords to match each
+                    student&apos;s exact Student ID. Bypasses email/SMS dispatch
+                    for institutions distributing login slips offline. Forced
+                    password change on first login is strictly enforced.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1 sm:mt-0">
+                  <input
+                    type="checkbox"
+                    checked={initialPasswordIsStudentId}
+                    onChange={(e) => {
+                      setInitialPasswordIsStudentId(e.target.checked);
+                      if (!e.target.checked)
+                        setConfirmStudentIdPasswordPolicy(false);
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+              {initialPasswordIsStudentId && (
+                <div className="p-3 bg-indigo-950/40 border border-indigo-800/60 rounded-xl space-y-2 text-xs">
+                  <div className="flex items-center gap-2 text-indigo-300 font-semibold">
+                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Policy Exception Confirmation Required</span>
+                  </div>
+                  <label className="flex items-start gap-2.5 cursor-pointer text-slate-300 select-none">
+                    <input
+                      type="checkbox"
+                      checked={confirmStudentIdPasswordPolicy}
+                      onChange={(e) =>
+                        setConfirmStudentIdPasswordPolicy(e.target.checked)
+                      }
+                      className="mt-0.5 rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-900"
+                    />
+                    <span className="text-[11px] leading-relaxed">
+                      I confirm as College Administrator that temporary
+                      passwords will equal student IDs, emails/SMS will not be
+                      sent, an audit record will be logged, and students must
+                      change their password on first login.
+                    </span>
+                  </label>
+                </div>
+              )}
             </div>
 
             {/* Summary Statistics */}

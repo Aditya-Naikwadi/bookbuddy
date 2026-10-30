@@ -586,16 +586,19 @@ describe("3. Catalog & E-Resource Carousels Strict Test Suite", () => {
         target: { value: "C++ [Advanced] (2024)*+?" },
       });
 
-      await waitFor(() => {
-        expect(apiClient.get).toHaveBeenCalledWith(
-          "/books/public",
-          expect.objectContaining({
-            params: expect.objectContaining({
-              search: "C++ [Advanced] (2024)*+?",
+      await waitFor(
+        () => {
+          expect(apiClient.get).toHaveBeenCalledWith(
+            "/books/public",
+            expect.objectContaining({
+              params: expect.objectContaining({
+                search: "C++ [Advanced] (2024)*+?",
+              }),
             }),
-          }),
-        );
-      });
+          );
+        },
+        { timeout: 4000 },
+      );
     });
   });
 

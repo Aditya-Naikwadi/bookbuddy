@@ -46,6 +46,10 @@ const auditLogSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'College',
     },
+    details: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       default: {},

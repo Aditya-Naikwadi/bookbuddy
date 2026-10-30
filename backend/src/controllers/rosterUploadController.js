@@ -310,7 +310,8 @@ async function processRosterBatchAsync(
   adminCollegeId,
   validRows,
   bulkDeactivateAbsent,
-  college
+  college,
+  initialPasswordPolicy = 'random_temp'
 ) {
   try {
     const batch = await StudentUploadBatch.findById(batchId);
@@ -382,10 +383,16 @@ async function processRosterBatchAsync(
           });
         } else {
           // New student account provisioning
-          const tempPassword = generateSecureTempPassword();
+          const isStudentIdPolicy = initialPasswordPolicy === 'student_id';
+          const tempPassword = isStudentIdPolicy
+            ? String(row.studentId)
+            : generateSecureTempPassword();
           const rawToken = crypto.randomBytes(32).toString('hex');
           const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-          const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+          // 30 days for student_id policy, 48 hours for random temporary token
+          const expiresAt = new Date(
+            Date.now() + (isStudentIdPolicy ? 30 * 24 * 60 * 60 * 1000 : 48 * 60 * 60 * 1000)
+          );
 
           newUsersToCreate.push({
             collegeId: adminCollegeId,
@@ -399,24 +406,46 @@ async function processRosterBatchAsync(
             status: 'invited',
             password: tempPassword,
             mustChangePasswordOnNextLogin: true,
-            invitedVia: 'bulk_upload',
-            activationTokenHash: tokenHash,
+            invitedVia: isStudentIdPolicy ? 'bulk_upload_student_id_pwd' : 'bulk_upload',
+            activationTokenHash: isStudentIdPolicy ? null : tokenHash,
             activationTokenExpiresAt: expiresAt,
             uploadBatchId: batch._id,
             uploadedAt: new Date(),
           });
 
-          notificationTasks.push({
-            rowNumber: rowNumber || overallIndex + 2,
-            overallIndex,
-            studentId: normalizedStudentId,
-            name,
-            email,
-            phone,
-            program,
-            tempPassword,
-            rawToken,
-          });
+          if (isStudentIdPolicy) {
+            // No email or SMS dispatch for offline student ID initial password policy
+            rowResults.push({
+              rowNumber: rowNumber || overallIndex + 2,
+              studentId: normalizedStudentId,
+              name,
+              email: email || '',
+              action: 'created',
+              deliveryStatus: 'initial_password_student_id',
+              reason:
+                'Initial password set to Student ID (offline roster). First-login change enforced.',
+            });
+            credentialSlips.push({
+              studentId: normalizedStudentId,
+              name,
+              email,
+              program,
+              tempPassword: String(row.studentId),
+              deliveryChannel: 'student_id_policy',
+            });
+          } else {
+            notificationTasks.push({
+              rowNumber: rowNumber || overallIndex + 2,
+              overallIndex,
+              studentId: normalizedStudentId,
+              name,
+              email,
+              phone,
+              program,
+              tempPassword,
+              rawToken,
+            });
+          }
 
           createdCount += 1;
         }
@@ -427,21 +456,38 @@ async function processRosterBatchAsync(
         await Promise.all(existingUpdatePromises);
       }
 
-      // Execute new user creations concurrently with pre-hashed passwords
+      // Execute new user creations with bounded concurrency pool (25 parallel hashes)
       if (newUsersToCreate.length > 0) {
         const argon2 = require('argon2');
         const argonOptions =
           process.env.NODE_ENV === 'test'
             ? { type: argon2.argon2id, timeCost: 1, memoryCost: 2048 }
             : { type: argon2.argon2id };
-        await Promise.all(
-          newUsersToCreate.map(async (u) => {
-            u.cardSecret = crypto.randomBytes(32).toString('hex');
-            u.studentId = normalizeStudentId(u.studentId);
-            if (u.email) u.email = normalizeEmail(u.email);
-            u.password = await argon2.hash(u.password, argonOptions);
-          })
+        const HASH_CONCURRENCY = 25;
+        const hashStart = Date.now();
+        const initialMem = process.memoryUsage().heapUsed;
+
+        for (let h = 0; h < newUsersToCreate.length; h += HASH_CONCURRENCY) {
+          const hashChunk = newUsersToCreate.slice(h, h + HASH_CONCURRENCY);
+          await Promise.all(
+            hashChunk.map(async (u) => {
+              u.cardSecret = crypto.randomBytes(32).toString('hex');
+              u.studentId = normalizeStudentId(u.studentId);
+              if (u.email) u.email = normalizeEmail(u.email);
+              u.password = await argon2.hash(u.password, argonOptions);
+            })
+          );
+          await new Promise((resolve) => setImmediate(resolve));
+        }
+
+        const hashDuration = Date.now() - hashStart;
+        const memDeltaMb = ((process.memoryUsage().heapUsed - initialMem) / (1024 * 1024)).toFixed(
+          2
         );
+        logger.info(
+          `[HASHING_BENCHMARK] Hashed ${newUsersToCreate.length} passwords in ${hashDuration}ms (Concurrency: ${HASH_CONCURRENCY}, Heap Delta: ${memDeltaMb}MB)`
+        );
+
         await User.insertMany(newUsersToCreate, { ordered: false });
       }
 
@@ -670,7 +716,51 @@ async function processRosterBatchAsync(
  * Initiates background ingestion job and returns HTTP 202 immediately.
  */
 exports.commitRosterUpload = asyncHandler(async (req, res, next) => {
-  const { batchId, validRows, bulkDeactivateAbsent } = req.body;
+  const {
+    batchId,
+    validRows,
+    bulkDeactivateAbsent,
+    initialPasswordPolicy = 'random_temp',
+    confirmStudentIdPasswordPolicy = false,
+  } = req.body;
+
+  if (initialPasswordPolicy === 'student_id') {
+    if (req.user.role !== 'college-admin' && req.user.role !== 'super-admin') {
+      return next(
+        new AppError(
+          'Only College Administrators or Super Admins can enable student ID initial passwords.',
+          403
+        )
+      );
+    }
+    if (!confirmStudentIdPasswordPolicy) {
+      return next(
+        new AppError(
+          'Explicit confirmation required: You must confirm the initial password policy exception.',
+          400
+        )
+      );
+    }
+
+    const AuditLog = require('../models/AuditLog');
+    try {
+      await AuditLog.create({
+        collegeId: req.user.collegeId,
+        userId: req.user._id,
+        action: 'ROSTER_UPLOAD_INITIAL_PASSWORD_STUDENT_ID_ENABLED',
+        details: {
+          batchId,
+          adminEmail: req.user.email,
+          totalStudents: validRows ? validRows.length : 0,
+          timestamp: new Date(),
+        },
+      });
+    } catch (auditErr) {
+      logger.warn(
+        `Failed to create audit log for roster upload password policy: ${auditErr.message}`
+      );
+    }
+  }
 
   if (!batchId) {
     return next(new AppError('Batch ID is required for commit', 400));
@@ -710,7 +800,8 @@ exports.commitRosterUpload = asyncHandler(async (req, res, next) => {
       adminCollegeId,
       validRows,
       Boolean(bulkDeactivateAbsent),
-      college
+      college,
+      initialPasswordPolicy
     );
   });
 

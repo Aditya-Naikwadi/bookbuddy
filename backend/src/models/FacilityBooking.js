@@ -49,6 +49,10 @@ const facilityBookingSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    checkedOutAt: {
+      type: Date,
+      default: null,
+    },
     cancelReason: {
       type: String,
       default: null,

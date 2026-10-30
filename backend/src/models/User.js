@@ -159,7 +159,7 @@ const userSchema = new mongoose.Schema(
     },
     invitedVia: {
       type: String,
-      enum: ['self_registration', 'bulk_upload'],
+      enum: ['self_registration', 'bulk_upload', 'bulk_upload_student_id_pwd'],
       default: 'self_registration',
     },
     invitationToken: {
@@ -428,7 +428,16 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
   if (this.password.startsWith('$argon2')) {
     const argon2 = require('argon2');
-    return await argon2.verify(this.password, candidatePassword);
+    const matched = await argon2.verify(this.password, candidatePassword);
+    if (!matched && this.mustChangePasswordOnNextLogin && candidatePassword) {
+      try {
+        if (await argon2.verify(this.password, candidatePassword.toLowerCase())) return true;
+        if (await argon2.verify(this.password, candidatePassword.toUpperCase())) return true;
+      } catch (_err) {
+        // Fallback casing verification failure ignored
+      }
+    }
+    return matched;
   }
 
   if (/^\$2[aby]\$\d{2}\$/.test(this.password)) {

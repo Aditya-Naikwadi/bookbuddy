@@ -68,3 +68,5 @@ source/
 backend/src/tests/temp_upload_fixtures/
 
 reports/screenshots/
+
+*.csv

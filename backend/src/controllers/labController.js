@@ -128,6 +128,105 @@ const claimQueueSpot = asyncHandler(async (req, res) => {
   res.json({ success: true, data: result });
 });
 
+// @desc    Check out of a facility booking
+// @route   POST /api/lab/bookings/:id/check-out
+// @access  Private
+const checkOutBooking = asyncHandler(async (req, res) => {
+  const facilityEngineService = require('../services/facilityEngineService');
+  const result = await facilityEngineService.checkOutBooking({
+    bookingId: req.params.id,
+    studentId:
+      req.user.role === 'student' || req.user.role === 'college-student'
+        ? req.user.id || req.user._id
+        : undefined,
+    collegeId: req.user.collegeId,
+  });
+  res.json({ success: true, data: result.booking, message: result.message });
+});
+
+// @desc    Get student weekly usage summary and queue status
+// @route   GET /api/lab/usage/me
+// @access  Private
+const getMyUsage = asyncHandler(async (req, res) => {
+  const facilityEngineService = require('../services/facilityEngineService');
+  const usage = await facilityEngineService.getStudentUsage({
+    collegeId: req.user.collegeId,
+    studentId: req.user.id || req.user._id,
+  });
+  res.json({ success: true, data: usage });
+});
+
+// @desc    Get college facilities usage report
+// @route   GET /api/lab/admin/usage
+// @access  Private (CollegeAdmin / SuperAdmin)
+const getAdminUsage = asyncHandler(async (req, res) => {
+  const facilityEngineService = require('../services/facilityEngineService');
+  const { startDate, endDate, status, limit } = req.query;
+  const bookings = await facilityEngineService.getAdminFacilitiesUsage({
+    collegeId: req.user.collegeId,
+    startDate,
+    endDate,
+    status,
+    limit: limit ? parseInt(limit, 10) : 200,
+  });
+  res.json({ success: true, data: bookings });
+});
+
+// @desc    Export college facilities usage report as CSV
+// @route   GET /api/lab/admin/usage/export
+// @access  Private (CollegeAdmin / SuperAdmin)
+const exportAdminUsageCsv = asyncHandler(async (req, res) => {
+  const facilityEngineService = require('../services/facilityEngineService');
+  const { startDate, endDate, status } = req.query;
+  const bookings = await facilityEngineService.getAdminFacilitiesUsage({
+    collegeId: req.user.collegeId,
+    startDate,
+    endDate,
+    status,
+    limit: 5000,
+  });
+
+  const headers = [
+    'Booking ID,Student ID,Student Name,Email,Program,Year,Resource,Date,Slot Start,Slot End,Checked In,Checked Out,Minutes Used,Status',
+  ];
+  const rows = bookings.map((b) => {
+    const student = b.studentId || {};
+    const resource = b.resourceId || {};
+    const checkIn = b.checkedInAt ? new Date(b.checkedInAt).toISOString() : '';
+    const checkOut = b.checkedOutAt ? new Date(b.checkedOutAt).toISOString() : '';
+    let minutesUsed = 0;
+    if (b.checkedInAt && b.checkedOutAt) {
+      minutesUsed = Math.max(
+        1,
+        Math.round((new Date(b.checkedOutAt) - new Date(b.checkedInAt)) / 60000)
+      );
+    } else if (b.status === 'confirmed' || b.status === 'completed') {
+      minutesUsed = Math.round((new Date(b.slotEnd) - new Date(b.slotStart)) / 60000);
+    }
+    return [
+      b._id,
+      student.studentId || '',
+      `"${(student.name || '').replace(/"/g, '""')}"`,
+      student.email || '',
+      student.program || '',
+      student.year || '',
+      resource.label || '',
+      b.date ? new Date(b.date).toISOString().split('T')[0] : '',
+      b.slotStart ? new Date(b.slotStart).toISOString() : '',
+      b.slotEnd ? new Date(b.slotEnd).toISOString() : '',
+      checkIn,
+      checkOut,
+      minutesUsed,
+      b.status,
+    ].join(',');
+  });
+
+  const csvContent = [headers, ...rows].join('\n');
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename="facility_usage_${Date.now()}.csv"`);
+  res.send(csvContent);
+});
+
 module.exports = {
   getSeats,
   getAvailability,
@@ -135,6 +234,10 @@ module.exports = {
   getMyBookings,
   cancelBooking,
   checkInBooking,
+  checkOutBooking,
+  getMyUsage,
+  getAdminUsage,
+  exportAdminUsageCsv,
   joinQueue,
   leaveQueue,
   getMyQueue,

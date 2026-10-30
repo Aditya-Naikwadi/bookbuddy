@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/server.js",
   "engines": {
-    "node": "^22.0.0"
+    "node": ">=22.0.0"
   },
   "allowScripts": {
     "argon2": true,
@@ -31,6 +31,7 @@
     "migrate:db": "node src/scripts/migrateIndicesAndDefaults.js",
     "migrate:hardening": "node src/scripts/migrateProductionHardening.js",
     "db:clear": "node src/scripts/clearDatabase.js",
+    "db:clear:users": "node src/scripts/clearNonSuperAdminUsers.js",
     "db:restore": "node src/scripts/restoreDatabase.js",
     "seed:superadmin": "node src/scripts/seedSuperAdmin.js",
     "lint": "eslint .",
