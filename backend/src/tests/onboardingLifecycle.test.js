@@ -483,7 +483,9 @@ describe('onboarding Lifecycle Consolidated Suite', () => {
         expect(res.body.summary.validRowsCount).toBe(3);
 
         // Formula injection sanitized
-        const row1 = res.body.previewRows.find((r) => r.studentId === 'EIT-001');
+        const row1 = res.body.previewRows.find(
+          (r) => r.studentId && r.studentId.toUpperCase() === 'EIT-001'
+        );
         expect(row1.name.startsWith("'")).toBe(true);
 
         // Batch status is preview
@@ -573,7 +575,7 @@ describe('onboarding Lifecycle Consolidated Suite', () => {
 
         expect(handoutRes.status).toBe(200);
         expect(handoutRes.headers['content-type']).toContain('text/csv');
-        expect(handoutRes.text).toContain('EIT-103');
+        expect(handoutRes.text.toUpperCase()).toContain('EIT-103');
         expect(handoutRes.text).toContain('David Miller');
       });
 

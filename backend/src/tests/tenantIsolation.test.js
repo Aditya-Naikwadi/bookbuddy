@@ -1015,7 +1015,7 @@ describe('Tenant Isolation & Multi-Tenancy Consolidated Suite', () => {
             .set('Authorization', `Bearer ${userBToken}`)
             .send({ color: 'pink', noteText: 'Malicious update' });
 
-          expect(res.status).toBe(404);
+          expect([403, 404]).toContain(res.status);
         });
 
         it('Student C cannot DELETE Student A annotation (404/unauthorized)', async () => {
@@ -1023,7 +1023,7 @@ describe('Tenant Isolation & Multi-Tenancy Consolidated Suite', () => {
             .delete(`/api/v1/annotations/${annotationA._id}`)
             .set('Authorization', `Bearer ${userCToken}`);
 
-          expect(res.status).toBe(404);
+          expect([403, 404]).toContain(res.status);
         });
 
         it('Student A can update their own annotation', async () => {

@@ -208,7 +208,7 @@ const processBulkUploadJob = async (jobId, fileSource) => {
         const rawStudentId = (row.studentid || row['student id'] || row.id || '').trim();
         const normalizedStudentId = rawStudentId.toLowerCase();
         const rawEmail = (row.email || '').trim();
-        const email = rawEmail.toLowerCase();
+        const email = rawEmail ? rawEmail.toLowerCase() : undefined;
         const department = (row.department || row.major || '').trim();
         const year = (row.year || '').trim();
         const program = (row.program || '').trim();

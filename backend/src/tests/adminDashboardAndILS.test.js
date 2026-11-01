@@ -840,6 +840,7 @@ describe('admin Dashboard And I L S Consolidated Suite', () => {
     const LabSeat = require('../models/LabSeat');
     const LabBooking = require('../models/LabBooking');
     const jwt = require('jsonwebtoken');
+    const config = require('../config');
     const { generatePatronToken, verifyPatronToken } = require('../utils/patronTokenUtil');
 
     describe('Backend Audit Fixes Unit Tests (Items 1 - 3)', () => {
@@ -914,6 +915,7 @@ describe('admin Dashboard And I L S Consolidated Suite', () => {
 
           // Expired token (signed with exp 2 seconds in past)
           const pastExp = Math.floor(Date.now() / 1000) - 2;
+          const secretToUse = config.jwt?.secret || process.env.JWT_SECRET || 'secret';
           const expiredToken = jwt.sign(
             {
               userId: studentUser._id.toString(),
@@ -921,9 +923,9 @@ describe('admin Dashboard And I L S Consolidated Suite', () => {
               type: 'patron-card-gate',
               exp: pastExp,
             },
-            process.env.JWT_SECRET || 'secret'
+            secretToUse
           );
-          const expiredResult = verifyPatronToken(expiredToken);
+          const expiredResult = verifyPatronToken(expiredToken, secretToUse);
           expect(expiredResult.valid).toBe(false);
           expect(expiredResult.reason).toContain('expired');
         });

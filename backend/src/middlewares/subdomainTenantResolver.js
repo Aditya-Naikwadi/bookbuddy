@@ -99,16 +99,27 @@ const subdomainTenantResolver = async (req, res, next) => {
 
     // Resolve tenant from database
     const college = await College.findOne({ slug: candidateSlug });
-    if (
-      !college ||
-      college.status === 'suspended' ||
-      college.status !== 'active' ||
-      college.isActive === false
-    ) {
+    if (!college) {
       return res.status(404).json({
         success: false,
-        message: 'Unknown college or institution',
+        message: 'College not found or unknown institution',
         code: 'UNKNOWN_COLLEGE',
+      });
+    }
+
+    if (college.status === 'suspended') {
+      return res.status(403).json({
+        success: false,
+        message: 'This college portal has been suspended by institution administration.',
+        code: 'COLLEGE_SUSPENDED',
+      });
+    }
+
+    if (college.status !== 'active' || college.isActive === false) {
+      return res.status(403).json({
+        success: false,
+        message: 'This college portal is currently inactive.',
+        code: 'COLLEGE_INACTIVE',
       });
     }
 

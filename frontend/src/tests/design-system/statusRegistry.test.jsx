@@ -146,19 +146,16 @@ describe("Design System: Status Registry & Token Architecture", () => {
   });
 
   it("Gracefully falls back to neutral unknown state in production with warning", () => {
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     try {
-      const resolved = resolveStatus("unmapped_production_item");
+      const resolved = resolveStatus("unmapped_production_item", "production");
       expect(resolved.category).toBe("unknown");
       expect(resolved.label).toBe("Unmapped Production Item");
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining("Unmapped status"),
       );
     } finally {
-      process.env.NODE_ENV = originalEnv;
       warnSpy.mockRestore();
     }
   });

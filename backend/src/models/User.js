@@ -321,7 +321,7 @@ userSchema.index(
   {
     unique: true,
     partialFilterExpression: {
-      email: { $type: 'string' },
+      email: { $type: 'string', $gt: '' },
     },
   }
 );

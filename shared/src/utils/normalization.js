@@ -7,8 +7,9 @@ const { ROLES, CANONICAL_ROLES } = require('../constants/roles');
  * - Returns empty string if undefined/null/empty
  */
 function normalizeEmail(email) {
-  if (email === undefined || email === null) return '';
-  return String(email).trim().toLowerCase();
+  if (email === undefined || email === null) return undefined;
+  const str = String(email).trim().toLowerCase();
+  return str === '' ? undefined : str;
 }
 
 /**

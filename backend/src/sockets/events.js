@@ -19,6 +19,7 @@ const events = {
   DASHBOARD_STATS: 'dashboard:stats',
   ANNOTATION_UPSERTED: 'annotation:upserted',
   ANNOTATION_DELETED: 'annotation:deleted',
+  COMPLAINT_UPDATED: 'complaint:updated',
 
   // === Backward-Compatible Aliases ===
   LOAN_CHECKOUT: 'loan:checkout',

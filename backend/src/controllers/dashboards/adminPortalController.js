@@ -796,14 +796,8 @@ const moderateEResourceGlobal = async (req, res, next) => {
     }
 
     const oldStatus = resource.moderationStatus;
-    if (status === 'approved') {
-      resource.moderationStatus = 'published';
-      resource.isPublished = true;
-      resource.publishedAt = new Date();
-    } else {
-      resource.moderationStatus = status;
-      resource.isPublished = false;
-    }
+    resource.moderationStatus = status;
+    resource.isPublished = false;
     resource.moderationNote = note || '';
     resource.moderatedBy = req.user.id;
     resource.moderatedAt = new Date();

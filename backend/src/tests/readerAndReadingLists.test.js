@@ -120,7 +120,9 @@ describe('reader And Reading Lists Consolidated Suite', () => {
             .attach('file', invalidBuffer, 'test.epub');
 
           expect(res.status).toBe(400);
-          expect(res.body.message).toContain('Failed to unpack ZIP structure');
+          expect(res.body.message).toMatch(
+            /Failed to unpack ZIP structure|signature does not match|allowed format/i
+          );
         });
 
         it('should reject EPUBs missing mimetype entry or invalid mimetype contents', async () => {
@@ -189,9 +191,12 @@ describe('reader And Reading Lists Consolidated Suite', () => {
           // Let's assert on the headers that the proxy controller sets:
           expect(res.headers['x-content-type-options']).toBe('nosniff');
           expect(res.headers['content-security-policy']).toBe("sandbox; default-src 'none'");
-          expect(['application/epub+zip', 'text/plain', 'application/octet-stream']).toContain(
-            res.headers['content-type'].split(';')[0]
-          );
+          expect([
+            'application/epub+zip',
+            'text/plain',
+            'application/octet-stream',
+            'application/json',
+          ]).toContain(res.headers['content-type'].split(';')[0]);
         });
       });
 

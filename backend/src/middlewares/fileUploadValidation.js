@@ -335,7 +335,7 @@ const createSafeFileFilter = ({ allowedExts = [], allowedMimes = [] }) => {
       if (lowerAllowedExts.length > 0 && !lowerAllowedExts.includes(ext.toLowerCase())) {
         return cb(
           new AppError(
-            `File extension '${ext}' is not allowed. Allowed extensions: ${lowerAllowedExts.join(', ')}`,
+            `Invalid file format. File extension '${ext}' is not allowed. Allowed extensions: ${lowerAllowedExts.join(', ')}`,
             400
           ),
           false

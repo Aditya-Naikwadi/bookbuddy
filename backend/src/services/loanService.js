@@ -148,12 +148,24 @@ const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
             copiesTotal: book?.copiesTotal || 0,
           },
         });
+        try {
+          const { getIo } = require('../sockets');
+          const socketIo = getIo();
+          if (socketIo && collegeId) {
+            socketIo.to('college:' + collegeId).emit('book:availability_updated', {
+              bookId,
+              availableCopies: book ? book.copiesAvailable : 0,
+            });
+          }
+        } catch (_err) {
+          // Non-blocking socket emit
+        }
       } catch (_err) {
         // Non-blocking socket emit
       }
 
       // 2. Post-transaction streak and badge updates
-      streakService.recordQualifyingAction(userId, collegeId, 'checkout').catch((err) => {
+      await streakService.recordQualifyingAction(userId, collegeId, 'checkout').catch((err) => {
         logger.error(
           `Error recording qualifying streak action after book checkout: ${err.message}`
         );

@@ -275,7 +275,11 @@ describe('Phase 2 Provisioning Pipeline & Provenance Suite — B.K. Birla Colleg
 
     it('proves script idempotency: running live provisioner again produces identical counts without duplicate key errors', async () => {
       const result = await provisionBKBirlaCollege({
-        rosterPath: path.join(__dirname, '../../bkbirlacollege_students_1000.csv'),
+        rosterPath: (() => {
+          const p = path.join(__dirname, '../../bkbirlacollege_students_1000.csv');
+          if (!fs.existsSync(p)) provisionBKBirlaCollege.generateFallbackCsv(p);
+          return p;
+        })(),
       });
 
       expect(result.success).toBe(true);

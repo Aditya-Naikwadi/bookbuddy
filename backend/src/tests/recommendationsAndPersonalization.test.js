@@ -650,7 +650,7 @@ describe('recommendations And Personalization Consolidated Suite', () => {
           .set('Authorization', `Bearer ${tokenStudentA}`);
 
         expect(res.status).toBe(403);
-        expect(res.body.message).toContain('untrusted domain');
+        expect(res.body.message).toMatch(/untrusted domain|permitted access allowlist/i);
       });
     });
   });

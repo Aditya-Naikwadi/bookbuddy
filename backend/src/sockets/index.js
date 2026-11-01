@@ -352,6 +352,20 @@ const emitAnnotationDelete = (userId, annotationId, bookId) => {
   }
 };
 
+const emitComplaintUpdate = (userId, complaint) => {
+  if (io && userId && complaint) {
+    const complaintData =
+      typeof complaint.toObject === 'function' ? complaint.toObject() : complaint;
+    io.to(`user:${userId}`).emit('complaint:updated', complaintData);
+  }
+};
+
+const emitAcquisitionUpdated = (collegeId, data) => {
+  if (io && collegeId) {
+    io.to(`college:${collegeId}`).emit(events.ACQUISITION_UPDATED, data);
+  }
+};
+
 const isUserConnected = (userId) => {
   if (!io || !io.sockets || !io.sockets.adapter || !io.sockets.adapter.rooms) return false;
   const room = io.sockets.adapter.rooms.get(`user:${userId}`);
@@ -371,5 +385,7 @@ module.exports = {
   emitReservationReady,
   emitAnnotationUpsert,
   emitAnnotationDelete,
+  emitComplaintUpdate,
+  emitAcquisitionUpdated,
   events,
 };

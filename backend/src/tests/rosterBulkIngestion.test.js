@@ -941,7 +941,7 @@ describe('roster Bulk Ingestion Consolidated Suite', () => {
 
           expect(handoutRes.status).toBe(200);
           expect(handoutRes.headers['content-type']).toContain('text/csv');
-          expect(handoutRes.text).toContain('STU-NO-TWILIO');
+          expect(handoutRes.text.toUpperCase()).toContain('STU-NO-TWILIO');
           expect(handoutRes.text).toContain('Bob Offline');
           expect(handoutRes.text).toContain('printed_handout');
         });
@@ -996,7 +996,7 @@ describe('roster Bulk Ingestion Consolidated Suite', () => {
             .set('Authorization', `Bearer ${adminToken}`);
 
           expect(handoutRes.status).toBe(200);
-          expect(handoutRes.text).toContain('STU-FAIL-SMS');
+          expect(handoutRes.text.toUpperCase()).toContain('STU-FAIL-SMS');
           expect(handoutRes.text).toContain('Carol Failed');
           expect(handoutRes.text).toContain('printed_handout');
         });

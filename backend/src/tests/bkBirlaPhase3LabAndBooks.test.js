@@ -144,6 +144,28 @@ describe('Phase 3 Lab & Books Suite — B.K. Birla College Specs', () => {
       role: { $in: ['student', 'college-student'] },
     }).limit(10);
 
+    if (testStudents.length < 10) {
+      const studentsToCreate = [];
+      for (let i = testStudents.length + 1; i <= 10; i++) {
+        const pad = String(i).padStart(4, '0');
+        studentsToCreate.push({
+          collegeId: college._id,
+          studentId: `bkbc-cs-2026-${pad}`,
+          name: `Test Student ${i}`,
+          email: `teststudent${i}@bkbirlacollege.edu`,
+          role: 'student',
+          password: '$argon2id$v=19$m=4096,t=3,p=1$fakehashforstudent',
+          status: 'active',
+          isEmailVerified: true,
+        });
+      }
+      await User.insertMany(studentsToCreate);
+      testStudents = await User.find({
+        collegeId: college._id,
+        role: { $in: ['student', 'college-student'] },
+      }).limit(10);
+    }
+
     // 6. Foreign student
     foreignStudent = await User.findOne({ collegeId: foreignCollege._id });
     if (!foreignStudent) {

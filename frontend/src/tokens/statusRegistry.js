@@ -177,18 +177,11 @@ function formatRawStatus(str) {
  * Resolves a raw status string into full semantic tokens and metadata.
  * Throws in development/testing if unmapped; returns 'unknown' neutral fallback in production.
  */
-export function resolveStatus(rawStatus) {
-  const isDevOrTest =
-    typeof globalThis !== "undefined" &&
-    globalThis.process?.env?.NODE_ENV === "production"
-      ? false
-      : (typeof globalThis !== "undefined" &&
-          globalThis.process?.env &&
-          (globalThis.process.env.NODE_ENV === "development" ||
-            globalThis.process.env.NODE_ENV === "test")) ||
-        (typeof import.meta !== "undefined" &&
-          import.meta.env &&
-          (import.meta.env.DEV || import.meta.env.MODE === "test"));
+export function resolveStatus(rawStatus, envMode) {
+  const isProd =
+    envMode === "production" ||
+    (typeof import.meta !== "undefined" && Boolean(import.meta.env?.PROD));
+  const isDevOrTest = !isProd;
 
   if (!rawStatus) {
     if (isDevOrTest) {
