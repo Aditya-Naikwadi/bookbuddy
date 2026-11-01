@@ -163,7 +163,7 @@ const eResourceSchema = new mongoose.Schema(
     },
     sourceType: {
       type: String,
-      enum: ['gutenberg', 'internal-upload'],
+      enum: ['gutenberg', 'internal-upload', 'student-upload'],
       default: 'internal-upload',
       index: true,
     },

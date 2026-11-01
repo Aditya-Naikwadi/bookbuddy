@@ -703,9 +703,18 @@ const deleteReadingListItem = async (req, res, next) => {
 // @access  Private/Student
 const getReadingProgress = async (req, res, next) => {
   try {
+    const { eresourceId } = req.params;
+    const targetResourceId = mongoose.Types.ObjectId.isValid(eresourceId)
+      ? new mongoose.Types.ObjectId(eresourceId)
+      : eresourceId;
     const progress = await ReadingProgress.findOne({
-      userId: req.user.id,
-      eresourceId: req.params.eresourceId,
+      userId: req.user._id || req.user.id,
+      $or: [
+        { eresourceId: targetResourceId },
+        { eresourceId: String(eresourceId) },
+        { resourceId: targetResourceId },
+        { resourceId: String(eresourceId) },
+      ],
     });
 
     if (!progress) {
@@ -729,10 +738,21 @@ const upsertReadingProgress = async (req, res, next) => {
     const { eresourceId } = req.params;
     const { currentPage, epubProgress } = req.body;
 
+    const userId = req.user._id || req.user.id;
+    const targetUserId = mongoose.Types.ObjectId.isValid(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : userId;
+    const targetResourceId = mongoose.Types.ObjectId.isValid(eresourceId)
+      ? new mongoose.Types.ObjectId(eresourceId)
+      : eresourceId;
+
     const progress = await ReadingProgress.findOneAndUpdate(
-      { userId: req.user.id, eresourceId },
+      { userId: targetUserId, eresourceId: targetResourceId },
       {
         $set: {
+          userId: targetUserId,
+          resourceId: targetResourceId,
+          eresourceId: targetResourceId,
           currentPage,
           epubProgress,
           lastReadAt: new Date(),
