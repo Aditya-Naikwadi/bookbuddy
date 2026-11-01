@@ -3,6 +3,7 @@ const LabSeat = require('../models/LabSeat');
 const LabBooking = require('../models/LabBooking');
 const labBookingService = require('../services/labBookingService');
 const events = require('../sockets/events');
+const { ROLES } = require('@bookbuddy/shared');
 
 // @desc    Get all lab seats
 // @route   GET /api/lab/seats
@@ -135,10 +136,7 @@ const checkOutBooking = asyncHandler(async (req, res) => {
   const facilityEngineService = require('../services/facilityEngineService');
   const result = await facilityEngineService.checkOutBooking({
     bookingId: req.params.id,
-    studentId:
-      req.user.role === 'student' || req.user.role === 'college-student'
-        ? req.user.id || req.user._id
-        : undefined,
+    studentId: req.user.role === ROLES.STUDENT ? req.user.id || req.user._id : undefined,
     collegeId: req.user.collegeId,
   });
   res.json({ success: true, data: result.booking, message: result.message });
