@@ -136,8 +136,12 @@ for (const target of targets) {
       if (!isTriaged && Array.isArray(vulnData.via)) {
         isTriaged = vulnData.via.some(
           (v) =>
-            typeof v === "object" &&
-            (validTriageMap.has(v.name) || validTriageMap.has(v.url)),
+            (typeof v === "string" && validTriageMap.has(v)) ||
+            (typeof v === "object" &&
+              v !== null &&
+              (validTriageMap.has(v.name) ||
+                validTriageMap.has(v.url) ||
+                validTriageMap.has(v.dependency))),
         );
       }
 
@@ -173,6 +177,23 @@ for (const target of targets) {
             pkgName.startsWith("@jest/") ||
             pkgName.startsWith("jest")) &&
           (validTriageMap.has("sprintf-js") || validTriageMap.has("jest"))
+        ) {
+          isTriaged = true;
+        } else if (
+          ([
+            "@eslint/config-array",
+            "eslint",
+            "glob",
+            "test-exclude",
+            "babel-plugin-istanbul",
+            "babel-jest",
+            "nodemon",
+            "minimatch",
+          ].includes(pkgName) ||
+            pkgName.startsWith("@eslint/") ||
+            pkgName.startsWith("@jest/") ||
+            pkgName.startsWith("jest")) &&
+          validTriageMap.has("minimatch")
         ) {
           isTriaged = true;
         }

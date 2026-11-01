@@ -335,6 +335,45 @@ async function provisionBKBirlaCollege(options = {}) {
       `\n  ℹ️ College with slug '${TENANT_SPEC.slug}' already exists (ID: ${college._id}).`
     );
     adminUser = await User.findOne({ collegeId: college._id, role: ROLES.COLLEGE_ADMIN });
+    if (!adminUser) {
+      adminTempPassword = `BirlaAdmin@2026!${crypto.randomBytes(4).toString('hex')}`;
+      adminUser = await User.create({
+        studentId: 'ADMIN-BKBIRLA-01',
+        name: 'B.K. Birla College Administrator',
+        email: normalizeEmail(TENANT_SPEC.contactEmail),
+        password: adminTempPassword,
+        role: ROLES.COLLEGE_ADMIN,
+        collegeId: college._id,
+        isEmailVerified: true,
+        membershipStatus: 'active',
+        status: 'active',
+        mustChangePasswordOnNextLogin: true,
+      });
+      console.log(`  ✓ Self-healed Primary Admin: ${adminUser.email}`);
+    }
+
+    // Ensure tenant_provisioned audit log exists
+    const existingTenantAudit = await AuditLog.findOne({
+      collegeId: college._id,
+      action: 'tenant_provisioned',
+    });
+    if (!existingTenantAudit) {
+      await AuditLog.create({
+        actorId: adminUser._id,
+        action: 'tenant_provisioned',
+        targetType: 'College',
+        targetId: college._id,
+        collegeId: college._id,
+        details: {
+          name: college.name,
+          slug: college.slug,
+          tier: college.licenseTier,
+          adminEmail: adminUser.email,
+          provisionedVia: 'SuperAdmin-Automated-Flow',
+        },
+      });
+      console.log('  ✓ Self-healed tenant_provisioned AuditLog');
+    }
   } else {
     console.log(
       '\n[3/5] Atomically Provisioning College Tenant and Primary Admin via runInTransaction...'

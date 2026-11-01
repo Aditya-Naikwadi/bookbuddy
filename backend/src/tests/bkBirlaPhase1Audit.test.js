@@ -50,17 +50,20 @@ describe('Phase 1 Audit & Gaps Suite — B.K. Birla College Specs', () => {
       await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_test');
     }
 
-    // Clean test collections
+    // Clean test collections for this audit suite only (preserve production bkbirla tenant)
+    const existingAuditColleges = await College.find({ slug: 'bkbirla-audit' }).select('_id');
+    const auditCollegeIds = existingAuditColleges.map((c) => c._id);
     await College.deleteMany({ slug: 'bkbirla-audit' });
     await User.deleteMany({ email: /@bkbirla-audit\.edu$/ });
-    await User.deleteMany({ email: /@bkbirlacollege\.edu$/ });
-    await FacilityResourceGroup.deleteMany({});
-    await FacilityResource.deleteMany({});
-    await FacilityBooking.deleteMany({});
-    await FacilityBookingQueue.deleteMany({});
-    await FacilityUsageWeekly.deleteMany({});
-    await AuditLog.deleteMany({});
-    await StudentUploadBatch.deleteMany({});
+    if (auditCollegeIds.length > 0) {
+      await FacilityResourceGroup.deleteMany({ collegeId: { $in: auditCollegeIds } });
+      await FacilityResource.deleteMany({ collegeId: { $in: auditCollegeIds } });
+      await FacilityBooking.deleteMany({ collegeId: { $in: auditCollegeIds } });
+      await FacilityBookingQueue.deleteMany({ collegeId: { $in: auditCollegeIds } });
+      await FacilityUsageWeekly.deleteMany({ collegeId: { $in: auditCollegeIds } });
+      await AuditLog.deleteMany({ collegeId: { $in: auditCollegeIds } });
+      await StudentUploadBatch.deleteMany({ collegeId: { $in: auditCollegeIds } });
+    }
 
     // Create test college with 15 hr weekly workstation cap
     college = await College.create({

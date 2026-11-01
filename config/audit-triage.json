@@ -81,6 +81,16 @@
       "acceptedBy": "@security-appsec-engineer",
       "reviewDate": "2026-09-24",
       "expiresAt": "2026-12-31"
+    },
+    {
+      "packageName": "minimatch",
+      "advisoryId": "GHSA-g3hv-75wg-m249",
+      "severity": "moderate",
+      "environment": "development-only (linting via eslint)",
+      "rationale": "Minimatch globparts amplification vulnerability in dev-only ESLint config-array. Isolated to developer linting scripts; never bundled into production client artifacts or backend server runtime.",
+      "acceptedBy": "@security-appsec-engineer",
+      "reviewDate": "2026-11-01",
+      "expiresAt": "2026-12-31"
     }
   ]
 }
