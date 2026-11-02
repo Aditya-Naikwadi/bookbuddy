@@ -31,6 +31,12 @@ const facilityResourceSchema = new mongoose.Schema(
       default: 'available',
       index: true,
     },
+    capacity: {
+      type: Number,
+      default: 1,
+      min: 1,
+      max: 10,
+    },
     notes: {
       type: String,
       default: '',

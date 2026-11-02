@@ -164,8 +164,10 @@ const collegeSchema = new mongoose.Schema(
     facilitySettings: {
       maxWeeklyWorkstationHours: { type: Number, default: 12 },
       maxWeeklySeatHours: { type: Number, default: 30 },
+      maxWeeklyPodHours: { type: Number, default: 10 },
       workstationAdvanceHorizonHours: { type: Number, default: 1 },
       seatAdvanceHorizonDays: { type: Number, default: 1 },
+      podAdvanceHorizonDays: { type: Number, default: 7 },
       checkInGraceMinutes: { type: Number, default: 10 },
       capScope: { type: String, enum: ['college', 'branch'], default: 'college' },
       // Backward compatibility fields

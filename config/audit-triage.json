@@ -91,6 +91,24 @@
       "acceptedBy": "@security-appsec-engineer",
       "reviewDate": "2026-11-01",
       "expiresAt": "2026-12-31"
+    },
+    {
+      "packageName": "@eslint/config-array",
+      "severity": "moderate",
+      "environment": "development-only (linting via eslint)",
+      "rationale": "Transitive advisory via minimatch in dev-only ESLint config-array. Isolated to developer linting scripts; never bundled into production client artifacts or backend server runtime.",
+      "acceptedBy": "@security-appsec-engineer",
+      "reviewDate": "2026-11-01",
+      "expiresAt": "2026-12-31"
+    },
+    {
+      "packageName": "eslint",
+      "severity": "moderate",
+      "environment": "development-only (linter)",
+      "rationale": "Transitive advisory via @eslint/config-array and minimatch. Isolated to developer linting scripts; never bundled into production client artifacts or backend server runtime.",
+      "acceptedBy": "@security-appsec-engineer",
+      "reviewDate": "2026-11-01",
+      "expiresAt": "2026-12-31"
     }
   ]
 }

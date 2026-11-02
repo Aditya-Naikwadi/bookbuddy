@@ -22,7 +22,7 @@ const facilityUsageWeeklySchema = new mongoose.Schema(
     },
     resourceType: {
       type: String,
-      enum: ['seat', 'workstation'],
+      enum: ['seat', 'workstation', 'study_pod'],
       required: [true, 'Resource type is required'],
       index: true,
     },

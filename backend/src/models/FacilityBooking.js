@@ -65,6 +65,11 @@ const facilityBookingSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    batchTag: {
+      type: String,
+      default: null,
+      index: true,
+    },
   },
   {
     timestamps: true,

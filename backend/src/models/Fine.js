@@ -56,6 +56,11 @@ const fineSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    batchTag: {
+      type: String,
+      default: null,
+      index: true,
+    },
   },
   {
     timestamps: true,

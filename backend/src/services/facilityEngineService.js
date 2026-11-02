@@ -102,6 +102,15 @@ const checkResourceHorizon = (
         400
       );
     }
+  } else if (resourceType === 'study_pod') {
+    const horizonDays = facilitySettings?.podAdvanceHorizonDays ?? 7;
+    const maxFutureMs = horizonDays * 24 * 60 * 60 * 1000;
+    if (start.getTime() > referenceNow.getTime() + maxFutureMs) {
+      throw new AppError(
+        `Study pods can only be booked up to ${horizonDays} day(s) in advance of the desired slot.`,
+        400
+      );
+    }
   } else {
     const horizonDays = facilitySettings?.seatAdvanceHorizonDays ?? 1;
     const maxFutureMs = horizonDays * 24 * 60 * 60 * 1000;
@@ -206,6 +215,7 @@ const holdSlot = async ({
   slotEnd: _slotEnd,
   ttlSeconds = 90,
   referenceNow = new Date(),
+  batchTag = null,
 }) => {
   // 1. Verify resource existence and availability
   const resource = await FacilityResource.findOne({
@@ -285,6 +295,7 @@ const confirmBooking = async ({
   bookedByRole = 'student',
   proxyForStudentId = null,
   referenceNow = new Date(),
+  batchTag = null,
 }) => {
   const targetStudentId = proxyForStudentId || studentId;
   const isStaffSelfBooking =
@@ -325,8 +336,13 @@ const confirmBooking = async ({
 
   const maxWeeklyWorkstationHours = college?.facilitySettings?.maxWeeklyWorkstationHours ?? 12;
   const maxWeeklySeatHours = college?.facilitySettings?.maxWeeklySeatHours ?? 30;
+  const maxWeeklyPodHours = college?.facilitySettings?.maxWeeklyPodHours ?? 10;
   const maxWeeklyHours =
-    resourceType === 'workstation' ? maxWeeklyWorkstationHours : maxWeeklySeatHours;
+    resourceType === 'workstation'
+      ? maxWeeklyWorkstationHours
+      : resourceType === 'study_pod'
+        ? maxWeeklyPodHours
+        : maxWeeklySeatHours;
   const maxWeeklyMinutes = maxWeeklyHours * 60;
   const collegeTimezone = college?.timezone || 'UTC';
 
@@ -398,6 +414,7 @@ const confirmBooking = async ({
             slotStart: start,
             slotEnd: end,
             status: 'confirmed',
+            batchTag,
           },
         ],
         { session }
@@ -623,8 +640,13 @@ const getStudentUsage = async ({ collegeId, studentId, referenceNow = new Date()
     weekStart,
   }).lean();
 
+  const maxWeeklyPodHours = college?.facilitySettings?.maxWeeklyPodHours ?? 10;
   const workstationUsage = usageRecords.find((r) => r.resourceType === 'workstation');
   const seatUsage = usageRecords.find((r) => r.resourceType === 'seat');
+  const podUsage = usageRecords.find((r) => r.resourceType === 'study_pod');
+  const podMinutesUsed = podUsage?.minutesUsed || 0;
+  const podHoursUsed = parseFloat((podMinutesUsed / 60).toFixed(1));
+  const podHoursRemaining = Math.max(0, parseFloat((maxWeeklyPodHours - podHoursUsed).toFixed(1)));
 
   const workstationMinutesUsed = workstationUsage?.minutesUsed || 0;
   const seatMinutesUsed = seatUsage?.minutesUsed || 0;
@@ -673,6 +695,13 @@ const getStudentUsage = async ({ collegeId, studentId, referenceNow = new Date()
         0,
         parseFloat((maxWeeklySeatHours - seatMinutesUsed / 60).toFixed(1))
       ),
+    },
+    study_pod: {
+      minutesUsed: podMinutesUsed,
+      hoursUsed: podHoursUsed,
+      maxWeeklyHours: maxWeeklyPodHours,
+      remainingHours: podHoursRemaining,
+      capReached: podHoursUsed >= maxWeeklyPodHours,
     },
     activeBookings,
     activeQueues,
@@ -1255,6 +1284,7 @@ const joinBookingQueue = async ({
   slotStart,
   slotEnd,
   referenceNow = new Date(),
+  batchTag = null,
 }) => {
   const parsedDate = new Date(date);
   const start = new Date(slotStart);
@@ -1334,6 +1364,7 @@ const joinBookingQueue = async ({
         slotEnd: end,
         queuePosition: nextPosition,
         status: 'queued',
+        batchTag,
       });
     } catch (createErr) {
       // If position collision occurred concurrently, apply small jitter and retry with next position

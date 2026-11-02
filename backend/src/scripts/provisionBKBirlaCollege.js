@@ -591,6 +591,103 @@ async function provisionBKBirlaCollege(options = {}) {
     console.log(`  ✓ All 50 Workstations already exist in group.`);
   }
 
+  // Step 3b: Provision 50 Quiet Study Seats under Resource Group
+  console.log('\n[4b/5] Provisioning Quiet Study Seats (SEAT-01 to SEAT-50)...');
+  let seatGroup = await FacilityResourceGroup.findOne({
+    collegeId: college._id,
+    name: 'Quiet Study Hall - 50 Seats',
+  });
+
+  if (!seatGroup) {
+    seatGroup = await FacilityResourceGroup.create({
+      collegeId: college._id,
+      name: 'Quiet Study Hall - 50 Seats',
+      type: 'seat',
+      slotDurationMinutes: 60,
+      operatingHours: {
+        openTime: '08:00',
+        closeTime: '20:00',
+      },
+      bookingHorizon: 'dayAhead1day',
+      totalUnits: 50,
+    });
+    console.log(`  ✓ Created Facility Resource Group: ${seatGroup.name}`);
+  }
+
+  const existingSeatsCount = await FacilityResource.countDocuments({
+    collegeId: college._id,
+    groupId: seatGroup._id,
+  });
+
+  if (existingSeatsCount < 50) {
+    const seatDocs = [];
+    for (let i = existingSeatsCount + 1; i <= 50; i++) {
+      const pad = String(i).padStart(2, '0');
+      seatDocs.push({
+        collegeId: college._id,
+        groupId: seatGroup._id,
+        label: `SEAT-${pad}`,
+        status: 'available',
+        notes: 'Quiet Study Desk with Power Outlet',
+      });
+    }
+    if (seatDocs.length > 0) {
+      await FacilityResource.insertMany(seatDocs);
+      console.log(`  ✓ Created ${seatDocs.length} Study Seats (SEAT-01 to SEAT-50).`);
+    }
+  } else {
+    console.log(`  ✓ All 50 Study Seats already exist in group.`);
+  }
+
+  // Step 3c: Provision 50 Collaborative Study Pods under Resource Group
+  console.log('\n[4c/5] Provisioning Study Pods (POD-01 to POD-50)...');
+  let podGroup = await FacilityResourceGroup.findOne({
+    collegeId: college._id,
+    name: 'Collaborative Study Pods - 50 Units',
+  });
+
+  if (!podGroup) {
+    podGroup = await FacilityResourceGroup.create({
+      collegeId: college._id,
+      name: 'Collaborative Study Pods - 50 Units',
+      type: 'study_pod',
+      slotDurationMinutes: 60,
+      operatingHours: {
+        openTime: '08:00',
+        closeTime: '20:00',
+      },
+      bookingHorizon: 'dayAhead7days',
+      totalUnits: 50,
+    });
+    console.log(`  ✓ Created Facility Resource Group: ${podGroup.name}`);
+  }
+
+  const existingPodsCount = await FacilityResource.countDocuments({
+    collegeId: college._id,
+    groupId: podGroup._id,
+  });
+
+  if (existingPodsCount < 50) {
+    const podDocs = [];
+    for (let i = existingPodsCount + 1; i <= 50; i++) {
+      const pad = String(i).padStart(2, '0');
+      podDocs.push({
+        collegeId: college._id,
+        groupId: podGroup._id,
+        label: `POD-${pad}`,
+        capacity: 1,
+        status: 'available',
+        notes: 'Individual Focus / Collaborative Study Pod',
+      });
+    }
+    if (podDocs.length > 0) {
+      await FacilityResource.insertMany(podDocs);
+      console.log(`  ✓ Created ${podDocs.length} Study Pods (POD-01 to POD-50).`);
+    }
+  } else {
+    console.log(`  ✓ All 50 Study Pods already exist in group.`);
+  }
+
   // Step 4: Catalog Physical Books
   console.log('\n[5/5] Provisioning Real Physical Book Catalog...');
   let booksCreated = 0;

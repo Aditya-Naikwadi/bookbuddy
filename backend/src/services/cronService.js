@@ -125,6 +125,7 @@ const runOverdueFineAccrual = async () => {
         amount,
         overdueDays,
         status: 'unpaid',
+        batchTag: loan.batchTag || null,
       });
     }
 

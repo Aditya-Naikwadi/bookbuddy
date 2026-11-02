@@ -11,7 +11,7 @@ const logger = require('../utils/logger');
 const { runInTransaction } = require('../utils/transactionHelper');
 const { atomicConditionalUpdate } = require('../utils/atomicUpdateHelper');
 
-const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
+const checkoutBook = async (userId, bookId, collegeId, issuedBy, batchTag = null) => {
   const txResult = await runInTransaction(
     async (session) => {
       // 1. Check unpaid fines limit
@@ -76,6 +76,7 @@ const checkoutBook = async (userId, bookId, collegeId, issuedBy) => {
               maxRenewals: config.maxRenewals,
               status: 'active',
               issuedBy,
+              batchTag,
             },
           ],
           { session }

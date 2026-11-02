@@ -15,7 +15,7 @@ const facilityResourceGroupSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['seat', 'workstation'],
+      enum: ['seat', 'workstation', 'study_pod'],
       required: [true, 'Resource type is required'],
       index: true,
     },
@@ -45,9 +45,13 @@ const facilityResourceGroupSchema = new mongoose.Schema(
     },
     bookingHorizon: {
       type: String,
-      enum: ['shortLead1hr', 'dayAhead1day'],
+      enum: ['shortLead1hr', 'dayAhead1day', 'dayAhead7days'],
       default: function () {
-        return this.type === 'workstation' ? 'shortLead1hr' : 'dayAhead1day';
+        return this.type === 'workstation'
+          ? 'shortLead1hr'
+          : this.type === 'study_pod'
+            ? 'dayAhead7days'
+            : 'dayAhead1day';
       },
     },
     totalUnits: {
