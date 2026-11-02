@@ -539,5 +539,17 @@ describe('Phase 3 Lab & Books Suite — B.K. Birla College Specs', () => {
         foreignStudent.collegeId.toString() !== targetBook.collegeId.toString();
       expect(isCrossCollegeCheckoutBlocked).toBe(true);
     });
+
+    afterAll(async () => {
+      await Loan.deleteMany({
+        collegeId: college._id,
+        userId: { $in: testStudents.map((s) => s._id) },
+      });
+      await Reservation.deleteMany({ collegeId: college._id, bookId: targetBook._id });
+      await Fine.deleteMany({
+        collegeId: college._id,
+        userId: { $in: testStudents.map((s) => s._id) },
+      });
+    });
   });
 });
