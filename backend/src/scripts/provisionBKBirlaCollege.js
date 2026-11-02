@@ -764,7 +764,11 @@ async function provisionBKBirlaCollege(options = {}) {
     collegeId: college._id,
     role: { $in: ['student', 'college-student'] },
   });
-  const finalPcsCount = await FacilityResource.countDocuments({ collegeId: college._id });
+  const finalPcsCount = await FacilityResource.countDocuments({
+    collegeId: college._id,
+    groupId: pcGroup._id,
+  });
+  const totalUnitsCount = await FacilityResource.countDocuments({ collegeId: college._id });
   const finalBooksCount = await Book.countDocuments({ collegeId: college._id });
 
   console.log('\n================================================================');
@@ -808,6 +812,7 @@ async function provisionBKBirlaCollege(options = {}) {
     adminTempPassword: adminTempPassword || 'Already Configured',
     studentsCount: finalStudentCount,
     pcsCount: finalPcsCount,
+    totalUnitsCount,
     booksCount: finalBooksCount,
   };
 }
