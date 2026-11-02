@@ -94,7 +94,7 @@ describe('Phase 3 Lab & Books Suite — B.K. Birla College Specs', () => {
       adminUser = await User.create({
         name: 'B.K. Birla College Administrator',
         email: 'admin@bkbirlacollege.edu',
-        password: '$argon2id$v=19$m=4096,t=3,p=1$fakeadminhash',
+        password: 'BirlaAdmin@2026!',
         role: 'college-admin',
         collegeId: college._id,
         isEmailVerified: true,

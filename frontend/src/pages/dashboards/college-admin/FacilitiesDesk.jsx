@@ -12,6 +12,7 @@ import {
   Search,
   RefreshCw,
   Clock,
+  Users,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import collegeAdminApi from "../../../api/collegeAdminApi";
@@ -48,6 +49,8 @@ export default function FacilitiesDesk() {
     specs: "Workstation PC",
   });
 
+  const [rightTab, setRightTab] = useState("bookings"); // 'bookings' | 'queue'
+
   // Fetch lab seats
   const { data: seatsData, isLoading: isLoadingSeats } = useQuery({
     queryKey: ["labSeats"],
@@ -60,6 +63,12 @@ export default function FacilitiesDesk() {
     queryFn: () => collegeAdminApi.getLabBookings(),
   });
 
+  // Fetch lab waitlist queue
+  const { data: queueData, isLoading: _isLoadingQueue } = useQuery({
+    queryKey: ["labQueue"],
+    queryFn: () => collegeAdminApi.getLabQueue(),
+  });
+
   // Real-time live occupancy updates with strict cleanup to prevent listener leaks
   useEffect(() => {
     if (!socket) return;
@@ -67,6 +76,7 @@ export default function FacilitiesDesk() {
     const handleSync = () => {
       queryClient.invalidateQueries(["labSeats"]);
       queryClient.invalidateQueries(["labBookings"]);
+      queryClient.invalidateQueries(["labQueue"]);
     };
 
     socket.on("facility:slot_booked", handleSync);
@@ -74,6 +84,9 @@ export default function FacilitiesDesk() {
     socket.on("facility:slot_checked_in", handleSync);
     socket.on("facility:slot_cancelled", handleSync);
     socket.on("facility:resource_status_changed", handleSync);
+    socket.on("facility:queue_joined", handleSync);
+    socket.on("facility:queue_promoted", handleSync);
+    socket.on("facility:queue_spot_claimed", handleSync);
 
     return () => {
       socket.off("facility:slot_booked", handleSync);
@@ -119,6 +132,8 @@ export default function FacilitiesDesk() {
 
   const seats = seatsData?.data || [];
   const bookings = bookingsData?.data || [];
+  const queue = queueData?.data || [];
+  const queueCount = queue.length;
 
   // Filter seats by resource type
   const filteredSeats = seats.filter((s) => {
@@ -135,7 +150,7 @@ export default function FacilitiesDesk() {
     (s) => s.maintenanceStatus === "maintenance",
   ).length;
   const activeBookingsCount = bookings.filter(
-    (b) => b.status === "booked",
+    (b) => b.status === "booked" || b.status === "confirmed",
   ).length;
 
   // Filtered Bookings by search query
@@ -198,7 +213,7 @@ export default function FacilitiesDesk() {
       </div>
 
       {/* Metric Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center gap-4">
           <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
             <Monitor size={22} />
@@ -242,6 +257,18 @@ export default function FacilitiesDesk() {
               {activeBookingsCount}
             </div>
             <div className="text-xs text-slate-400">Active Bookings</div>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <Users size={22} />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-amber-400">
+              {queueCount}
+            </div>
+            <div className="text-xs text-slate-400">Waitlist Queue</div>
           </div>
         </div>
       </div>
@@ -357,17 +384,36 @@ export default function FacilitiesDesk() {
           </div>
         </div>
 
-        {/* Right Col: Active Reservations Log */}
+        {/* Right Col: Active Reservations & Queue Log */}
         <div className="space-y-4">
           <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-            <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Calendar className="text-sky-400" size={20} />
-                Active Reservations
-              </h3>
-              <span className="text-xs font-mono text-slate-400 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800">
-                {filteredBookings.length} Logged
-              </span>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-2 border-b border-slate-800">
+              <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs w-full">
+                <button
+                  type="button"
+                  onClick={() => setRightTab("bookings")}
+                  className={`flex-1 px-3 py-1.5 rounded-lg font-medium transition-all flex items-center justify-center gap-1.5 ${
+                    rightTab === "bookings"
+                      ? "bg-sky-600 text-white shadow"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <Calendar size={13} />
+                  Bookings ({filteredBookings.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRightTab("queue")}
+                  className={`flex-1 px-3 py-1.5 rounded-lg font-medium transition-all flex items-center justify-center gap-1.5 ${
+                    rightTab === "queue"
+                      ? "bg-amber-600 text-white shadow"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <Users size={13} />
+                  Queue ({queueCount})
+                </button>
+              </div>
             </div>
 
             {/* Search Input */}

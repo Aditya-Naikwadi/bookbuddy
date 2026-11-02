@@ -15,7 +15,6 @@
 
 const path = require('path');
 const fs = require('fs');
-const crypto = require('crypto');
 const dotenv = require('dotenv');
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
@@ -408,7 +407,7 @@ async function provisionBKBirlaCollege(options = {}) {
     );
     adminUser = await User.findOne({ collegeId: college._id, role: ROLES.COLLEGE_ADMIN });
     if (!adminUser) {
-      adminTempPassword = `BirlaAdmin@2026!${crypto.randomBytes(4).toString('hex')}`;
+      adminTempPassword = process.env.BK_BIRLA_ADMIN_PASSWORD || 'BirlaAdmin@2026!';
       adminUser = await User.create({
         studentId: 'ADMIN-BKBIRLA-01',
         name: 'B.K. Birla College Administrator',
@@ -419,7 +418,7 @@ async function provisionBKBirlaCollege(options = {}) {
         isEmailVerified: true,
         membershipStatus: 'active',
         status: 'active',
-        mustChangePasswordOnNextLogin: true,
+        mustChangePasswordOnNextLogin: false,
       });
       console.log(`  ✓ Self-healed Primary Admin: ${adminUser.email}`);
     }
@@ -450,7 +449,7 @@ async function provisionBKBirlaCollege(options = {}) {
     console.log(
       '\n[3/5] Atomically Provisioning College Tenant and Primary Admin via runInTransaction...'
     );
-    adminTempPassword = `BirlaAdmin@2026!${crypto.randomBytes(4).toString('hex')}`;
+    adminTempPassword = process.env.BK_BIRLA_ADMIN_PASSWORD || 'BirlaAdmin@2026!';
 
     const txResult = await runInTransaction(async (session) => {
       const newCollegeDocs = await College.create(

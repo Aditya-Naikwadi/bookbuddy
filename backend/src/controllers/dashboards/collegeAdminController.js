@@ -947,7 +947,38 @@ const moderateEResource = async (req, res, next) => {
 // @access  Private/CollegeAdmin
 const getLabSeats = async (req, res, next) => {
   try {
-    const seats = await LabSeat.find({ ...req.tenantFilter });
+    let seats = await LabSeat.find({ ...req.tenantFilter });
+    if (!seats || seats.length === 0) {
+      const FacilityResource = require('../../models/FacilityResource');
+      const resources = await FacilityResource.find({ ...req.tenantFilter })
+        .populate('groupId')
+        .sort({ label: 1 });
+      if (resources && resources.length > 0) {
+        seats = resources.map((r) => ({
+          _id: r._id,
+          collegeId: r.collegeId,
+          labName: r.groupId?.name || 'Main Computer Lab',
+          seatNumber: r.label,
+          resourceType:
+            r.groupId?.type === 'workstation'
+              ? 'workstation'
+              : r.groupId?.type === 'quiet_seat'
+                ? 'quiet_seat'
+                : 'study_pod',
+          zoneName: r.groupId?.name || 'Main Hall',
+          specs: r.notes || `${r.groupId?.name || 'Workstation'} Unit`,
+          maintenanceStatus:
+            r.status === 'maintenance'
+              ? 'maintenance'
+              : r.status === 'institutional-block'
+                ? 'retired'
+                : 'operational',
+          status: r.status,
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt,
+        }));
+      }
+    }
     res.json({ success: true, data: seats });
   } catch (error) {
     next(error);
@@ -1076,13 +1107,70 @@ const getLabBookings = async (req, res, next) => {
       filter.seatId = { $in: seats.map((s) => s._id) };
     }
 
-    const bookings = await LabBooking.find(filter)
+    let bookings = await LabBooking.find(filter)
       .populate('seatId')
       .populate('userId', 'name studentId email')
       .sort({ startTime: -1 })
       .lean();
 
+    if (!bookings || bookings.length === 0) {
+      const FacilityBooking = require('../../models/FacilityBooking');
+      const fBookings = await FacilityBooking.find({
+        ...req.tenantFilter,
+        status: { $in: ['confirmed', 'checked-in', 'held'] },
+      })
+        .populate('resourceId')
+        .populate('studentId', 'name studentId email')
+        .sort({ slotStart: -1 })
+        .limit(100)
+        .lean();
+
+      if (fBookings && fBookings.length > 0) {
+        bookings = fBookings.map((fb) => ({
+          _id: fb._id,
+          collegeId: fb.collegeId,
+          userId: fb.studentId,
+          seatId: {
+            _id: fb.resourceId?._id,
+            seatNumber: fb.resourceId?.label || 'PC-01',
+            labName: 'Main Computer Lab',
+            resourceType: 'workstation',
+          },
+          seatNumber: fb.resourceId?.label,
+          date: fb.date,
+          startTime: fb.slotStart,
+          endTime: fb.slotEnd,
+          resourceType: 'workstation',
+          status: fb.status === 'confirmed' ? 'booked' : fb.status,
+          checkedInAt: fb.checkedInAt,
+        }));
+      }
+    }
+
     res.json({ success: true, data: bookings });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get waitlist queue for lab/facilities
+// @route   GET /api/dashboards/college-admin/lab-queue
+// @access  Private/CollegeAdmin
+const getLabQueue = async (req, res, next) => {
+  try {
+    require('../../models/User');
+    require('../../models/FacilityResourceGroup');
+    const FacilityBookingQueue = require('../../models/FacilityBookingQueue');
+    const queue = await FacilityBookingQueue.find({
+      ...req.tenantFilter,
+      status: { $in: ['queued', 'ready_to_confirm'] },
+    })
+      .populate('studentId', 'name studentId email')
+      .populate('resourceGroupId', 'name type')
+      .sort({ queuePosition: 1 })
+      .lean();
+
+    res.json({ success: true, count: queue.length, data: queue });
   } catch (error) {
     next(error);
   }
@@ -1776,6 +1864,7 @@ module.exports = {
   updateLabSeat,
   getLabBookings,
   cancelLabBookingByAdmin,
+  getLabQueue,
   getBookSuggestions,
   updateBookSuggestion,
   getFeedback,

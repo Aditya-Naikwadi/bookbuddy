@@ -24,6 +24,7 @@ const {
   updateLabSeat,
   getLabBookings,
   cancelLabBookingByAdmin,
+  getLabQueue,
   getBookSuggestions,
   updateBookSuggestion,
   getFeedback,
@@ -129,6 +130,7 @@ router
     updateLabSeat
   );
 router.route('/lab-bookings').get(getLabBookings);
+router.route('/lab-queue').get(getLabQueue);
 router
   .route('/lab-bookings/:id')
   .delete(validate(paramIdSchema), auditLog('lab_booking.cancel'), cancelLabBookingByAdmin);

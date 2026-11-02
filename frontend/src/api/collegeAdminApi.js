@@ -113,6 +113,11 @@ export const getLabBookings = async () => {
   return data;
 };
 
+export const getLabQueue = async () => {
+  const { data } = await apiClient.get("/dashboards/college-admin/lab-queue");
+  return data;
+};
+
 export const cancelLabBooking = async (id) => {
   const { data } = await apiClient.delete(
     `/dashboards/college-admin/lab-bookings/${id}`,
@@ -194,6 +199,7 @@ const collegeAdminApi = {
   bulkCreateLabSeats,
   updateLabSeat,
   getLabBookings,
+  getLabQueue,
   cancelLabBooking,
   getHelpdeskTickets,
   resolveHelpdeskTicket,

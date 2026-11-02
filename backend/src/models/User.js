@@ -428,16 +428,20 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
   if (this.password.startsWith('$argon2')) {
     const argon2 = require('argon2');
-    const matched = await argon2.verify(this.password, candidatePassword);
-    if (!matched && this.mustChangePasswordOnNextLogin && candidatePassword) {
-      try {
-        if (await argon2.verify(this.password, candidatePassword.toLowerCase())) return true;
-        if (await argon2.verify(this.password, candidatePassword.toUpperCase())) return true;
-      } catch (_err) {
-        // Fallback casing verification failure ignored
+    try {
+      const matched = await argon2.verify(this.password, candidatePassword);
+      if (!matched && this.mustChangePasswordOnNextLogin && candidatePassword) {
+        try {
+          if (await argon2.verify(this.password, candidatePassword.toLowerCase())) return true;
+          if (await argon2.verify(this.password, candidatePassword.toUpperCase())) return true;
+        } catch (_err) {
+          // Fallback casing verification failure ignored
+        }
       }
+      return matched;
+    } catch (_err) {
+      return false;
     }
-    return matched;
   }
 
   if (/^\$2[aby]\$\d{2}\$/.test(this.password)) {

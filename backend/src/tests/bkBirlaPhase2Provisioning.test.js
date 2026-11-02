@@ -36,7 +36,11 @@ jest.setTimeout(60000);
 describe('Phase 2 Provisioning Pipeline & Provenance Suite — B.K. Birla College', () => {
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bookbuddy_test');
+      await mongoose.connect(
+        process.env.MONGODB_URI ||
+          process.env.MONGO_URI ||
+          'mongodb://127.0.0.1:27017/bookbuddy_test'
+      );
     }
   });
 
@@ -181,6 +185,16 @@ describe('Phase 2 Provisioning Pipeline & Provenance Suite — B.K. Birla Colleg
 
     beforeAll(async () => {
       collegeDoc = await College.findOne({ slug: 'bkbirla' });
+      if (!collegeDoc) {
+        await provisionBKBirlaCollege({
+          rosterPath: (() => {
+            const p = path.join(__dirname, '../../bkbirlacollege_students_1000.csv');
+            if (!fs.existsSync(p)) provisionBKBirlaCollege.generateFallbackCsv(p);
+            return p;
+          })(),
+        });
+        collegeDoc = await College.findOne({ slug: 'bkbirla' });
+      }
       if (collegeDoc) {
         adminDoc = await User.findOne({ collegeId: collegeDoc._id, role: 'college-admin' });
       }
