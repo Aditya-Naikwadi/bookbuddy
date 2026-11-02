@@ -155,16 +155,17 @@ describe('Phase 1 Audit & Gaps Suite — B.K. Birla College Specs', () => {
 
   afterAll(async () => {
     try {
-      await College.deleteMany({ slug: 'bkbirla-audit' });
-      await User.deleteMany({ email: /@bkbirla-audit\.edu$/ });
-      await User.deleteMany({ email: /@bkbirlacollege\.edu$/ });
-      await FacilityResourceGroup.deleteMany({});
-      await FacilityResource.deleteMany({});
-      await FacilityBooking.deleteMany({});
-      await FacilityBookingQueue.deleteMany({});
-      await FacilityUsageWeekly.deleteMany({});
-      await AuditLog.deleteMany({});
-      await StudentUploadBatch.deleteMany({});
+      if (college?._id) {
+        await College.deleteMany({ _id: college._id });
+        await User.deleteMany({ collegeId: college._id });
+        await FacilityResourceGroup.deleteMany({ collegeId: college._id });
+        await FacilityResource.deleteMany({ collegeId: college._id });
+        await FacilityBooking.deleteMany({ collegeId: college._id });
+        await FacilityBookingQueue.deleteMany({ collegeId: college._id });
+        await FacilityUsageWeekly.deleteMany({ collegeId: college._id });
+        await AuditLog.deleteMany({ collegeId: college._id });
+        await StudentUploadBatch.deleteMany({ collegeId: college._id });
+      }
       if (mongoose.connection && mongoose.connection.readyState !== 0) {
         await mongoose.connection.close();
       }
