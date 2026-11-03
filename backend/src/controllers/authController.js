@@ -39,8 +39,9 @@ const registerUser = async (req, res, next) => {
   try {
     let { studentId, name, email, password, role, collegeId } = req.body;
 
-    const isCollegeStudent = role === 'college-student'; // Backwards compatibility
     const effectiveRole = normalizeRole(role || ROLES.STUDENT);
+    const isCollegeStudent =
+      Boolean(collegeId && effectiveRole === ROLES.STUDENT) || role === 'college-student'; // Backwards compatibility
 
     if ([ROLES.COLLEGE_ADMIN, ROLES.SUPER_ADMIN].includes(effectiveRole)) {
       return next(new AppError('Public registration of administrative roles is forbidden.', 403));
@@ -49,7 +50,7 @@ const registerUser = async (req, res, next) => {
     const normalizedEmail = normalizeEmail(email);
     const normalizedStudentId = normalizeStudentId(studentId);
 
-    if (effectiveRole === ROLES.STUDENT && (collegeId || normalizedStudentId)) {
+    if (effectiveRole === ROLES.STUDENT && (collegeId || normalizedStudentId || isCollegeStudent)) {
       if (!collegeId && isCollegeStudent) {
         return next(
           new AppError('College selection is required. Please select your institution.', 400)
@@ -144,7 +145,7 @@ const registerUser = async (req, res, next) => {
 
     // Task 7: If no roster match is found for a College Student, create a StudentJoinRequest (pending)
     // instead of an active account. Zero tenant dashboard access until approved by college admin.
-    if (isCollegeStudent && targetCollegeId) {
+    if ((isCollegeStudent || _isInstitutionalStudent) && targetCollegeId) {
       const pendingRequest = await StudentJoinRequest.findOne({
         collegeId: targetCollegeId,
         $or: [{ email: normalizedEmail }, { studentId: normalizedStudentId }],
@@ -269,6 +270,19 @@ const loginUser = async (req, res, next) => {
     const user = await User.findOne(query).select('+password +mfaSecret +activationTokenHash');
 
     if (!user) {
+      const pendingJoin = await StudentJoinRequest.findOne({
+        $or: [{ email: normalizedIdentifier }, { studentId: normalizedIdentifier }],
+        status: 'pending',
+      });
+      if (pendingJoin) {
+        await consumeFailedLogin(req);
+        return next(
+          new AppError(
+            'Your registration request is currently pending review by your college administrator.',
+            401
+          )
+        );
+      }
       await consumeFailedLogin(req);
       return next(new AppError('Invalid credentials.', 401));
     }

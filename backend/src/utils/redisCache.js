@@ -27,20 +27,41 @@ const targetRedisUrl = normalizeRedisUrl(rawRedisUrl);
 if (targetRedisUrl) {
   try {
     const isTls = targetRedisUrl.startsWith('rediss://');
+    const isTest = process.env.NODE_ENV === 'test';
     redisClient = new Redis(targetRedisUrl, {
-      maxRetriesPerRequest: 2,
-      connectTimeout: 5000,
+      maxRetriesPerRequest: isTest ? 1 : 3,
+      connectTimeout: isTest ? 2000 : 10000,
+      enableKeepAlive: true,
+      keepAlive: 10000,
       tls: isTls ? { rejectUnauthorized: false } : undefined,
-      retryStrategy: (times) => {
-        if (times > 5) return null; // Stop retrying after 5 attempts to allow graceful in-memory fallback
-        return Math.min(times * 500, 3000);
+      reconnectOnError: (err) => {
+        if (isTest) return false;
+        const targetErrors = ['READONLY', 'ECONNRESET', 'EPIPE', 'ETIMEDOUT'];
+        if (
+          targetErrors.some((target) => (err.message || '').includes(target) || err.code === target)
+        ) {
+          return 1;
+        }
+        return false;
       },
-      lazyConnect: true,
+      retryStrategy: (times) => {
+        if (isTest) return null;
+        return Math.min(times * 200, 3000);
+      },
+      lazyConnect: isTest,
     });
 
     redisClient.on('connect', () => {
       isConnected = true;
       logger.info('Connected to Redis cache.');
+    });
+
+    redisClient.on('ready', () => {
+      isConnected = true;
+    });
+
+    redisClient.on('close', () => {
+      isConnected = false;
     });
 
     redisClient.on('error', (err) => {
@@ -49,6 +70,19 @@ if (targetRedisUrl) {
       }
       isConnected = false;
     });
+
+    if (!isTest) {
+      const keepAliveHeartbeat = setInterval(async () => {
+        try {
+          if (redisClient && redisClient.status === 'ready') {
+            await redisClient.ping();
+          }
+        } catch (_) {
+          // Handled by ioredis reconnect
+        }
+      }, 25000);
+      keepAliveHeartbeat.unref();
+    }
 
     redisClient.connect().catch((err) => {
       isConnected = false;

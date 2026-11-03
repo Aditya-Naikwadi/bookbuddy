@@ -31,11 +31,27 @@ if (isTest && isMock) {
   redisReady = true;
 } else if (sanitizedRedisUrl) {
   try {
+    const isTls = sanitizedRedisUrl.startsWith('rediss://');
     redisClient = new Redis(sanitizedRedisUrl, {
-      maxRetriesPerRequest: 1,
-      connectTimeout: 2000,
-      reconnectOnError: () => false,
-      retryStrategy: () => null,
+      maxRetriesPerRequest: isTest ? 1 : 3,
+      connectTimeout: isTest ? 2000 : 10000,
+      enableKeepAlive: true,
+      keepAlive: 10000,
+      tls: isTls ? { rejectUnauthorized: false } : undefined,
+      reconnectOnError: (err) => {
+        if (isTest) return false;
+        const targetErrors = ['READONLY', 'ECONNRESET', 'EPIPE', 'ETIMEDOUT'];
+        if (
+          targetErrors.some((target) => (err.message || '').includes(target) || err.code === target)
+        ) {
+          return 1;
+        }
+        return false;
+      },
+      retryStrategy: (times) => {
+        if (isTest) return null;
+        return Math.min(times * 200, 3000);
+      },
       lazyConnect: isTest,
     });
 
@@ -44,12 +60,33 @@ if (isTest && isMock) {
       logger.info('Connected to Redis for rate limiting.');
     });
 
+    redisClient.on('ready', () => {
+      redisReady = true;
+    });
+
+    redisClient.on('close', () => {
+      redisReady = false;
+    });
+
     redisClient.on('error', (err) => {
       redisReady = false;
       if (!isTest) {
         logger.warn('Redis connection error. Rate limiting falling back to in-memory store.', err);
       }
     });
+
+    if (!isTest) {
+      const keepAliveHeartbeat = setInterval(async () => {
+        try {
+          if (redisClient && redisClient.status === 'ready') {
+            await redisClient.ping();
+          }
+        } catch (_) {
+          // Keep-alive failure handled by ioredis reconnect
+        }
+      }, 25000);
+      keepAliveHeartbeat.unref();
+    }
   } catch (err) {
     if (!isTest) {
       logger.warn(
