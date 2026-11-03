@@ -373,9 +373,22 @@ const handleRejection = (key, tierName, req, res, next, rej, userId = null) => {
 const resetAllLimiters = async () => {
   if (redisClient && process.env.NODE_ENV === 'test') {
     try {
-      const keys = await redisClient.keys('rlflx:*');
-      if (keys && keys.length > 0) {
-        await redisClient.del(...keys);
+      const patterns = [
+        'auth:*',
+        'authIp:*',
+        'authEmail:*',
+        'global:*',
+        'user:*',
+        'expensive:*',
+        'search:*',
+        'patronCardVerify:*',
+        'login_fail*',
+      ];
+      const keyPromises = patterns.map((p) => redisClient.keys(p));
+      const keyArrays = await Promise.all(keyPromises);
+      const allKeys = keyArrays.flat();
+      if (allKeys.length > 0) {
+        await redisClient.del(...allKeys);
       }
     } catch {
       // Squelch redis rate limiter flush errors in tests

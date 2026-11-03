@@ -303,6 +303,19 @@ const returnBook = async (loanId, collegeId) => {
           },
         });
 
+        try {
+          const { getIo } = require('../sockets');
+          const socketIo = getIo();
+          if (socketIo && collegeId) {
+            socketIo.to('college:' + collegeId).emit('book:availability_updated', {
+              bookId: loan.bookId,
+              availableCopies: book ? book.copiesAvailable : 0,
+            });
+          }
+        } catch (_err) {
+          // Non-blocking socket emit
+        }
+
         if (nextHold) {
           emitRealtimeEvent({
             event: events.RESERVATION_READY,
