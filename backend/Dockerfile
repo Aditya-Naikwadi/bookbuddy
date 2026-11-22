@@ -1,5 +1,5 @@
 # Stage 1: Build dependencies
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 
 WORKDIR /usr/src/app
 
@@ -14,7 +14,7 @@ COPY backend/package*.json ./
 RUN npm ci --only=production --legacy-peer-deps || npm install --omit=dev --legacy-peer-deps
 
 # Stage 2: Production image (Slim & Non-Root)
-FROM node:22-alpine AS production
+FROM node:26-alpine AS production
 
 WORKDIR /usr/src/app
 
